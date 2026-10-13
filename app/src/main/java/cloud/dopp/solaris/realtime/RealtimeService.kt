@@ -393,7 +393,7 @@ class RealtimeService : Service() {
         return androidx.core.app.NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(NOTIF_ACCENT)
-            .setContentTitle(getString(R.string.appName))
+            .setContentTitle(cloud.dopp.solaris.data.PersonaStore.name(this, getString(R.string.appName)))
             .setContentText(status)
             .setOngoing(true)
             .setPriority(androidx.core.app.NotificationCompat.PRIORITY_MIN)
