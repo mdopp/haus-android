@@ -30,6 +30,8 @@ import cloud.dopp.solaris.R
 import cloud.dopp.solaris.SolarisApp
 import cloud.dopp.solaris.SolarisConfig
 import cloud.dopp.solaris.data.ApiClient
+import cloud.dopp.solaris.data.PersonaStore
+import cloud.dopp.solaris.data.SbApiClient
 import cloud.dopp.solaris.data.ServerStore
 import cloud.dopp.solaris.data.UpdateCheck
 import cloud.dopp.solaris.data.TokenStore
@@ -233,6 +235,17 @@ class OnboardingHomeActivity : AppCompatActivity() {
             layoutParams = layoutParams.also { it.height = Math.round(figurePx) }
         }
 
+        // The house persona's name replaces the wordmark (laib#130); without one
+        // the Solaris lockup stays exactly as it was.
+        val persona = PersonaStore.get(this)
+        findViewById<TextView>(R.id.brand_word_start).text = persona?.display ?: "Solar"
+        val mark = if (persona == null) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.brand_figure).visibility = mark
+        findViewById<View>(R.id.brand_word_end).visibility = mark
+        persona?.accent?.let { runCatching { android.graphics.Color.parseColor(it) }.getOrNull() }?.let {
+            findViewById<View>(R.id.brand_rule).setBackgroundColor(it)
+        }
+
         val top = if (connected) R.dimen.brand_lockup_top_compact else R.dimen.brand_lockup_top
         setTopMargin(R.id.brand_lockup, resources.getDimensionPixelSize(top))
         // With the claim gone the rule carries the gap to the status line itself.
@@ -301,6 +314,21 @@ class OnboardingHomeActivity : AppCompatActivity() {
         // hidden on future launches (we can't detect an installed WebAPK).
 
         renderToolSection()
+        if (connected) refreshPersona(connected)
+    }
+
+    /** Ask Haus who the house is (laib#130); redraw the lockup when that changed. */
+    private fun refreshPersona(connected: Boolean) {
+        kotlin.concurrent.thread {
+            val fresh = try {
+                SbApiClient(applicationContext).getPersona()
+            } catch (e: Exception) {
+                null
+            } ?: return@thread
+            if (fresh == PersonaStore.get(applicationContext)) return@thread
+            PersonaStore.save(applicationContext, fresh)
+            runOnUiThread { if (!isFinishing) renderBrand(connected) }
+        }
     }
 
     /**
@@ -625,6 +653,7 @@ class OnboardingHomeActivity : AppCompatActivity() {
         ServerStore.setRealtimeEnabled(this, false)
         TokenStore.clear(this)
         ServerStore.clear(this)
+        PersonaStore.clear(this)
         findViewById<EditText>(R.id.server_url).setText("")
         render()
         toast(getString(R.string.home_logged_out))

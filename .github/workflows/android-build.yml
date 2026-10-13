@@ -55,6 +55,11 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: ./gradlew :app:assembleDebug --stacktrace
 
+      # The JVM unit tests (Robolectric) — they existed but no workflow ran them.
+      - name: Unit tests
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
       # Signed release only on a tag, and only when the keystore secret exists.
       # NOTE: the `secrets` context is NOT allowed inside an `if:` expression
       # (GitHub: "Unrecognized named-value: 'secrets'"), so we surface its presence

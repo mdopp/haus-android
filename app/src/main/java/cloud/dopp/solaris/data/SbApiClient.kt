@@ -29,12 +29,17 @@ class SbApiClient(private val ctx: Context) {
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    private fun get(path: String): JSONObject? {
+    private fun get(path: String): JSONObject? = getNapi("/servicebay$path")
+
+    /** `GET /napi/persona` (Haus, laib#130) → the house persona, or null when the server has none. */
+    fun getPersona(): Persona? = getNapi("/persona")?.let { Persona.parse(it) }
+
+    private fun getNapi(path: String): JSONObject? {
         val base = ServerStore.baseUrl(ctx)?.trimEnd('/') ?: return null
         val token = TokenStore.get(ctx) ?: return null
         return try {
             val req = Request.Builder()
-                .url(base + SolarisConfig.NAPI + "/servicebay" + path)
+                .url(base + SolarisConfig.NAPI + path)
                 .header("Authorization", "Bearer $token")
                 .get()
                 .build()
