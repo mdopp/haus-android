@@ -44,6 +44,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # the default "tools platform-tools" fails: current cmdline-tools no
+          # longer has the "tools" package (#172)
+          packages: platform-tools
 
       # Compile check for PRs. Skipped on a tag run — the signed release build
       # below already compiles, so there's no point assembling debug too.
