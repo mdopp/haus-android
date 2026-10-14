@@ -26,7 +26,7 @@ object NotifyCheckReport {
 
     /**
      * One report block. [approvals]/[updates] are the counts just fetched from
-     * `/napi/servicebay/home`, or null when the fetch failed — then [error] carries
+     * `/napi/box/home`, or null when the fetch failed — then [error] carries
      * the reason. [notificationsEnabled] false explains the otherwise baffling case
      * "test ran, nothing appeared" (POST_NOTIFICATIONS denied or channel muted).
      */

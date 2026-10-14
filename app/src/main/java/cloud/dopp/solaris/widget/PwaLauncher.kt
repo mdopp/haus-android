@@ -77,7 +77,7 @@ object PwaLauncher {
         /**
          * A single ServiceBay approval's **verdict page** (#43, solarisbay#1085).
          * [id] is the approval id from the `servicebay` SSE frame `{id,kind,summary}`
-         * or `GET /napi/servicebay/approvals`. The page's buttons POST the verdict
+         * or `GET /napi/box/approvals`. The page's buttons POST the verdict
          * over the Authelia session — the device token cannot (servicebay#2249),
          * which is why a tap must land here in the Custom Tab, not render natively.
          *

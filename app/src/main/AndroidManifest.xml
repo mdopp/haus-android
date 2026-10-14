@@ -49,7 +49,11 @@
         android:theme="@style/Theme.Solaris">
 
         <!-- Launcher + onboarding hub. Also captures the pairing deep link
-             cloud.dopp.solaris://pair#token=… from the server's /pair-device page. -->
+             cloud.dopp.haus://pair#token=… from the server's /pair-device page, and its
+             legacy twin cloud.dopp.solaris://pair#token=… (#174: both stay valid
+             until no installed app knows only the old one). The setup QR is
+             scanned in-app and deliberately has NO intent-filter: a link from any
+             web page could otherwise point the app at a foreign server. -->
         <activity
             android:name=".ui.OnboardingHomeActivity"
             android:exported="true"
@@ -64,6 +68,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="cloud.dopp.solaris" android:host="pair" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="cloud.dopp.haus" android:host="pair" />
             </intent-filter>
         </activity>
 
@@ -289,7 +299,8 @@
             android:label="@string/approvals_title"
             android:theme="@style/Theme.Solaris" />
 
-        <!-- ServiceBay overview widget (#42): home-summary from /napi/servicebay/home. -->
+        <!-- ServiceBay overview widget (#42): home-summary from /napi/box/home
+             (legacy /napi/servicebay/home, #174). -->
         <receiver
             android:name=".widget.SbOverviewWidgetProvider"
             android:exported="true"

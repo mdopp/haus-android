@@ -19,7 +19,7 @@ import cloud.dopp.solaris.widget.PwaLauncher
 /**
  * Screen-off backstop for the realtime service (#48): while the screen is off the
  * live SSE is dropped (battery/Doze), and this runs a light ~4-minute poll via a
- * Doze-tolerant alarm — checks `/napi/servicebay/home` for a rise in pending
+ * Doze-tolerant alarm — checks `/napi/box/home` for a rise in pending
  * approvals and alerts, then re-arms. On screen-on the service reconnects the SSE
  * and cancels this. Best-effort: deep Doze may stretch the interval beyond 4 min
  * (Android throttles allow-while-idle alarms).

@@ -17,7 +17,7 @@ import kotlin.concurrent.thread
 /**
  * ServiceBay **overview** widget (#42): a home-summary card showing services
  * up (+ failed/down), pending approvals and pending updates, from Solaris'
- * aggregated `/napi/servicebay/home` (BFF, ADR 0010). Read-only — a tap opens the
+ * aggregated `/napi/box/home` (BFF, ADR 0010). Read-only — a tap opens the
  * PWA. Config-less (like the camera/voice tiles); the bound Solaris server + token
  * are enough.
  */
