@@ -4,7 +4,8 @@ import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.PictureDrawable
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -40,7 +41,6 @@ import cloud.dopp.haus.widget.ToolWidgetProvider
 import cloud.dopp.haus.widget.WidgetPin
 import cloud.dopp.haus.widget.WidgetStore
 import cloud.dopp.haus.widget.WidgetTypes
-import com.caverock.androidsvg.SVG
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlin.concurrent.thread
@@ -158,40 +158,44 @@ class HomeActivity : AppCompatActivity() {
         findViewById<View>(R.id.persona_rule).setBackgroundColor(accent)
         val ground = persona?.ground?.let(::color) ?: getColor(R.color.haus_bg)
         findViewById<View>(R.id.home_root).setBackgroundColor(ground)
-        val svg = if (persona?.hasIcon == true) PersonaIcon.accept(PersonaStore.icon(this)) else null
-        showIcon(svg)
+        val png = if (persona?.hasIcon == true) PersonaIcon.accept(PersonaStore.icon(this)) else null
+        showIcon(png)
     }
 
-    /** The SVG last drawn, so a redraw does not parse it again. */
-    private var drawnSvg: String? = null
+    /** The PNG last drawn, so a redraw does not decode it again. */
+    private var drawnPng: ByteArray? = null
 
     /**
-     * Draw the persona's [svg], parsed off the main thread: a large or broken
+     * Draw the persona's [png], decoded off the main thread: a large or broken
      * icon costs a missing icon, never a frozen screen. Within
-     * [PersonaIcon.MAX_BYTES] only.
+     * [PersonaIcon.MAX_BYTES] only, and at most [ICON_SIDE] px a side.
      */
-    private fun showIcon(svg: String?) {
+    private fun showIcon(png: ByteArray?) {
         val icon = findViewById<ImageView>(R.id.persona_icon)
-        if (svg == null) {
-            drawnSvg = null
+        if (png == null) {
+            drawnPng = null
             icon.visibility = View.GONE
             return
         }
-        if (svg == drawnSvg) return
-        drawnSvg = svg
+        if (png.contentEquals(drawnPng)) return
+        drawnPng = png
         thread {
-            val picture = runCatching { SVG.getFromString(svg).renderToPicture() }.getOrNull()
+            val bitmap = runCatching { decode(png) }.getOrNull()
             runOnUiThread {
-                if (isFinishing || drawnSvg != svg) return@runOnUiThread
-                if (picture == null) {
-                    icon.visibility = View.GONE
-                } else {
-                    icon.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // a Picture draws in software only
-                    icon.setImageDrawable(PictureDrawable(picture))
-                    icon.visibility = View.VISIBLE
-                }
+                if (isFinishing || drawnPng !== png) return@runOnUiThread
+                icon.setImageBitmap(bitmap)
+                icon.visibility = if (bitmap == null) View.GONE else View.VISIBLE
             }
         }
+    }
+
+    /** [png] as a bitmap, sampled down to at most [ICON_SIDE] px a side; null when it does not decode. */
+    private fun decode(png: ByteArray): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(png, 0, png.size, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > ICON_SIDE) sample *= 2
+        return BitmapFactory.decodeByteArray(png, 0, png.size, BitmapFactory.Options().apply { inSampleSize = sample })
     }
 
     private fun color(hex: String): Int? = runCatching { Color.parseColor(hex.trim()) }.getOrNull()
@@ -201,11 +205,12 @@ class HomeActivity : AppCompatActivity() {
         thread {
             val client = BoxApiClient(applicationContext)
             val fresh = runCatching { client.getPersona() }.getOrNull() ?: return@thread
-            val svg = if (fresh.hasIcon) runCatching { client.getPersonaIcon() }.getOrNull() else null
-            val changed = fresh != PersonaStore.get(applicationContext) || svg != PersonaStore.icon(applicationContext)
+            val png = if (fresh.hasIcon) runCatching { client.getPersonaIcon() }.getOrNull() else null
+            val changed = fresh != PersonaStore.get(applicationContext) ||
+                !png.contentEquals(PersonaStore.icon(applicationContext))
             if (!changed) return@thread
             PersonaStore.save(applicationContext, fresh)
-            PersonaStore.saveIcon(applicationContext, svg)
+            PersonaStore.saveIcon(applicationContext, png)
             runOnUiThread { if (!isFinishing) renderPersona() }
         }
     }
@@ -479,6 +484,9 @@ class HomeActivity : AppCompatActivity() {
     private companion object {
         const val PREFS_ASKED = "haus_asked"
         const val KEY_EXEMPTION = "battery_exemption"
+
+        /** The persona icon's largest side as decoded: it is shown small. */
+        const val ICON_SIDE = 512
     }
 
     private fun appVersionName(): String = runCatching {

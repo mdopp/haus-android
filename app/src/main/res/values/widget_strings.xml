@@ -100,6 +100,7 @@
     <!-- Aktionsblatt der Zeile (#90/#107). %1$s = Titel der Zeile. -->
     <string name="tool_action_confirm">„%1$s“ wirklich ausführen?</string>
     <string name="tool_action_do">Ausführen</string>
+    <string name="tool_open">Öffnen</string>
 
     <!-- 1x1-Tool-Kachel (#71): Erfassen bzw. Chat mit geöffneter Karte. -->
     <!-- Noch nicht gebundene Kachel (#105): der Tipp führt in die Auswahl. -->

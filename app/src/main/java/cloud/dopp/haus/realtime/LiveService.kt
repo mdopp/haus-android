@@ -30,6 +30,7 @@ import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.request
 import cloud.dopp.haus.ui.HomeActivity
+import cloud.dopp.haus.widget.ActiveCache
 import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
 import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
 import cloud.dopp.haus.widget.BoxServicesWidgetProvider
@@ -38,6 +39,7 @@ import cloud.dopp.haus.widget.EnergyStatsWidgetProvider
 import cloud.dopp.haus.widget.EnergyTotalsWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
+import cloud.dopp.haus.widget.WidgetStore
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -145,7 +147,8 @@ object Live {
 
 /**
  * The live widgets' foreground service: it holds `GET /napi/portal/events`
- * (only `card_state`) while the screen is on and nothing while it is off.
+ * (`card_state` and `active_set`) while the screen is on and nothing while it
+ * is off.
  *
  * - It listens for the screen itself — a foreground component gets the
  *   broadcasts, a cached process does not.
@@ -153,8 +156,9 @@ object Live {
  *   widget read again, since Haus sends a card only when it changes.
  * - Screen off: drop the connection. Nothing polls; a widget nobody sees
  *   needs no update.
- * - A frame renders its device widget from the card, refetches the active
- *   list and, for an energy entity, the energy widgets — each coalesced.
+ * - A card renders its device widget, refetches the active list and, for an
+ *   energy entity, the energy widgets — each coalesced. An active set
+ *   refetches the active list unless it is the list last read.
  * - A 401 stops the service (the device was removed in Haus); any other loss
  *   reconnects with backoff, reset only after a healthy session.
  * - After its process died, Android restarts it (`START_STICKY`). That restart
@@ -308,15 +312,28 @@ class LiveService : Service() {
             val ev = RealtimeProtocol.frame(type, data) ?: return
             main.post {
                 if (eventSource !== source) return@post
-                runCatching { DeviceWidgetProvider.wakeEntity(this@LiveService, ev.entityId, ev.card) }
-                main.removeCallbacks(activeRefresh)
-                main.postDelayed(activeRefresh, ACTIVE_REFRESH_DEBOUNCE_MS)
-                // a sensor comes every 10 s at most: at most one energy refetch in that time
-                if (!energyQueued && ev.entityId in WatchSet.energy(this@LiveService)) {
-                    energyQueued = true
-                    main.postDelayed(energyRefresh, ENERGY_REFRESH_MS)
+                when (ev) {
+                    is RealtimeProtocol.ActiveSetEvent -> {
+                        val lastRead = ActiveCache.decode(WidgetStore.activeCacheJson(this@LiveService))
+                        if (RealtimeProtocol.rereadActive(ev.ids, lastRead)) readActive()
+                    }
+                    is RealtimeProtocol.CardStateEvent -> {
+                        runCatching { DeviceWidgetProvider.wakeEntity(this@LiveService, ev.entityId, ev.card) }
+                        readActive()
+                        // a sensor comes every 10 s at most: at most one energy refetch in that time
+                        if (!energyQueued && ev.entityId in WatchSet.energy(this@LiveService)) {
+                            energyQueued = true
+                            main.postDelayed(energyRefresh, ENERGY_REFRESH_MS)
+                        }
+                    }
                 }
             }
+        }
+
+        /** The active list reads again once a burst is over: a card and the set it changed cost one read. */
+        private fun readActive() {
+            main.removeCallbacks(activeRefresh)
+            main.postDelayed(activeRefresh, ACTIVE_REFRESH_DEBOUNCE_MS)
         }
 
         override fun onClosed(eventSource: EventSource) {

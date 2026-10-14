@@ -103,7 +103,7 @@ class NapiFieldsTest {
         assertArrayEquals(png, Reach.call(icon, "accept", png) as ByteArray?)
         val svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".toByteArray()
         assertNull("SVG taken as an icon", Reach.call(icon, "accept", svg))
-        val max = Reach.get(Reach.obj(icon), "MAX_BYTES") as Int
+        val max = Class.forName(icon).getField("MAX_BYTES").getInt(null)
         val atCap = png + ByteArray(max - png.size)
         assertArrayEquals("a PNG exactly at the cap", atCap, Reach.call(icon, "accept", atCap) as ByteArray?)
         assertNull("a PNG over the cap", Reach.call(icon, "accept", atCap + byteArrayOf(0)))
@@ -221,9 +221,12 @@ class NapiFieldsTest {
     @Test
     fun theActiveListsRowsGoToTheRowTapScreen() {
         val src = File(RepoFiles.main, "java/cloud/dopp/haus/widget/ActiveDevicesWidgetProvider.kt").readText()
-        val template = src.substringAfter("setPendingIntentTemplate(").substringBefore("\n    }")
-        assertTrue("the row template does not aim at ToolActionActivity", template.contains("ToolActionActivity"))
-        assertTrue("the row template is not mutable: the fill-in could not land", src.contains("FLAG_MUTABLE"))
+        val template = src.substringAfter("setPendingIntentTemplate(").substringBefore("\n")
+        assertTrue("the row template is not the row-tap screen's: $template", template.contains("ToolActionActivity.template("))
+        val t = shadowOf(ToolActionActivity.template(ctx(), 1))
+        assertTrue(t.isActivityIntent)
+        assertEquals(ToolActionActivity::class.java.name, t.savedIntent.component?.className)
+        assertTrue("not mutable: a row's fill-in could not land", (t.flags and android.app.PendingIntent.FLAG_MUTABLE) != 0)
     }
 
     // --- the row-tap screen ------------------------------------------------------

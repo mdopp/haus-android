@@ -157,10 +157,14 @@ object ActionSheets {
      * Nothing here is dangerous: a catalog action is whatever the tool declared,
      * and the server decides which need confirming (the `confirm_required` 403,
      * answered by [toolConfirm]) — the widget does not promote one on its own.
+     *
+     * With [open] the row's page on Haus is one more entry, after the actions, so
+     * an action keeps its place (#178).
      */
-    fun toolActions(titles: List<String?>): ActionSheet =
+    fun toolActions(titles: List<String?>, open: Boolean = false): ActionSheet =
         ActionSheet(
-            titles.map { ActionItem(labelRes = R.string.tool_action_do, tone = ActionTone.PRIMARY, label = it) },
+            titles.map { ActionItem(labelRes = R.string.tool_action_do, tone = ActionTone.PRIMARY, label = it) } +
+                listOfNotNull(if (open) ActionItem(R.string.tool_open) else null),
         )
 
     /**

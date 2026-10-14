@@ -358,7 +358,7 @@ class PairingTest {
     fun thePersonaIsNameColoursAndIcon() {
         val p = Persona.parse(
             JSONObject(
-                """{"name":"joshua","display":"Joshua","greeting":"Hallo.","accent":"#3ddc84","ground":"#0c120e","icon":"/napi/persona/icon.svg"}""",
+                """{"name":"joshua","display":"Joshua","greeting":"Hallo.","accent":"#3ddc84","ground":"#0c120e","icon":"/napi/persona/icon.png"}""",
             ),
         )
         assertEquals("Joshua", p?.display)

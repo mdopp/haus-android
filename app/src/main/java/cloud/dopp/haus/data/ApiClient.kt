@@ -100,17 +100,17 @@ class ApiClient(private val ctx: Context) {
     }
 
     /**
-     * Register this device's watch set via `POST /napi/portal/watch`
-     * (`{"entity_ids":[…]}`): Haus then streams `card_state` for exactly these
-     * entities over `/napi/portal/events`.
+     * Register this device's watch set via `POST /napi/portal/watch` ([watchBody]):
+     * Haus then streams `card_state` for exactly these entities over
+     * `/napi/portal/events`, and `active_set` when the body says `active`.
      *
      * Returns Haus's status (503 while Home Assistant is down, which
      * [cloud.dopp.haus.realtime.RealtimeProtocol.watchRetryMs] retries), or 0
      * when no request went out (no server, no token, no network). Never throws.
      */
-    fun postWatch(entityIds: List<String>): Int {
+    fun postWatch(body: JSONObject): Int {
         return try {
-            http.newCall(authed(Napi.WATCH, body = watchBody(entityIds).asBody())).execute().use { it.code }
+            http.newCall(authed(Napi.WATCH, body = body.asBody())).execute().use { it.code }
         } catch (e: Exception) {
             0
         }
@@ -151,18 +151,18 @@ class ApiClient(private val ctx: Context) {
      * The household's currently **active** devices (lights on, covers open,
      * switches on, …) for the overview widget (#28) — one GET of
      * `/napi/portal/active`, which answers the already-active entities as cards.
-     * Bounded by [cap]. Empty/error → empty list (the widget renders its "keine
-     * aktiven Geräte" state), so a hiccup never crashes it.
+     * Bounded by [cap]. Null when the read failed: that is no news about the
+     * house, so the widget keeps the list it last read instead of "Alles aus".
      */
-    fun listActive(cap: Int = 40): List<Card> {
+    fun listActive(cap: Int = 40): List<Card>? {
         try {
             http.newCall(authed(Napi.ACTIVE)).execute().use { resp ->
-                if (!resp.isSuccessful) return emptyList()
-                val body = resp.body?.string() ?: return emptyList()
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string() ?: return null
                 return parseActive(body).take(cap)
             }
         } catch (e: Exception) {
-            return emptyList()
+            return null
         }
     }
 
@@ -344,6 +344,7 @@ class ApiClient(private val ctx: Context) {
             // HA's capability bitmask (#92). Absent ⇒ null ⇒ "capability unproven",
             // which the lock chooser reads as "no latch".
             supportedFeatures = o.optInt(CardJson.SUPPORTED_FEATURES, -1).takeIf { it >= 0 },
+            page = o.optString(CardJson.PAGE).ifBlank { null },
         )
 
         /** `{ok, energy: {flow, totals}}` → [Energy], or null when Haus says it has none. */
@@ -411,8 +412,12 @@ class ApiClient(private val ctx: Context) {
             return out
         }
 
-        /** The `POST /napi/portal/watch` body, `{"entity_ids":[…]}` (#48). */
-        fun watchBody(entityIds: List<String>): JSONObject = Napi.WATCH.json(JSONArray(entityIds))
+        /**
+         * The `POST /napi/portal/watch` body, `{"entity_ids":[…]}` (#48), with
+         * `"active":true` while this phone shows the active devices (#178).
+         */
+        fun watchBody(entityIds: List<String>, active: Boolean = false): JSONObject =
+            Napi.WATCH.json(JSONArray(entityIds), if (active) true else null)
 
         /**
          * Classify an `/napi/action-callback` reply (#90). Both refusals Haus can

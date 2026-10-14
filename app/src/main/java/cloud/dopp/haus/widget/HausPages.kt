@@ -10,7 +10,8 @@ import cloud.dopp.haus.ui.HomeActivity
 /**
  * Where a widget's body tap goes: one of Haus's own pages, in the person's
  * browser — where their Authelia session is (laib ADR 0022: the app has no web
- * shell of its own; Haus's pages run in any browser).
+ * shell of its own; Haus's pages run in any browser). A device, an active row
+ * and a tool row open the item's own page when Haus names one ([item]).
  *
  * The pages are Haus's (`cmd/haus/main.go`); `NapiContractTest` holds the app
  * to them. Unpaired, a tap opens the app instead, which asks for Haus's address.
@@ -24,6 +25,20 @@ object HausPages {
     const val BOX = "/box"
 
     fun url(base: String, page: String): String = base.trimEnd('/') + page
+
+    /**
+     * [raw] when it is a page on Haus: a path from its root, as Haus names an
+     * item's own page (`page`, `/raeume/<entity_id>`). An absolute or
+     * protocol-relative URL, a backslash, `..` or whitespace inside is null, so
+     * a reply can never send a tap off Haus.
+     */
+    fun page(raw: String?): String? = raw?.trim()?.takeIf { p ->
+        p.startsWith("/") && !p.startsWith("//") && ".." !in p &&
+            p.none { it == '\\' || it.isWhitespace() || it.isISOControl() }
+    }
+
+    /** An item's tap: its own page when Haus named one, else [START]. */
+    fun item(raw: String?): String = page(raw) ?: START
 
     /** The intent that shows [page] of the paired Haus, or the app when there is none. */
     fun intent(ctx: Context, page: String): Intent {

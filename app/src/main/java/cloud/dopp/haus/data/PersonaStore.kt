@@ -1,8 +1,9 @@
 package cloud.dopp.haus.data
 
 import android.content.Context
+import java.io.File
 
-/** The last persona Haus named, and its icon; cleared on unpairing. Plain prefs, no secret. */
+/** The last persona Haus named, and its icon; cleared on unpairing. Plain prefs and a file, no secret. */
 object PersonaStore {
     private const val PREFS = "house_persona"
 
@@ -30,14 +31,19 @@ object PersonaStore {
             .apply()
     }
 
-    /** The icon's SVG text, as last fetched. */
-    fun icon(ctx: Context): String? = p(ctx).getString("icon_svg", null)
+    private fun iconFile(ctx: Context) = File(ctx.filesDir, "persona_icon.png")
 
-    fun saveIcon(ctx: Context, svg: String?) {
-        p(ctx).edit().apply { if (svg == null) remove("icon_svg") else putString("icon_svg", svg) }.apply()
+    /** The icon's PNG, as last fetched. */
+    fun icon(ctx: Context): ByteArray? = runCatching { iconFile(ctx).readBytes() }.getOrNull()
+
+    fun saveIcon(ctx: Context, png: ByteArray?) {
+        runCatching { if (png == null) iconFile(ctx).delete() else iconFile(ctx).writeBytes(png) }
     }
 
-    fun clear(ctx: Context) = p(ctx).edit().clear().apply()
+    fun clear(ctx: Context) {
+        p(ctx).edit().clear().apply()
+        saveIcon(ctx, null)
+    }
 
     /** The name to show: the persona's, else the app's own. */
     fun name(ctx: Context, fallback: String): String = get(ctx)?.display ?: fallback

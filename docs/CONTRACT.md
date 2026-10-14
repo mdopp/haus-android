@@ -40,7 +40,10 @@ registered by any other app on the phone and catch the token in the redirect.
   server. `server` is required; `token` is optional (present → paired once
   confirmed and checked; absent → the app opens `/pair-device` there).
 - The persona — name, greeting, colours (`accent`, `ground`), icon — comes from
-  `GET /napi/persona` and `GET /napi/persona/icon.svg`.
+  `GET /napi/persona` and, when it names an icon, `GET /napi/persona/icon.png`:
+  a PNG of at most 256 KB, decoded with `BitmapFactory` off the main thread.
+  The app has no SVG decoder; until Laib renders a persona's PNG (laib#191)
+  Haus names no icon and the app shows none.
 
 ## (b) The `/napi` paths the app calls
 
@@ -54,7 +57,7 @@ each row naming the Haus file and lines it came from.
 
 | Widget | Path |
 |---|---|
-| pairing | `GET /napi/whoami`, `GET /napi/persona`, `GET /napi/persona/icon.svg` |
+| pairing | `GET /napi/whoami`, `GET /napi/persona`, `GET /napi/persona/icon.png` |
 | device | `GET /napi/portal/state`, `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
 | active devices | `GET /napi/portal/active` |
 | energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
@@ -63,6 +66,16 @@ each row naming the Haus file and lines it came from.
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
 | live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |
 
+Fields the widgets read beyond a value to show:
+
+- `page` on every card (`/napi/portal/state`, `/napi/portal/active`, the
+  stream's `card_state`) and on every tool row with an id: the item's own page
+  on Haus, a path (`/raeume/<entity_id>`, `/kalender/erinnerung/<uid>`,
+  `/kontakte/<uid>`, `/dokumente/<id>`, `/notizen/<file>`). See (d).
+- `pendingApprovals` and `pendingUpdates` of `/napi/box/home`: Haus counts a
+  template update once, as an update, never as an approval. The Box widget
+  shows the two numbers apart.
+
 ## (c) The live stream
 
 One foreground service (`realtime/LiveService.kt`, type `specialUse`, a quiet
@@ -70,14 +83,26 @@ One foreground service (`realtime/LiveService.kt`, type `specialUse`, a quiet
 (the default) and a widget the stream keeps current is placed (device, active
 devices, energy, energy statistics, energy totals, tools, the Box widgets). It
 listens for the screen itself. While the screen is on it holds
-`GET /napi/portal/events` and reads `card_state` frames only; on screen-off it
-drops the connection. Once connected it posts its watch set
-(`POST /napi/portal/watch`: the device widgets' entities and, while an energy
-widget is placed, the energy flow's sensors; re-posted inside Haus's one-hour
-TTL; a 503 while Home Assistant is down is retried with backoff, about two
-minutes) and has every fed widget read again. A frame for an energy sensor
-reads the energy widgets again, at most every 10 s, Haus's sensor interval.
-A 401 stops the service.
+`GET /napi/portal/events` and reads two frames, `card_state` and `active_set`;
+on screen-off it drops the connection. Once connected it posts its watch set
+(`POST /napi/portal/watch`: `entity_ids`, the device widgets' entities and,
+while an energy widget is placed, the energy flow's sensors; `active: true`
+while an active-devices widget is placed, left out otherwise; re-posted inside
+Haus's one-hour TTL, and at once when the first active-devices widget is placed
+or the last one removed; a 503 while Home Assistant is down is retried with
+backoff, about two minutes) and has every fed widget read again.
+
+- `card_state` (`{entity_id, card}`) draws the device widgets of that entity
+  and reads the active list again; a frame for an energy sensor reads the
+  energy widgets again, at most every 10 s, Haus's sensor interval.
+- `active_set` (`{entity_ids}`) comes only while the watch says `active`: at
+  once when the stream opens or the watch turns active, then when the set of
+  things that are on or open changes, at most every 10 s. The app reads
+  `/napi/portal/active` again unless the ids are exactly the ones it last read
+  (order aside). A failed read keeps the list last read.
+
+A card and the set it changed arrive together; they cost one read of the
+active list, not two. A 401 stops the service.
 
 It starts from allowed starts only (Android 12+): the app's screen, a widget
 tap, a configure screen (the fed widgets without a choice have a no-UI one,
@@ -99,3 +124,13 @@ through their chat channel, not the app (laib ADR 0022 §3).
 
 A widget's body tap opens one of Haus's pages in the browser: `/start` for the
 house, `/box` for the Box. The app has no web shell of its own.
+
+An item opens its own page, base + `page`: a device widget's name, a row of
+the active devices, a tool row. Only a path on Haus is taken (it starts with a
+single `/`, has no `..`, no backslash, no whitespace); an absolute URL or
+anything else is never opened. Without a page a device and an active row open
+`/start`, and a tool row keeps its tap: a row with actions opens its sheet —
+with "Öffnen" as one more entry, after the actions, when it has a page — and a
+row with neither does nothing. A collection row has one tap target, so active
+and tool rows go through one translucent screen (`ToolActionActivity`) that
+opens the page or the sheet.

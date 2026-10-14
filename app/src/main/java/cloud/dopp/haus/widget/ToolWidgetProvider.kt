@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import cloud.dopp.haus.R
@@ -150,7 +149,7 @@ class ToolWidgetProvider : AppWidgetProvider() {
             .setData(Uri.parse("haus://tool/$appWidgetId"))
         v.setRemoteAdapter(R.id.tw_list, svc)
         v.setEmptyView(R.id.tw_list, R.id.tw_empty)
-        v.setPendingIntentTemplate(R.id.tw_list, rowTemplate(context, appWidgetId))
+        v.setPendingIntentTemplate(R.id.tw_list, ToolActionActivity.template(context, 410_000 + appWidgetId))
 
         // Where a body tap goes (#105): bound → Haus's start page, unbound → this
         // instance's picker. A widget that says "Tool wählen" must let the
@@ -180,24 +179,6 @@ class ToolWidgetProvider : AppWidgetProvider() {
         return PendingIntent.getActivity(
             context, 420_000 + appWidgetId, i,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-    }
-
-    /**
-     * The ListView's one `PendingIntentTemplate` (#28 pattern). It aims at
-     * [ToolActionActivity] because a collection has exactly one template for the
-     * whole row: the row's fill-in says which actions that row can offer, and that
-     * activity turns them into a sheet — or does nothing for a row with none (#90).
-     * **Mutable** so the fill-in can merge.
-     */
-    private fun rowTemplate(context: Context, appWidgetId: Int): PendingIntent {
-        val i = Intent(context, ToolActionActivity::class.java)
-            .addFlags(ActionDialog.TASK_FLAGS)
-        val mutable =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
-        return PendingIntent.getActivity(
-            context, 410_000 + appWidgetId, i,
-            PendingIntent.FLAG_UPDATE_CURRENT or mutable,
         )
     }
 

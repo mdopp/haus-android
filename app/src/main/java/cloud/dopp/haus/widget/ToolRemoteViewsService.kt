@@ -39,9 +39,9 @@ class ToolRemoteViewsService : RemoteViewsService() {
  * this launcher evidently delivers one.
  *
  * So the row carries exactly one fill-in, the check mark is **gone from the
- * layout**, and a tap opens [ActionSheets.toolActions] with the row's actions.
- * A row that offers no action has nothing to offer: Haus has no page for an
- * item, so the tap does nothing rather than open a guessed address.
+ * layout**, and a tap opens [ActionSheets.toolActions] with the row's actions
+ * and its page. A row without an action opens its page on Haus (#178); a row
+ * with neither does nothing rather than open a guessed address.
  *
  * Split out of the factory so the assembly is JVM-testable.
  */
@@ -53,12 +53,13 @@ object ToolRow {
     /**
      * The one fill-in that completes the collection's template (#90). It carries
      * everything the tap needs to assemble its sheet without a catalog lookup:
-     * the actions the row can fill and the row's title for the wording.
+     * the actions the row can fill, its page and the row's title for the wording.
      */
     fun fillIn(cell: ToolCell, appWidgetId: Int): Intent {
         val i = Intent()
             .putExtra(ToolActionActivity.EXTRA_TITLE, cell.title)
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        cell.page?.let { i.putExtra(ToolActionActivity.EXTRA_PAGE, it) }
         if (cell.offers.size > 1) {
             // Several fillable actions (#169): the sheet offers each under its own
             // title. The single-action extras stay filled too.

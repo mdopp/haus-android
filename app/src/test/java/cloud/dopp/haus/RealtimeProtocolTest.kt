@@ -118,7 +118,7 @@ class RealtimeProtocolTest {
     @Test
     fun theStreamReadsCardStateAndNothingElse() {
         val frame = """{"entity_id":"light.kueche","card":{"entity_id":"light.kueche","domain":"light","state":"on"}}"""
-        val ev = RealtimeProtocol.frame("card_state", frame)
+        val ev = RealtimeProtocol.frame("card_state", frame) as RealtimeProtocol.CardStateEvent?
         org.junit.Assert.assertNotNull(ev)
         assertEquals("light.kueche", ev!!.entityId)
         assertEquals("on", ev.card.state)

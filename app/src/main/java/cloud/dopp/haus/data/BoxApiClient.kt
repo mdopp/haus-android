@@ -43,11 +43,10 @@ class BoxApiClient(private val ctx: Context) {
     fun getPersona(): Persona? = get(Napi.PERSONA)?.let { Persona.parse(it) }
 
     /**
-     * `GET /napi/persona/icon.svg` → the persona's icon as SVG text, or null
-     * when it has none, it is not SVG, or it is larger than [PersonaIcon.MAX_BYTES].
+     * `GET /napi/persona/icon.png` → the persona's icon, or null when it has
+     * none, it is not a PNG, or it is larger than [PersonaIcon.MAX_BYTES].
      */
-    fun getPersonaIcon(): String? =
-        bytes(Napi.PERSONA_ICON, PersonaIcon.MAX_BYTES.toLong())?.toString(Charsets.UTF_8)?.let(PersonaIcon::accept)
+    fun getPersonaIcon(): ByteArray? = PersonaIcon.accept(bytes(Napi.PERSONA_ICON, PersonaIcon.MAX_BYTES.toLong()))
 
     /** `GET /napi/box/home` → the summary counts, or null on any failure. */
     fun getHome(): BoxHome? {
