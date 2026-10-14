@@ -53,9 +53,15 @@ on settings put system screen_off_timeout 1800000
 on locksettings set-disabled true >/dev/null 2>&1 || true
 adb install -r -g "$APK" >/dev/null || { fail "install"; exit 1; }
 adb install -r "$TEST_APK" >/dev/null || { fail "install tests"; exit 1; }
-on appwidget grantbind --package $PKG --user 0
-on am instrument -w -e class cloud.dopp.haus.e2e.LiveE2ESetup $PKG.test/androidx.test.runner.AndroidJUnitRunner | tee "$OUT/setup.txt"
-grep -q "OK (1 test)" "$OUT/setup.txt" || { fail "setup: pair and place widgets"; exit 1; }
+# right after an install the widget service may not take the grant yet: up to three tries
+for try in 1 2 3; do
+  on appwidget grantbind --package $PKG --user 0
+  on am instrument -w -e class cloud.dopp.haus.e2e.LiveE2ESetup $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/setup.txt"
+  grep -q "OK (1 test)" "$OUT/setup.txt" && break
+  say "setup try $try failed: $(grep -m1 AssertionError "$OUT/setup.txt")"
+  sleep 5
+done
+grep -q "OK (1 test)" "$OUT/setup.txt" || { cat "$OUT/setup.txt"; fail "setup: pair and place widgets"; exit 1; }
 
 # 1 --------------------------------------------------------------------------
 wake
