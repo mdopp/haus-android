@@ -55,7 +55,7 @@ import java.io.StringWriter
  *  1. connect to their own Solaris server (URL entry; QR to follow),
  *  2. install the Solaris PWA (opens the server in a Custom Tab),
  *  3. add widgets (one-tap via requestPinAppWidget).
- * It also captures the `haus://pair#token=…` (or legacy
+ * It also captures the `cloud.dopp.haus://pair#token=…` (or legacy
  * `cloud.dopp.solaris://pair#token=…`) redirect from the
  * server's /pair-device page and stores the device token.
  *
@@ -487,7 +487,7 @@ class OnboardingHomeActivity : AppCompatActivity() {
     }
 
     /**
-     * Parse `haus://setup?server=…&token=…` (or its legacy
+     * Parse `cloud.dopp.haus://setup?server=…&token=…` (or its legacy
      * `cloud.dopp.solaris://` twin, see [PairLinks]), or a plain https URL.
      */
     private fun handleScanned(text: String) {
@@ -531,7 +531,7 @@ class OnboardingHomeActivity : AppCompatActivity() {
 
     private fun handleDeepLink(intent: Intent?) {
         val data = intent?.data ?: return
-        // haus://pair#token=… or the legacy cloud.dopp.solaris://pair#token=… (#174).
+        // cloud.dopp.haus://pair#token=… or the legacy cloud.dopp.solaris://pair#token=… (#174).
         // PairLinks parses fragment and query by hand and never throws.
         if (!PairLinks.isPairLink(data)) return
         val token = PairLinks.pairToken(data)

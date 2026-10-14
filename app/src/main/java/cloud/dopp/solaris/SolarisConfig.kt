@@ -68,18 +68,18 @@ object SolarisConfig {
     const val LEGACY_TOKEN_PREFIX = "sol_device_"
 
     /**
-     * Pairing redirect deep link: `haus://pair#token=…&id=…`, or the legacy
+     * Pairing redirect deep link: `cloud.dopp.haus://pair#token=…&id=…`, or the legacy
      * `cloud.dopp.solaris://pair#token=…&id=…` (#174 — both are accepted).
      * The token rides the fragment so it never hits proxy logs.
      */
-    const val PAIR_SCHEME = "haus"
+    const val PAIR_SCHEME = "cloud.dopp.haus"
     const val LEGACY_PAIR_SCHEME = "cloud.dopp.solaris"
     const val PAIR_HOST = "pair"
     const val PAIR_TOKEN_PARAM = "token"
 
     /**
      * QR content the server's "connect phone" page encodes (scanned in-app, not
-     * launched as an intent): `haus://setup?server=<url>&token=<device token>`,
+     * launched as an intent): `cloud.dopp.haus://setup?server=<url>&token=<device token>`,
      * or the same under the legacy `cloud.dopp.solaris://` scheme.
      * `server` required, `token` optional (present → instant pair; absent → login).
      */

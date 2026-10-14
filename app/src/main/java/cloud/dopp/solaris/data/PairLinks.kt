@@ -8,8 +8,8 @@ import cloud.dopp.solaris.SolarisConfig
  * `pair` redirect deep link and the `setup` QR content.
  *
  * Two generations of names are valid side by side (#174, laib ADR 0021):
- *  - the **neutral** ones Haus moves to — `haus_device_…`, `haus://pair`,
- *    `haus://setup`;
+ *  - the **neutral** ones Haus moves to — `haus_device_…`, `cloud.dopp.haus://pair`,
+ *    `cloud.dopp.haus://setup`;
  *  - the **legacy** ones every installed app knows — `sol_device_…`,
  *    `cloud.dopp.solaris://pair`, `cloud.dopp.solaris://setup`.
  * Scheme and prefix are independent: either scheme may carry either prefix.

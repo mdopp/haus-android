@@ -15,8 +15,8 @@ installed on every family phone, and until then accepts both.
 | | Neutral | Legacy | App behaviour |
 |---|---|---|---|
 | device-token prefix | `haus_device_` | `sol_device_` | stores a token with either prefix |
-| pair deep link | `haus://pair#token=…&id=…` | `cloud.dopp.solaris://pair#token=…&id=…` | both open the hub; either scheme may carry either prefix |
-| setup QR content | `haus://setup?server=…&token=…` | `cloud.dopp.solaris://setup?server=…&token=…` | both parsed by the in-app scanner |
+| pair deep link | `cloud.dopp.haus://pair#token=…&id=…` | `cloud.dopp.solaris://pair#token=…&id=…` | both open the hub; either scheme may carry either prefix. The new scheme is named after the domain on purpose: a bare `haus://` could be registered by any other app on the phone and catch the token in the redirect |
+| setup QR content | `cloud.dopp.haus://setup?server=…&token=…` | `cloud.dopp.solaris://setup?server=…&token=…` | both parsed by the in-app scanner |
 | Box keys | `/napi/box/{home,services,approvals,upgrades}` | `/napi/servicebay/…` | new first, old on a 404, the answering one remembered per server |
 | package id | — | `cloud.dopp.solaris` | **never changes**: a new id is a new app |
 

@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 
 /**
  * #174 (laib ADR 0021): the app learns the neutral names next to the old ones.
- * Haus may hand out `haus_device_…` tokens and `haus://pair` / `haus://setup`
+ * Haus may hand out `haus_device_…` tokens and `cloud.dopp.haus://pair` / `cloud.dopp.haus://setup`
  * links; every phone that still talks to a server speaking `sol_device_…` and
  * `cloud.dopp.solaris://` must keep pairing exactly as before.
  */
@@ -62,7 +62,7 @@ class PairLinksTest {
 
     @Test
     fun neutralPairLinkPairs() {
-        val uri = Uri.parse("haus://pair#token=haus_device_TESTTOKEN123&id=abc")
+        val uri = Uri.parse("cloud.dopp.haus://pair#token=haus_device_TESTTOKEN123&id=abc")
         assertTrue(PairLinks.isPairLink(uri))
         assertEquals("haus_device_TESTTOKEN123", PairLinks.pairToken(uri))
     }
@@ -72,7 +72,7 @@ class PairLinksTest {
     fun schemeAndPrefixAreIndependent() {
         assertEquals(
             "sol_device_TESTTOKEN123",
-            PairLinks.pairToken(Uri.parse("haus://pair#token=sol_device_TESTTOKEN123&id=abc")),
+            PairLinks.pairToken(Uri.parse("cloud.dopp.haus://pair#token=sol_device_TESTTOKEN123&id=abc")),
         )
         assertEquals(
             "haus_device_TESTTOKEN123",
@@ -84,13 +84,13 @@ class PairLinksTest {
     fun pairTokenAlsoReadsTheQueryAndDecodes() {
         assertEquals(
             "haus_device_TEST+TOKEN",
-            PairLinks.pairToken(Uri.parse("haus://pair?id=abc&token=haus_device_TEST%2BTOKEN")),
+            PairLinks.pairToken(Uri.parse("cloud.dopp.haus://pair?id=abc&token=haus_device_TEST%2BTOKEN")),
         )
     }
 
     @Test
     fun notAPairLink() {
-        assertFalse(PairLinks.isPairLink(Uri.parse("haus://setup?server=https://haus.example")))
+        assertFalse(PairLinks.isPairLink(Uri.parse("cloud.dopp.haus://setup?server=https://haus.example")))
         assertFalse(PairLinks.isPairLink(Uri.parse("https://haus.example/pair#token=haus_device_X")))
         assertFalse(PairLinks.isPairLink(Uri.parse("solaris://pair#token=haus_device_X")))
         assertNull(PairLinks.pairToken(Uri.parse("https://haus.example/pair#token=haus_device_X")))
@@ -98,9 +98,9 @@ class PairLinksTest {
 
     @Test
     fun pairLinkWithoutAValidTokenYieldsNoToken() {
-        assertNull(PairLinks.pairToken(Uri.parse("haus://pair#id=abc")))
-        assertNull(PairLinks.pairToken(Uri.parse("haus://pair#token=&id=abc")))
-        assertNull(PairLinks.pairToken(Uri.parse("haus://pair#token=sb_TESTTOKEN&id=abc")))
+        assertNull(PairLinks.pairToken(Uri.parse("cloud.dopp.haus://pair#id=abc")))
+        assertNull(PairLinks.pairToken(Uri.parse("cloud.dopp.haus://pair#token=&id=abc")))
+        assertNull(PairLinks.pairToken(Uri.parse("cloud.dopp.haus://pair#token=sb_TESTTOKEN&id=abc")))
     }
 
     @Test
@@ -115,7 +115,7 @@ class PairLinksTest {
     @Test
     fun neutralSetupLinkParses() {
         val s = PairLinks.parseSetup(
-            "haus://setup?server=https%3A%2F%2Fhaus.example&token=haus_device_TESTTOKEN123",
+            "cloud.dopp.haus://setup?server=https%3A%2F%2Fhaus.example&token=haus_device_TESTTOKEN123",
         )
         assertEquals("https://haus.example", s?.server)
         assertEquals("haus_device_TESTTOKEN123", s?.token)
@@ -124,18 +124,18 @@ class PairLinksTest {
     /** No token, or one the app doesn't recognise: connect, then log in to pair. */
     @Test
     fun setupLinkWithoutAValidTokenStillNamesTheServer() {
-        val bare = PairLinks.parseSetup("haus://setup?server=https%3A%2F%2Fhaus.example")
+        val bare = PairLinks.parseSetup("cloud.dopp.haus://setup?server=https%3A%2F%2Fhaus.example")
         assertEquals("https://haus.example", bare?.server)
         assertNull(bare?.token)
-        val foreign = PairLinks.parseSetup("haus://setup?server=https%3A%2F%2Fhaus.example&token=sb_X")
+        val foreign = PairLinks.parseSetup("cloud.dopp.haus://setup?server=https%3A%2F%2Fhaus.example&token=sb_X")
         assertEquals("https://haus.example", foreign?.server)
         assertNull(foreign?.token)
     }
 
     @Test
     fun notASetupLink() {
-        assertNull(PairLinks.parseSetup("haus://setup?token=haus_device_X"))
-        assertNull(PairLinks.parseSetup("haus://pair?server=https%3A%2F%2Fhaus.example"))
+        assertNull(PairLinks.parseSetup("cloud.dopp.haus://setup?token=haus_device_X"))
+        assertNull(PairLinks.parseSetup("cloud.dopp.haus://pair?server=https%3A%2F%2Fhaus.example"))
         assertNull(PairLinks.parseSetup("https://haus.example"))
         assertNull(PairLinks.parseSetup("hello"))
         assertNull(PairLinks.parseSetup(""))
@@ -144,7 +144,7 @@ class PairLinksTest {
     /** The neutral pair link reaches the hub and stores its token, like the old one. */
     @Test
     fun neutralPairDeepLinkStoresTheToken() {
-        val uri = Uri.parse("haus://pair#token=haus_device_TESTTOKEN123&id=abc")
+        val uri = Uri.parse("cloud.dopp.haus://pair#token=haus_device_TESTTOKEN123&id=abc")
         Robolectric.buildActivity(OnboardingHomeActivity::class.java, Intent(Intent.ACTION_VIEW, uri)).setup()
         assertEquals("haus_device_TESTTOKEN123", TokenStore.get(ctx()))
     }
@@ -159,7 +159,7 @@ class PairLinksTest {
     /** The manifest routes both pair schemes to the hub; the browser hands them over. */
     @Test
     fun bothPairSchemesResolveToTheHub() {
-        for (link in listOf("cloud.dopp.solaris://pair#token=x", "haus://pair#token=x")) {
+        for (link in listOf("cloud.dopp.solaris://pair#token=x", "cloud.dopp.haus://pair#token=x")) {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
                 .addCategory(Intent.CATEGORY_BROWSABLE)
                 .setPackage(ctx().packageName)

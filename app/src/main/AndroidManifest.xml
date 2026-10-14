@@ -49,7 +49,7 @@
         android:theme="@style/Theme.Solaris">
 
         <!-- Launcher + onboarding hub. Also captures the pairing deep link
-             haus://pair#token=… from the server's /pair-device page, and its
+             cloud.dopp.haus://pair#token=… from the server's /pair-device page, and its
              legacy twin cloud.dopp.solaris://pair#token=… (#174: both stay valid
              until no installed app knows only the old one). The setup QR is
              scanned in-app and deliberately has NO intent-filter: a link from any
@@ -73,7 +73,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="haus" android:host="pair" />
+                <data android:scheme="cloud.dopp.haus" android:host="pair" />
             </intent-filter>
         </activity>
 

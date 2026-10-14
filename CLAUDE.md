@@ -16,7 +16,7 @@ new ones (#174):
 | Legacy name | Neutral name | Notes |
 |---|---|---|
 | token prefix `sol_device_` | `haus_device_` | the app accepts both before storing a token |
-| deep link `cloud.dopp.solaris://pair`, QR `cloud.dopp.solaris://setup` | `haus://pair`, `haus://setup` | both schemes, either prefix |
+| deep link `cloud.dopp.solaris://pair`, QR `cloud.dopp.solaris://setup` | `cloud.dopp.haus://pair`, `cloud.dopp.haus://setup` | both schemes, either prefix |
 | `/napi/servicebay/{home,services,approvals,upgrades}` | `/napi/box/…` | new first, old on a 404, remembered per server |
 | package id `cloud.dopp.solaris`, repo `solaris-android` | — | stays: a new package id is a new app |
 
