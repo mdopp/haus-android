@@ -1,17 +1,19 @@
 package cloud.dopp.haus
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * What the new app is not (#176, laib ADR 0022 §1–2): no foreground service,
- * no notifications, no boot start, no background poll, no web shell, no voice.
- * Widgets stay current through one live stream, only while the screen is on —
- * so nothing in the manifest may keep the app alive or wake it, and nothing in
- * the sources may post a notification, schedule work, set an alarm, hold a
- * wakelock or open a Trusted Web Activity.
+ * What the app is and is not (#176; the owner's call on how the widgets stay
+ * live). It is widgets and pairing, kept live by one foreground service of
+ * type `specialUse` that holds the stream while the screen is on, restarts
+ * after boot, and shows one quiet notification for it. It is not a poll: no
+ * widget update period, no job, no worker, no alarm, no wakelock. Not
+ * `dataSync` either — Android 15 caps that at 6 hours a day. No web shell, no
+ * voice, no other notification.
  */
 class ManifestTest {
 
@@ -19,24 +21,64 @@ class ManifestTest {
     private val gradle by lazy { File(RepoFiles.root, "app/build.gradle").readText() }
     private val sources by lazy { RepoFiles.mainKotlin().associate { RepoFiles.relative(it) to it.readText() } }
 
-    private fun noneSay(vararg needles: String): List<String> =
-        sources.flatMap { (path, text) -> needles.filter { text.contains(it) }.map { "$path: $it" } }
+    /** The one file that may hold a foreground service and post its notification. */
+    private val serviceFile = "app/src/main/java/cloud/dopp/haus/realtime/LiveService.kt"
 
+    private fun noneSay(vararg needles: String, except: Set<String> = emptySet()): List<String> =
+        sources.filterKeys { it !in except }
+            .flatMap { (path, text) -> needles.filter { text.contains(it) }.map { "$path: $it" } }
+
+    /** Exactly these permissions: the network, the camera capture, and what the live service needs. */
     @Test
-    fun noPermissionThatKeepsTheAppAliveOrTalksToThePerson() {
-        listOf(
-            "FOREGROUND_SERVICE", "POST_NOTIFICATIONS", "RECEIVE_BOOT_COMPLETED", "WAKE_LOCK",
-            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "RECORD_AUDIO",
-        ).forEach { assertFalse("manifest asks for $it", manifest.contains("android.permission.$it")) }
+    fun thePermissionsAreExactlyTheseAndNoOthers() {
+        val asked = Regex("""<uses-permission[^>]*android:name="([^"]+)"""").findAll(manifest)
+            .map { it.groupValues[1].removePrefix("android.permission.") }.toSet()
+        assertEquals(
+            setOf(
+                "INTERNET", "CAMERA",
+                "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", // the live service
+                "RECEIVE_BOOT_COMPLETED", // its restart after boot
+                "POST_NOTIFICATIONS", // its notification, shown on Android 13+
+            ),
+            asked,
+        )
     }
 
+    /** Exactly one foreground service, `specialUse` only, with the reason Play asks for. */
     @Test
-    fun theOnlyServicesAreTheWidgetLists() {
-        val services = Regex("""<service[^>]*android:name="([^"]+)"""").findAll(manifest)
-            .map { it.groupValues[1] }.toList()
-        services.forEach { assertTrue("$it is not a widget list", it.endsWith("RemoteViewsService")) }
-        assertFalse("a foreground service type", manifest.contains("foregroundServiceType"))
-        assertFalse("a boot receiver", manifest.contains("BOOT_COMPLETED"))
+    fun oneSpecialUseForegroundServiceAndTheWidgetLists() {
+        val services = Regex("""<service\b[^>]*>""").findAll(manifest).map { it.value }.toList()
+        val foreground = services.filter { it.contains("foregroundServiceType") }
+        assertEquals("foreground services: $foreground", 1, foreground.size)
+        val fgs = foreground.single()
+        assertTrue(fgs, fgs.contains("""android:name=".realtime.LiveService""""))
+        assertTrue(fgs, fgs.contains("""android:foregroundServiceType="specialUse""""))
+        assertTrue(fgs, fgs.contains("""android:exported="false""""))
+        val block = manifest.substringAfter(fgs).substringBefore("</service>")
+        assertTrue("no special-use subtype", block.contains("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"))
+        assertTrue("the subtype does not say what it is for", block.contains("live widget connection to the user's own Haus server"))
+        (services - fgs).forEach { assertTrue("$it is not a widget list", it.contains("RemoteViewsService\"")) }
+        assertFalse("dataSync is capped at 6 h a day", manifest.contains("dataSync"))
+    }
+
+    /** One boot receiver, and it is the live service's restart. */
+    @Test
+    fun theBootReceiverRestartsTheLiveServiceOnly() {
+        assertEquals(1, Regex("""android.intent.action.BOOT_COMPLETED""").findAll(manifest).count())
+        val receiver = manifest.substringBefore("android.intent.action.BOOT_COMPLETED").substringAfterLast("<receiver")
+        assertTrue(receiver, receiver.contains("""android:name=".realtime.BootReceiver""""))
+    }
+
+    /** No widget asks Android to wake it: the live service resyncs on screen-on. */
+    @Test
+    fun noWidgetPolls() {
+        val infos = File(RepoFiles.main, "res/xml").listFiles()!!.filter { it.name.endsWith("_widget_info.xml") }
+        assertTrue("no widget info files", infos.isNotEmpty())
+        val polling = infos.mapNotNull { f ->
+            val period = Regex("""android:updatePeriodMillis="(\d+)"""").find(f.readText())?.groupValues?.get(1)
+            if (period != "0") "${f.name}: ${period ?: "not set"}" else null
+        }
+        assertTrue("widgets that poll:\n" + polling.joinToString("\n"), polling.isEmpty())
     }
 
     @Test
@@ -46,14 +88,18 @@ class ManifestTest {
         assertFalse("android-browser-helper", gradle.contains("androidbrowserhelper"))
     }
 
+    /** The live service's notification is the only one, and only it goes foreground. */
     @Test
-    fun noNotificationNoAlarmNoWebShellNoVoiceInTheSources() {
+    fun noOtherNotificationNoWebShellNoVoiceInTheSources() {
         val hits = noneSay(
             "NotificationCompat", "NotificationManager", "NotificationChannel", "startForeground",
-            "AlarmManager", "WorkManager", "TrustedWebActivity", "androidx.browser.trusted",
-            "RecognizerIntent", "SpeechRecognizer",
+            except = setOf(serviceFile),
+        ) + noneSay(
+            "TrustedWebActivity", "androidx.browser.trusted", "RecognizerIntent", "SpeechRecognizer",
+            "DATA_SYNC", "dataSync",
         )
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
+        assertTrue("the live service has no notification", sources[serviceFile]?.contains("startForeground") == true)
     }
 
     /**
@@ -66,15 +112,16 @@ class ManifestTest {
         val hits = noneSay(
             "JobScheduler", "JobService", "JobInfo", "JOB_SCHEDULER_SERVICE",
             "androidx.work", "WorkManager", "WorkRequest", "CoroutineWorker",
-            "AlarmManager", "ALARM_SERVICE", "setExactAndAllowWhileIdle", "setAlarmClock",
+            "AlarmManager", "ALARM_SERVICE", "setExactAndAllowWhileIdle", "setAndAllowWhileIdle", "setAlarmClock",
             "newWakeLock", "WakeLock", "PARTIAL_WAKE_LOCK", "acquire(",
+            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "isIgnoringBatteryOptimizations",
         )
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
     }
 
     @Test
     fun noJobServiceOrAlarmReceiverInTheManifest() {
-        listOf("BIND_JOB_SERVICE", "SCHEDULE_EXACT_ALARM", "USE_EXACT_ALARM", "androidx.work").forEach {
+        listOf("BIND_JOB_SERVICE", "SCHEDULE_EXACT_ALARM", "USE_EXACT_ALARM", "androidx.work", "WAKE_LOCK").forEach {
             assertFalse("manifest names $it", manifest.contains(it))
         }
     }
