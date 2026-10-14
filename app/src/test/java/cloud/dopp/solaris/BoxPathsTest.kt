@@ -12,8 +12,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #174 (laib ADR 0021): the Box keys move from `/napi/servicebay/*` to the
- * neutral `/napi/box/*`. The app asks the new path first and falls back to the
+ * #174 (laib ADR 0021): the Box keys move from `/napi/servicebay/…` to the
+ * neutral `/napi/box/…`. The app asks the new path first and falls back to the
  * old one on a 404. Once a server has answered, the app remembers which path it
  * was, so a server that only knows one name costs one extra request, once.
  */

@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Where a server serves the Box keys (`home`, `services`, `approvals`,
  * `upgrades`) under `/napi` (#174, laib ADR 0021).
  *
- * The neutral name is `/napi/box/*`; `/napi/servicebay/*` is the legacy name
+ * The neutral name is `/napi/box/…`; `/napi/servicebay/…` is the legacy name
  * every server so far speaks (solarisbay, and Haus via `internal/legacy`). The
  * app asks the new name first and falls back to the old one on a 404. It
  * remembers per server which name answered, so a server that knows only one of
