@@ -14,7 +14,7 @@ import java.lang.reflect.Modifier
  * parameters and body fields it sends, the reply keys it reads — and the
  * client builds its requests from that data alone. This test holds the data
  * to [HAUS], a copy of what Haus's handlers read and send, each row naming the
- * Haus file and lines it was copied from (mdopp/haus at 16473a0). When Haus
+ * Haus file and lines it was copied from (mdopp/haus at 8c1251e). When Haus
  * changes a handler, the row changes with it, in the same breath.
  *
  * The declarations are read by reflection: every static field of `Napi` is
@@ -35,15 +35,15 @@ class NapiContractTest {
         val required: Set<String> = emptySet(),
         val sends: Set<String> = emptySet(),
         val accept: String? = null,
-        val event: String? = null,
+        val events: List<String> = emptyList(),
     ) {
         override fun toString() = "$method $path ($at)"
     }
 
     companion object {
-        /** A card: internal/napi/home.go:168-192, its control attributes home.go:44-46. */
+        /** A card: internal/napi/home.go:164-193, its control attributes home.go:43-45, its page :177. */
         val CARD = setOf(
-            "entity_id", "name", "domain", "state", "device_class", "unit", "updated_at_ms",
+            "entity_id", "name", "domain", "state", "page", "device_class", "unit", "updated_at_ms",
             "supported_features", "brightness", "color_temp", "rgb_color", "color_mode", "supported_color_modes",
             "current_position", "temperature", "current_temperature", "hvac_action", "target_temp_step", "min_temp",
             "max_temp", "hvac_modes", "volume_level", "media_title", "media_artist",
@@ -55,36 +55,40 @@ class NapiContractTest {
         /** Every /napi route Haus serves, as its handler reads and answers it. */
         val HAUS = listOf(
             Route(
-                "GET", "/napi/persona", "internal/napi/napi.go:61-72",
+                "GET", "/napi/persona", "internal/napi/napi.go:63-74",
                 query = mapOf("lang" to null),
                 sends = setOf("name", "display", "greeting", "accent", "ground", "icon"),
             ),
-            Route("GET", "/napi/persona/icon.svg", "internal/napi/napi.go:73-80"),
-            Route("GET", "/napi/whoami", "internal/napi/napi.go:171-180", sends = setOf("uid", "via")),
+            Route("GET", "/napi/persona/icon.png", "internal/napi/napi.go:75-82"),
+            Route("GET", "/napi/whoami", "internal/napi/napi.go:181-190", sends = setOf("uid", "via")),
             Route(
-                "GET", "/napi/box/home", "internal/napi/napi.go:83-106 (prefix: internal/app/app.go:17)",
+                "GET", "/napi/box/home",
+                "internal/napi/napi.go:85-108 (prefix: internal/app/app.go:17; updates apart: napi.go:105, 224-235)",
                 sends = setOf(
                     "servicesUp", "servicesFailed", "servicesDown", "pendingApprovals", "pendingUpdates",
                     "state", "drift", "lastHeard", "operator",
                 ),
             ),
             Route(
-                "GET", "/napi/box/services", "internal/napi/napi.go:107-125",
+                "GET", "/napi/box/services", "internal/napi/napi.go:109-127",
                 sends = setOf("services", "name", "activeState", "subState", "health", "detail"),
             ),
             Route(
-                "GET", "/napi/box/approvals", "internal/napi/napi.go:126-141",
+                "GET", "/napi/box/approvals", "internal/napi/napi.go:128-144, the row napi.go:238-244",
                 sends = setOf("approvals", "id", "service", "title", "description", "created_at", "status"),
             ),
-            Route("GET", "/napi/box/upgrades", "internal/napi/napi.go:142-146", sends = setOf("upgrades")),
             Route(
-                "POST", "/napi/box/services/{name}/operate", "internal/napi/napi.go:147-162",
+                "GET", "/napi/box/upgrades", "internal/napi/napi.go:145-156, the row napi.go:238-244",
+                sends = setOf("upgrades", "id", "service", "title", "description", "created_at"),
+            ),
+            Route(
+                "POST", "/napi/box/services/{name}/operate", "internal/napi/napi.go:157-172",
                 body = setOf("action"), required = setOf("action"), sends = setOf("ok", "name", "action"),
             ),
-            Route("POST", "/napi/box/approvals/{id}/approve", "internal/napi/napi.go:166-169"),
-            Route("POST", "/napi/box/approvals/{id}/deny", "internal/napi/napi.go:166-170"),
+            Route("POST", "/napi/box/approvals/{id}/approve", "internal/napi/napi.go:176-179"),
+            Route("POST", "/napi/box/approvals/{id}/deny", "internal/napi/napi.go:176-180"),
             Route(
-                "POST", "/napi/ha/call", "internal/napi/home.go:85-141",
+                "POST", "/napi/ha/call", "internal/napi/home.go:84-140",
                 body = setOf("entity_id", "service", "data", "confirmed"),
                 required = setOf("entity_id", "service"), sends = setOf("ok", "error"),
             ),
@@ -98,12 +102,12 @@ class NapiContractTest {
                 sends = setOf("ok", "error", "energy", "flow", "totals", "circuits") + METER,
             ),
             Route(
-                "GET", "/napi/portal/entity-history", "internal/napi/home.go:219-252, ranges home.go:48",
+                "GET", "/napi/portal/entity-history", "internal/napi/home.go:219-252, ranges home.go:47",
                 query = mapOf("entity_id" to null, "range" to setOf("24h", "48h", "7d")),
                 required = setOf("entity_id"), sends = setOf("ok", "error", "history", "t", "state"),
             ),
             Route(
-                "GET", "/napi/portal/active", "internal/napi/home.go:254-291",
+                "GET", "/napi/portal/active", "internal/napi/home.go:254-291, the same set as active_set: live.go:324-350",
                 sends = setOf("ok", "error", "active", "room") + CARD,
             ),
             Route("GET", "/napi/portal/camera/{entity_id}/snapshot", "internal/napi/camera.go:27-53"),
@@ -115,15 +119,17 @@ class NapiContractTest {
                 ),
             ),
             Route(
-                "POST", "/napi/portal/watch", "internal/napi/live.go:89-117",
-                body = setOf("entity_ids"), required = setOf("entity_ids"), sends = setOf("ok", "error"),
+                "POST", "/napi/portal/watch", "internal/napi/live.go:106-145",
+                body = setOf("entity_ids", "active"), required = setOf("entity_ids"), sends = setOf("ok", "error"),
             ),
             Route(
-                "GET", "/napi/portal/events", "internal/napi/live.go:119-130, the frame live.go:308-309",
-                sends = setOf("entity_id", "card") + CARD, accept = "text/event-stream", event = "card_state",
+                "GET", "/napi/portal/events",
+                "internal/napi/live.go:147-180, card_state live.go:432-434, active_set live.go:376-397",
+                sends = setOf("entity_id", "card", "entity_ids") + CARD, accept = "text/event-stream",
+                events = listOf("card_state", "active_set"),
             ),
             Route(
-                "GET", "/napi/defs/tool", "internal/napi/tools.go:67-101",
+                "GET", "/napi/defs/tool", "internal/napi/tools.go:77-102",
                 sends = setOf(
                     "ok", "kind", "defs", "tool-id", "tool-label", "tool-api-path", "tool-cell-schema", "tool-actions",
                     "tool-actions-titled", "tool-action-params", "id", "title",
@@ -131,25 +137,26 @@ class NapiContractTest {
             ),
             Route(
                 "POST", "/napi/action-callback",
-                "internal/napi/tools.go:267-283 (confirmed: named at :271, read by no action Haus has)",
+                "internal/napi/tools.go:276-336 (confirmed: named at :276, read by no action Haus has)",
                 body = setOf("action_id", "params", "confirmed"), required = setOf("action_id"),
                 sends = setOf("ok", "reason"),
             ),
             Route(
-                "GET", "/napi/portal/tasks", "internal/napi/tools.go:54, 120-176",
-                query = mapOf("done" to setOf("1")), sends = setOf("ok", "error", "tasks", "id", "title", "status", "due"),
+                "GET", "/napi/portal/tasks", "internal/napi/tools.go:55, 121-177, the page :165",
+                query = mapOf("done" to setOf("1")),
+                sends = setOf("ok", "error", "tasks", "id", "page", "title", "status", "due"),
             ),
             Route(
-                "GET", "/napi/portal/contacts", "internal/napi/tools.go:57, 178-214",
-                sends = setOf("ok", "error", "contacts", "id", "name", "phone", "email", "birthday"),
+                "GET", "/napi/portal/contacts", "internal/napi/tools.go:58, 179-218, the page :210",
+                sends = setOf("ok", "error", "contacts", "id", "page", "name", "phone", "email", "birthday"),
             ),
             Route(
-                "GET", "/napi/portal/documents", "internal/napi/tools.go:60, 216-244",
-                sends = setOf("ok", "error", "documents", "id", "title", "created", "correspondent", "link"),
+                "GET", "/napi/portal/documents", "internal/napi/tools.go:61, 220-249, the page :244",
+                sends = setOf("ok", "error", "documents", "id", "title", "created", "correspondent", "link", "page"),
             ),
             Route(
-                "GET", "/napi/portal/notes", "internal/napi/tools.go:63, 246-260",
-                sends = setOf("ok", "error", "notes", "id", "title", "changed"),
+                "GET", "/napi/portal/notes", "internal/napi/tools.go:64, 251-265",
+                sends = setOf("ok", "error", "notes", "id", "page", "title", "changed"),
             ),
             Route(
                 "POST", "/napi/upload", "internal/napi/upload.go:144-145, the parts upload.go:214-232",
@@ -157,29 +164,29 @@ class NapiContractTest {
             ),
         )
 
-        /** Where Haus reads the token: `bearerOf`, internal/napi/napi.go:197-200. */
+        /** Where Haus reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
         const val HAUS_AUTH_HEADER = "Authorization"
         const val HAUS_AUTH_SCHEME = "Bearer"
 
-        /** The domains Haus draws as a card: `cardDomains`, internal/napi/home.go:41. */
+        /** The domains Haus draws as a card: `cards.Domains`, internal/cards/pages.go:21-25. */
         val HAUS_CARD_DOMAINS = setOf("sensor", "binary_sensor", "cover", "light", "switch", "climate", "media_player", "lock")
 
-        /** The rows paths Haus's tool catalog names: internal/napi/tools.go:80-92. */
+        /** The rows paths Haus's tool catalog names: internal/napi/tools.go:81-93. */
         val HAUS_TOOL_PATHS = setOf("/napi/portal/contacts", "/napi/portal/documents", "/napi/portal/notes", "/napi/portal/tasks")
 
-        /** The cell roles Haus's tool catalog uses: internal/napi/tools.go:81-93. */
+        /** The cell roles Haus's tool catalog uses: internal/napi/tools.go:82-94. */
         val HAUS_CELL_ROLES = setOf("title", "meta", "actions")
 
         /**
-         * Haus's pages (cmd/haus/main.go:59-68). Not "/" and not "/healthz": "/"
-         * and every path Haus does not serve land on Start (main.go:70), so a
+         * Haus's pages (cmd/haus/main.go:61-75). Not "/" and not "/healthz": "/"
+         * and every path Haus does not serve land on Start (main.go:77), so a
          * wrong page would never fail loudly — only this list catches it.
          */
         val PAGES = setOf("/start", "/raeume", "/kalender", "/notizen", "/box", "/box/geraete", "/pair-device")
 
         /** What the widgets and the pairing need: each must be declared. */
         val NEEDED = setOf(
-            "GET /napi/persona", "GET /napi/persona/icon.svg", "GET /napi/whoami",
+            "GET /napi/persona", "GET /napi/persona/icon.png", "GET /napi/whoami",
             "GET /napi/box/home", "GET /napi/box/services",
             "POST /napi/ha/call", "GET /napi/portal/state", "GET /napi/portal/energy",
             "GET /napi/portal/entity-history", "GET /napi/portal/active", "GET /napi/portal/start/addable",
@@ -243,7 +250,7 @@ class NapiContractTest {
         val body: List<String>,
         val reads: Set<String>,
         val accept: String?,
-        val event: String?,
+        val events: List<String>,
     ) {
         override fun toString() = "$name ($method $path)"
     }
@@ -273,7 +280,7 @@ class NapiContractTest {
                 reads = (Reach.get(e, "reply") as List<Any>).filter { it.javaClass.simpleName != "CellSchemaJson" }
                     .flatMap { keysOf(it) }.toSet(),
                 accept = Reach.get(e, "accept") as String?,
-                event = Reach.get(e, "event") as String?,
+                events = runCatching { Reach.get(e, "events") as List<String> }.getOrDefault(emptyList()),
             )
         }
     }
@@ -349,7 +356,21 @@ class NapiContractTest {
         assertTrue("no events endpoint", events != null)
         val route = HAUS.single { it.path == "/napi/portal/events" }
         assertEquals(route.accept, events!!.accept)
-        assertEquals(route.event, events.event)
+        assertEquals("the frames the app reads", route.events, events.events)
+    }
+
+    /**
+     * What Haus added for the app (#178, haus#30) is read: the card's and the
+     * tool row's page, the active set's ids, and the watch's active flag.
+     */
+    @Test
+    fun theAppReadsHaussNewFields() {
+        val byName = declared.associateBy { it.name }
+        assertTrue("a card's page is not read", "page" in byName.getValue("STATE").reads)
+        assertTrue("an active card's page is not read", "page" in byName.getValue("ACTIVE").reads)
+        assertTrue("a tool row's page is not read", "page" in byName.getValue("TOOL_ROWS").reads)
+        assertTrue("the active set's ids are not read", "entity_ids" in byName.getValue("EVENTS").reads)
+        assertTrue("the watch says nothing of the active set", "active" in byName.getValue("WATCH").body)
     }
 
     @Test

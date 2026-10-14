@@ -128,4 +128,43 @@ class RealtimeProtocolTest {
         assertNull("a frame without a card", RealtimeProtocol.frame("card_state", """{"entity_id":"light.x"}"""))
         assertNull("garbage", RealtimeProtocol.frame("card_state", "{"))
     }
+
+    // --- active_set (#178) ------------------------------------------------------
+
+    private val rp = "cloud.dopp.haus.realtime.RealtimeProtocol"
+
+    /** Haus's set of things that are on or open, for a phone whose watch says active. */
+    @Test
+    fun theStreamReadsTheActiveSet() {
+        val ev = RealtimeProtocol.frame("active_set", """{"entity_ids":["light.b","cover.a"]}""")
+        org.junit.Assert.assertNotNull("active_set not read", ev)
+        assertEquals(setOf("light.b", "cover.a"), Reach.get(ev!!, "ids"))
+        val none = RealtimeProtocol.frame("active_set", """{"entity_ids":[]}""")
+        org.junit.Assert.assertNotNull("an empty set is a set", none)
+        assertEquals(emptySet<String>(), Reach.get(none!!, "ids"))
+    }
+
+    @Test
+    fun aBrokenActiveSetIsDropped() {
+        listOf(null, "", "{", "[]", "{}", """{"entity_ids":"light.a"}""", """{"entity_ids":null}""").forEach {
+            assertNull("taken: $it", RealtimeProtocol.frame("active_set", it))
+        }
+        val mixed = RealtimeProtocol.frame("active_set", """{"entity_ids":["light.a","",3,null,"  "]}""")
+        assertEquals(setOf("light.a"), Reach.get(mixed!!, "ids"))
+    }
+
+    private fun card(id: String) = cloud.dopp.haus.data.Card(id, id, id.substringBefore('.'), null, "on", null)
+
+    /** Read again unless the set is exactly the ids last read, order aside. */
+    @Test
+    fun theActiveListIsReadAgainOnlyWhenTheSetDiffers() {
+        fun reread(ids: Set<String>, last: List<String>) = Reach.call(rp, "rereadActive", ids, last.map(::card)) as Boolean
+        assertEquals(false, reread(setOf("light.a", "cover.b"), listOf("cover.b", "light.a")))
+        assertEquals(false, reread(emptySet(), emptyList()))
+        assertEquals(true, reread(setOf("light.a"), emptyList()))
+        assertEquals(true, reread(emptySet(), listOf("light.a")))
+        assertEquals(true, reread(setOf("light.a", "cover.b"), listOf("light.a")))
+        assertEquals(true, reread(setOf("light.a"), listOf("light.a", "cover.b")))
+        assertEquals(true, reread(setOf("light.a"), listOf("light.b")))
+    }
 }

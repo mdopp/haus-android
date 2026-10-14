@@ -8,6 +8,9 @@ what the e2e asserts on, one timestamped line each:
   WATCH <body>      a POST /napi/portal/watch
   GET <path>        every other authed GET
   FRAME <id> -> n   a card_state pushed through /ctl/frame to n open streams
+  ACTIVE_SET <ids> -> n
+                    an active_set pushed through /ctl/active_set to n open streams;
+                    /napi/portal/active answers those ids from then on, as Haus would
 
 The stream writes ": ping" every second and watches its socket, so a stream
 the phone dropped shows as CLOSE within about 0.1 s. /ctl/* is the e2e's own control, unauthed, local.
@@ -142,18 +145,28 @@ class Haus(BaseHTTPRequestHandler):
         except (OSError, ssl.SSLError):
             return True
 
+    def push(self, event, data):
+        """Hand one SSE frame to every open stream; how many took it."""
+        frame = ("event: %s\ndata: %s\n\n" % (event, json.dumps(data))).encode()
+        with lock:
+            for frames, wake in streams:
+                frames.append(frame)
+                wake.set()
+            return len(streams)
+
     def control(self, url):
         q = parse_qs(url.query)
         if url.path == "/ctl/frame":
             entity = q.get("entity_id", ["light.e2e"])[0]
-            data = json.dumps({"entity_id": entity, "card": card(entity, q.get("state", ["on"])[0])})
-            frame = ("event: card_state\ndata: %s\n\n" % data).encode()
-            with lock:
-                for frames, wake in streams:
-                    frames.append(frame)
-                    wake.set()
-                n = len(streams)
+            n = self.push("card_state", {"entity_id": entity, "card": card(entity, q.get("state", ["on"])[0])})
             log("FRAME %s -> %d" % (entity, n))
+            return self.reply(200, {"streams": n})
+        if url.path == "/ctl/active_set":
+            ids = sorted(i for i in q.get("ids", [""])[0].split(",") if i)
+            with lock:
+                REPLIES["/napi/portal/active"] = {"ok": True, "active": [card(i, "on") for i in ids]}
+            n = self.push("active_set", {"entity_ids": ids})
+            log("ACTIVE_SET %s -> %d" % (",".join(ids), n))
             return self.reply(200, {"streams": n})
         if url.path == "/ctl/streams":
             with lock:

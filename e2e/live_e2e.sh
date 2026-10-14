@@ -5,7 +5,9 @@
 #
 #   1 the app starts the service: foreground (specialUse on 34+), OPEN and WATCH
 #   2 screen off: CLOSE within 5 s; forced idle for 90 s: no OPEN, no WATCH
-#   3 screen on: exactly one OPEN, a WATCH; a pushed frame makes a widget fetch
+#   3 screen on: exactly one OPEN, a WATCH that says active (an active widget is
+#     placed); a pushed frame makes a widget fetch; an active_set other than the
+#     list last read makes exactly one read of it, the same set again none
 #   4 the process killed: with the battery exemption a new OPEN within 30 s;
 #     without it, no notification of a dead service. An app update starts it.
 #   5 a real reboot: OPEN within 60 s of boot
@@ -107,9 +109,24 @@ wait_for "$m" OPEN 1 15 || true
 sleep 8
 [ "$(since "$m" OPEN)" -eq 1 ] && pass "3 screen on opens exactly one stream" || fail "3 $(since "$m" OPEN) OPENs after screen on"
 [ "$(since "$m" WATCH)" -ge 1 ] && pass "3 screen on posts the watch set" || fail "3 no WATCH after screen on"
+tail -n +$(( m + 1 )) "$LOG" | cut -d' ' -f2- | grep "^WATCH" | grep -q '"active":true' \
+  && pass "3 the watch says active: an active widget is placed" || fail "3 the watch does not say active"
 m=$(mark)
 curl -sk -X POST "https://127.0.0.1:8443/ctl/frame?entity_id=light.e2e&state=off" >/dev/null
 wait_for "$m" "GET /napi/portal/active" 1 10 && pass "3 a pushed frame makes the active list fetch" || fail "3 no fetch after a frame"
+sleep 5 # the frame's read lands; the list last read is empty
+# each push must reach the open stream, or "no read" would prove nothing
+pushed() { curl -sk -X POST "https://127.0.0.1:8443/ctl/active_set?ids=$1" | grep -q '"streams": [1-9]'; }
+m=$(mark)
+pushed light.e2e || fail "3 the first active_set reached no stream"
+sleep 10
+n=$(since "$m" "GET /napi/portal/active")
+[ "$n" -eq 1 ] && pass "3 an active_set that differs: exactly one read" || fail "3 an active_set that differs: $n reads"
+m=$(mark)
+pushed light.e2e || fail "3 the second active_set reached no stream"
+sleep 10
+n=$(since "$m" "GET /napi/portal/active")
+[ "$n" -eq 0 ] && pass "3 the active_set last read: no read" || fail "3 the active_set last read: $n reads"
 
 # 4 --------------------------------------------------------------------------
 on dumpsys deviceidle whitelist +$PKG >/dev/null
