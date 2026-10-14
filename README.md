@@ -13,9 +13,9 @@ no web shell, no messages, no approvals, no diagnostics.
   quiet "Live-Widgets" notification) holds the live stream
   (`/napi/portal/events`, `card_state` only) while the screen is on, drops it
   when the screen goes off and re-reads every widget on screen-on. No poll.
-  On by default once paired; a switch in the app turns it off. After the app
-  was killed it comes back by itself only with the battery-optimization
-  exemption, which the app asks for once.
+  On by default once paired; a switch in the app turns it off. That it comes
+  back by itself after the app was killed is what the battery-optimization
+  exemption guarantees; the app asks for it once.
 
 The seam with Haus is [`docs/CONTRACT.md`](docs/CONTRACT.md); the visual
 standard is [`docs/DESIGN.md`](docs/DESIGN.md).

@@ -9,12 +9,13 @@ what the e2e asserts on, one timestamped line each:
   GET <path>        every other authed GET
   FRAME <id> -> n   a card_state pushed through /ctl/frame to n open streams
 
-The stream writes ": ping" every second, so a stream the phone dropped shows as
-CLOSE within about a second. /ctl/* is the e2e's own control, unauthed, local.
+The stream writes ": ping" every second and watches its socket, so a stream
+the phone dropped shows as CLOSE within about 0.1 s. /ctl/* is the e2e's own control, unauthed, local.
 Standard library only.
 """
 import argparse
 import json
+import select
 import ssl
 import threading
 import time
@@ -109,15 +110,18 @@ class Haus(BaseHTTPRequestHandler):
         try:
             self.wfile.write(b": hello\n\n")
             self.wfile.flush()
-            while True:
-                wake.wait(1.0)
+            next_ping = time.time() + 1.0
+            while not self.gone():
+                wake.wait(0.1)
                 wake.clear()
                 with lock:
                     out = frames[:]
                     frames.clear()
                 for f in out:
                     self.wfile.write(f)
-                self.wfile.write(b": ping\n\n")
+                if time.time() >= next_ping:
+                    self.wfile.write(b": ping\n\n")
+                    next_ping = time.time() + 1.0
                 self.wfile.flush()
         except (OSError, ssl.SSLError):
             pass
@@ -125,6 +129,18 @@ class Haus(BaseHTTPRequestHandler):
             with lock:
                 streams.remove(mine)
             log("CLOSE")
+
+    def gone(self):
+        """The phone closed the stream: its end is readable and reads as nothing."""
+        conn = self.connection
+        if not select.select([conn], [], [], 0)[0]:
+            return False
+        try:
+            return conn.recv(1) == b""
+        except ssl.SSLWantReadError:
+            return False
+        except (OSError, ssl.SSLError):
+            return True
 
     def control(self, url):
         q = parse_qs(url.query)

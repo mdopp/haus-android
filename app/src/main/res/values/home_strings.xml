@@ -62,7 +62,7 @@
     <string name="live_on">Widgets live</string>
     <string name="live_paused">Pausiert, Bildschirm aus</string>
     <string name="live_battery_on">Wird nach einem Neustart der App von selbst wieder live.</string>
-    <string name="live_battery_off">Nach einem Neustart der App erst wieder live, wenn du sie öffnest oder ein Widget antippst. Tippen, um das zu ändern.</string>
+    <string name="live_battery_off">Nach einem Neustart der App wird es nicht sicher von selbst wieder live, sonst erst, wenn du sie öffnest oder ein Widget antippst. Tippen, um das zu ändern.</string>
     <string name="live_battery_title">Akku-Optimierung</string>
     <string name="live_battery_why">Damit die Widgets nach einem Neustart der App von selbst wieder live werden, braucht die App eine Ausnahme von der Akku-Optimierung. Verbunden ist sie trotzdem nur, solange der Bildschirm an ist.</string>
     <string name="live_battery_yes">Erlauben</string>

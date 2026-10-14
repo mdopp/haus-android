@@ -111,9 +111,9 @@ object Live {
         isEnabled(ctx) && ServerStore.isConfigured(ctx) && TokenStore.isPaired(ctx) && fedPlaced(ctx)
 
     /**
-     * On the battery-optimization exemption list. Only then may Android's restart
-     * of the service after its process died (`START_STICKY`) go foreground on
-     * Android 12+; that exemption is what made the old app recover by itself.
+     * On the battery-optimization exemption list: the documented exemption that
+     * lets Android's restart of the service after its process died
+     * (`START_STICKY`) go foreground on Android 12+, as it let the old app recover.
      */
     fun exempt(ctx: Context): Boolean =
         ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true
@@ -157,13 +157,16 @@ object Live {
  *   list and, for an energy entity, the energy widgets — each coalesced.
  * - A 401 stops the service (the device was removed in Haus); any other loss
  *   reconnects with backoff, reset only after a healthy session.
- * - After its process died, Android restarts it (`START_STICKY`), but on
- *   Android 12+ that restart may go foreground only while the app is exempt
- *   from battery optimization ([Live.exempt]); the app asks for it once after
- *   pairing and shows the state beside its switch. Without it the restart is
- *   refused and the service ends quietly, without a notification, until the
- *   next allowed start. [BootReceiver] starts it after a reboot and after an
- *   app update. No rescue worker, alarm, wakelock or poll.
+ * - After its process died, Android restarts it (`START_STICKY`). That restart
+ *   is a background start, which Android 12+ allows documentedly only while
+ *   the app is exempt from battery optimization ([Live.exempt]); the app asks
+ *   for it once after pairing and shows the state beside its switch. (The
+ *   emulators of the e2e, API 31 to 35, let the restart go foreground without
+ *   it too — it keeps the allowance of the start it repeats — but that is not
+ *   documented, and an OEM build may refuse it.) A refused start ends the
+ *   service quietly, without a notification, until the next allowed start.
+ *   [BootReceiver] starts it after a reboot and after an app update. No rescue
+ *   worker, alarm, wakelock or poll.
  */
 class LiveService : Service() {
 

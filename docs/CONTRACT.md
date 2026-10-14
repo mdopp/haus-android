@@ -82,10 +82,12 @@ A 401 stops the service.
 It starts from allowed starts only (Android 12+): the app's screen, a widget
 tap, a configure screen (the fed widgets without a choice have a no-UI one,
 so placing them counts), boot and an app update. After its process died,
-Android restarts it, and on Android 12+ that restart may go foreground only
-while the app is exempt from battery optimization — asked once after pairing,
-shown beside the switch. Without the exemption the widgets stay as they are
-until the next allowed start. A connection silent for 240 s (Haus pings every
+Android restarts it. On Android 12+ that restart is a background start, which
+is documented as allowed while the app is exempt from battery optimization —
+asked once after pairing, shown beside the switch. (On the e2e's emulators,
+API 31 to 35, the restart also went foreground without it; that is not
+documented, and an OEM build may refuse it. A refused restart ends quietly,
+without a notification, until the next allowed start.) A connection silent for 240 s (Haus pings every
 90 s) counts as dead and is reopened. A session counts as healthy — and resets the reconnect
 backoff — only after 120 s, longer than Haus's 90 s ping, so a proxy that
 cuts idle streams does not make the app reconnect every minute. With the screen
