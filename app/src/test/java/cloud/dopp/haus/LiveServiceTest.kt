@@ -29,6 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -95,6 +96,11 @@ class LiveServiceTest {
             })
         }
         runCatching { Reach.set(live, "postWatch", { _: Context -> watchPosts++ }) }
+    }
+
+    @After
+    fun foregroundAllowedAgain() {
+        runCatching { Reach.set(live, "refuseForeground", false) }
     }
 
     private fun place(vararg which: Pair<Class<out android.appwidget.AppWidgetProvider>, Int>) {
@@ -276,6 +282,17 @@ class LiveServiceTest {
         assertTrue("energy totals not read: $asked", EnergyTotalsWidgetProvider::class.java.name in asked)
     }
 
+    /** An app update kills the process; MY_PACKAGE_REPLACED, an allowed start, brings it back. */
+    @Test
+    fun anUpdateStartsItAgain() {
+        place(fed.first())
+        val receiver = Class.forName("cloud.dopp.haus.realtime.BootReceiver").getDeclaredConstructor()
+            .newInstance() as android.content.BroadcastReceiver
+        receiver.onReceive(ctx(), Intent(Intent.ACTION_MY_PACKAGE_REPLACED))
+        val started = shadowOf(ctx() as android.app.Application).nextStartedService
+        assertEquals(serviceClass, started?.component?.className)
+    }
+
     @Test
     fun bootStartsItAgain() {
         place(fed.first())
@@ -288,5 +305,186 @@ class LiveServiceTest {
             ComponentName(ctx(), serviceClass),
             started?.component,
         )
+    }
+
+    // --- from the review of the live service: the screen-off guarantees ---------
+
+    /** A reconnect pending when the screen goes off never fires, however long it stays off. */
+    @Test
+    fun screenOffWhileBackingOffNeverReconnects() {
+        place(fed.first())
+        start()
+        listeners.last().onFailure(opened.last(), null, response(502))
+        idle()
+        screen(false)
+        broadcast(Intent.ACTION_SCREEN_OFF)
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofHours(2))
+        assertEquals("reconnected with the screen off", 1, opened.size)
+    }
+
+    /** A failure after the screen went off but before SCREEN_OFF arrived schedules nothing. */
+    @Test
+    fun aFailureInTheScreenOffGapDoesNotReconnect() {
+        place(fed.first())
+        start()
+        screen(false) // SCREEN_OFF not delivered yet
+        listeners.last().onFailure(opened.last(), null, response(502))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMinutes(10))
+        assertEquals("reconnected with the screen off", 1, opened.size)
+    }
+
+    /** The watch set is re-posted every 20 minutes while the screen is on, and never with it off. */
+    @Test
+    fun theWatchRepostRunsOnlyWithTheScreenOn() {
+        place(fed.first())
+        start()
+        listeners.last().onOpen(opened.last(), response(200))
+        idle()
+        val first = watchPosts
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMinutes(21))
+        assertEquals("no re-post after 20 min", first + 1, watchPosts)
+        screen(false)
+        broadcast(Intent.ACTION_SCREEN_OFF)
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofHours(3))
+        assertEquals("re-posted with the screen off", first + 1, watchPosts)
+    }
+
+    /** The open of a stream screen-off already dropped neither resyncs nor posts. */
+    @Test
+    fun aLateOpenAfterScreenOffIsIgnored() {
+        place(fed.first())
+        start()
+        val l = listeners.last()
+        val s = opened.last()
+        screen(false)
+        broadcast(Intent.ACTION_SCREEN_OFF)
+        val app = shadowOf(ctx() as android.app.Application)
+        app.clearBroadcastIntents()
+        l.onOpen(s, response(200))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofHours(1))
+        assertEquals("a late open posted the watch set", 0, watchPosts)
+        assertTrue("a late open resynced", app.broadcastIntents.none { it.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE })
+    }
+
+    /** Destroying the service closes the stream and stops listening for the screen. */
+    @Test
+    fun destroyClosesTheStreamAndStopsListening() {
+        place(fed.first())
+        val c = start()
+        c.destroy()
+        idle()
+        assertTrue("stream left open after onDestroy", opened.last().cancelled)
+        screen(false)
+        broadcast(Intent.ACTION_SCREEN_OFF)
+        screen(true)
+        broadcast(Intent.ACTION_SCREEN_ON)
+        assertEquals("a destroyed service connected", 1, opened.size)
+    }
+
+    /** It asks Android to start it again when the process dies. */
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun itIsSticky() {
+        place(fed.first())
+        val s = Robolectric.buildService(Class.forName(serviceClass) as Class<Service>).create().get()
+        assertEquals(Service.START_STICKY, s.onStartCommand(null, 0, 1))
+    }
+
+    /** When Android refuses the foreground start (a restart from the background), no notification is left behind. */
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun aRefusedForegroundLeavesNoNotification() {
+        place(fed.first())
+        Reach.set(live, "refuseForeground", true)
+        screen(false)
+        val c = Robolectric.buildService(Class.forName(serviceClass) as Class<Service>).create()
+        c.get().onStartCommand(null, 0, 1)
+        idle()
+        val nm = shadowOf(ctx().getSystemService(NotificationManager::class.java))
+        assertEquals(
+            "orphan notification: ${nm.allNotifications.map { it.extras.getString("android.text") }}",
+            0, nm.allNotifications.size,
+        )
+        assertTrue(shadowOf(c.get()).isStoppedBySelf)
+    }
+
+    /** Stopping removes the notification, too (a 401 after it was shown). */
+    @Test
+    fun stoppingRemovesTheNotification() {
+        place(fed.first())
+        start()
+        listeners.last().onOpen(opened.last(), response(200))
+        idle()
+        listeners.last().onFailure(opened.last(), null, response(401))
+        idle()
+        val nm = shadowOf(ctx().getSystemService(NotificationManager::class.java))
+        assertEquals("a notification after the stop", 0, nm.allNotifications.size)
+    }
+
+    /** Only a session that stayed up past the healthy threshold resets the backoff. */
+    @Test
+    fun theBackoffResetsOnlyAfterAHealthySession() {
+        place(fed.first())
+        start()
+        val looper = shadowOf(Looper.getMainLooper())
+        // two quick failures: 2 s, then 4 s
+        listeners.last().onFailure(opened.last(), null, response(502))
+        looper.idleFor(java.time.Duration.ofSeconds(2))
+        assertEquals(2, opened.size)
+        listeners.last().onFailure(opened.last(), null, response(502))
+        looper.idleFor(java.time.Duration.ofSeconds(3))
+        assertEquals("the second retry came before 4 s", 2, opened.size)
+        looper.idleFor(java.time.Duration.ofSeconds(1))
+        assertEquals(3, opened.size)
+        // a healthy session: open, then 121 s up, then lost — back to 2 s
+        listeners.last().onOpen(opened.last(), response(200))
+        looper.idleFor(java.time.Duration.ofSeconds(121))
+        listeners.last().onFailure(opened.last(), null, response(502))
+        looper.idleFor(java.time.Duration.ofSeconds(2))
+        assertEquals("the backoff did not reset after a healthy session", 4, opened.size)
+    }
+
+    /** Haus pings over HTTP/1.1, where OkHttp's ping does nothing: a silent dead path is caught by the read timeout. */
+    @Test
+    fun aSilentlyDeadConnectionTimesOut() {
+        val client = Reach.get(Reach.obj(live), "client") as okhttp3.OkHttpClient
+        val haussPingMs = 90_000
+        assertTrue("read timeout ${client.readTimeoutMillis} ms", client.readTimeoutMillis in (2 * haussPingMs)..(3 * haussPingMs))
+    }
+
+    /** Placing a fed widget from the tray runs its onUpdate, which may not start a foreground service. */
+    @Test
+    fun aWidgetUpdateDoesNotStartTheService() {
+        val app = shadowOf(ctx() as android.app.Application)
+        fed.forEach { (cls, layout) ->
+            while (app.nextStartedService != null) { /* drain */ }
+            shadowOf(AppWidgetManager.getInstance(ctx())).createWidget(cls, layout)
+            idle()
+            assertEquals("${cls.simpleName}.onUpdate started it", null, app.nextStartedService?.component?.className)
+        }
+    }
+
+    /** Removing a widget may stop the service, never start it: that broadcast is no allowed start. */
+    @Test
+    fun removingAWidgetNeverStartsTheService() {
+        val app = shadowOf(ctx() as android.app.Application)
+        val mgr = AppWidgetManager.getInstance(ctx())
+        place(*fed.toTypedArray())
+        fed.forEach { (cls, _) ->
+            while (app.nextStartedService != null) { /* drain */ }
+            val id = mgr.getAppWidgetIds(ComponentName(ctx(), cls)).first()
+            cls.getDeclaredConstructor().newInstance().onDeleted(ctx(), intArrayOf(id))
+            idle()
+            assertEquals("${cls.simpleName}.onDeleted started it", null, app.nextStartedService?.component?.className)
+        }
+    }
+
+    /** The start is a foreground-service start: a plain startService from a widget tap is refused on Android 8+. */
+    @Test
+    fun ensureStartsAForegroundService() {
+        val src = java.io.File(RepoFiles.main, "java/cloud/dopp/haus/realtime/LiveService.kt").readText()
+        val ensure = src.substringAfter("fun ensure(").substringBefore("\n    }")
+        assertTrue(ensure, ensure.contains("startForegroundService("))
+        assertTrue(ensure, !Regex("""[^d]startService\(""").containsMatchIn(ensure))
     }
 }

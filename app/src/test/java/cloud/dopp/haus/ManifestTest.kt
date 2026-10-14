@@ -39,6 +39,8 @@ class ManifestTest {
                 "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", // the live service
                 "RECEIVE_BOOT_COMPLETED", // its restart after boot
                 "POST_NOTIFICATIONS", // its notification, shown on Android 13+
+                // its restart after the process died: on the exemption list a restart may go foreground
+                "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
             ),
             asked,
         )
@@ -61,12 +63,34 @@ class ManifestTest {
         assertFalse("dataSync is capped at 6 h a day", manifest.contains("dataSync"))
     }
 
-    /** One boot receiver, and it is the live service's restart. */
+    /** One receiver restarts the live service after a boot and after an app update, both allowed starts. */
     @Test
     fun theBootReceiverRestartsTheLiveServiceOnly() {
         assertEquals(1, Regex("""android.intent.action.BOOT_COMPLETED""").findAll(manifest).count())
-        val receiver = manifest.substringBefore("android.intent.action.BOOT_COMPLETED").substringAfterLast("<receiver")
-        assertTrue(receiver, receiver.contains("""android:name=".realtime.BootReceiver""""))
+        assertEquals(1, Regex("""android.intent.action.MY_PACKAGE_REPLACED""").findAll(manifest).count())
+        val receiver = manifest.substringAfter("""android:name=".realtime.BootReceiver"""").substringBefore("</receiver>")
+        assertTrue(receiver, receiver.contains("android.intent.action.BOOT_COMPLETED"))
+        assertTrue(receiver, receiver.contains("android.intent.action.MY_PACKAGE_REPLACED"))
+    }
+
+    /**
+     * The fed widgets without a configure screen of their own get the shared
+     * no-UI one, required, so placing one from the launcher is a visible
+     * activity — an allowed start for the live service on Android 12+.
+     */
+    @Test
+    fun theFedWidgetsWithoutAScreenStartTheServiceWhenPlaced() {
+        listOf(
+            "energy_widget_info.xml", "energy_stats_widget_info.xml", "energy_totals_widget_info.xml",
+            "active_devices_widget_info.xml", "box_overview_widget_info.xml", "box_services_widget_info.xml",
+        ).forEach { name ->
+            val info = File(RepoFiles.main, "res/xml/$name").readText()
+            assertTrue(name, info.contains("""android:configure="cloud.dopp.haus.widget.LiveConfigActivity""""))
+            assertFalse("$name: an optional configure step is skipped at placement", info.contains("configuration_optional"))
+        }
+        val activity = manifest.substringAfter("""android:name=".widget.LiveConfigActivity"""").substringBefore("</activity>")
+        assertTrue(activity, activity.contains("android.appwidget.action.APPWIDGET_CONFIGURE"))
+        assertTrue(activity, activity.contains("Translucent"))
     }
 
     /** No widget asks Android to wake it: the live service resyncs on screen-on. */
@@ -114,7 +138,6 @@ class ManifestTest {
             "androidx.work", "WorkManager", "WorkRequest", "CoroutineWorker",
             "AlarmManager", "ALARM_SERVICE", "setExactAndAllowWhileIdle", "setAndAllowWhileIdle", "setAlarmClock",
             "newWakeLock", "WakeLock", "PARTIAL_WAKE_LOCK", "acquire(",
-            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "isIgnoringBatteryOptimizations",
         )
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
     }

@@ -180,6 +180,41 @@ class PairingTest {
         assertEquals(string("pairing_success"), ShadowToast.getTextOfLatestToast())
     }
 
+    /**
+     * Once paired, the app asks — once, and saying why — to be exempt from
+     * battery optimization: only then may Android's restart of the live
+     * service after a killed process go foreground (Android 12+).
+     */
+    @Test
+    fun afterPairingItAsksOnceForTheExemptionAndSaysWhy() {
+        val why = "Damit die Widgets nach einem Neustart der App von selbst wieder live werden"
+        val c = home()
+        connect(c.get(), "haus.example")
+        c.newIntent(Intent(Intent.ACTION_VIEW, link))
+        confirm()
+        settle { TokenStore.get(ctx()) != null && dialog()?.let { shadowOf(it).message.toString().contains(why) } == true }
+        val d = dialog()
+        assertNotNull(d)
+        assertTrue("no explanation: ${shadowOf(d).message}", shadowOf(d).message.toString().contains(why))
+        val activity = c.get()
+        while (shadowOf(activity).nextStartedActivity != null) { /* the Custom Tab of the pairing */ }
+        d!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+        val asked = shadowOf(activity).nextStartedActivity
+        assertEquals(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, asked?.action)
+        assertEquals(Uri.parse("package:" + ctx().packageName), asked?.data)
+
+        // pairing again does not ask again
+        TokenStore.clear(ctx())
+        val again = home()
+        connect(again.get(), "haus.example")
+        again.newIntent(Intent(Intent.ACTION_VIEW, link))
+        confirm()
+        settle { TokenStore.get(ctx()) != null }
+        settle { false }
+        assertTrue("asked twice", dialog()?.let { shadowOf(it).message.toString().contains(why) } != true || !dialog()!!.isShowing)
+    }
+
     /** Any page or app can fire the pair link; without a pairing the app started, it pairs nothing. */
     @Test
     fun aPairLinkNobodyAskedForStoresNothing() {
