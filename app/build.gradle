@@ -31,6 +31,8 @@ android {
         targetSdkVersion 35
         versionCode 1
         versionName "1.0.0"
+        // The live e2e on emulators (e2e/, .github/workflows/live-e2e.yml).
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
         release {
@@ -103,4 +105,8 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.13'
     testImplementation 'androidx.test:core:1.6.1'
     testImplementation 'androidx.test.ext:junit:1.2.1'
+
+    // The live e2e's setup on the emulator: pair and place widgets (e2e/live_e2e.sh).
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

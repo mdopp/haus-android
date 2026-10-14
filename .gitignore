@@ -37,3 +37,8 @@ twa-manifest.json.bak
 .claude/state/verify-result.json
 .claude/state/work-queue.json
 .claude/state/autoloop.lock
+
+# --- live e2e (e2e/make_ca.sh): the throwaway CA and the debug-only trust in it ---
+/e2e/out/
+/e2e-out/
+/app/src/debug/
