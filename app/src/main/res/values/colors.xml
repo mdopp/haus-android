@@ -3,82 +3,45 @@
     <!-- Legacy Google-template shortcut background (kept for shortcut drawables). -->
     <color name="shortcut_background">#F5F5F5</color>
 
-    <!-- Adaptive launcher-icon background: the brand blue. It stays blue while the
-         in-app accent follows the web surface to orange (#130) — the icon is seen
-         on the home screen among foreign icons, and the orange figure needs the
-         blue field to read at all. -->
-    <color name="ic_launcher_background">@color/solaris_brand_blue</color>
+    <!-- Adaptive launcher-icon background: the brand blue (#130). -->
+    <color name="ic_launcher_background">@color/haus_brand_blue</color>
 
-    <!-- ── Solaris palette ─────────────────────────────────────────────────
-         Mirrors the Solaris web frontend. Backgrounds are the same deep near-black as the splash
-         (twa-manifest backgroundColor #070709 / themeColor #0C0C0E). -->
-    <color name="solaris_bg">#070709</color>            <!-- window background -->
-    <color name="solaris_bg_elevated">#0C0C0E</color>   <!-- status/nav bar -->
-    <color name="solaris_card">#14141A</color>          <!-- card surface -->
-    <color name="solaris_card_edge">#1FFFFFFF</color>   <!-- hairline card border -->
+    <!-- ── Haus palette ───────────────────────────────────────────────── -->
+    <color name="haus_bg">#070709</color>            <!-- window background -->
+    <color name="haus_bg_elevated">#0C0C0E</color>   <!-- status/nav bar -->
+    <color name="haus_card">#14141A</color>          <!-- card surface -->
+    <color name="haus_card_edge">#1FFFFFFF</color>   <!-- hairline card border -->
 
-    <!-- ── The seam to the web surface (#127) ──────────────────────────────
-         Since #115 the Solaris web surface opens *inside* this app, so the
-         native shell and the web page are seen in one movement and every colour
-         they do not share reads as a break. Direction is settled: the shell
-         follows the web surface, never the other way round — the web is the
-         product's face, it is seen from the desktop too, and it lives in another
-         repo, so it cannot be recoloured from here at all.
+    <!-- The window's two background tones, for the status and navigation bar. -->
+    <color name="haus_surface_bg">#070709</color>    <!-- web background_color -->
+    <color name="haus_surface_theme">#0C0C0E</color> <!-- web theme_color -->
 
-         These two are therefore *the web's* values, not ours: they are the
-         `theme_color` / `background_color` the surface declares for itself (the
-         same pair the twa-manifest block in app/build.gradle was generated
-         from). Everything the user sees around the surface — the shell's window,
-         its status and navigation bar, and the bars handed to the Trusted Web
-         Activity — is painted from here, so the frame does not change colour
-         when the view does. If the web surface ever moves, these two lines are
-         the whole change. -->
-    <color name="solaris_surface_bg">#070709</color>    <!-- web background_color -->
-    <color name="solaris_surface_theme">#0C0C0E</color> <!-- web theme_color -->
+    <!-- The in-app accent; the persona's own accent replaces it on the home screen. -->
+    <color name="haus_accent">#F97316</color>        <!-- orange-500 -->
+    <color name="haus_accent_dark">#EA580C</color>   <!-- orange-600 (pressed) -->
+    <color name="haus_accent_faint">#1FF97316</color><!-- 12% orange tint -->
 
-    <!-- ── The accent, second half of the seam (#127 → #130) ───────────────
-         #127 carried the web surface's *backgrounds* over and left the accent
-         where it was: ServiceBay blue. On the device that showed as a blue
-         primary button standing next to an orange surface — the very break the
-         ticket set out to remove. The direction is unchanged (the shell follows
-         the web, never the other way round), so the accent follows too.
+    <!-- The launcher icon and the app-icon shortcut glyphs sit among foreign
+         icons on the home screen; they keep the brand blue (#130). -->
+    <color name="haus_brand_blue">#3B82F6</color>      <!-- brand blue-500 -->
+    <color name="haus_brand_blue_dark">#2563EB</color> <!-- blue-600 (pressed) -->
 
-         The value is not invented: it is the orange of the Solaris figure in the
-         app's own brand mark (`ic_solaris_figure` / `ic_maskable` run
-         #F97316→#FBAF21), which is the same mark the web surface accents from —
-         send button, tab bar, input border, wordmark. -->
-    <color name="solaris_accent">#F97316</color>        <!-- Solaris orange-500 -->
-    <color name="solaris_accent_dark">#EA580C</color>   <!-- orange-600 (pressed) -->
-    <color name="solaris_accent_faint">#1FF97316</color><!-- 12% orange tint -->
+    <color name="haus_text">#F2F2F5</color>         <!-- primary text -->
+    <color name="haus_text_muted">#9AA0AE</color>   <!-- secondary/hint text -->
+    <color name="haus_text_faint">#6B7280</color>   <!-- tertiary -->
 
-    <!-- ── What does NOT follow the surface (#130) ──────────────────────────
-         The seam argument only holds where the shell is *seen next to* the web
-         surface. Three things are not: the launcher icon and the app-icon
-         shortcut glyphs sit on the Android home screen among foreign icons, the
-         notification sits in the shade among foreign notifications, and the
-         brand lockup IS the icon's mark — the blue field with the orange figure
-         is what makes it findable, and orange-on-orange would swallow the
-         figure. They keep the brand blue, and it lives here rather than as a
-         copy of the old accent value so the split is visible. -->
-    <color name="solaris_brand_blue">#3B82F6</color>      <!-- ServiceBay blue-500 -->
-    <color name="solaris_brand_blue_dark">#2563EB</color> <!-- blue-600 (pressed) -->
-
-    <color name="solaris_text">#F2F2F5</color>         <!-- primary text -->
-    <color name="solaris_text_muted">#9AA0AE</color>   <!-- secondary/hint text -->
-    <color name="solaris_text_faint">#6B7280</color>   <!-- tertiary -->
-
-    <color name="solaris_warn">#EF5350</color>         <!-- folgenschwere Aktion (#92) -->
-    <color name="solaris_warn_faint">#1FEF5350</color> <!-- 12% warn tint (#113) -->
+    <color name="haus_warn">#EF5350</color>         <!-- folgenschwere Aktion (#92) -->
+    <color name="haus_warn_faint">#1FEF5350</color> <!-- 12% warn tint (#113) -->
 
     <!-- Backdrop of an action dialog (#114). The action activities are
          translucent; without a painted window they showed whatever sat on top of
          the app's task. Deckkraft auf 70 % gesenkt (#119): etwas mehr scheint
          durch, der Zweck bleibt — der Dialog sieht gleich aus, egal was dahinter
          liegt, weil seine Karte selbst deckend ist. -->
-    <color name="solaris_scrim">#B3070709</color>
+    <color name="haus_scrim">#B3070709</color>
 
-    <color name="solaris_field">#161620</color>        <!-- input field fill -->
-    <color name="solaris_divider">#1AFFFFFF</color>    <!-- list divider -->
+    <color name="haus_field">#161620</color>        <!-- input field fill -->
+    <color name="haus_divider">#1AFFFFFF</color>    <!-- list divider -->
 
     <!-- Energy leg colors, shared by web + widgets. -->
     <color name="energy_supply">#66BB6A</color>        <!-- PV / feed-in / discharge -->

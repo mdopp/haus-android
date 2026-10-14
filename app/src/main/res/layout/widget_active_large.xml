@@ -4,7 +4,7 @@
      (backed by ActiveDevicesRemoteViewsService), so it shows EVERY active device
      and scrolls — replacing the old fixed row slots that could only show a few.
      Empty state via setEmptyView. RemoteViews-safe views only (no plain <View>).
-     Tap a row → PWA (via the collection PendingIntentTemplate + per-row fill-in). -->
+     Tap a row → Haus's start page (via the collection PendingIntentTemplate + per-row fill-in). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/av_root"
     android:layout_width="match_parent"

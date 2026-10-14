@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Box overview widget (#42): a home-summary card — services up/failed,
+     pending approvals, pending updates — from /napi/box/home. Read-only; a
+     tap opens Haus's page. RemoteViews-safe (LinearLayout/TextView/ImageView only). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/box_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="10dp">
+
+    <!-- Header: title + refresh. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+
+        <TextView
+            android:id="@+id/box_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/box_overview_title"
+            android:textColor="@color/haus_text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <ImageView
+            android:id="@+id/box_refresh"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_refresh"
+            android:tint="@color/haus_text_muted"
+            android:contentDescription="@string/widget_refresh" />
+    </LinearLayout>
+
+    <!-- Stat row: three columns. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp"
+        android:baselineAligned="false">
+
+        <!-- Services. -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/box_services"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textColor="@color/energy_supply"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/box_overview_services"
+                android:textColor="@color/haus_text_muted"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/box_services_bad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/energy_draw"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Approvals. -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/box_approvals"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textColor="@color/haus_text"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/box_overview_approvals"
+                android:textColor="@color/haus_text_muted"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Updates. -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/box_updates"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textColor="@color/haus_text"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/box_overview_updates"
+                android:textColor="@color/haus_text_muted"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

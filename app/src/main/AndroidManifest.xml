@@ -1,61 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cloud.dopp.solaris">
+<!-- Haus (#176, laib ADR 0022): home-screen widgets and pairing, nothing else.
+     One foreground service keeps the widgets live while the screen is on; no
+     other notification, no poll, no web shell. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Realtime SSE foreground service (#48): live-updates opt-in. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!-- Android 14 caps the dataSync FGS type at ~6h/24h → use specialUse (no cap)
-         for the long-lived realtime push connection; dataSync kept for API 29–33. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <!-- Screen-off backstop poll (#48): hold CPU briefly for the network check. -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- The camera widget's capture screen (#36). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <!-- Voice/mic widget (#17): device speech-to-text capture. -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <!-- The live widgets (realtime/LiveService.kt): one specialUse foreground service,
+         its notification (shown on Android 13+ only with the permission), its restart after boot. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Exempt from battery optimization, the restart of the live service after its
+         process died may go foreground on Android 12+ (asked once after pairing). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- Android 11+ package visibility: see browsers / Custom Tabs providers. -->
+    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
     <queries>
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="https" />
-        </intent>
-        <!-- Voice widget (#17): see the system speech recognizer on Android 11+. -->
-        <intent>
-            <action android:name="android.speech.RecognitionService" />
-        </intent>
-        <intent>
-            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
-        </intent>
     </queries>
-
     <application
-        android:name=".SolarisApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/appName"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Solaris">
+        android:theme="@style/Theme.Haus">
 
-        <!-- Launcher + onboarding hub. Also captures the pairing deep link
-             cloud.dopp.haus://pair#token=… from the server's /pair-device page, and its
-             legacy twin cloud.dopp.solaris://pair#token=… (#174: both stay valid
-             until no installed app knows only the old one). The setup QR is
-             scanned in-app and deliberately has NO intent-filter: a link from any
-             web page could otherwise point the app at a foreign server. -->
+        <!-- The app's one screen: pairing, then the widgets. It also takes the
+             redirect from Haus's /pair-device, cloud.dopp.haus://pair#token=….
+             The setup QR is scanned in-app and has NO intent filter: a link
+             from any web page could otherwise point the app at a foreign server. -->
         <activity
-            android:name=".ui.OnboardingHomeActivity"
+            android:name=".ui.HomeActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:label="@string/appName">
@@ -67,23 +49,10 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="cloud.dopp.solaris" android:host="pair" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="cloud.dopp.haus" android:host="pair" />
             </intent-filter>
         </activity>
-
         <!-- Universal device widget (#4). -->
-        <!-- What Solaris told this household (#158) — the destination a
-             notification tap never had. -->
-        <activity
-            android:name=".ui.NoticesActivity"
-            android:exported="false"
-            android:label="@string/notices_title" />
 
         <receiver
             android:name=".widget.DeviceWidgetProvider"
@@ -114,7 +83,7 @@
             android:name=".widget.WidgetConfigActivity"
             android:exported="true"
             android:label="@string/widget_device_label"
-            android:theme="@style/Theme.Solaris.Config">
+            android:theme="@style/Theme.Haus.Config">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
@@ -146,34 +115,7 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- The Solaris surface inside the app (#115): hosts the Trusted Web
-             Activity that shows the paired server full-screen, without a URL bar
-             and on Chrome's existing Authelia session. Default task affinity, so
-             it lives in the app's own task and shows up in Recents as Solaris;
-             singleTop so a second tap re-navigates the open surface.
 
-             DELIBERATELY not exported and carrying NO intent-filter for
-             https://chat.dopp.cloud: an exported (let alone autoVerify'd) filter
-             would make the app a system-wide handler for that address, and any
-             app on the phone could push a URL into the signed-in household view.
-             The surface is opened by the app itself — the hub's "Zu Solaris",
-             widgets, shortcuts, notifications — and by nothing else. Since #129
-             the launcher entry is OnboardingHomeActivity again. -->
-        <activity
-            android:name=".ui.SolarisSurfaceActivity"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:label="@string/appName"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.Solaris" />
-
-        <!-- Invisible trampoline: a widget body tap opens the PWA in a Custom Tab (#27). -->
-        <activity
-            android:name=".widget.PwaTrampolineActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Energy statistics widget (#9): 48h house-consumption sparkline. -->
         <receiver
@@ -227,30 +169,8 @@
             android:exported="false"
             android:label="@string/camera_capture_title"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.Solaris" />
+            android:theme="@style/Theme.Haus" />
 
-        <activity
-            android:name=".widget.CameraWidgetConfigActivity"
-            android:exported="true"
-            android:label="@string/camera_widget_label"
-            android:theme="@style/Theme.Solaris.Config">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
-
-        <!-- Voice/mic widget (#17): tap → speech → auto-sent household chat. -->
-        <receiver
-            android:name=".widget.VoiceWidgetProvider"
-            android:exported="true"
-            android:label="@string/voice_widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/voice_widget_info" />
-        </receiver>
 
         <!-- Devices tile (#167): one tap to the household start page. -->
         <receiver
@@ -265,12 +185,6 @@
                 android:resource="@xml/devices_widget_info" />
         </receiver>
 
-        <!-- Invisible speech-capture trampoline for the voice widget (#17). -->
-        <activity
-            android:name=".widget.VoiceTrampolineActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Energy totals widget (#16): 2x2 kWh totals grid (Gesamt). -->
         <receiver
@@ -285,45 +199,32 @@
                 android:resource="@xml/energy_totals_widget_info" />
         </receiver>
 
-        <!-- Diagnostics (#48): version + last crash + connection log. -->
-        <activity
-            android:name=".ui.DiagnosticsActivity"
-            android:exported="false"
-            android:label="@string/diag_title"
-            android:theme="@style/Theme.Solaris" />
 
-        <!-- In-app pending-approvals list (#43): read-only feed; rows open the PWA to act. -->
-        <activity
-            android:name=".ui.ApprovalsActivity"
-            android:exported="false"
-            android:label="@string/approvals_title"
-            android:theme="@style/Theme.Solaris" />
 
-        <!-- ServiceBay overview widget (#42): home-summary from /napi/box/home
-             (legacy /napi/servicebay/home, #174). -->
+        <!-- Box overview widget (#42): the Box's summary from /napi/box/home. -->
         <receiver
-            android:name=".widget.SbOverviewWidgetProvider"
+            android:name=".widget.BoxOverviewWidgetProvider"
             android:exported="true"
-            android:label="@string/sb_overview_label">
+            android:label="@string/box_overview_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/sb_overview_widget_info" />
+                android:resource="@xml/box_overview_widget_info" />
         </receiver>
 
-        <!-- ServiceBay service-status summary widget (#44): healthy/warning/failure. -->
+        <!-- Box service-status summary widget (#44): healthy/warning/failure. -->
         <receiver
-            android:name=".widget.SbServicesWidgetProvider"
+            android:name=".widget.BoxServicesWidgetProvider"
             android:exported="true"
-            android:label="@string/sb_services_label">
+            android:label="@string/box_services_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/sb_services_widget_info" />
+                android:resource="@xml/box_services_widget_info" />
         </receiver>
 
         <!-- Generic schema-driven .tool widget (#70): ONE provider that renders any
@@ -352,16 +253,16 @@
             android:name=".widget.ToolWidgetConfigActivity"
             android:exported="true"
             android:label="@string/tool_widget_label"
-            android:theme="@style/Theme.Solaris.Config">
+            android:theme="@style/Theme.Haus.Config">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
 
         <!-- Row target of the tool widget (#70/#90): a collection has ONE pending-
-             intent template, so this one activity handles both fill-ins — the body
-             tap (open the PWA) and the action button (POST /napi/action-callback,
-             with the server's confirm gate). Invisible; no layout is set. -->
+             intent template, so every row tap lands here and offers the row's
+             actions (POST /napi/action-callback, with the server's confirm gate).
+             Invisible; no layout is set. -->
         <activity
             android:name=".widget.ToolActionActivity"
             android:exported="false"
@@ -369,55 +270,10 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- 1x1 tool launcher tile (#71): a deep link into the PWA for one tool —
-             its declared create path, or the chat with its card already open. -->
-        <receiver
-            android:name=".widget.ToolLauncherWidgetProvider"
-            android:exported="true"
-            android:label="@string/tool_launch_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/tool_launcher_widget_info" />
-        </receiver>
 
-        <!-- Binds a placed launcher tile to one tool-id + mode from the catalog (#71). -->
-        <activity
-            android:name=".widget.ToolLauncherConfigActivity"
-            android:exported="true"
-            android:label="@string/tool_launch_label"
-            android:theme="@style/Theme.Solaris.Config">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
 
-        <!-- Realtime SSE client (#48): embedded foreground service that wakes
-             device widgets from card_state pushes. Opt-in, off by default. -->
-        <service
-            android:name=".realtime.RealtimeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse|dataSync">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Long-lived push/SSE connection to the user's own Solaris server for live widget + approval updates." />
-        </service>
 
-        <!-- Screen-off backstop poll alarm target (#48). -->
-        <receiver
-            android:name=".realtime.RealtimeIdleReceiver"
-            android:exported="false" />
 
-        <!-- Restart the realtime service after a reboot (only if opted-in). -->
-        <receiver
-            android:name=".realtime.BootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
 
         <!-- Share captured photos with the system camera app for ACTION_IMAGE_CAPTURE
              (#36). Authority mirrors the fileprovider used by FileProvider.getUriForFile. -->
@@ -431,5 +287,38 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
+        <!-- The live widgets: holds /napi/portal/events while the screen is on.
+             specialUse: Android 15 caps the data-sync type at 6 hours a day. -->
+        <service
+            android:name=".realtime.LiveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="A live widget connection to the user's own Haus server: while the screen is on, it keeps the home-screen widgets showing the current state of the household." />
+        </service>
+
+        <!-- Starts the live widgets again after a reboot and after an app update. -->
+        <receiver
+            android:name=".realtime.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- The configure step of the fed widgets without a choice: no UI, it starts
+             the live service (an allowed start) and confirms at once. -->
+        <activity
+            android:name=".widget.LiveConfigActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

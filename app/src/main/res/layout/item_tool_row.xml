@@ -10,7 +10,7 @@
      the press: first attributes (clickable, a 48dp target), then structure (no
      fill-in on the root at all, text column and button as siblings with one
      fill-in each). The app disproves the last one itself — ToolActionActivity
-     opens the PWA only when no action id arrived, so "Solaris opened" means the
+     opens Haus's page only when no action id arrived, so "Haus opened" means the
      button's fill-in never came. This launcher delivers one click target per
      collection row, whatever the docs allow, so the check mark is REMOVED rather
      than hidden and the choice moved into the sheet the row tap opens. -->

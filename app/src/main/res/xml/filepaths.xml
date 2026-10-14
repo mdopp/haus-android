@@ -14,7 +14,6 @@
      limitations under the License.
 -->
 <paths>
-    <files-path path="twa_splash/" name="twa_splash" />
     <!-- Camera captures handed to the system camera app via FileProvider (#36). -->
     <cache-path path="captures/" name="captures" />
 </paths>

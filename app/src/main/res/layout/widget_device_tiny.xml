@@ -2,7 +2,7 @@
 <!-- Tiny device widget (1×1, #31 → #55 → #57): keep the NAME (top, single line,
      ellipsized — the user wants it) and make the TOGGLE a tappable state-tinted
      domain ICON with NO button chrome (#57). Tap the icon = the domain's primary
-     action (toggle / open-close); tap the name = open the PWA — except while the
+     action (toggle / open-close); tap the name = open Haus's page — except while the
      widget is unconfigured, when the WHOLE tile opens the picker (#94/#104).
      RemoteViews-safe (LinearLayout / ImageView / TextView / ProgressBar — no
      plain <View>, no Button box). -->
@@ -26,7 +26,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- The device name, full width (tap = open PWA). The confirm badge (#38) is
+        <!-- The device name, full width (tap = open Haus's start page). The confirm badge (#38) is
              deliberately absent on this tier (#95): at 1×1 it ate about a third of the
              name width, and since #92 every tap on the tile opens the chooser anyway,
              so it announced something a touch makes obvious a moment later. The larger

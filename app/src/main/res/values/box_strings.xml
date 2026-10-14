@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Box widgets (#40 epic: #42/#43/#44/#45). -->
+<resources>
+    <string name="box_overview_label">Box-Übersicht</string>
+    <string name="box_overview_description">Dienste, Freigaben und Updates auf einen Blick.</string>
+    <string name="box_overview_title">Box</string>
+    <string name="box_overview_services">Dienste</string>
+    <string name="box_overview_approvals">Freigaben</string>
+    <string name="box_overview_updates">Updates</string>
+    <string name="box_overview_bad">%d ⚠</string>
+
+    <string name="box_services_label">Box-Dienste</string>
+    <string name="box_services_description">Dienst-Status auf einen Blick: healthy / warning / failure.</string>
+    <string name="box_services_title">Dienste</string>
+    <string name="box_health_ok">healthy</string>
+    <string name="box_health_warn">warning</string>
+    <string name="box_health_fail">failure</string>
+
+</resources>

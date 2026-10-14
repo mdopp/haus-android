@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Solaris adaptive launcher icon: the Solaris figure on a ServiceBay-blue field.
-     Only the original navy background was swapped for blue (#3B82F6, #13) — the
-     orange figure + white outline are the original brand mark (ic_maskable). The
-     blue base layer fills the mask-safe margin so the field is seamless; the
-     foreground is transparent (the mark lives full-bleed in the background, as in
-     the original icon). -->
+<!-- The Haus launcher icon: a white house on the brand blue. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background>
-        <layer-list>
-            <item android:drawable="@color/ic_launcher_background" />
-            <item android:drawable="@mipmap/ic_maskable"
-                android:top="8.5dp"
-                android:right="8.5dp"
-                android:left="8.5dp"
-                android:bottom="8.5dp" />
-        </layer-list>
-    </background>
-    <foreground android:drawable="@android:color/transparent" />
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_house" />
 </adaptive-icon>

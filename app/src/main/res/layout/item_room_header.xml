@@ -12,7 +12,7 @@
     android:textAllCaps="true"
     android:textStyle="bold"
     android:letterSpacing="0.08"
-    android:textColor="@color/solaris_accent"
+    android:textColor="@color/haus_accent"
     android:textSize="12sp"
     android:maxLines="1"
     android:ellipsize="end" />

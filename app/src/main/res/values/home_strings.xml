@@ -2,145 +2,70 @@
 <resources>
     <string name="app_version_placeholder">Version</string>
     <string name="app_version_fmt">Version %1$s</string>
-    <string name="diag_title">Diagnose</string>
-    <string name="diag_copy">Kopieren</string>
-    <string name="diag_clear">Leeren</string>
-    <string name="diag_copied">Kopiert</string>
-    <!-- Notification self-test (#110): make the #45 alert path checkable on demand. -->
-    <string name="diag_notify_check">Meldungen prüfen</string>
-    <string name="diag_notify_running">Prüfe…</string>
-    <string name="diag_test_notif_fmt">%1$s · Testmeldung</string>
     <string name="home_claim">Dein Zuhause, klar im Blick.</string>
-    <string name="home_connect_hint">Verbinde dich mit deinem Solaris-Server.</string>
-    <string name="qr_scan">QR-Code scannen</string>
-    <string name="qr_prompt">Solaris-QR-Code scannen</string>
-    <string name="qr_invalid">Kein gültiger Solaris-QR-Code.</string>
-    <string name="home_or_manual">oder Server-Adresse manuell eingeben:</string>
+
+    <!-- Pairing (#176): Haus's address, then /pair-device, confirm, done. -->
+    <string name="home_connect_hint">Gib die Adresse deines Hauses ein. Danach meldest du dich an und bestätigst die Kopplung.</string>
+    <string name="home_url_hint">haus.example.org</string>
+    <string name="home_connect">Koppeln</string>
+    <string name="home_enter_url">Bitte die Adresse eingeben.</string>
     <string name="home_reconnect">Bei %1$s anmelden, um die Kopplung abzuschließen.</string>
-    <string name="home_connect">Verbinden</string>
-    <string name="home_enter_url">Bitte die Server-Adresse eingeben.</string>
+    <string name="qr_scan">QR-Code scannen</string>
+    <string name="qr_prompt">QR-Code von Box → Geräte scannen</string>
+    <string name="qr_invalid">Kein gültiger Kopplungs-Code.</string>
+    <string name="pairing_success">Gekoppelt ✓</string>
+    <string name="pairing_failed">Kopplung fehlgeschlagen – ungültiger Zugang</string>
+    <string name="server_http_refused">Die Adresse muss mit https:// beginnen. Über http:// ginge der Zugang unverschlüsselt durchs Netz.</string>
+    <string name="pairing_not_started">Diesen Kopplungs-Link hat die App nicht angefordert. Zum Koppeln die Adresse hier eingeben.</string>
+    <string name="pairing_confirm_title">Koppeln?</string>
+    <string name="pairing_confirm_link">Mit %1$s koppeln? Die App speichert dann den Zugang zu diesem Haus.</string>
+    <string name="pairing_confirm_setup">Mit %1$s koppeln? Die App wechselt dann zu diesem Haus und speichert den Zugang.</string>
+    <string name="pairing_confirm_server">Mit %1$s verbinden und dort koppeln?</string>
+    <string name="pairing_confirm_yes">Koppeln</string>
+    <string name="pairing_confirm_no">Abbrechen</string>
+    <string name="pairing_refused">Haus kennt diesen Zugang nicht. Bitte neu koppeln.</string>
+    <string name="pairing_unreachable">Haus ist gerade nicht erreichbar. Bitte später neu koppeln.</string>
+    <string name="pairing_not_saved">Der Zugang ließ sich auf diesem Telefon nicht speichern. Die App ist nicht gekoppelt; bitte neu koppeln.</string>
+    <string name="home_no_browser">Kein Browser gefunden.</string>
+    <string name="pairing_action">Mit Haus koppeln</string>
 
-    <!-- Request access (#50): pre-auth affordance for users without an account —
-         opens the server's request-access page in a Custom Tab. -->
-    <string name="home_request_access_intro">Noch keinen Zugang?</string>
-    <string name="home_request_access">Zugang anfordern</string>
-    <string name="home_status_label">Status</string>
-    <!-- The status dot already carries the state — a second ✓ in the text said
-         it twice (#126). -->
-    <string name="home_connected">Verbunden mit %1$s</string>
-    <string name="home_status_connected">Verbunden</string>
+    <!-- Paired. -->
+    <string name="home_connected">Gekoppelt mit %1$s</string>
+    <string name="home_widgets_title">Widget hinzufügen</string>
+    <string name="home_widgets_hint">Tippen legt es auf den Startbildschirm.</string>
+    <string name="home_widgets_group_tools">Haushalt</string>
+    <string name="home_widgets_group_box">Box</string>
+    <string name="home_box_hint">Für alle, die sich um die Box kümmern.</string>
+    <string name="home_add_widget_manual">Widget über den Startbildschirm hinzufügen (lang drücken → Widgets).</string>
+    <string name="home_logout">Kopplung aufheben</string>
+    <string name="home_logged_out">Kopplung aufgehoben.</string>
 
-    <!-- Quick-add widget grid (#37): now THE primary add surface — a tap on a
-         tile pins that widget type (the energy tile opens a variant chooser). -->
-    <string name="home_widgets_teaser_title">Widget hinzufügen</string>
-    <string name="home_widgets_teaser_hint">Tippen legt es auf den Startbildschirm.</string>
-    <!-- Progressive disclosure (#126): ServiceBay- und Tool-Widgets liegen hinter
-         diesem Schalter, damit die erste Seite fünf Kacheln zeigt statt einem
-         Dutzend. Versteckt, nicht entfernt. -->
-    <string name="home_more_widgets">Weitere Widgets</string>
-    <string name="home_less_widgets">Weniger anzeigen</string>
-
-    <!-- Short labels for the tappable quick-add tiles. -->
-    <string name="home_tile_device">Gerät</string>
-    <string name="home_tile_energy">Energie</string>
-    <string name="home_tile_active">Aktiv</string>
-    <string name="home_tile_camera">Kamera</string>
-    <string name="home_tile_voice">Sprache</string>
-    <string name="home_widgets_group_servicebay">ServiceBay</string>
-    <string name="home_tile_sb_overview">Übersicht</string>
-    <string name="home_tile_sb_services">Dienste</string>
-    <!-- Catalog-driven tool section (#72): filled at runtime from /napi/defs/tool,
-         so a neu installiertes .tool erscheint hier ohne App-Update. -->
-    <string name="home_widgets_group_tools">Tools</string>
-    <string name="home_tools_hint">Aus deinem Solaris-Server geladen — neue Tools erscheinen automatisch.</string>
-    <string name="home_add_widget">Widget hinzufügen</string>
-    <string name="home_add_widget_manual">Widget über den Homescreen-Editor hinzufügen (lang drücken → Widgets).</string>
-
-    <!-- Widget-type chooser (#34): pick which widget to pin. -->
-    <string name="home_pick_widget_title">Welches Widget?</string>
-    <string name="home_pick_widget_cancel">Abbrechen</string>
+    <!-- The widget types the home screen offers (#34). -->
     <string name="widget_type_device">Gerät</string>
+    <string name="widget_type_devices">Alle Geräte</string>
     <string name="widget_type_energy_now">Energie · Jetzt</string>
     <string name="widget_type_energy_history">Energie · Verlauf</string>
     <string name="widget_type_energy_totals">Energie · Gesamt</string>
     <string name="widget_type_active">Aktive Geräte</string>
     <string name="widget_type_camera">Kamera</string>
-    <string name="widget_type_voice">Sprache</string>
+    <string name="widget_type_box_overview">Box · Übersicht</string>
+    <string name="widget_type_box_services">Box · Dienste</string>
 
-    <!-- Step 2 (#11): install the PWA for chat & notifications. -->
-
-    <!-- Seit #115 öffnet die Oberfläche IN dieser App — „öffnen" versprach einen
-         Sprung nach draußen, den es nicht mehr gibt (#127). -->
-    <string name="home_open">Zu Solaris</string>
-    <string name="home_logout">Abmelden</string>
-    <string name="home_logged_out">Abgemeldet.</string>
-    <string name="home_no_browser">Kein Browser gefunden.</string>
-
-    <!-- Crash-reporter UX (staged): friendly message first, trace on request. -->
-    <string name="crash_title">Fehler beim letzten Start</string>
-    <string name="crash_message">Es ist ein Fehler aufgetreten. Bitte melde ihn, damit wir ihn beheben können.</string>
-    <string name="crash_details">Details</string>
-    <string name="crash_report">Fehler melden</string>
-    <string name="crash_close">Schließen</string>
-    <string name="crash_copy">Kopieren</string>
-    <string name="crash_copied">Kopiert</string>
-    <string name="crash_details_title">Technische Details</string>
-
-    <!-- Live-Updates (#48): realtime SSE toggle + foreground-service notification. -->
-    <string name="home_widgets_group_household">Haushalt</string>
     <string name="devices_widget_cta">Geräte</string>
     <string name="devices_widget_label">Alle Geräte öffnen</string>
-    <string name="devices_widget_description">Alle Geräte auf einen Blick — öffnet die Übersicht in Solaris.</string>
-    <string name="notices_title">Meldungen</string>
-    <string name="notices_empty">Noch keine Meldungen.\n\nWas Solaris meldet, steht hier — auch wenn du die Benachrichtigung weggewischt hast. Aufgehoben wird eine Woche, auf diesem Telefon.</string>
-    <string name="notices_clear">Verlauf löschen</string>
-    <string name="home_notices">Meldungen ansehen</string>
-    <string name="home_update_download">App laden</string>
-    <string name="home_update_available">Update %1$s</string>
-    <string name="home_realtime_title">Live-Updates</string>
-    <!-- Kurz, was es tut (#126); das Warum steht im Info-Dialog. -->
-    <string name="home_realtime_hint">Widgets und Freigaben melden sich sofort.</string>
-    <string name="home_realtime_info_cd">Was Live-Updates bedeuten</string>
-    <string name="home_realtime_info">Solaris hält im Hintergrund eine direkte Verbindung zu deinem Server: Geräte-Widgets aktualisieren sich sofort, und Freigabe-Anfragen melden sich, sobald sie entstehen.\n\nAndroid verlangt dafür eine dauerhafte Benachrichtigung — sie zeigt nur an, dass die Verbindung steht. Der Akkuverbrauch steigt dadurch etwas.\n\nBei ausgeschaltetem Bildschirm wird die Verbindung geschont; wie oft dann nachgesehen wird, stellst du in der Zeile „Im Ruhemodus" ein.</string>
-    <string name="home_info_ok">Verstanden</string>
-    <string name="realtime_channel_name">Live-Updates</string>
-    <string name="realtime_channel_desc">Hält die Verbindung für sofortige Widget-Aktualisierungen.</string>
-    <string name="realtime_notif_title">Live-Updates aktiv</string>
-    <string name="realtime_notif_text">Geräte-Widgets werden sofort aktualisiert.</string>
-    <string name="approval_channel_name">Freigaben</string>
-    <string name="approval_channel_desc">Meldung bei neuen ServiceBay-Freigaben.</string>
-    <string name="approval_notif_title">Neue Freigabe</string>
-    <string name="approval_notif_generic">Eine ServiceBay-Freigabe wartet.</string>
-
-    <!-- Live-Updates: screen-off backstop poll interval control. -->
-    <string name="realtime_interval_label">Im Ruhemodus: alle %1$d Min</string>
-    <string name="realtime_interval_sec">Im Ruhemodus: alle %1$d Sek (bleibt live)</string>
-    <string name="realtime_interval_off">Im Ruhemodus: aus</string>
-    <string name="realtime_interval_title">Reaktion bei Bildschirm aus</string>
-    <plurals name="approvals_pending">
-        <item quantity="one">%d Freigabe wartet</item>
-        <item quantity="other">%d Freigaben warten</item>
-    </plurals>
-
-    <!-- Pending ServiceBay updates notification (#45). Informational — the actual
-         update is triggered in ServiceBay (solarisbay#827), not natively. -->
-    <string name="updates_channel_name">Updates</string>
-    <string name="updates_channel_desc">Meldung bei ausstehenden ServiceBay-Updates.</string>
-    <string name="updates_notif_title">Updates verfügbar</string>
-    <plurals name="updates_pending">
-        <item quantity="one">%d ausstehendes Update</item>
-        <item quantity="other">%d ausstehende Updates</item>
-    </plurals>
-
-    <!-- Haus-Meldungen, Timer und Erinnerungen (#116, solarisbay#1276/#1280).
-         Drei Kanaele, damit sie getrennt stummschaltbar bleiben: wer die
-         Haus-Meldungen nicht will, darf dadurch keinen Timer verlieren.
-         KEIN Alarmkanal — Zustellung ist best effort, siehe RealtimeProtocol. -->
-    <string name="notice_house_channel_name">Haus-Meldungen</string>
-    <string name="notice_house_channel_desc">Meldungen aus Automatisierungen, z. B. „Waschmaschine fertig“. Beste Bemühung, kein Alarm.</string>
-    <string name="notice_timer_channel_name">Timer und Wecker</string>
-    <string name="notice_timer_channel_desc">Abgelaufene Timer und Wecker. Geklingelt wird am Lautsprecher — das hier ist die Kopie fürs Telefon.</string>
-    <string name="notice_reminder_channel_name">Erinnerungen</string>
-    <string name="notice_reminder_channel_desc">Fällige Erinnerungen aus Solaris. Beste Bemühung, kein Alarm.</string>
-    <string name="notice_generic">Neue Meldung aus Solaris.</string>
+    <string name="devices_widget_description">Alle Geräte auf einen Blick — öffnet die Startseite von Haus.</string>
+    <!-- The live widgets (LiveService). -->
+    <string name="live_switch">Live-Widgets: aktuell, solange der Bildschirm an ist</string>
+    <string name="live_channel">Live-Widgets</string>
+    <string name="live_channel_desc">Zeigt, ob die Widgets live mit deinem Haus verbunden sind.</string>
+    <string name="live_connecting">Verbinde …</string>
+    <string name="live_on">Widgets live</string>
+    <string name="live_paused">Pausiert, Bildschirm aus</string>
+    <string name="live_battery_on">Wird nach einem Neustart der App von selbst wieder live.</string>
+    <string name="live_battery_off">Nach einem Neustart der App wird es nicht sicher von selbst wieder live, sonst erst, wenn du sie öffnest oder ein Widget antippst. Tippen, um das zu ändern.</string>
+    <string name="live_battery_title">Akku-Optimierung</string>
+    <string name="live_battery_why">Damit die Widgets nach einem Neustart der App von selbst wieder live werden, braucht die App eine Ausnahme von der Akku-Optimierung. Verbunden ist sie trotzdem nur, solange der Bildschirm an ist.</string>
+    <string name="live_battery_yes">Erlauben</string>
+    <string name="live_battery_no">Später</string>
+    <string name="live_reconnecting">Keine Verbindung zum Haus, neuer Versuch …</string>
 </resources>

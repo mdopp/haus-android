@@ -3,7 +3,7 @@
      per-type chips (icon + "N an/offen"), e.g. "💡 3 an · 🪟 2 offen". No single
      grand total on its own — the chips are the grouped-by-type summary. Up to 5
      chip slots + a "+N" overflow, all RemoteViews-safe (LinearLayout/ImageView/
-     TextView only — no plain <View>). Tap → PWA. -->
+     TextView only — no plain <View>). Tap → Haus's start page. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/av_root"
     android:layout_width="match_parent"

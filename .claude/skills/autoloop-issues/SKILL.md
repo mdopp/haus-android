@@ -1,9 +1,9 @@
 ---
 name: autoloop-issues
-description: Orchestrates an autonomous issue-resolution pipeline for mdopp/solaris-android — Planner → Builder → Verify — coordinated through a shared work queue, spawning each stage as a fresh sub-agent so the loop session stays clean. Adapted from the solarisbay autoloop for a native Android/Gradle app: "verify" is Gradle build + Robolectric tests + a signed release APK (there is no server/box to deploy to — on-device behaviour is human-gated by sideloading the APK). Cross-repo needs become tickets in solarisbay/servicebay, never built here. Access-widening changes — a new path to a sensitive action, a secret made reachable — leave the batch and open as a DRAFT PR on their own branch for human review. Core state lives in GitHub (autoloop:* labels/issues/PRs); a tiny gitignored cache holds only in-flight run state, brokered by queue.py and rebuildable from GitHub. Use when the user asks to "burn down the android backlog", "work the solaris-android issues autonomously", or invokes /loop with this skill.
+description: Orchestrates an autonomous issue-resolution pipeline for mdopp/haus-android — Planner → Builder → Verify — coordinated through a shared work queue, spawning each stage as a fresh sub-agent so the loop session stays clean. Adapted from the haus autoloop for a native Android/Gradle app: "verify" is Gradle build + Robolectric tests + a signed release APK (there is no server/box to deploy to — on-device behaviour is human-gated by sideloading the APK). Cross-repo needs become tickets in haus, never built here. Access-widening changes — a new path to a sensitive action, a secret made reachable — leave the batch and open as a DRAFT PR on their own branch for human review. Core state lives in GitHub (autoloop:* labels/issues/PRs); a tiny gitignored cache holds only in-flight run state, brokered by queue.py and rebuildable from GitHub. Use when the user asks to "burn down the android backlog", "work the haus-android issues autonomously", or invokes /loop with this skill.
 ---
 
-# Autoloop orchestrator — mdopp/solaris-android
+# Autoloop orchestrator — mdopp/haus-android
 
 You are the **coordinator** of an autonomous issue-resolution pipeline for the
 **native Android app**. You do **not** write code or groom issues yourself — you
@@ -22,15 +22,15 @@ small. **Read the project `CLAUDE.md` and user memory before the first iteration
 — they override this skill on conflict** (esp. Conventional Commits, "never
 commit the keystore", cross-repo=ticket, German replies).
 
-## What solaris-android is (and why verify is unusual)
+## What haus-android is (and why verify is unusual)
 It's a **standalone native Android app** (Kotlin + Gradle, no Bubblewrap) — a
-widgets/onboarding shell that pairs to a user's own Solaris server and talks to
+widgets/onboarding shell that pairs to a user's own Haus and talks to
 the token-only `/napi/` prefix. It is **not** deployed to a server. So there is
 **no real-box `/verify`**: the closest thing to "the box" is the **user's phone**,
 and installing the APK there is **human-gated**. The pipeline therefore verifies
 what it *can* headlessly — **it compiles, it passes Robolectric tests, it produces
 a correctly-signed release APK** — and leaves on-device confirmation to the human
-(who sideloads the APK). The in-app crash reporter (`SolarisApp` →
+(who sideloads the APK). The in-app crash reporter (`HausApp` →
 `last_crash.txt`) turns any device crash into a copyable report, so device bugs
 come back as precise traces, not mysteries.
 
@@ -44,7 +44,7 @@ Survives firings, machines, and **concurrent instances** — the `autoloop:build
 the **cross-instance claim**, so two instances never grab the same issue. Labels: `queued`
 (planned) · `building` (claimed) · `blocked` · `needs-refinement` · `review` (exposure:
 solo draft-PR — never auto-merge) · `device-test` (sideload + confirm on the phone) ·
-`upstream-wait` (blocked on an unmerged **solarisbay/servicebay** ticket — cross-repo =
+`upstream-wait` (blocked on an unmerged **haus** ticket — cross-repo =
 ticket only) · `verify-pending`/`verify-failed` (on the release PR).
 
 **EPHEMERAL run state → `.claude/state/autoloop-cache.json`** (**gitignored**, touched only
@@ -99,8 +99,8 @@ review gate is worth more than the saved CI run, and only there.
 Everything else — grouping, building, compile/test gates, signing — runs without you.
 
 ## Step 0 — Preflight (every firing)
-1. Read `CLAUDE.md` + user memory (`.claude/projects/-workspace-solaris-android/memory/MEMORY.md`). Honour: German replies, Conventional Commits, NEVER commit the keystore, cross-repo=ticket-only.
-2. Ensure the toolchain env (per session — see memory `toolchain-not-preprovisioned`): `JAVA_HOME=~/.bubblewrap/jdk/jdk-17.0.11+9`, `ANDROID_HOME=~/.bubblewrap/android_sdk`, `PATH` incl. `~/.npm-global/bin`. `git config --global --add safe.directory /workspace/solaris-android`.
+1. Read `CLAUDE.md` + user memory (`.claude/projects/-workspace-haus-android/memory/MEMORY.md`). Honour: German replies, Conventional Commits, NEVER commit the keystore, cross-repo=ticket-only.
+2. Ensure the toolchain env (per session — see memory `toolchain-not-preprovisioned`): `JAVA_HOME=~/.bubblewrap/jdk/jdk-17.0.11+9`, `ANDROID_HOME=~/.bubblewrap/android_sdk`, `PATH` incl. `~/.npm-global/bin`. `git config --global --add safe.directory /workspace/haus-android`.
 3. `queue.py summary` for status (cold start: `queue.py rebuild --release-pr <n>`); fold any `.claude/state/verify-result.json` in with `queue.py verify-set …`; `queue.py mirror` prunes the cache + re-projects labels.
 4. Decide the ONE stage to dispatch this firing (below) and spawn it as a fresh Agent. Re-read the queue after it returns.
 

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Box service-status summary widget (#44): 2x2-ish counts card, resizable,
+     NO config. Reads /napi/box/services when placed and on screen-on (the live service); a tap opens Haus's page. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="140dp"
+    android:minResizeHeight="80dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:description="@string/box_services_description"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:initialLayout="@layout/widget_box_services"
+    android:previewLayout="@layout/widget_box_services"
+    android:configure="cloud.dopp.haus.widget.LiveConfigActivity"
+    android:updatePeriodMillis="0" />

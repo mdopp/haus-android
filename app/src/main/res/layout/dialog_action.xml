@@ -7,12 +7,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/card_solaris"
+    android:background="@drawable/card_haus"
     android:padding="@dimen/space_md">
 
     <TextView
         android:id="@+id/ad_title"
-        style="@style/Text.Solaris.Headline"
+        style="@style/Text.Haus.Headline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="4dp"
@@ -21,7 +21,7 @@
 
     <TextView
         android:id="@+id/ad_message"
-        style="@style/Text.Solaris.Body"
+        style="@style/Text.Haus.Body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="4dp"
@@ -46,11 +46,11 @@
         android:layout_height="1dp"
         android:layout_marginTop="@dimen/space_xs"
         android:layout_marginBottom="@dimen/space_sm"
-        android:background="@color/solaris_divider" />
+        android:background="@color/haus_divider" />
 
     <Button
         android:id="@+id/ad_cancel"
-        style="@style/Widget.Solaris.Button.Ghost"
+        style="@style/Widget.Haus.Button.Ghost"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/widget_confirm_no" />

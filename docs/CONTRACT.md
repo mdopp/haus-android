@@ -1,103 +1,101 @@
 # CONTRACT — the interface with Haus
 
-The seam between this repo (the Android app) and its server, **Haus**
-(`mdopp/haus`, served at `https://haus.<domain>`). Both sides must agree on
-these; any change here is a **cross-repo coordination**.
+The seam between this repo (the Haus app) and its server, **Haus**
+(`mdopp/haus`, served at `https://haus.<domain>`). Haus is the contract: the
+app calls exactly the paths Haus serves, under the names Haus's
+`internal/app` declares (laib ADR 0022). One set of names, nothing older next
+to them. Any change here is a **cross-repo change** with `mdopp/haus`.
 
-**History.** Until laib ADR 0021 the server was **Solaris** (`mdopp/solarisbay`,
-`https://chat.dopp.cloud`), which also re-served ServiceBay's data for the
-widgets. Haus took over that role. The names Solaris gave this contract are
-held by every installed app, so they are **legacy names that stay valid**
-next to the neutral ones (#174). Haus keeps them in `internal/legacy`; it
-switches to the neutral names only after an app release that knows them is
-installed on every family phone, and until then accepts both.
+| | Value | Haus |
+|---|---|---|
+| package id | `cloud.dopp.haus` | — |
+| device-token prefix | `haus_device_` | `app.TokenPrefix` |
+| pair deep link | `cloud.dopp.haus://pair#token=…&id=…` | `app.Scheme`, `pages/pair.go` |
+| setup QR content | `cloud.dopp.haus://setup?server=…&token=…` | `pages/geraete.go` |
+| Box keys | `/napi/box/home`, `/napi/box/services` | `app.BoxPrefix` |
 
-| | Neutral | Legacy | App behaviour |
-|---|---|---|---|
-| device-token prefix | `haus_device_` | `sol_device_` | stores a token with either prefix |
-| pair deep link | `cloud.dopp.haus://pair#token=…&id=…` | `cloud.dopp.solaris://pair#token=…&id=…` | both open the hub; either scheme may carry either prefix. The new scheme is named after the domain on purpose: a bare `haus://` could be registered by any other app on the phone and catch the token in the redirect |
-| setup QR content | `cloud.dopp.haus://setup?server=…&token=…` | `cloud.dopp.solaris://setup?server=…&token=…` | both parsed by the in-app scanner |
-| Box keys | `/napi/box/{home,services,approvals,upgrades}` | `/napi/servicebay/…` | new first, old on a 404, the answering one remembered per server |
-| package id | — | `cloud.dopp.solaris` | **never changes**: a new id is a new app |
+The scheme is named after the domain on purpose: a bare `haus://` could be
+registered by any other app on the phone and catch the token in the redirect.
 
-## (a) Digital Asset Links — `assetlinks.json`
+## (a) Pairing
 
-- **Endpoint:** `GET <server>/.well-known/assetlinks.json`, e.g.
-  `https://haus.<domain>/.well-known/assetlinks.json`.
-- **Served by:** the paired server. Solaris served it from solaris-chat, with
-  the fingerprints from env **`ANDROID_CERT_FINGERPRINTS`** (comma-separated →
-  array elements). Haus does not serve it yet; until it does, the in-app
-  surface on a Haus server falls back to a Custom Tab with a URL bar.
-- **Auth:** **PUBLIC / unauthenticated.** Google's Digital Asset Links verifier
-  fetches this itself and is not logged in — it **must not** sit behind
-  Authelia. It is the one path on the server's host that has to bypass the
-  auth gate.
-- **Content:**
+- The person enters Haus's address (or scans the QR on Box → Geräte). The app
+  opens `<haus>/pair-device` in a Custom Tab, where their Authelia session is;
+  they confirm; Haus mints a device and redirects to the pair deep link with
+  the token in the **fragment** (never in a proxy log).
+- Only `https://` addresses: an `http://` one is refused with a message, typed
+  or scanned.
+- The pair link is taken only while a pairing the app started is pending (it
+  opened `/pair-device` less than 15 minutes ago); Haus's redirect carries no
+  nonce of the app's, so the pending server is what ties the link to it. Any
+  other pair link pairs nothing.
+- Nothing replaces server or token without a dialog that names the host: the
+  pair link, a scanned address and a scanned setup QR all ask first.
+- Before the token is stored, the app checks it: the prefix `haus_device_`,
+  then `GET /napi/whoami` against that server (200 with a `uid`). Then it is
+  stored encrypted on the device; if that write fails, the app says so and
+  stays unpaired.
+- The setup QR is QR content, not a link: the manifest has an intent filter for
+  `cloud.dopp.haus://pair` only, so no web page can point the app at a foreign
+  server. `server` is required; `token` is optional (present → paired once
+  confirmed and checked; absent → the app opens `/pair-device` there).
+- The persona — name, greeting, colours (`accent`, `ground`), icon — comes from
+  `GET /napi/persona` and `GET /napi/persona/icon.svg`.
 
-  ```json
-  [
-    {
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "cloud.dopp.solaris",
-        "sha256_cert_fingerprints": ["AA:BB:CC:..."]
-      }
-    }
-  ]
-  ```
+## (b) The `/napi` paths the app calls
 
-- **Fingerprints** come from this repo's signing keys — see `docs/SETUP.md`
-  steps 3–4 and 7 (upload key + Play App Signing key).
-- **Package name** must stay `cloud.dopp.solaris` (the app's
-  `applicationId`). Changing it breaks verification on both sides and makes a
-  new app.
+Every request carries `Authorization: Bearer haus_device_…`; Haus answers 401
+without one and a JSON 404 for a path it does not serve. Each call is declared
+as data in `app/src/main/java/cloud/dopp/haus/data/Napi.kt` — method, path,
+query parameters (and the values Haus takes), body fields, the reply keys the
+app reads — and `data/NapiRequest.kt` is the one place a request is built from
+it. `NapiContractTest` holds every declaration to a copy of Haus's handlers,
+each row naming the Haus file and lines it came from.
 
-Failure mode: mismatch/absence → the in-app surface renders **with a URL bar**
-(a plain Custom Tab) instead of full-screen.
+| Widget | Path |
+|---|---|
+| pairing | `GET /napi/whoami`, `GET /napi/persona`, `GET /napi/persona/icon.svg` |
+| device | `GET /napi/portal/state`, `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
+| active devices | `GET /napi/portal/active` |
+| energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
+| camera | `POST /napi/upload` (capture) |
+| tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,contacts,documents,notes}`), `POST /napi/action-callback` |
+| Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
+| live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |
 
-## (b) Device token and pairing
+## (c) The live stream
 
-Native surfaces (home-screen widgets, tiles, the realtime service) run
-**outside** the browser, so they can't ride the Custom Tab cookies. They
-authenticate with a device token minted by the server:
+One foreground service (`realtime/LiveService.kt`, type `specialUse`, a quiet
+"Live-Widgets" notification) runs while the app is paired, its switch is on
+(the default) and a widget the stream keeps current is placed (device, active
+devices, energy, energy statistics, energy totals, tools, the Box widgets). It
+listens for the screen itself. While the screen is on it holds
+`GET /napi/portal/events` and reads `card_state` frames only; on screen-off it
+drops the connection. Once connected it posts its watch set
+(`POST /napi/portal/watch`: the device widgets' entities and, while an energy
+widget is placed, the energy flow's sensors; re-posted inside Haus's one-hour
+TTL; a 503 while Home Assistant is down is retried with backoff, about two
+minutes) and has every fed widget read again. A frame for an energy sensor
+reads the energy widgets again, at most every 10 s, Haus's sensor interval.
+A 401 stops the service.
 
-- **Pairing.** The user enters the server address (or scans its QR). The app
-  opens `<server>/pair-device` in a Custom Tab; Authelia logs the person in,
-  they confirm, and the server redirects to the pair deep link with the token
-  in the **fragment** (never in proxy logs). The app checks the prefix
-  (`haus_device_` or `sol_device_`) before it stores the token.
-- **Setup QR.** The server's device page can mint a token and show it as a
-  setup URI in a QR code. That URI is QR content, not a link: the manifest has
-  intent filters for `…://pair` only, so no web page can point the app at a
-  foreign server. `server` is required; `token` is optional (present → paired
-  at once; absent → the app opens `/pair-device`).
-- **Use.** The server **accepts** `Authorization: Bearer <device token>` on the
-  token-only `/napi/` prefix, which bypasses Authelia and fails closed.
-  The app stores the token encrypted on-device and sends it on every request.
+It starts from allowed starts only (Android 12+): the app's screen, a widget
+tap, a configure screen (the fed widgets without a choice have a no-UI one,
+so placing them counts), boot and an app update. After its process died,
+Android restarts it. On Android 12+ that restart is a background start, which
+is documented as allowed while the app is exempt from battery optimization —
+asked once after pairing, shown beside the switch. (On the e2e's emulators,
+API 31 to 35, the restart also went foreground without it; that is not
+documented, and an OEM build may refuse it. A refused restart ends quietly,
+without a notification, until the next allowed start.) A connection silent for 240 s (Haus pings every
+90 s) counts as dead and is reopened. A session counts as healthy — and resets the reconnect
+backoff — only after 120 s, longer than Haus's 90 s ping, so a proxy that
+cuts idle streams does not make the app reconnect every minute. With the screen
+off nothing goes over the network: no stream, no poll (every widget's update
+period is 0), no catch-up. Messages to people go
+through their chat channel, not the app (laib ADR 0022 §3).
 
-The mint/accept surface is owned by the server; this repo consumes it. The
-token prefixes, both deep-link schemes and the bearer rule are the contract.
+## (d) Pages
 
-## (c) Box keys
-
-The widgets read four Box keys token-authed under `/napi`: `home` (summary
-counts), `services`, `approvals`, `upgrades`. The app asks `/napi/box/<key>`
-first; on a **404** it asks `/napi/servicebay/<key>` and remembers per server
-which one answered. Any other failure (401, 5xx, no network) is not a reason to
-fall back. A server only has to serve one of the two names; serving both is how
-the switch happens without breaking older apps.
-
-## (d) App entry / auth
-
-- The server is chosen per install (`https://haus.<domain>`); nothing is
-  hard-coded. The in-app surface opens the paired server's pages.
-- Auth happens via **Authelia inside the Chrome Custom Tab** — the same cookie
-  jar as the browser PWA. No separate mobile login flow.
-
----
-
-**Changing any of the above** (package id, fingerprints, token prefixes,
-deep-link schemes, `/napi` paths, the bearer rule, the public/unauth
-requirement on assetlinks) requires a coordinated change in both
-`mdopp/solaris-android` and `mdopp/haus`.
+A widget's body tap opens one of Haus's pages in the browser: `/start` for the
+house, `/box` for the Box. The app has no web shell of its own.

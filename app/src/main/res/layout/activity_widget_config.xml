@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/solaris_bg"
+    android:background="@color/haus_bg"
     android:paddingStart="20dp"
     android:paddingEnd="20dp"
     android:paddingTop="20dp"
@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="14dp"
-        android:textColor="@color/solaris_text"
+        android:textColor="@color/haus_text"
         android:textStyle="bold"
         android:textSize="17sp" />
 
@@ -32,13 +32,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:background="@drawable/field_solaris"
+        android:background="@drawable/field_haus"
         android:hint="@string/widget_config_search_hint"
         android:inputType="text"
         android:imeOptions="actionSearch"
         android:maxLines="1"
-        android:textColor="@color/solaris_text"
-        android:textColorHint="@color/solaris_text_muted"
+        android:textColor="@color/haus_text"
+        android:textColorHint="@color/haus_text_muted"
         android:drawablePadding="8dp"
         android:visibility="gone"
         android:importantForAutofill="no" />
@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="@color/solaris_divider"
+        android:divider="@color/haus_divider"
         android:dividerHeight="1dp"
         android:scrollbarStyle="outsideOverlay" />
 </LinearLayout>

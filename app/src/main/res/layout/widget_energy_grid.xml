@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Energy "Jetzt": a 2x2 flow grid (PV / Haus / Netz / Akku), each a mini-card
-     with a big colored value + direction — mirroring the Solaris web Energy
+     with a big colored value + direction — mirroring the web Energy
      "jetzt" screen. Cells are inlined (not <include>d) so RemoteViews can address
      each child by a unique id. Reused for the flow widget (live W) and the totals
      widget (kWh). -->

@@ -4,10 +4,10 @@
     <string name="widget_load_error">konnte nicht laden</string>
     <string name="widget_lock">Bestätigung erforderlich</string>
 
-    <string name="energy_widget_label">Solaris-Energie · Jetzt</string>
+    <string name="energy_widget_label">Haus-Energie · Jetzt</string>
     <string name="energy_widget_description">Fluss-Grid PV/Haus/Netz/Akku (klein: Netz-Bezug/Einspeisung)</string>
 
-    <string name="stats_widget_label">Solaris-Energie · Verlauf</string>
+    <string name="stats_widget_label">Haus-Energie · Verlauf</string>
     <string name="stats_widget_description">Multi-Linien-Verlauf PV/Haus/Netz/Akku mit 24h/7d-Umschalter</string>
     <string name="stats_title">Verlauf</string>
     <string name="stats_range">Verlauf · %1$s</string>
@@ -15,7 +15,7 @@
     <string name="stats_pair">koppeln</string>
     <string name="stats_nodata">keine Daten</string>
 
-    <string name="totals_widget_label">Solaris-Energie · Gesamt</string>
+    <string name="totals_widget_label">Haus-Energie · Gesamt</string>
     <string name="totals_widget_description">Summen-Grid: PV-Erzeugung, Einspeisung, Netzbezug, Batterie (kWh)</string>
     <string name="totals_title">Energie · gesamt</string>
     <string name="totals_loading">wird geladen …</string>

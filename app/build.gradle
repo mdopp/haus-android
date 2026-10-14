@@ -19,139 +19,20 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-// Bubblewrap's TWA block. Partly back in service since #115: the app shows the
-// Solaris surface itself as a Trusted Web Activity (SolarisSurface), and takes
-// the theme/navigation colours below from here.
-//
-// What is NOT taken from here, and must stay that way:
-//  - the **server**. `hostName`/`launchUrl` are the generator's single-tenant
-//    idea; the real surface URL is the server the user paired with, read at
-//    runtime from ServerStore (#52). The resValues they feed are unused.
-//  - the **shortcuts**. The generator task that rewrote res/xml/shortcuts.xml
-//    from a `shortcuts` list is gone (#97) and does not come back — the app-icon
-//    menu is published at runtime from the user's own devices (AppShortcuts,
-//    #100). A build-time list would only overwrite it with an empty file.
-def twaManifest = [
-    applicationId: 'cloud.dopp.solaris',
-    hostName: 'localhost', // legacy TWA field — feeds now-unused resValues, no hardcoded server.
-    launchUrl: '/', // legacy TWA field — the real start URL is the paired server.
-    name: 'Solaris Companion', // The application name (distinct from the "Solaris" PWA).
-    launcherName: 'Solaris Companion', // The name shown on the Android Launcher.
-    // In service again (#115): SolarisSurface passes these to the TWA intent.
-    themeColor: '#0C0C0E', // The color used for the status bar.
-    themeColorDark: '#0C0C0E', // The color used for the dark status bar.
-    navigationColor: '#070709', // The color used for the navigation bar.
-    navigationColorDark: '#070709', // The color used for the dark navbar.
-    navigationDividerColor: '#000000', // The navbar divider color.
-    navigationDividerColorDark: '#000000', // The dark navbar divider color.
-    backgroundColor: '#070709', // The color used for the splash screen background.
-    // Notification *delegation* (a TrustedWebActivityService that lets the browser
-    // post as us) is deliberately NOT wired: the app raises its own notifications
-    // from its own SSE connection with the device token. The resValue below is
-    // read by nobody.
-    enableNotifications: true,
-    // (removed: the TWA `shortcuts` list — app-icon shortcuts are published at
-    // runtime from the user's own devices, see AppShortcuts, #97.)
-    // The duration of fade out animation in milliseconds to be played when removing splash screen.
-    splashScreenFadeOutDuration: 300,
-    generatorApp: 'bubblewrap-cli', // Application that generated the Android Project
-    // The fallback strategy for when Trusted Web Activity is not available. Possible values are
-    // 'customtabs' and 'webview'.
-    fallbackType: 'customtabs',
-    enableSiteSettingsShortcut: 'true',
-    orientation: 'default',
-]
-
 android {
     compileSdkVersion 36
-    namespace "cloud.dopp.solaris"
+    namespace "cloud.dopp.haus"
     defaultConfig {
-        applicationId "cloud.dopp.solaris"
+        // A new app (laib ADR 0022 §1): its own id, nothing carried from the old one.
+        applicationId "cloud.dopp.haus"
         // Phase 3 raised 21 → 23: EncryptedSharedPreferences (Jetpack Security)
         // needs the AndroidKeyStore-backed master key from API 23.
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 106
-        versionName "2.47.0"
-
-        // The name for the application
-        resValue "string", "appName", twaManifest.name
-
-        // The name for the application on the Android Launcher
-        resValue "string", "launcherName", twaManifest.launcherName
-
-        // The URL that will be used when launching the TWA from the Android Launcher
-        def launchUrl = "https://" + twaManifest.hostName + twaManifest.launchUrl
-        resValue "string", "launchUrl", launchUrl
-
-        
-
-        
-            // (removed: TWA webManifestUrl resValue — unused since the TWA was retired, #53)
-        
-
-        
-
-        
-
-        // The hostname is used when building the intent-filter, so the TWA is able to
-        // handle Intents to open host url of the application.
-        resValue "string", "hostName", twaManifest.hostName
-
-        // This attribute sets the status bar color for the TWA. It can be either set here or in
-        // `res/values/colors.xml`. Setting in both places is an error and the app will not
-        // compile. If not set, the status bar color defaults to #FFFFFF - white.
-        resValue "color", "colorPrimary", twaManifest.themeColor
-
-        // This attribute sets the dark status bar color for the TWA. It can be either set here or in
-        // `res/values/colors.xml`. Setting in both places is an error and the app will not
-        // compile. If not set, the status bar color defaults to #000000 - white.
-        resValue "color", "colorPrimaryDark", twaManifest.themeColorDark
-
-        // This attribute sets the navigation bar color for the TWA. It can be either set here or
-        // in `res/values/colors.xml`. Setting in both places is an error and the app will not
-        // compile. If not set, the navigation bar color defaults to #FFFFFF - white.
-        resValue "color", "navigationColor", twaManifest.navigationColor
-
-        // This attribute sets the dark navigation bar color for the TWA. It can be either set here
-        // or in `res/values/colors.xml`. Setting in both places is an error and the app will not
-        // compile. If not set, the navigation bar color defaults to #000000 - black.
-        resValue "color", "navigationColorDark", twaManifest.navigationColorDark
-
-        // This attribute sets the navbar divider color for the TWA. It can be either 
-        // set here or in `res/values/colors.xml`. Setting in both places is an error and the app 
-        // will not compile. If not set, the divider color defaults to #00000000 - transparent.
-        resValue "color", "navigationDividerColor", twaManifest.navigationDividerColor
-
-        // This attribute sets the dark navbar divider color for the TWA. It can be either 
-        // set here or in `res/values/colors.xml`. Setting in both places is an error and the 
-        //app will not compile. If not set, the divider color defaults to #000000 - black.
-        resValue "color", "navigationDividerColorDark", twaManifest.navigationDividerColorDark
-
-        // Sets the color for the background used for the splash screen when launching the
-        // Trusted Web Activity.
-        resValue "color", "backgroundColor", twaManifest.backgroundColor
-
-        // Defines a provider authority for the Splash Screen
-        resValue "string", "providerAuthority", twaManifest.applicationId + '.fileprovider'
-
-        // The enableNotification resource is used to enable or disable the
-        // TrustedWebActivityService, by changing the android:enabled and android:exported
-        // attributes
-        resValue "bool", "enableNotification", twaManifest.enableNotifications.toString()
-
-        // The splashScreenFadeOutDuration resource is used to set the duration of fade out animation in milliseconds
-        // to be played when removing splash screen. The default is 0 (no animation).
-        resValue "integer", "splashScreenFadeOutDuration", twaManifest.splashScreenFadeOutDuration.toString()
-
-        resValue "string", "generatorApp", twaManifest.generatorApp
-
-        resValue "string", "fallbackType", twaManifest.fallbackType
-
-        resValue "bool", "enableSiteSettingsShortcut", twaManifest.enableSiteSettingsShortcut
-        resValue "string", "orientation", twaManifest.orientation
-
-        
+        versionCode 1
+        versionName "1.0.0"
+        // The live e2e on emulators (e2e/, .github/workflows/live-e2e.yml).
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
         release {
@@ -161,7 +42,7 @@ android {
             if (ksFile) {
                 storeFile file(ksFile)
                 storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "solaris"
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "haus"
                 keyPassword(System.getenv("ANDROID_KEY_PASSWORD")
                         ?: System.getenv("ANDROID_KEYSTORE_PASSWORD"))
             }
@@ -194,12 +75,6 @@ android {
     }
 }
 
-// (removed: the Bubblewrap generateShorcutsFile task — #97. It rewrote
-// res/xml/shortcuts.xml on every build from the empty twaManifest.shortcuts
-// list, and pointed the entries at the retired TWA LauncherActivity. The
-// app-icon long-press menu is published dynamically at runtime instead
-// (AppShortcuts), because a build-time list cannot know the user's devices.)
-
 repositories {
     
 }
@@ -207,27 +82,31 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    // --- Native standalone app (widgets + onboarding + pairing) ---
+    // --- Widgets and pairing ---
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    // Custom Tabs for pairing (/pair-device) and "open Solaris".
+    // Custom Tabs for pairing (/pair-device): it shares the browser's Authelia session.
     implementation 'androidx.browser:browser:1.8.0'
-    // Encrypted-at-rest storage for the sol_device_… bearer token.
+    // Encrypted-at-rest storage for the haus_device_… bearer token.
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
     // Read JPEG EXIF orientation so camera captures are rotated upright (#67).
     implementation 'androidx.exifinterface:exifinterface:1.3.7'
     // Networking for the widget data/action calls.
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    // Server-Sent Events client for the realtime widget-wake service (#48).
+    // Server-Sent Events client for the live stream, held while the screen is on (#176).
     implementation 'com.squareup.okhttp3:okhttp-sse:4.12.0'
     // Self-contained QR scanner for onboarding (no Google Play Services).
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
-    // Periodic rescue of the realtime SSE service after aggressive OEM kills (#48).
-    implementation 'androidx.work:work-runtime:2.9.1'
+    // The persona's icon is an SVG (/napi/persona/icon.svg); Android has no SVG decoder.
+    implementation 'com.caverock:androidsvg-aar:1.4'
 
     // JVM tests (Robolectric — runs Android components on the JVM, no emulator/VM).
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.13'
     testImplementation 'androidx.test:core:1.6.1'
     testImplementation 'androidx.test.ext:junit:1.2.1'
+
+    // The live e2e's setup on the emulator: pair and place widgets (e2e/live_e2e.sh).
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

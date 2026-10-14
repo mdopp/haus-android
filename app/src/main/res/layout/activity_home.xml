@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- targetSdk 35 draws every window edge-to-edge, so this screen's own top
-     padding is NOT enough to clear the status bar — the status line ended up at
-     the height of the system clock (#130). The Activity adds the system-bar
-     insets onto the root's padding (`applySystemBarInsets`), which is why the
-     root carries an id; `android:statusBarColor` alone is a no-op on API 35. -->
+<!-- The app's one screen (#176): pair with Haus, then add widgets. targetSdk 35
+     draws edge-to-edge, so HomeActivity adds the system-bar insets onto the
+     root's padding; the root carries an id for that. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/home_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/solaris_bg"
+    android:background="@color/haus_bg"
     android:fillViewport="true"
     android:scrollbars="none">
 
@@ -22,201 +19,91 @@
         android:paddingTop="@dimen/space_lg"
         android:paddingBottom="@dimen/space_xl">
 
-        <!-- ── Brand block — the "Solar[figure]s" wordmark in its blue glow ──────
-             The first-run moment (#37), and the screen's header in BOTH states.
-             #126 hid it once paired; the operator's device feedback (#130) took
-             that back — the wordmark in its glow stays visible. What it does not
-             stay is full size: paired, the Activity switches the lockup to the
-             compact tokens below and drops the claim, so the height #126 won for
-             the content is kept (it came from the tiles anyway).
-
-             The glow stays BLUE while the shell's accent follows the web surface
-             to orange (#130): this lockup *is* the brand mark, the same one on
-             the launcher icon, and the blue field is exactly what the operator
-             asked to have back. -->
+        <!-- The persona: icon, name, a rule in its accent (from /napi/persona). -->
         <LinearLayout
-            android:id="@+id/brand_block"
+            android:id="@+id/persona_block"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xl"
+            android:layout_marginBottom="@dimen/space_lg"
+            android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <FrameLayout
-                android:id="@+id/brand_lockup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/brand_lockup_top">
-
-                <ImageView
-                    android:id="@+id/brand_glow"
-                    android:layout_width="@dimen/hero_glow_size"
-                    android:layout_height="@dimen/hero_glow_size"
-                    android:layout_gravity="center"
-                    android:translationY="0dp"
-                    android:src="@drawable/hero_glow"
-                    android:importantForAccessibility="no"
-                    android:contentDescription="@null" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_gravity="center">
-
-                    <TextView
-                        android:id="@+id/brand_word_start"
-                        style="@style/Text.Solaris.Hero"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Solar" />
-
-                    <ImageView
-                        android:id="@+id/brand_figure"
-                        android:layout_width="wrap_content"
-                        android:layout_height="@dimen/brand_figure_height"
-                        android:adjustViewBounds="true"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginEnd="1dp"
-                        android:layout_marginBottom="2dp"
-                        android:src="@drawable/ic_solaris_figure"
-                        android:contentDescription="@null" />
-
-                    <TextView
-                        android:id="@+id/brand_word_end"
-                        style="@style/Text.Solaris.Hero"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="s" />
-                </LinearLayout>
-            </FrameLayout>
-
-            <!-- Accent underline: a short rule centred under the wordmark. It is
-                 part of the brand lockup, so it keeps the brand blue rather than
-                 following the shell accent (#130). -->
-            <View
-                android:id="@+id/brand_rule"
-                android:layout_width="52dp"
-                android:layout_height="3dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="@dimen/brand_rule_bottom"
-                android:background="@color/solaris_brand_blue" />
+            <ImageView
+                android:id="@+id/persona_icon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:contentDescription="@null"
+                android:visibility="gone" />
 
             <TextView
-                android:id="@+id/brand_claim"
-                style="@style/Text.Solaris.Body"
+                android:id="@+id/persona_name"
+                style="@style/Text.Haus.Hero"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
+                android:text="@string/appName" />
+
+            <View
+                android:id="@+id/persona_rule"
+                android:layout_width="52dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="10dp"
+                android:background="@color/haus_accent" />
+
+            <TextView
+                android:id="@+id/persona_greeting"
+                style="@style/Text.Haus.Body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_sm"
                 android:gravity="center_horizontal"
-                android:layout_marginBottom="@dimen/space_xl"
                 android:text="@string/home_claim" />
         </LinearLayout>
 
-        <!-- ── Where the slack goes (#134) ────────────────────────────────────
-             The content used to start at the top and leave a large empty area
-             under the footer — air at the one place it does nothing. The screen
-             is anchored at the BOTTOM instead: this spacer swallows whatever the
-             viewport has left over, so the gap falls between the brand block and
-             the rest, where the glow needs room around it.
-
-             `0dp` + weight is what makes it safe on a short screen: the excess
-             space the ScrollView's `fillViewport` hands down is exactly the empty
-             area that sat at the foot, never more, and when there is none the
-             spacer collapses to nothing instead of pushing content out of reach
-             (#126's prioritisation stays intact). -->
-        <View
-            android:id="@+id/brand_spacer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:importantForAccessibility="no" />
-
-        <!-- ── Not connected: connect to your own server ─────────────────── -->
+        <!-- Unpaired: Haus's address, then /pair-device. -->
         <LinearLayout
             android:id="@+id/connect_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/card_haus"
             android:orientation="vertical"
-            android:background="@drawable/card_solaris"
             android:padding="@dimen/card_padding">
 
             <TextView
                 android:id="@+id/connect_hint"
+                style="@style/Text.Haus.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_lg"
-                android:text="@string/home_connect_hint"
-                android:textColor="@color/solaris_text"
-                android:textSize="@dimen/text_body"
-                android:lineSpacingExtra="3sp" />
-
-            <Button
-                android:id="@+id/qr_scan_btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/qr_scan" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/home_or_manual"
-                android:textColor="@color/solaris_text_muted"
-                android:textSize="14sp" />
+                android:text="@string/home_connect_hint" />
 
             <EditText
                 android:id="@+id/server_url"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="https://dein-server"
+                android:hint="@string/home_url_hint"
+                android:importantForAutofill="no"
                 android:inputType="textUri"
-                android:autofillHints="url"
-                android:importantForAutofill="no" />
+                android:singleLine="true" />
 
             <Button
                 android:id="@+id/connect_btn"
-                style="@style/Widget.Solaris.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_md"
+                android:layout_marginTop="@dimen/space_sm"
                 android:text="@string/home_connect" />
 
-            <!-- Request access (#50): a discreet link-style affordance for users
-                 without an account yet — opens the server's request-access page
-                 in a Custom Tab (pre-auth public web flow, ADR 0010). -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_lg"
-                android:text="@string/home_request_access_intro"
-                android:textColor="@color/solaris_text_muted"
-                android:textSize="13sp"
-                android:gravity="center_horizontal" />
-
-            <TextView
-                android:id="@+id/request_access_btn"
+            <Button
+                android:id="@+id/qr_scan_btn"
+                style="@style/Widget.Haus.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
-                android:paddingTop="@dimen/space_sm"
-                android:paddingBottom="@dimen/space_sm"
-                android:text="@string/home_request_access"
-                android:textColor="@color/solaris_accent"
-                android:textSize="@dimen/text_body"
-                android:textStyle="bold"
-                android:gravity="center_horizontal"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
+                android:text="@string/qr_scan" />
         </LinearLayout>
 
-        <!-- ── Connected: the hub behind the surface ──────────────────────────
-             Order is priority, top down (#126/#127): where you are, the way into
-             Solaris, then the things the hub actually owns — Live-Updates and
-             widgets. Everything below the widget card is optional and may fall
-             below the fold. -->
+        <!-- Paired: where to, and the widgets to add. -->
         <LinearLayout
             android:id="@+id/connected_section"
             android:layout_width="match_parent"
@@ -224,591 +111,106 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <!-- 1. Status line: full width like every card and button around it
-                 (#126) — a wrap_content pill sat visibly short of the right edge.
-                 Dot + host; tinted green when connected (wired in the Activity). -->
-            <LinearLayout
+            <TextView
+                android:id="@+id/status"
+                style="@style/Text.Haus.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/chip_solaris"
-                android:paddingStart="@dimen/space_md"
-                android:paddingEnd="@dimen/space_md"
-                android:paddingTop="@dimen/space_sm"
-                android:paddingBottom="@dimen/space_sm">
+                android:layout_marginBottom="@dimen/space_md"
+                android:gravity="center_horizontal" />
 
-                <View
-                    android:id="@+id/status_dot"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_marginEnd="10dp"
-                    android:background="@drawable/status_dot" />
-
-                <TextView
-                    android:id="@+id/status"
-                    style="@style/Text.Solaris.Title"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:ellipsize="middle" />
-            </LinearLayout>
-
-            <!-- 2. Live-Updates (#48): opt-in realtime SSE. One short line says
-                 what it does; the why (persistent notification, battery, idle
-                 interval) sits behind the info icon (#126). -->
-            <LinearLayout
+            <!-- The live widgets (LiveService): on by default once paired. -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/live_switch"
+                style="@style/Text.Haus.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:baselineAligned="false"
-                android:background="@drawable/card_solaris"
-                android:padding="@dimen/card_padding"
-                android:layout_marginTop="@dimen/space_md">
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/live_switch" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginEnd="@dimen/space_sm">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            style="@style/Text.Solaris.Title"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/home_realtime_title" />
-
-                        <ImageView
-                            android:id="@+id/realtime_info"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:padding="9dp"
-                            android:src="@drawable/ic_info"
-                            app:tint="@color/solaris_text_muted"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="@string/home_realtime_info_cd" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_realtime_hint"
-                        android:textColor="@color/solaris_text_muted"
-                        android:textSize="13sp" />
-
-                    <!-- Screen-off backstop poll interval — a live setting, so it
-                         stays on the card (only while Live-Updates is on, #48);
-                         what it means is explained in the info dialog. -->
-                    <TextView
-                        android:id="@+id/realtime_interval"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:paddingTop="4dp"
-                        android:paddingBottom="4dp"
-                        android:text="@string/realtime_interval_off"
-                        android:textColor="@color/solaris_accent"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                        android:visibility="gone" />
-
-                    <!-- What Solaris said (#158). On this card because it is the
-                         notification feature's own history; reachable here so it
-                         does not depend on a notification being on screen. -->
-                    <TextView
-                        android:id="@+id/home_notices"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:paddingTop="4dp"
-                        android:paddingBottom="4dp"
-                        android:text="@string/home_notices"
-                        android:textColor="@color/solaris_accent"
-                        android:textSize="13sp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground" />
-                </LinearLayout>
-
-                <Switch
-                    android:id="@+id/realtime_switch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <!-- 3. "Widget hinzufügen": tapping a tile pins that widget type (the
-                 energy tile opens a Jetzt/Verlauf/Gesamt chooser). The five
-                 household types are what almost every user wants; ServiceBay and
-                 the catalog-driven tools sit behind "Weitere Widgets" (#126) —
-                 hidden, never removed. -->
-            <LinearLayout
-                android:id="@+id/widgets_teaser_card"
+            <!-- Whether a restart after a killed process goes live by itself; a tap asks for it. -->
+            <TextView
+                android:id="@+id/live_battery"
+                style="@style/Text.Haus.Label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/card_solaris"
-                android:padding="@dimen/card_padding"
-                android:layout_marginTop="@dimen/space_md">
+                android:layout_marginBottom="@dimen/space_md"
+                android:background="?android:attr/selectableItemBackground" />
 
-                <TextView
-                    style="@style/Text.Solaris.Title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_widgets_teaser_title"
-                    android:layout_marginBottom="2dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_widgets_teaser_hint"
-                    android:textColor="@color/solaris_text_muted"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="@dimen/space_sm" />
-
-                <!-- 5-column grid of equal-weight tappable tiles. -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:baselineAligned="false">
-
-                    <LinearLayout
-                        android:id="@+id/tile_device"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="@dimen/space_xs"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:minHeight="@dimen/tile_min_height"
-                        android:paddingTop="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_sm"
-                        android:background="@drawable/tile_solaris"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/home_tile_device">
-
-                        <ImageView
-                            android:layout_width="@dimen/tile_icon"
-                            android:layout_height="@dimen/tile_icon"
-                            android:src="@drawable/ic_device"
-                            app:tint="@color/solaris_accent"
-                            android:contentDescription="@null" />
-
-                        <TextView
-                            style="@style/Text.Solaris.Tile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="@string/home_tile_device" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tile_energy"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="@dimen/space_xs"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:minHeight="@dimen/tile_min_height"
-                        android:paddingTop="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_sm"
-                        android:background="@drawable/tile_solaris"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/home_tile_energy">
-
-                        <ImageView
-                            android:layout_width="@dimen/tile_icon"
-                            android:layout_height="@dimen/tile_icon"
-                            android:src="@drawable/ic_bolt"
-                            app:tint="@color/solaris_accent"
-                            android:contentDescription="@null" />
-
-                        <TextView
-                            style="@style/Text.Solaris.Tile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="@string/home_tile_energy" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tile_active"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="@dimen/space_xs"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:minHeight="@dimen/tile_min_height"
-                        android:paddingTop="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_sm"
-                        android:background="@drawable/tile_solaris"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/home_tile_active">
-
-                        <ImageView
-                            android:layout_width="@dimen/tile_icon"
-                            android:layout_height="@dimen/tile_icon"
-                            android:src="@drawable/ic_switch"
-                            app:tint="@color/solaris_accent"
-                            android:contentDescription="@null" />
-
-                        <TextView
-                            style="@style/Text.Solaris.Tile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="@string/home_tile_active" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tile_camera"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="@dimen/space_xs"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:minHeight="@dimen/tile_min_height"
-                        android:paddingTop="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_sm"
-                        android:background="@drawable/tile_solaris"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/home_tile_camera">
-
-                        <ImageView
-                            android:layout_width="@dimen/tile_icon"
-                            android:layout_height="@dimen/tile_icon"
-                            android:src="@drawable/ic_camera"
-                            app:tint="@color/solaris_accent"
-                            android:contentDescription="@null" />
-
-                        <TextView
-                            style="@style/Text.Solaris.Tile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="@string/home_tile_camera" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tile_voice"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:minHeight="@dimen/tile_min_height"
-                        android:paddingTop="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_sm"
-                        android:background="@drawable/tile_solaris"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/home_tile_voice">
-
-                        <ImageView
-                            android:layout_width="@dimen/tile_icon"
-                            android:layout_height="@dimen/tile_icon"
-                            android:src="@drawable/ic_mic"
-                            app:tint="@color/solaris_accent"
-                            android:contentDescription="@null" />
-
-                        <TextView
-                            style="@style/Text.Solaris.Tile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="@string/home_tile_voice" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Behind "Weitere Widgets" (#126): the infra widgets (#42/#44)
-                     and the catalog-driven tool widgets (#72). Collapsed by
-                     default so the first screen shows five tiles instead of a
-                     dozen — every entry stays one tap away. -->
-                <LinearLayout
-                    android:id="@+id/more_widgets"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <!-- All devices at once (#167): a household type, but the row
-                         of five above is full, so it opens this section. -->
-                    <TextView
-                        style="@style/Text.Solaris.Title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_widgets_group_household"
-                        android:layout_marginTop="@dimen/space_md"
-                        android:layout_marginBottom="6dp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:baselineAligned="false">
-
-                        <LinearLayout
-                            android:id="@+id/tile_devices"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="@dimen/space_xs"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:minHeight="@dimen/tile_min_height"
-                            android:paddingTop="@dimen/space_sm"
-                            android:paddingBottom="@dimen/space_sm"
-                            android:background="@drawable/tile_solaris"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:contentDescription="@string/devices_widget_label">
-
-                            <ImageView
-                                android:layout_width="@dimen/tile_icon"
-                                android:layout_height="@dimen/tile_icon"
-                                android:src="@drawable/ic_device"
-                                app:tint="@color/solaris_accent"
-                                android:contentDescription="@null" />
-
-                            <TextView
-                                style="@style/Text.Solaris.Tile"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:text="@string/devices_widget_cta" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="2" />
-                    </LinearLayout>
-
-                    <TextView
-                        style="@style/Text.Solaris.Title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_widgets_group_servicebay"
-                        android:layout_marginTop="@dimen/space_md"
-                        android:layout_marginBottom="6dp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:baselineAligned="false">
-
-                        <LinearLayout
-                            android:id="@+id/tile_sb_overview"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="@dimen/space_xs"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:minHeight="@dimen/tile_min_height"
-                            android:paddingTop="@dimen/space_sm"
-                            android:paddingBottom="@dimen/space_sm"
-                            android:background="@drawable/tile_solaris"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:contentDescription="@string/home_tile_sb_overview">
-
-                            <ImageView
-                                android:layout_width="@dimen/tile_icon"
-                                android:layout_height="@dimen/tile_icon"
-                                android:src="@drawable/ic_servicebay"
-                                app:tint="@color/solaris_accent"
-                                android:contentDescription="@null" />
-
-                            <TextView
-                                style="@style/Text.Solaris.Tile"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:text="@string/home_tile_sb_overview" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/tile_sb_services"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:minHeight="@dimen/tile_min_height"
-                            android:paddingTop="@dimen/space_sm"
-                            android:paddingBottom="@dimen/space_sm"
-                            android:background="@drawable/tile_solaris"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:contentDescription="@string/home_tile_sb_services">
-
-                            <ImageView
-                                android:layout_width="@dimen/tile_icon"
-                                android:layout_height="@dimen/tile_icon"
-                                android:src="@drawable/ic_services"
-                                app:tint="@color/solaris_accent"
-                                android:contentDescription="@null" />
-
-                            <TextView
-                                style="@style/Text.Solaris.Tile"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:text="@string/home_tile_sb_services" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Tools group (#72): NOT a static tile list — filled at
-                         runtime from the server's .tool catalog (/napi/defs/tool),
-                         so a newly installed plugin shows up as an addable widget
-                         without an app rebuild. Hidden until the catalog yields a
-                         listable tool. -->
-                    <TextView
-                        android:id="@+id/tools_group_title"
-                        style="@style/Text.Solaris.Title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_widgets_group_tools"
-                        android:layout_marginTop="@dimen/space_md"
-                        android:layout_marginBottom="6dp"
-                        android:visibility="gone" />
-
-                    <TextView
-                        android:id="@+id/tools_group_hint"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_tools_hint"
-                        android:textColor="@color/solaris_text_muted"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/tools_group"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/more_widgets_toggle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_sm"
-                    android:paddingTop="@dimen/space_sm"
-                    android:paddingBottom="@dimen/space_sm"
-                    android:gravity="center"
-                    android:text="@string/home_more_widgets"
-                    android:textColor="@color/solaris_accent"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground" />
-            </LinearLayout>
-
-            <!-- 4. The way into Solaris, now at the foot of the screen (#132).
-                 #127 pulled it up under the status line as the filled, full-width
-                 primary; on the device that made it the loudest thing here,
-                 competing with the wordmark right above it. It moves down beside
-                 "Abmelden" — but it does NOT become the footer text link that
-                 #127 was right to abolish: it stays the filled accent button and
-                 only loses its full width, because it remains the entry to the
-                 product's main surface and has to stay distinguishable from the
-                 quiet sign-out link under it. -->
-            <Button
-                android:id="@+id/open_btn"
-                android:layout_width="wrap_content"
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:minWidth="200dp"
+                android:text="@string/home_widgets_title" />
+
+            <TextView
+                style="@style/Text.Haus.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/home_widgets_hint" />
+
+            <LinearLayout
+                android:id="@+id/widgets_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_haus"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/tools_group_title"
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_lg"
-                android:text="@string/home_open" />
+                android:text="@string/home_widgets_group_tools"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/tools_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_haus"
+                android:orientation="vertical"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_lg"
+                android:text="@string/home_widgets_group_box" />
+
+            <TextView
+                style="@style/Text.Haus.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/home_box_hint" />
+
+            <LinearLayout
+                android:id="@+id/box_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_haus"
+                android:orientation="vertical" />
+
+            <Button
+                android:id="@+id/logout_btn"
+                style="@style/Widget.Haus.Button.Ghost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xl"
+                android:text="@string/home_logout" />
         </LinearLayout>
 
-        <!-- Footer: sign out, the app download and the installed version share ONE
-             row (#132, #151). All three are secondary and none needs a line of its
-             own — and the version must appear exactly once: a separate download
-             line above this one repeated it (#149 as first built).
-             Three targets because they lead three different places: sign-out,
-             the browser, and the diagnostics screen (#110). None of them is
-             hidden behind a long-press. The row sits outside the paired section
-             because the version belongs to both states; `render` hides the
-             sign-out link alone. -->
-        <LinearLayout
-            android:id="@+id/home_footer"
+        <TextView
+            android:id="@+id/app_version"
+            style="@style/Text.Haus.Label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:baselineAligned="false"
-            android:layout_marginTop="@dimen/space_md">
-
-            <TextView
-                android:id="@+id/logout_btn"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:paddingTop="@dimen/space_sm"
-                android:paddingBottom="@dimen/space_sm"
-                android:gravity="start"
-                android:text="@string/home_logout"
-                android:textColor="@color/solaris_text_muted"
-                android:textSize="@dimen/text_body"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
-
-            <TextView
-                android:id="@+id/update_hint"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:paddingTop="@dimen/space_sm"
-                android:paddingBottom="@dimen/space_sm"
-                android:gravity="center"
-                android:textColor="@color/solaris_text_muted"
-                android:textSize="12sp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
-
-            <TextView
-                android:id="@+id/app_version"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:paddingTop="@dimen/space_sm"
-                android:paddingBottom="@dimen/space_sm"
-                android:gravity="end"
-                android:text="@string/app_version_placeholder"
-                android:textColor="@color/solaris_text_faint"
-                android:textSize="12sp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
-        </LinearLayout>
+            android:layout_marginTop="@dimen/space_md"
+            android:gravity="center"
+            android:text="@string/app_version_placeholder" />
     </LinearLayout>
 </ScrollView>

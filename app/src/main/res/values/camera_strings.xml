@@ -2,7 +2,7 @@
 <!-- Native camera capture + upload screen (#36). -->
 <resources>
     <string name="camera_capture_title">Kamera</string>
-    <string name="camera_capture_hint">Foto oder Serie aufnehmen und an deinen Solaris-Server hochladen — optional als mehrseitiges PDF.</string>
+    <string name="camera_capture_hint">Foto oder Serie aufnehmen und an Haus hochladen — optional als mehrseitiges PDF.</string>
 
     <string name="camera_capture_none">Noch keine Aufnahme</string>
     <string name="camera_capture_one">1 Seite aufgenommen</string>
@@ -18,7 +18,7 @@
 
     <string name="camera_capture_uploading">Wird hochgeladen…</string>
     <string name="camera_capture_done">Hochgeladen ✓</string>
-    <string name="camera_capture_no_endpoint">Upload-Endpunkt am Server noch nicht verfügbar (solarisbay#826).</string>
+    <string name="camera_capture_no_endpoint">Upload-Endpunkt am Server noch nicht verfügbar.</string>
     <string name="camera_capture_auth">Nicht berechtigt — Gerät neu koppeln.</string>
     <string name="camera_capture_failed">Upload fehlgeschlagen (%d). Erneut versuchen.</string>
     <string name="camera_capture_no_permission">Kamera-Berechtigung nötig, um aufzunehmen.</string>

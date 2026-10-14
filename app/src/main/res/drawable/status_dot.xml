@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Solid round status indicator (Ampel). Tinted at runtime — green when
-     connected, muted grey when not (see OnboardingHomeActivity.render). -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="@color/energy_supply" />
-    <size android:width="12dp" android:height="12dp" />
-</shape>

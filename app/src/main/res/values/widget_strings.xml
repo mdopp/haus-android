@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_device_label">Solaris-Gerät</string>
+    <string name="widget_device_label">Haus-Gerät</string>
     <string name="widget_device_description">Ein Gerät steuern (Licht, Schalter, Garage …)</string>
 
     <string name="widget_confirm_title">Bestätigen</string>
@@ -38,7 +38,7 @@
     <!-- Fehlgeschlagener Tipp (#111): waehrend des Ausfalls antwortete
          /napi/ha/call mit 500, die Kachel schwieg und der Tipp sah folgenlos aus.
          %1$s = Geraetename. -->
-    <string name="widget_action_failed">%1$s nicht geschaltet – Solaris antwortet nicht</string>
+    <string name="widget_action_failed">%1$s nicht geschaltet – Haus antwortet nicht</string>
 
     <!-- Schloss-Kachel (#84): der Riegel, nicht die Tür. -->
     <string name="widget_lock_lock">Abschließen</string>
@@ -72,31 +72,23 @@
     <string name="widget_config_current">%1$s · aktuell</string>
 
     <!-- Active-devices overview widget (#28). -->
-    <string name="active_widget_label">Solaris · Aktive Geräte</string>
+    <string name="active_widget_label">Haus · Aktive Geräte</string>
     <string name="active_widget_description">Übersicht: welche Geräte gerade an/offen sind</string>
-    <string name="active_title">Aktiv</string>
-    <string name="active_loading">wird geladen …</string>
-    <string name="active_pair">koppeln</string>
     <string name="active_none">Alles aus</string>
     <!-- %1$d = Anzahl aktiver Geräte -->
     <string name="active_count">%1$d an</string>
-    <string name="active_more">+%1$d weitere</string>
     <!-- Compact overflow for the grouped-by-type chips: %1$d = weitere Typen. -->
     <string name="active_types_more">+%1$d</string>
 
     <!-- Large device widget 48h history (#29). -->
-    <string name="device_nohistory">kein Verlauf</string>
 
-    <!-- Camera trigger widget (#36): a tile that opens the PWA camera view. -->
+    <!-- Camera trigger widget (#36): a tile that opens Haus's page camera view. -->
     <string name="camera_widget_label">Kamera</string>
     <string name="camera_widget_description">Kachel öffnet die Kamera-Live-Ansicht in der App</string>
-    <string name="camera_config_pick">Kamera wählen:</string>
-    <string name="camera_config_empty">Keine Kameras gefunden.</string>
-    <string name="camera_open_hint">Kamera öffnen</string>
 
     <!-- Generic schema-driven .tool widget (#70/#72): one provider for every tool. -->
-    <string name="tool_widget_label">Solaris · Tool</string>
-    <string name="tool_widget_description">Liste eines Solaris-Tools (Aufgaben, Kontakte, Dokumente …)</string>
+    <string name="tool_widget_label">Haus · Tool</string>
+    <string name="tool_widget_description">Liste eines Haus-Tools (Aufgaben, Kontakte, Dokumente …)</string>
     <!-- %1$s = Tool-Name, %2$d = Anzahl Einträge. -->
     <string name="tool_title_count">%1$s · %2$d</string>
     <string name="tool_empty">Keine Einträge</string>
@@ -108,26 +100,8 @@
     <!-- Aktionsblatt der Zeile (#90/#107). %1$s = Titel der Zeile. -->
     <string name="tool_action_confirm">„%1$s“ wirklich ausführen?</string>
     <string name="tool_action_do">Ausführen</string>
-    <string name="tool_row_open">Eintrag öffnen</string>
 
     <!-- 1x1-Tool-Kachel (#71): Erfassen bzw. Chat mit geöffneter Karte. -->
-    <string name="tool_launch_label">Solaris · Tool-Kachel</string>
-    <string name="tool_launch_description">Kachel öffnet ein Tool: neu erfassen oder Karte im Chat</string>
-    <string name="tool_launch_cta_compose">Neu</string>
-    <string name="tool_launch_cta_chat">Öffnen</string>
-    <string name="tool_launch_pick">Kachel wählen:</string>
-    <string name="tool_launch_empty">Keine Tools gefunden.</string>
-    <string name="tool_launch_change">Kachel ändern:</string>
     <!-- Noch nicht gebundene Kachel (#105): der Tipp führt in die Auswahl. -->
-    <string name="tool_launch_setup">einrichten</string>
-    <!-- %1$s = Tool-Name, %2$s = tool_launch_cta_*. -->
-    <string name="tool_launch_entry">%1$s · %2$s</string>
 
-    <!-- Voice/mic widget (#17). -->
-    <string name="voice_widget_label">Solaris · Sprache</string>
-    <string name="voice_widget_description">Per Sprache eine Frage an Solaris stellen</string>
-    <string name="voice_widget_cta">Sprechen</string>
-    <string name="voice_prompt">Sprich mit Solaris …</string>
-    <string name="voice_no_recognizer">Keine Spracherkennung auf diesem Gerät verfügbar.</string>
-    <string name="voice_perm_denied">Mikrofon-Zugriff wird für die Spracheingabe benötigt.</string>
 </resources>
