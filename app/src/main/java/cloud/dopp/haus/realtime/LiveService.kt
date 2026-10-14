@@ -19,6 +19,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -64,11 +65,15 @@ object Live {
         EnergyTotalsWidgetProvider::class.java, ToolWidgetProvider::class.java,
     )
 
-    private val client: OkHttpClient by lazy {
+    /**
+     * Haus writes `: ping` every 90 s on HTTP/1.1, where OkHttp's own ping does
+     * nothing. A read timeout of three pings turns a silently dead path (a router
+     * reboot, a lost NAT entry) into a failure, and the service reconnects.
+     */
+    val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(0, TimeUnit.MILLISECONDS) // long-lived; Haus pings every 90 s
-            .pingInterval(30, TimeUnit.SECONDS)
+            .readTimeout(240, TimeUnit.SECONDS)
             .build()
     }
 
@@ -80,6 +85,11 @@ object Live {
     /** Posts the watch set. Replaced in tests. */
     @Volatile
     var postWatch: (Context) -> Unit = { WatchSet.postCurrentAsync(it) }
+
+    /** Makes the foreground start fail, as Android refuses it outside an allowed start. Tests only. */
+    @VisibleForTesting
+    @Volatile
+    var refuseForeground = false
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -101,11 +111,20 @@ object Live {
         isEnabled(ctx) && ServerStore.isConfigured(ctx) && TokenStore.isPaired(ctx) && fedPlaced(ctx)
 
     /**
+     * On the battery-optimization exemption list. Only then may Android's restart
+     * of the service after its process died (`START_STICKY`) go foreground on
+     * Android 12+; that exemption is what made the old app recover by itself.
+     */
+    fun exempt(ctx: Context): Boolean =
+        ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true
+
+    /**
      * Start the service when it is wanted, else stop it. Android 12+ lets an app
-     * start a foreground service only from where the person is: the app's
-     * screen, boot, a widget tap. So call this from those; elsewhere a start
-     * throws `ForegroundServiceStartNotAllowedException`, which is swallowed —
-     * the next app open, boot or widget tap starts it, as in the old app.
+     * start a foreground service only from an allowed start: the app's screen, a
+     * configure screen, a widget tap, boot, an app update — or anywhere while the
+     * app is exempt from battery optimization. So call this from those;
+     * elsewhere the start throws `ForegroundServiceStartNotAllowedException`,
+     * which is swallowed, as in the old app.
      */
     fun ensure(ctx: Context) {
         val app = ctx.applicationContext
@@ -138,9 +157,13 @@ object Live {
  *   list and, for an energy entity, the energy widgets — each coalesced.
  * - A 401 stops the service (the device was removed in Haus); any other loss
  *   reconnects with backoff, reset only after a healthy session.
- * - `START_STICKY` brings it back after the process dies, [BootReceiver] after
- *   a reboot. No rescue worker, no battery exemption: the connection runs only
- *   with the screen on, when Doze never applies.
+ * - After its process died, Android restarts it (`START_STICKY`), but on
+ *   Android 12+ that restart may go foreground only while the app is exempt
+ *   from battery optimization ([Live.exempt]); the app asks for it once after
+ *   pairing and shows the state beside its switch. Without it the restart is
+ *   refused and the service ends quietly, without a notification, until the
+ *   next allowed start. [BootReceiver] starts it after a reboot and after an
+ *   app update. No rescue worker, alarm, wakelock or poll.
  */
 class LiveService : Service() {
 
@@ -149,6 +172,7 @@ class LiveService : Service() {
     private var attempt = 0
     private var connectedAtMs = 0L
     private var status = R.string.live_connecting
+    private var inForeground = false
     private var energyQueued = false
 
     private val screen = object : BroadcastReceiver() {
@@ -168,7 +192,7 @@ class LiveService : Service() {
     override fun onCreate() {
         super.onCreate()
         if (!foreground()) {
-            stopSelf()
+            stopSelf() // refused: nothing to undo, nothing shown
             return
         }
         val filter = IntentFilter().apply {
@@ -180,7 +204,11 @@ class LiveService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!foreground() || !Live.wanted(this)) {
+        if (!foreground()) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        if (!Live.wanted(this)) {
             stop()
             return START_NOT_STICKY
         }
@@ -221,8 +249,10 @@ class LiveService : Service() {
     }
 
     private fun stop() {
+        inForeground = false
         drop(R.string.live_paused)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        runCatching { getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID) }
         stopSelf()
     }
 
@@ -312,21 +342,24 @@ class LiveService : Service() {
 
     /** Go foreground; false when Android refuses (a start outside an allowed context). */
     private fun foreground(): Boolean = try {
+        check(!Live.refuseForeground) { "refused" }
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         } else {
             0
         }
         ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(), type)
+        inForeground = true
         true
     } catch (e: Exception) {
         false
     }
 
-    /** Show [text] as the connection state, re-posting only on a change. */
+    /** Show [text] as the connection state, re-posting only on a change and only while in the foreground. */
     private fun show(text: Int) {
         if (text == status) return
         status = text
+        if (!inForeground) return
         runCatching { getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, notification()) }
     }
 
@@ -372,9 +405,14 @@ class LiveService : Service() {
     }
 }
 
-/** Starts the live widgets again after a reboot, when they are wanted. */
+/**
+ * Starts the live widgets again after a reboot and after an app update (which
+ * kills the process), when they are wanted. Both are allowed starts.
+ */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) Live.ensure(context)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            Live.ensure(context)
+        }
     }
 }

@@ -181,6 +181,8 @@ class ToolWidgetConfigActivity : AppCompatActivity() {
         // the instance's entry instead of adding one (#96).
         WidgetStore.bindTool(this, appWidgetId, def.id, def.label)
         ToolWidgetProvider.requestRefresh(applicationContext, appWidgetId)
+        // A visible activity: an allowed start for the live service that feeds this widget.
+        cloud.dopp.haus.realtime.Live.ensure(applicationContext)
         setResult(RESULT_OK, resultIntent())
         finish()
     }

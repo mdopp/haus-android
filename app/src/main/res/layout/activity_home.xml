@@ -128,6 +128,15 @@
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/live_switch" />
 
+            <!-- Whether a restart after a killed process goes live by itself; a tap asks for it. -->
+            <TextView
+                android:id="@+id/live_battery"
+                style="@style/Text.Haus.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:background="?android:attr/selectableItemBackground" />
+
             <TextView
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"

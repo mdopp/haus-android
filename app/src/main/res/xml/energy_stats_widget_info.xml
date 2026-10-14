@@ -9,4 +9,5 @@
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/widget_energy_stats"
     android:previewLayout="@layout/widget_energy_stats"
+    android:configure="cloud.dopp.haus.widget.LiveConfigActivity"
     android:updatePeriodMillis="0" />

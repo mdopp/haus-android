@@ -77,7 +77,16 @@ widget is placed, the energy flow's sensors; re-posted inside Haus's one-hour
 TTL; a 503 while Home Assistant is down is retried with backoff, about two
 minutes) and has every fed widget read again. A frame for an energy sensor
 reads the energy widgets again, at most every 10 s, Haus's sensor interval.
-A 401 stops the service; it starts again after boot. A session counts as healthy — and resets the reconnect
+A 401 stops the service.
+
+It starts from allowed starts only (Android 12+): the app's screen, a widget
+tap, a configure screen (the fed widgets without a choice have a no-UI one,
+so placing them counts), boot and an app update. After its process died,
+Android restarts it, and on Android 12+ that restart may go foreground only
+while the app is exempt from battery optimization — asked once after pairing,
+shown beside the switch. Without the exemption the widgets stay as they are
+until the next allowed start. A connection silent for 240 s (Haus pings every
+90 s) counts as dead and is reopened. A session counts as healthy — and resets the reconnect
 backoff — only after 120 s, longer than Haus's 90 s ping, so a proxy that
 cuts idle streams does not make the app reconnect every minute. With the screen
 off nothing goes over the network: no stream, no poll (every widget's update

@@ -8,6 +8,7 @@ import android.graphics.drawable.PictureDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -85,6 +86,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<SwitchCompat>(R.id.live_switch).setOnCheckedChangeListener { _, on ->
             if (on != Live.isEnabled(this)) Live.setEnabled(applicationContext, on)
         }
+        findViewById<TextView>(R.id.live_battery).setOnClickListener { if (!Live.exempt(this)) requestExemption() }
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
         applySystemBarInsets()
         handleDeepLink(intent)
@@ -137,6 +139,9 @@ class HomeActivity : AppCompatActivity() {
         if (!connected) return
         findViewById<TextView>(R.id.status).text = getString(R.string.home_connected, ServerStore.host(this) ?: "")
         findViewById<SwitchCompat>(R.id.live_switch).isChecked = Live.isEnabled(this)
+        findViewById<TextView>(R.id.live_battery).setText(
+            if (Live.exempt(this)) R.string.live_battery_on else R.string.live_battery_off,
+        )
         renderWidgetTypes()
         renderTools()
         refreshPersona()
@@ -399,10 +404,42 @@ class HomeActivity : AppCompatActivity() {
                         },
                     ),
                 )
-                if (outcome == Pairing.Outcome.PAIRED) askToNotify()
+                if (outcome == Pairing.Outcome.PAIRED) askExemptionOnce()
                 Live.ensure(app)
                 if (!isFinishing) render()
             }
+        }
+    }
+
+    /**
+     * Once paired, ask once — saying why — to be exempt from battery
+     * optimization: only then may Android's restart of the live service after
+     * its process died go foreground on Android 12+. Then the notification.
+     */
+    private fun askExemptionOnce() {
+        val prefs = getSharedPreferences(PREFS_ASKED, MODE_PRIVATE)
+        if (Live.exempt(this) || prefs.getBoolean(KEY_EXEMPTION, false)) {
+            askToNotify()
+            return
+        }
+        prefs.edit().putBoolean(KEY_EXEMPTION, true).apply()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.live_battery_title)
+            .setMessage(R.string.live_battery_why)
+            .setPositiveButton(R.string.live_battery_yes) { _, _ -> requestExemption() }
+            .setNegativeButton(R.string.live_battery_no, null)
+            .setOnDismissListener { askToNotify() }
+            .show()
+    }
+
+    /** The system's own question for the exemption, else its settings list. */
+    private fun requestExemption() {
+        try {
+            startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")),
+            )
+        } catch (e: Exception) {
+            runCatching { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
         }
     }
 
@@ -438,6 +475,11 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+
+    private companion object {
+        const val PREFS_ASKED = "haus_asked"
+        const val KEY_EXEMPTION = "battery_exemption"
+    }
 
     private fun appVersionName(): String = runCatching {
         packageManager.getPackageInfo(packageName, 0).versionName ?: "?"

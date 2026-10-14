@@ -23,7 +23,9 @@ These rules apply to every session, human or agent.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
   app. The live service's quiet notification is the only one; do not add
   another, a second service, a poll (widget update periods stay 0), a job, an
-  alarm or a wakelock. `ManifestTest` holds this.
+  alarm, a wakelock or a rescue worker. Recovery after a killed process rests
+  on the battery-optimization exemption the person grants. `ManifestTest`
+  holds this; `e2e/` proves it on emulators (`.github/workflows/live-e2e.yml`).
 
 ## Commits
 

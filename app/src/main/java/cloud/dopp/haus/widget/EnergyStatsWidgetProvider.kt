@@ -47,6 +47,9 @@ class EnergyStatsWidgetProvider : AppWidgetProvider() {
             AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
         )
         if (id == AppWidgetManager.INVALID_APPWIDGET_ID) return
+        if (intent.action == ACTION_TOGGLE || intent.action == ACTION_REFRESH) {
+            cloud.dopp.haus.realtime.Live.ensure(context) // a widget tap: an allowed start
+        }
         when (intent.action) {
             ACTION_TOGGLE -> {
                 WidgetStore.setRange(context, id, WidgetStore.range(context, id).toggled())

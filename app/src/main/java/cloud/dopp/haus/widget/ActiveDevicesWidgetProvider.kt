@@ -40,6 +40,7 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == ACTION_REFRESH) {
+            cloud.dopp.haus.realtime.Live.ensure(context) // a widget tap: an allowed start
             val id = intent.getIntExtra(
                 AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
             )

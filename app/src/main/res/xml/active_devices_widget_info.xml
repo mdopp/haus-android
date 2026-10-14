@@ -9,4 +9,5 @@
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/widget_active_small"
     android:previewLayout="@layout/widget_active_large"
+    android:configure="cloud.dopp.haus.widget.LiveConfigActivity"
     android:updatePeriodMillis="0" />

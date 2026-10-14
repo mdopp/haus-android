@@ -14,6 +14,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Exempt from battery optimization, the restart of the live service after its
+         process died may go foreground on Android 12+ (asked once after pairing). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
     <queries>
@@ -295,13 +298,27 @@
                 android:value="A live widget connection to the user's own Haus server: while the screen is on, it keeps the home-screen widgets showing the current state of the household." />
         </service>
 
-        <!-- Starts the live widgets again after a reboot, when they are wanted. -->
+        <!-- Starts the live widgets again after a reboot and after an app update. -->
         <receiver
             android:name=".realtime.BootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- The configure step of the fed widgets without a choice: no UI, it starts
+             the live service (an allowed start) and confirms at once. -->
+        <activity
+            android:name=".widget.LiveConfigActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

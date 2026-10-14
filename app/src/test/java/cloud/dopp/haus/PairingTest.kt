@@ -200,8 +200,9 @@ class PairingTest {
         while (shadowOf(activity).nextStartedActivity != null) { /* the Custom Tab of the pairing */ }
         d!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         shadowOf(Looper.getMainLooper()).idle()
-        val asked = shadowOf(activity).nextStartedActivity
-        assertEquals(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, asked?.action)
+        val started = generateSequence { shadowOf(activity).nextStartedActivity }.toList()
+        val asked = started.firstOrNull { it.action == android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS }
+        assertNotNull("not asked: ${started.map { it.action }}", asked)
         assertEquals(Uri.parse("package:" + ctx().packageName), asked?.data)
 
         // pairing again does not ask again
