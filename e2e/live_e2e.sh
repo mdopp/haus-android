@@ -68,14 +68,23 @@ sleep 2
 dump 1
 fg && pass "1 the service is in the foreground" || fail "1 not in the foreground"
 if [ "$API" -ge 34 ]; then
-  grep -qiE "0x40000000|specialUse" "$OUT/services-1.txt" && pass "1 type specialUse" || fail "1 not specialUse"
+  grep -qiE "types=(0x)?40000000|foregroundServiceType=(0x)?40000000|specialUse" "$OUT/services-1.txt" \
+    && pass "1 type specialUse" || fail "1 not specialUse"
 fi
 grep -q "live_widgets" "$OUT/notification-1.txt" && pass "1 the notification is on Live-Widgets" || fail "1 no Live-Widgets notification"
 
 # 2 --------------------------------------------------------------------------
 m=$(mark)
+off=$(date +%s.%N)
 on input keyevent KEYCODE_SLEEP
-wait_for "$m" CLOSE 1 5 && pass "2 screen off closes the stream within 5 s" || fail "2 no CLOSE within 5 s of screen off"
+if wait_for "$m" CLOSE 1 15; then
+  closed=$(tail -n +$(( m + 1 )) "$LOG" | grep " CLOSE" | head -1 | cut -d' ' -f1)
+  took=$(python3 -c "print(round($closed - $off, 1))")
+  python3 -c "import sys; sys.exit(0 if $closed - $off <= 5 else 1)" \
+    && pass "2 screen off closes the stream within 5 s ($took s)" || fail "2 CLOSE $took s after screen off"
+else
+  fail "2 no CLOSE within 15 s of screen off"
+fi
 on dumpsys battery unplug
 on dumpsys deviceidle force-idle >/dev/null
 m=$(mark)
@@ -110,7 +119,7 @@ m=$(mark)
 on am start -W -n $PKG/.ui.HomeActivity >/dev/null
 wait_for "$m" OPEN 1 20 || true
 on input keyevent KEYCODE_HOME
-sleep 2
+sleep 40 # well past the grace Android gives an app that just left the screen
 adb logcat -c
 m=$(mark)
 on kill -9 "$(pid)"

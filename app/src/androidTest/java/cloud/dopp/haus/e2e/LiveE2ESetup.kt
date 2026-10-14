@@ -36,6 +36,19 @@ class LiveE2ESetup {
         WidgetStore.bind(ctx, device, "light.e2e", "E2E", "light", null)
         val active = host.allocateAppWidgetId()
         assertTrue("bind the active widget", mgr.bindAppWidgetIdIfAllowed(active, ComponentName(ctx, ActiveDevicesWidgetProvider::class.java)))
+        // The stores write with apply(); the process ends with the instrumentation.
+        assertTrue("server not on disk", written(ctx, "haus_server", "10.0.2.2"))
+        assertTrue("widget binding not on disk", written(ctx, "haus_widgets", "light.e2e"))
+    }
+
+    /** Wait until the prefs file [name] holds [needle]: apply() writes in the background. */
+    private fun written(ctx: android.content.Context, name: String, needle: String): Boolean {
+        val f = java.io.File(ctx.applicationInfo.dataDir, "shared_prefs/$name.xml")
+        repeat(100) {
+            if (f.isFile && f.readText().contains(needle)) return true
+            Thread.sleep(50)
+        }
+        return false
     }
 
     private companion object {
