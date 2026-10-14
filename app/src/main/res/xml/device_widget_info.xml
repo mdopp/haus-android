@@ -9,7 +9,7 @@
     android:description="@string/widget_device_description"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:configure="cloud.dopp.solaris.widget.WidgetConfigActivity"
+    android:configure="cloud.dopp.haus.widget.WidgetConfigActivity"
     android:widgetFeatures="reconfigurable"
     android:initialLayout="@layout/widget_device_small"
     android:previewLayout="@layout/widget_device_medium"

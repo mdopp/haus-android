@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One row of the scrollable active-devices collection widget (#28): type icon +
-     name + state, Solaris dark look, mirroring item_device_row. RemoteViews-safe
+     name + state, dark look, mirroring item_device_row. RemoteViews-safe
      (LinearLayout/ImageView/TextView only — no plain <View>). The whole row is
      clickable via the collection's PendingIntentTemplate + a per-row fill-in
-     intent (tap → PWA). -->
+     intent (tap → Haus's start page). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/av_item_root"
     android:layout_width="match_parent"

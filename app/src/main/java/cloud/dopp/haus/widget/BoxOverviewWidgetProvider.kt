@@ -1,0 +1,145 @@
+package cloud.dopp.haus.widget
+
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.RemoteViews
+import cloud.dopp.haus.R
+import cloud.dopp.haus.data.BoxApiClient
+import cloud.dopp.haus.data.BoxHome
+import kotlin.concurrent.thread
+
+/**
+ * Box **overview** widget (#42): a home-summary card showing services
+ * up (+ failed/down), pending approvals and pending updates, from Haus's
+ * `/napi/box/home`. Read-only — a tap opens Haus's Box page, where the admin
+ * finds the way to Laib's own page for approvals. Config-less; the paired
+ * Haus and its token are enough.
+ */
+class BoxOverviewWidgetProvider : AppWidgetProvider() {
+
+    override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
+        ids.forEach { refresh(context, it) }
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle?,
+    ) = refresh(context, appWidgetId)
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == ACTION_REFRESH) {
+            val id = intent.getIntExtra(
+                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
+            )
+            if (id != AppWidgetManager.INVALID_APPWIDGET_ID) refresh(context, id)
+        }
+    }
+
+    private fun refresh(context: Context, appWidgetId: Int) {
+        val mgr = AppWidgetManager.getInstance(context)
+        // Tap → Haus's Box page (#109).
+        val tap = HausPages.tap(context, appWidgetId, HausPages.BOX)
+        // Immediate render from the last-good cache (#46) — show the last numbers
+        // instantly, not "—", even after a reboot/process death — then live fetch.
+        val cached = WidgetCache.getHome(context, appWidgetId)
+        try {
+            mgr.updateAppWidget(appWidgetId, render(context, appWidgetId, cached, tap))
+        } catch (t: Throwable) {
+            WidgetFallback.show(context, appWidgetId, tap)
+            return
+        }
+        val pending = goAsync()
+        thread {
+            try {
+                val home = try { BoxApiClient(context.applicationContext).getHome() } catch (e: Exception) { null }
+                if (home != null) WidgetCache.putHome(context, appWidgetId, home)
+                // On a failed fetch keep the last-good numbers instead of blanking (#46).
+                mgr.updateAppWidget(appWidgetId, render(context, appWidgetId, home ?: cached, tap))
+            } catch (t: Throwable) {
+                WidgetFallback.show(context, appWidgetId, tap)
+            } finally {
+                pending?.finish()
+            }
+        }
+    }
+
+    override fun onDeleted(context: Context, ids: IntArray) {
+        ids.forEach { WidgetCache.clear(context, it) }
+    }
+
+    private fun render(context: Context, appWidgetId: Int, home: BoxHome?, tap: PendingIntent): RemoteViews {
+        val v = RemoteViews(context.packageName, R.layout.widget_sb_overview)
+        v.setOnClickPendingIntent(R.id.sb_root, tap)
+        v.setOnClickPendingIntent(R.id.sb_refresh, refreshPending(context, appWidgetId))
+        if (home == null) {
+            v.setTextViewText(R.id.sb_services, "—")
+            v.setTextViewText(R.id.sb_approvals, "—")
+            v.setTextViewText(R.id.sb_updates, "—")
+            v.setViewVisibility(R.id.sb_services_bad, View.GONE)
+            return v
+        }
+        v.setTextViewText(R.id.sb_services, home.servicesUp.toString())
+        v.setTextViewText(R.id.sb_approvals, home.pendingApprovals.toString())
+        v.setTextViewText(R.id.sb_updates, home.pendingUpdates.toString())
+        val bad = home.servicesFailed + home.servicesDown
+        if (bad > 0) {
+            v.setViewVisibility(R.id.sb_services_bad, View.VISIBLE)
+            v.setTextViewText(
+                R.id.sb_services_bad,
+                context.getString(R.string.sb_overview_bad, bad),
+            )
+        } else {
+            v.setViewVisibility(R.id.sb_services_bad, View.GONE)
+        }
+        return v
+    }
+
+    private fun refreshPending(context: Context, appWidgetId: Int): PendingIntent {
+        val i = Intent(context, BoxOverviewWidgetProvider::class.java)
+            .setAction(ACTION_REFRESH)
+            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        return PendingIntent.getBroadcast(
+            context, 320_000 + appWidgetId, i,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    companion object {
+        const val ACTION_REFRESH = "cloud.dopp.haus.widget.SB_OVERVIEW_REFRESH"
+
+        /**
+         * Re-fetch and re-render every placed instance (#137).
+         *
+         * These tiles carry `updatePeriodMillis="0"` — Android never calls
+         * `onUpdate` on its own — and the realtime channel cannot wake them either:
+         * `card_state` is built from Home Assistant `state_changed` events, and a
+         * Box service is not an HA entity. Without this the tile shows
+         * whatever it read the last time someone tapped it, so a service that fell
+         * over stays green on the home screen.
+         *
+         * Called from [cloud.dopp.haus.realtime.LiveStream] once the stream is up after screen-on —
+         * the moment the tile is about to be looked at. Deliberately not on a timer:
+         * polling for a surface nobody is watching costs battery for nothing.
+         */
+        fun refreshAll(context: Context) {
+            val mgr = AppWidgetManager.getInstance(context)
+            val ids = mgr.getAppWidgetIds(
+                android.content.ComponentName(context, BoxOverviewWidgetProvider::class.java),
+            )
+            for (id in ids) {
+                val i = Intent(context, BoxOverviewWidgetProvider::class.java)
+                    .setAction(ACTION_REFRESH)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                context.sendBroadcast(i)
+            }
+        }
+    }
+}

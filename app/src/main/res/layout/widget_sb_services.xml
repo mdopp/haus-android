@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- ServiceBay service-status summary widget (#44): three counts — healthy /
+<!-- Box service-status summary widget (#44): three counts — healthy /
      warning / failure — from /napi/box/services. Read-only; a tap opens the
-     PWA. No per-service list, no start/stop control. RemoteViews-safe. -->
+     Box page. No per-service list, no start/stop control. RemoteViews-safe. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/svc_root"
     android:layout_width="match_parent"
@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/sb_services_title"
-            android:textColor="@color/solaris_text"
+            android:textColor="@color/haus_text"
             android:textSize="15sp"
             android:textStyle="bold"
             android:maxLines="1"
@@ -34,7 +34,7 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_refresh"
-            android:tint="@color/solaris_text_muted"
+            android:tint="@color/haus_text_muted"
             android:contentDescription="@string/widget_refresh" />
     </LinearLayout>
 
@@ -67,7 +67,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/sb_health_ok"
-                android:textColor="@color/solaris_text_muted"
+                android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -94,7 +94,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/sb_health_warn"
-                android:textColor="@color/solaris_text_muted"
+                android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -121,7 +121,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/sb_health_fail"
-                android:textColor="@color/solaris_text_muted"
+                android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
                 android:ellipsize="end" />

@@ -1,4 +1,4 @@
-# CI for the standalone Solaris widgets app (plain Gradle, no Bubblewrap).
+# CI for the Haus app (plain Gradle).
 #
 # - Every push/PR to main: a debug build proves the project COMPILES.
 # - A tag `v*`: a release-signed APK + AAB, when the keystore secrets are present.
@@ -7,7 +7,8 @@
 # Required repo secrets for signed releases:
 #   ANDROID_KEYSTORE_BASE64    - `base64 -w0 android.keystore`
 #   ANDROID_KEYSTORE_PASSWORD  - the store/key password
-# (key alias defaults to `solaris`.)
+# (key alias `haus`.) Without them, debug and CI builds still run; only the
+# tag release is skipped. The key itself is the owner's decision (laib#30).
 
 name: android-build
 
@@ -81,7 +82,7 @@ jobs:
         env:
           ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: solaris
+          ANDROID_KEY_ALIAS: haus
         run: ./gradlew :app:assembleRelease :app:bundleRelease --stacktrace
 
       - name: Attach APK/AAB to the release
@@ -96,7 +97,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: solaris-android
+          name: haus-android
           path: |
             app/build/outputs/apk/**/*.apk
             app/build/outputs/bundle/**/*.aab

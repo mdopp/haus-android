@@ -32,7 +32,7 @@
         android:maxLines="1"
         android:ellipsize="end"
         android:text="@string/devices_widget_cta"
-        android:textColor="@color/solaris_text"
+        android:textColor="@color/haus_text"
         android:textStyle="bold"
         android:textSize="13sp" />
 </LinearLayout>

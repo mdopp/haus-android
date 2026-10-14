@@ -11,7 +11,7 @@
     android:orientation="vertical"
     android:background="@drawable/widget_bg">
 
-    <!-- Header (tap = open PWA): everything except the control buttons + refresh.
+    <!-- Header (tap = open Haus's start page): everything except the control buttons + refresh.
          Padded; the bottom bar sits outside this so it can go edge-to-edge. -->
     <LinearLayout
         android:id="@+id/w_header"

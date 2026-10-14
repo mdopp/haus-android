@@ -1,53 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App-wide Solaris theme: dark surfaces + ServiceBay-blue accent.
+    <!-- App-wide Haus theme: dark surfaces + the orange accent.
          Applied in AndroidManifest to the application + activities so the
          onboarding/pairing/config screens stop looking like stock Android. -->
-    <style name="Theme.Solaris" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/solaris_accent</item>
-        <item name="colorPrimaryDark">@color/solaris_bg_elevated</item>
-        <item name="colorAccent">@color/solaris_accent</item>
-        <item name="android:colorBackground">@color/solaris_bg</item>
-        <item name="android:windowBackground">@color/solaris_bg</item>
-        <item name="android:textColorPrimary">@color/solaris_text</item>
-        <item name="android:textColorSecondary">@color/solaris_text_muted</item>
-        <item name="android:textColorHint">@color/solaris_text_faint</item>
-        <!-- The system bars are the frame the user sees around BOTH the native
-             screens and the in-app web surface (#127), so they are painted from
-             the surface tokens rather than from the shell palette — same values
-             SolarisSurface hands the Trusted Web Activity, so nothing changes
-             colour when the view changes. -->
-        <item name="android:statusBarColor">@color/solaris_surface_theme</item>
-        <item name="android:navigationBarColor">@color/solaris_surface_bg</item>
-        <item name="buttonStyle">@style/Widget.Solaris.Button</item>
-        <item name="editTextStyle">@style/Widget.Solaris.EditText</item>
+    <style name="Theme.Haus" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/haus_accent</item>
+        <item name="colorPrimaryDark">@color/haus_bg_elevated</item>
+        <item name="colorAccent">@color/haus_accent</item>
+        <item name="android:colorBackground">@color/haus_bg</item>
+        <item name="android:windowBackground">@color/haus_bg</item>
+        <item name="android:textColorPrimary">@color/haus_text</item>
+        <item name="android:textColorSecondary">@color/haus_text_muted</item>
+        <item name="android:textColorHint">@color/haus_text_faint</item>
+        <!-- The system bars carry the window's own background tones. -->
+        <item name="android:statusBarColor">@color/haus_surface_theme</item>
+        <item name="android:navigationBarColor">@color/haus_surface_bg</item>
+        <item name="buttonStyle">@style/Widget.Haus.Button</item>
+        <item name="editTextStyle">@style/Widget.Haus.EditText</item>
     </style>
 
     <!-- Same theme, but drawn over whatever is behind (used by the widget config
          activity so the picker floats on a dimmed backdrop). -->
-    <style name="Theme.Solaris.Config" parent="Theme.Solaris" />
+    <style name="Theme.Haus.Config" parent="Theme.Haus" />
 
     <!-- Every widget action dialog (#113): the card is `dialog_action.xml`, so the
          window itself is transparent and only supplies the dim. One theme for all
          of them — the confirm, the lock chooser, the colour palette and whatever
          sheet comes next — because the point of the ticket is that they stop
          looking like three different dialogs. -->
-    <style name="Theme.Solaris.ActionDialog" parent="android:Theme.Material.Dialog.Alert">
-        <item name="android:colorAccent">@color/solaris_accent</item>
-        <item name="android:colorBackground">@color/solaris_bg_elevated</item>
+    <style name="Theme.Haus.ActionDialog" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">@color/haus_accent</item>
+        <item name="android:colorBackground">@color/haus_bg_elevated</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimAmount">0.55</item>
         <item name="android:windowMinWidthMajor">80%</item>
         <item name="android:windowMinWidthMinor">92%</item>
-        <item name="android:textColorPrimary">@color/solaris_text</item>
-        <item name="android:textColorSecondary">@color/solaris_text_muted</item>
+        <item name="android:textColorPrimary">@color/haus_text</item>
+        <item name="android:textColorSecondary">@color/haus_text_muted</item>
     </style>
 
     <!-- Filled, rounded, accent-blue primary button. -->
-    <style name="Widget.Solaris.Button" parent="Widget.AppCompat.Button">
-        <item name="android:background">@drawable/btn_solaris</item>
-        <item name="android:textColor">@color/solaris_text</item>
+    <style name="Widget.Haus.Button" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/btn_haus</item>
+        <item name="android:textColor">@color/haus_text</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">15sp</item>
@@ -58,61 +54,61 @@
     </style>
 
     <!-- Secondary/ghost button: outlined, muted — for less prominent actions. -->
-    <style name="Widget.Solaris.Button.Ghost" parent="Widget.Solaris.Button">
-        <item name="android:background">@drawable/btn_solaris_ghost</item>
-        <item name="android:textColor">@color/solaris_text_muted</item>
+    <style name="Widget.Haus.Button.Ghost" parent="Widget.Haus.Button">
+        <item name="android:background">@drawable/btn_haus_ghost</item>
+        <item name="android:textColor">@color/haus_text_muted</item>
         <item name="android:textStyle">normal</item>
     </style>
 
     <!-- ── Text styles (#37) ────────────────────────────────────────────────
          A consistent type hierarchy using the tokens from dimens.xml. Plain
          (non-Widget) styles applied via style="…" on TextViews. -->
-    <style name="Text.Solaris" parent="" />
+    <style name="Text.Haus" parent="" />
 
-    <style name="Text.Solaris.Hero">
-        <item name="android:textColor">@color/solaris_text</item>
+    <style name="Text.Haus.Hero">
+        <item name="android:textColor">@color/haus_text</item>
         <item name="android:textSize">@dimen/text_hero</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
 
-    <style name="Text.Solaris.Headline">
-        <item name="android:textColor">@color/solaris_text</item>
+    <style name="Text.Haus.Headline">
+        <item name="android:textColor">@color/haus_text</item>
         <item name="android:textSize">@dimen/text_headline</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
 
-    <style name="Text.Solaris.Title">
-        <item name="android:textColor">@color/solaris_text</item>
+    <style name="Text.Haus.Title">
+        <item name="android:textColor">@color/haus_text</item>
         <item name="android:textSize">@dimen/text_title</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="Text.Solaris.Body">
-        <item name="android:textColor">@color/solaris_text_muted</item>
+    <style name="Text.Haus.Body">
+        <item name="android:textColor">@color/haus_text_muted</item>
         <item name="android:textSize">@dimen/text_body</item>
         <item name="android:lineSpacingExtra">3sp</item>
     </style>
 
-    <style name="Text.Solaris.Label">
-        <item name="android:textColor">@color/solaris_text_muted</item>
+    <style name="Text.Haus.Label">
+        <item name="android:textColor">@color/haus_text_muted</item>
         <item name="android:textSize">@dimen/text_label</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.08</item>
     </style>
 
-    <style name="Text.Solaris.Tile">
-        <item name="android:textColor">@color/solaris_text</item>
+    <style name="Text.Haus.Tile">
+        <item name="android:textColor">@color/haus_text</item>
         <item name="android:textSize">@dimen/text_tile</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Dark, rounded input field. -->
-    <style name="Widget.Solaris.EditText" parent="Widget.AppCompat.EditText">
-        <item name="android:background">@drawable/field_solaris</item>
-        <item name="android:textColor">@color/solaris_text</item>
-        <item name="android:textColorHint">@color/solaris_text_faint</item>
+    <style name="Widget.Haus.EditText" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/field_haus</item>
+        <item name="android:textColor">@color/haus_text</item>
+        <item name="android:textColorHint">@color/haus_text_faint</item>
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
         <item name="android:paddingTop">14dp</item>

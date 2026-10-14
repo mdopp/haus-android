@@ -1,4 +1,4 @@
-# Stage: Planner — mdopp/solaris-android
+# Stage: Planner — mdopp/haus-android
 
 You are the **Planner** sub-agent. Fresh context. Fill the shared work queue with
 actionable units and **bounce everything underspecified to the human** instead of
@@ -14,12 +14,12 @@ every ambiguous one becomes a *specific question*.
 
 ## Step 1 — Pull the backlog
 ```bash
-gh issue list --repo mdopp/solaris-android --state open --limit 100 --json number,title,labels,body
+gh issue list --repo mdopp/haus-android --state open --limit 100 --json number,title,labels,body
 ```
 ### Exclusion filter (drop if any apply)
 - Labels include `postponed`/`wontfix`/`duplicate`/`invalid`.
 - Already in `completed[]`/`review[]`/`blocked[]`/`awaiting_user[]`/`needs_refinement[]`/`upstream_waits[]`/`device_test[]` or a current `queue[]` unit.
-- **Unaddressed external comment** — `gh api repos/mdopp/solaris-android/issues/<N>/comments`; if the last comment is a non-owner, non-agent human → `awaiting_user[]`, skip, **never reply**.
+- **Unaddressed external comment** — `gh api repos/mdopp/haus-android/issues/<N>/comments`; if the last comment is a non-owner, non-agent human → `awaiting_user[]`, skip, **never reply**.
 
 ## Step 2 — Triage each survivor
 Build-ready = clear symptom/goal + a nameable starting file/subsystem (from the
@@ -27,7 +27,7 @@ body or a quick `grep` in `app/src/main/…`). A good issue is symptom + goal +
 starting point, not a fix-plan.
 - **Build-ready** → becomes/joins a unit (Step 3).
 - **Underspecified** (no acceptance, ambiguous scope, needs a product/design decision) → `queue.py park <issue> refinement --comment "<the specific question>"` (labels `autoloop:needs-refinement` + posts the question in one call).
-- **Needs a server change** (anything under `/napi/`, the pairing page, the web UI, a new API/field) → this is **cross-repo**. Do NOT build it here. File/ensure a **ticket in mdopp/solarisbay** (or servicebay for proxy/Authelia), and park the local issue in `upstream_waits[]` `{issue, cross_repo_issue, reason, since}`. Re-check each run whether the cross-repo issue closed → unblock. (See memory `cross-repo-ticket-only`; solarisbay/servicebay are auto-loop, so a well-written ticket gets built.)
+- **Needs a server change** (anything under `/napi/`, the pairing page, the web UI, a new API/field) → this is **cross-repo**. Do NOT build it here. File/ensure a **ticket in mdopp/haus** (or box for proxy/Authelia), and park the local issue in `upstream_waits[]` `{issue, cross_repo_issue, reason, since}`. Re-check each run whether the cross-repo issue closed → unblock. (See memory `cross-repo-ticket-only`; haus are auto-loop, so a well-written ticket gets built.)
 
 ## Step 3 — Cluster into units
 Group issues that touch the same area (e.g. all widget-rendering, all onboarding
@@ -67,7 +67,7 @@ Set it when the unit — *whatever file it lives in* — does any of:
 - **lets untrusted input into a privileged path**: a newly exported component, a
   deep-link handler, an intent acted on without verifying where it came from.
 - **changes signing or the asset-links identity**: signing config, `applicationId`,
-  or the fingerprints in the handshake with solarisbay.
+  or the fingerprints in the handshake with haus.
 
 Rule of thumb: **if the diff moves a household action closer to a tap, it is a
 review unit.** Rendering, labels, layout, i18n, tests and refactors that leave

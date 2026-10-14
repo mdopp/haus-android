@@ -1,4 +1,4 @@
-# Stage: Builder — mdopp/solaris-android
+# Stage: Builder — mdopp/haus-android
 
 You are the **Builder** sub-agent. Fresh context. Implement **one unit** onto the
 persistent batch branch with **fast gates**, or perform the **batch seal** when
@@ -7,7 +7,7 @@ told. Return one line and exit.
 Read first: `SKILL.md` (batch economy — the prime directive) + `CLAUDE.md` +
 memory. Env (per session): `export JAVA_HOME=~/.bubblewrap/jdk/jdk-17.0.11+9
 ANDROID_HOME=~/.bubblewrap/android_sdk; export PATH=$JAVA_HOME/bin:~/.npm-global/bin:$PATH`.
-`git config --global --add safe.directory /workspace/solaris-android`.
+`git config --global --add safe.directory /workspace/haus-android`.
 
 ## Mode A — build one unit (the common case)
 1. `queue.py next` → the next planned unit **in planning order** (the planner's order is the build order — never re-pick by id); then `queue.py claim <id>` (sets `autoloop:building`, the cross-instance lock).
@@ -28,7 +28,7 @@ ANDROID_HOME=~/.bubblewrap/android_sdk; export PATH=$JAVA_HOME/bin:~/.npm-global
 4. Build the **signed release APK** for the human to sideload-test (memory
    `signing-key-and-fingerprint` has the keystore; password is user-held — the
    loop uses the CI path or the env-driven gradle signingConfig):
-   `ANDROID_KEYSTORE_FILE=… ANDROID_KEYSTORE_PASSWORD=… ANDROID_KEY_ALIAS=solaris ./gradlew :app:assembleRelease` → verify `apksigner verify` shows the expected cert.
+   `ANDROID_KEYSTORE_FILE=… ANDROID_KEYSTORE_PASSWORD=… ANDROID_KEY_ALIAS=haus ./gradlew :app:assembleRelease` → verify `apksigner verify` shows the expected cert.
 5. Set `verify_state = {sha, status:"owed"}`. For each `gate:"verify"` unit, add to
    `queue.py park <issue> device-test --comment "APK app/build/outputs/apk/release/app-release.apk — <what_to_check>"` for each shipped unit — the human sideloads + confirms — then `queue.py batch reset` (drops the shipped units; durable record is the merged PR + closed issues).
 6. Reset `batch = null`. Return `builder: sealed batch/<id> (#a #b …) → verify owed`.

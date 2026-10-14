@@ -11,7 +11,7 @@
     android:orientation="horizontal"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
-    android:background="@drawable/btn_solaris_ghost"
+    android:background="@drawable/btn_haus_ghost"
     android:clickable="true"
     android:focusable="true">
 
@@ -24,7 +24,7 @@
 
     <TextView
         android:id="@+id/ar_label"
-        style="@style/Text.Solaris.Title"
+        style="@style/Text.Haus.Title"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content" />

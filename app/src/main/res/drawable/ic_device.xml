@@ -2,7 +2,7 @@
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24" android:viewportHeight="24"
     android:tint="#FFFFFFFF">
-    <!-- Refined Solaris "device" glyph: a wall-mounted control panel with a
+    <!-- Refined Haus "device" glyph: a wall-mounted control panel with a
          rounded screen and a status dot + slider — reads as a generic smart
          device, cleaner than the old TV+phone motif. Single tintable path so
          the accent tint still applies (siblings: ic_light/ic_cover/ic_switch). -->

@@ -25,7 +25,7 @@ object RepoFiles {
     fun walk(dir: File = root): List<File> =
         dir.walkTopDown()
             .onEnter { it == dir || it.name !in skipDirs }
-            .filter { it.isFile }
+            .filter { it.isFile && it.name != ".git" } // a worktree's .git is a file
             .toList()
 
     /** A file with a NUL byte in its first 8 KB is binary (png, jar). */

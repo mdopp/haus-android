@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Native camera capture + upload (#36): take one or a series of photos, name the
      file (date/time prefilled), optionally combine into a multi-page PDF, and
-     upload to the paired Solaris server (/napi/upload, solarisbay#826). -->
+     upload to the paired Haus (/napi/upload). -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/solaris_bg">
+    android:background="@color/haus_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,14 +19,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
             android:text="@string/camera_capture_title"
-            style="@style/Text.Solaris.Headline" />
+            style="@style/Text.Haus.Headline" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs"
             android:text="@string/camera_capture_hint"
-            style="@style/Text.Solaris.Body" />
+            style="@style/Text.Haus.Body" />
 
         <!-- Captured pages counter. -->
         <TextView
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_lg"
             android:text="@string/camera_capture_none"
-            style="@style/Text.Solaris.Title" />
+            style="@style/Text.Haus.Title" />
 
         <!-- Mini gallery (#62): thumbnails of every captured page; each can be
              deleted or reordered. Hidden until there's at least one page. -->
@@ -59,13 +59,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/btn_solaris"
+            android:background="@drawable/btn_haus"
             android:drawableStart="@drawable/ic_camera"
             android:drawablePadding="@dimen/space_sm"
             android:paddingTop="14dp"
             android:paddingBottom="14dp"
             android:text="@string/camera_capture_take"
-            android:textColor="@color/solaris_text"
+            android:textColor="@color/haus_text"
             android:textAllCaps="false" />
 
         <Button
@@ -73,11 +73,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_sm"
-            android:background="@drawable/btn_solaris_ghost"
+            android:background="@drawable/btn_haus_ghost"
             android:paddingTop="12dp"
             android:paddingBottom="12dp"
             android:text="@string/camera_capture_clear"
-            android:textColor="@color/solaris_text_muted"
+            android:textColor="@color/haus_text_muted"
             android:textAllCaps="false"
             android:visibility="gone" />
 
@@ -87,19 +87,19 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_lg"
             android:text="@string/camera_capture_filename"
-            style="@style/Text.Solaris.Label" />
+            style="@style/Text.Haus.Label" />
 
         <EditText
             android:id="@+id/cap_filename"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs"
-            android:background="@drawable/field_solaris"
+            android:background="@drawable/field_haus"
             android:padding="@dimen/space_md"
             android:inputType="text"
             android:maxLines="1"
-            android:textColor="@color/solaris_text"
-            android:textColorHint="@color/solaris_text_faint"
+            android:textColor="@color/haus_text"
+            android:textColorHint="@color/haus_text_faint"
             android:hint="@string/camera_capture_filename" />
 
         <!-- Combine to a single multi-page PDF. -->
@@ -115,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/camera_capture_as_pdf"
-                style="@style/Text.Solaris.Body" />
+                style="@style/Text.Haus.Body" />
 
             <Switch
                 android:id="@+id/cap_pdf"
@@ -137,7 +137,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/camera_capture_bw"
-                style="@style/Text.Solaris.Body" />
+                style="@style/Text.Haus.Body" />
 
             <Switch
                 android:id="@+id/cap_bw"
@@ -150,11 +150,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_lg"
-            android:background="@drawable/btn_solaris"
+            android:background="@drawable/btn_haus"
             android:paddingTop="14dp"
             android:paddingBottom="14dp"
             android:text="@string/camera_capture_upload"
-            android:textColor="@color/solaris_text"
+            android:textColor="@color/haus_text"
             android:textAllCaps="false"
             android:enabled="false" />
 
@@ -173,6 +173,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_sm"
             android:text=""
-            style="@style/Text.Solaris.Body" />
+            style="@style/Text.Haus.Body" />
     </LinearLayout>
 </ScrollView>

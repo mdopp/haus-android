@@ -14,7 +14,7 @@
             android:id="@+id/page_thumb"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/field_solaris"
+            android:background="@drawable/field_haus"
             android:scaleType="centerCrop"
             android:contentDescription="@string/camera_capture_title" />
 
@@ -27,7 +27,7 @@
             android:background="@drawable/tile_accent_circle"
             android:gravity="center"
             android:text="✕"
-            android:textColor="@color/solaris_text"
+            android:textColor="@color/haus_text"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -41,7 +41,7 @@
             android:paddingStart="6dp"
             android:paddingEnd="6dp"
             android:text="1"
-            android:textColor="@color/solaris_text"
+            android:textColor="@color/haus_text"
             android:textSize="12sp"
             android:textStyle="bold" />
     </FrameLayout>
@@ -62,7 +62,7 @@
             android:gravity="center"
             android:padding="6dp"
             android:text="◀"
-            android:textColor="@color/solaris_text_muted"
+            android:textColor="@color/haus_text_muted"
             android:textSize="16sp" />
 
         <TextView
@@ -73,7 +73,7 @@
             android:gravity="center"
             android:padding="6dp"
             android:text="▶"
-            android:textColor="@color/solaris_text_muted"
+            android:textColor="@color/haus_text_muted"
             android:textSize="16sp" />
     </LinearLayout>
 </LinearLayout>

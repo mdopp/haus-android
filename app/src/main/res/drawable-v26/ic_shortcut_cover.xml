@@ -7,7 +7,7 @@
      The 30% inset keeps the glyph inside the mask's safe zone — the outer third
      of the canvas is the launcher's to crop. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/solaris_brand_blue" />
+    <background android:drawable="@color/haus_brand_blue" />
     <foreground>
         <inset android:drawable="@drawable/ic_cover" android:inset="30%" />
     </foreground>
