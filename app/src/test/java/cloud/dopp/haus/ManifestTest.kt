@@ -10,7 +10,8 @@ import java.io.File
  * no notifications, no boot start, no background poll, no web shell, no voice.
  * Widgets stay current through one live stream, only while the screen is on —
  * so nothing in the manifest may keep the app alive or wake it, and nothing in
- * the sources may post a notification or open a Trusted Web Activity.
+ * the sources may post a notification, schedule work, set an alarm, hold a
+ * wakelock or open a Trusted Web Activity.
  */
 class ManifestTest {
 
@@ -53,6 +54,29 @@ class ManifestTest {
             "RecognizerIntent", "SpeechRecognizer",
         )
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
+    }
+
+    /**
+     * Nothing that runs the app later or keeps the CPU up: no job (JobScheduler),
+     * no worker (WorkManager), no alarm (AlarmManager), no wakelock (PowerManager).
+     * Asking PowerManager whether the screen is on is fine; holding it awake is not.
+     */
+    @Test
+    fun noJobNoWorkerNoAlarmNoWakelockInTheSources() {
+        val hits = noneSay(
+            "JobScheduler", "JobService", "JobInfo", "JOB_SCHEDULER_SERVICE",
+            "androidx.work", "WorkManager", "WorkRequest", "CoroutineWorker",
+            "AlarmManager", "ALARM_SERVICE", "setExactAndAllowWhileIdle", "setAlarmClock",
+            "newWakeLock", "WakeLock", "PARTIAL_WAKE_LOCK", "acquire(",
+        )
+        assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
+    }
+
+    @Test
+    fun noJobServiceOrAlarmReceiverInTheManifest() {
+        listOf("BIND_JOB_SERVICE", "SCHEDULE_EXACT_ALARM", "USE_EXACT_ALARM", "androidx.work").forEach {
+            assertFalse("manifest names $it", manifest.contains(it))
+        }
     }
 
     @Test

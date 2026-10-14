@@ -61,4 +61,17 @@ class DeviceSearchTest {
         // heizung has no room → its domain "climate" is searched.
         assertTrue(DeviceSearch.matches(heizung, "climate"))
     }
+
+    /**
+     * Haus offers cameras for the picker (camera.go:25) but draws no card for one
+     * (home.go:41, 170): a device widget bound to a camera would never render.
+     * The picker offers only what Haus draws as a card.
+     */
+    @Test
+    fun aCameraIsNotOfferedForADeviceWidget() {
+        val cam = dev("Einfahrt", room = "Hof", domain = "camera")
+        @Suppress("UNCHECKED_CAST")
+        val offered = Reach.call("cloud.dopp.haus.data.DeviceSearch", "pickable", all + cam) as List<Device>
+        assertEquals(all, offered)
+    }
 }

@@ -78,4 +78,39 @@ class RealtimeProtocolTest {
         assertTrue(RealtimeProtocol.healthySession(open, open + RealtimeProtocol.STABLE_SESSION_MS))
         assertTrue(RealtimeProtocol.healthySession(open, open + 5 * RealtimeProtocol.STABLE_SESSION_MS))
     }
+
+    /**
+     * Haus pings an open stream every 90 s (live.go:28). A proxy that cuts idle
+     * streams before that ends every session early; such a session must not
+     * count as healthy, or the backoff resets and the app reconnects — and
+     * re-reads every widget — about once a minute.
+     */
+    @Test
+    fun aHealthySessionOutlastsHaussPing() {
+        val haussPing = 90_000L
+        assertTrue(RealtimeProtocol.STABLE_SESSION_MS > haussPing)
+        val open = 1_000_000L
+        org.junit.Assert.assertFalse(RealtimeProtocol.healthySession(open, open + haussPing))
+    }
+
+    /**
+     * `POST /napi/portal/watch` answers 503 while Home Assistant is down
+     * (live.go:92-95). Without its watch set the open stream carries no frames,
+     * so the post is tried again, backing off, and gives up after a bound; every
+     * other answer is final.
+     */
+    @Test
+    fun aWatchPostHausCannotTakeYetIsRetriedWithBackoff() {
+        val rp = "cloud.dopp.haus.realtime.RealtimeProtocol"
+        val delays = (0 until 12).map { Reach.call(rp, "watchRetryMs", 503, it) as Long? }
+        assertEquals(2_000L, delays[0])
+        val tried = delays.takeWhile { it != null }.map { it!! }
+        assertTrue("no retry at all", tried.size >= 3)
+        assertTrue("does not back off: $tried", tried.zipWithNext().all { (a, b) -> b >= a } && tried.last() > tried.first())
+        assertTrue("retries forever: $delays", delays.last() == null)
+        assertTrue("waits longer than a minute: $tried", tried.all { it <= 60_000L })
+        listOf(200, 204, 400, 401, 404, 500, 0).forEach {
+            assertNull("retries a $it", Reach.call(rp, "watchRetryMs", it, 0))
+        }
+    }
 }
