@@ -30,6 +30,7 @@ import cloud.dopp.solaris.R
 import cloud.dopp.solaris.SolarisApp
 import cloud.dopp.solaris.SolarisConfig
 import cloud.dopp.solaris.data.ApiClient
+import cloud.dopp.solaris.data.PairLinks
 import cloud.dopp.solaris.data.PersonaStore
 import cloud.dopp.solaris.data.SbApiClient
 import cloud.dopp.solaris.data.ServerStore
@@ -54,7 +55,8 @@ import java.io.StringWriter
  *  1. connect to their own Solaris server (URL entry; QR to follow),
  *  2. install the Solaris PWA (opens the server in a Custom Tab),
  *  3. add widgets (one-tap via requestPinAppWidget).
- * It also captures the `cloud.dopp.solaris://pair#token=…` redirect from the
+ * It also captures the `haus://pair#token=…` (or legacy
+ * `cloud.dopp.solaris://pair#token=…`) redirect from the
  * server's /pair-device page and stores the device token.
  *
  * **This is the screen the app icon opens** (#129). #115 briefly sent the icon
@@ -484,23 +486,22 @@ class OnboardingHomeActivity : AppCompatActivity() {
         )
     }
 
-    /** Parse `cloud.dopp.solaris://setup?server=…&token=…`, or a plain https URL. */
+    /**
+     * Parse `haus://setup?server=…&token=…` (or its legacy
+     * `cloud.dopp.solaris://` twin, see [PairLinks]), or a plain https URL.
+     */
     private fun handleScanned(text: String) {
-        val uri = runCatching { Uri.parse(text) }.getOrNull()
-        if (uri != null && uri.scheme == SolarisConfig.PAIR_SCHEME && uri.host == SolarisConfig.SETUP_HOST) {
-            val server = uri.getQueryParameter(SolarisConfig.SETUP_SERVER_PARAM)
-            val token = uri.getQueryParameter(SolarisConfig.PAIR_TOKEN_PARAM)
-            if (!server.isNullOrBlank()) {
-                ServerStore.setBaseUrl(this, server)
-                if (!token.isNullOrBlank() && token.startsWith("sol_device_")) {
-                    TokenStore.save(this, token)
-                    toast(getString(R.string.pairing_success))
-                    render()
-                } else {
-                    openPairing()
-                }
-                return
+        val setup = PairLinks.parseSetup(text)
+        if (setup != null) {
+            ServerStore.setBaseUrl(this, setup.server)
+            if (setup.token != null) {
+                TokenStore.save(this, setup.token)
+                toast(getString(R.string.pairing_success))
+                render()
+            } else {
+                openPairing()
             }
+            return
         }
         if (text.startsWith("http://", true) || text.startsWith("https://", true)) {
             ServerStore.setBaseUrl(this, text)
@@ -530,16 +531,11 @@ class OnboardingHomeActivity : AppCompatActivity() {
 
     private fun handleDeepLink(intent: Intent?) {
         val data = intent?.data ?: return
-        if (data.scheme != SolarisConfig.PAIR_SCHEME || data.host != SolarisConfig.PAIR_HOST) return
-        // Token rides the fragment (cloud.dopp.solaris://pair#token=…). Parse the
-        // fragment AND query by hand — never call getQueryParameter (it throws on
-        // opaque URIs) — and swallow anything so this path can't crash the app.
-        val token = try {
-            paramFrom(data.fragment) ?: paramFrom(data.encodedQuery)
-        } catch (e: Exception) {
-            null
-        }
-        if (token != null && token.startsWith("sol_device_")) {
+        // haus://pair#token=… or the legacy cloud.dopp.solaris://pair#token=… (#174).
+        // PairLinks parses fragment and query by hand and never throws.
+        if (!PairLinks.isPairLink(data)) return
+        val token = PairLinks.pairToken(data)
+        if (token != null) {
             try {
                 TokenStore.save(this, token)
                 toast(getString(R.string.pairing_success))
@@ -549,16 +545,6 @@ class OnboardingHomeActivity : AppCompatActivity() {
         } else {
             toast(getString(R.string.pairing_failed))
         }
-    }
-
-    /** Pull `token=…` out of a `k=v&k=v` string (URL fragment or query). */
-    private fun paramFrom(s: String?): String? {
-        if (s.isNullOrBlank()) return null
-        val raw = s.split("&")
-            .firstOrNull { it.startsWith("${SolarisConfig.PAIR_TOKEN_PARAM}=") }
-            ?.substringAfter("=") ?: return null
-        val decoded = runCatching { Uri.decode(raw) }.getOrNull() ?: raw
-        return decoded.ifBlank { null }
     }
 
     /**

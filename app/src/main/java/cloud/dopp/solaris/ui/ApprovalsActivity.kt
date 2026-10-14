@@ -17,7 +17,7 @@ import kotlin.concurrent.thread
 
 /**
  * In-app list of pending ServiceBay approvals (#43), read from Solaris'
- * aggregated `/napi/servicebay/approvals`. Read-only: each row opens the PWA to
+ * aggregated `/napi/box/approvals`. Read-only: each row opens the PWA to
  * actually approve/reject, because the verdict needs the admin's Authelia session
  * (only the Custom Tab has it) — a device-token verdict is forbidden by design
  * (#2249). Reached from the ServiceBay overview widget's approvals count and

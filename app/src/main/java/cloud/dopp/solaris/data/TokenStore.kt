@@ -11,8 +11,9 @@ import javax.crypto.AEADBadTagException
 
 /**
  * Encrypted-at-rest storage for the native client's device-token bearer
- * (`sol_device_…`), backed by [EncryptedSharedPreferences] + an AndroidKeyStore
- * master key.
+ * (`haus_device_…`, legacy `sol_device_…` — the prefix is checked by
+ * [PairLinks] before saving, not here), backed by [EncryptedSharedPreferences]
+ * + an AndroidKeyStore master key.
  *
  * **Durability (#46).** Two hazards used to silently delete the token — which
  * blanked every widget "after a while / on certain events":

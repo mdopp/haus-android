@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ServiceBay service-status summary widget (#44): 2x2-ish counts card, resizable,
-     NO config. Polls /napi/servicebay/services; a tap opens the PWA. -->
+     NO config. Polls /napi/box/services; a tap opens the PWA. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="180dp"
     android:minHeight="110dp"

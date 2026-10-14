@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ServiceBay service-status summary widget (#44): three counts — healthy /
-     warning / failure — from /napi/servicebay/services. Read-only; a tap opens the
+     warning / failure — from /napi/box/services. Read-only; a tap opens the
      PWA. No per-service list, no start/stop control. RemoteViews-safe. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/svc_root"

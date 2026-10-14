@@ -15,8 +15,9 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Minimal Solaris API client for the native surfaces, authenticated with the
- * `sol_device_…` bearer token from [TokenStore]. All calls are blocking and must
- * run off the main thread (widget provider goAsync thread / worker).
+ * device token (`haus_device_…`, legacy `sol_device_…`) from [TokenStore]. All
+ * calls are blocking and must run off the main thread (widget provider goAsync
+ * thread / worker).
  */
 class ApiClient(private val ctx: Context) {
 

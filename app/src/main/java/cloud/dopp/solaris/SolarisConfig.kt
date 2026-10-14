@@ -6,7 +6,10 @@ package cloud.dopp.solaris
  * is multi-tenant: each user pairs it to their own Solaris server).
  */
 object SolarisConfig {
-    /** Android application id — the pairing deep-link scheme equals this. */
+    /**
+     * Android application id. It stays `cloud.dopp.solaris` for good: a new id
+     * would be a new app. The legacy deep-link scheme equals it.
+     */
     const val PACKAGE = "cloud.dopp.solaris"
 
     /**
@@ -57,16 +60,27 @@ object SolarisConfig {
     }
 
     /**
-     * Pairing redirect deep link: `cloud.dopp.solaris://pair#token=…&id=…`
-     * (token in the fragment so it never hits proxy logs).
+     * Device-token prefixes (#174, laib ADR 0021). Haus moves to the neutral
+     * `haus_device_`; `sol_device_` is what every server minted before and stays
+     * valid. Matching lives in [cloud.dopp.solaris.data.PairLinks].
      */
-    const val PAIR_SCHEME = "cloud.dopp.solaris"
+    const val TOKEN_PREFIX = "haus_device_"
+    const val LEGACY_TOKEN_PREFIX = "sol_device_"
+
+    /**
+     * Pairing redirect deep link: `haus://pair#token=…&id=…`, or the legacy
+     * `cloud.dopp.solaris://pair#token=…&id=…` (#174 — both are accepted).
+     * The token rides the fragment so it never hits proxy logs.
+     */
+    const val PAIR_SCHEME = "haus"
+    const val LEGACY_PAIR_SCHEME = "cloud.dopp.solaris"
     const val PAIR_HOST = "pair"
     const val PAIR_TOKEN_PARAM = "token"
 
     /**
-     * QR content the server's "connect phone" page encodes (scanned, not launched
-     * as an intent): `cloud.dopp.solaris://setup?server=<url>&token=<sol_device_…>`.
+     * QR content the server's "connect phone" page encodes (scanned in-app, not
+     * launched as an intent): `haus://setup?server=<url>&token=<device token>`,
+     * or the same under the legacy `cloud.dopp.solaris://` scheme.
      * `server` required, `token` optional (present → instant pair; absent → login).
      */
     const val SETUP_HOST = "setup"

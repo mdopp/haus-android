@@ -13,7 +13,7 @@ import kotlin.concurrent.thread
 
 /**
  * ServiceBay **service-status summary** widget (#44): three counts — healthy /
- * warning / failure — from Solaris' aggregated `/napi/servicebay/services`
+ * warning / failure — from Solaris' aggregated `/napi/box/services`
  * (BFF, ADR 0010), bucketed by [SbRender]. Deliberately NOT a per-service list and
  * NOT a control surface (start/stop hinges on solarisbay#827). Read-only; a tap
  * opens the PWA.

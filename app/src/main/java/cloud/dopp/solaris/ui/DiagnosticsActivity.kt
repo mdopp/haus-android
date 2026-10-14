@@ -64,7 +64,7 @@ class DiagnosticsActivity : AppCompatActivity() {
     }
 
     /**
-     * The notification self-test (#110): fetch `/napi/servicebay/home` **once**,
+     * The notification self-test (#110): fetch `/napi/box/home` **once**,
      * bypassing the screen-off + rise gate that makes #45 unprovokable, report the
      * counts and the tap target, deliver one marked test alert per kind through the
      * real builders, and drop the persisted baseline so a standing count alerts
