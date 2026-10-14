@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Devices trigger tile (#167): the unified trigger-tile pattern (#54), the same
-     shape as the voice and camera tiles — a filled accent circle with a glyph and
+     shape as the camera tile — a filled accent circle with a glyph and
      one bold word. A tap opens the household start page, where every pinned device
      shows its live state and can be operated.
      RemoteViews-safe (LinearLayout / ImageView / TextView only). -->

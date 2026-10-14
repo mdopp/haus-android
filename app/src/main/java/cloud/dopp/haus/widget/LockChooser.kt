@@ -32,11 +32,12 @@ enum class LockChoice(val service: String) {
  * confirmation** — there is no longer any path that acts without an explicit
  * pick, and no second dialog on top of it.
  *
- * `lock.open` is the odd one out. The server does not block it — the old server
- * #1212 allowlists the whole `lock` domain on `/napi/ha/call` and gates every
- * `lock.*` with the authoritative 403 `sensitive_action` — but the *lock* may
- * not have a latch at all. HA advertises one via `LockEntityFeature.OPEN`, bit 0
- * of the entity's `supported_features`, which `card_spec` forwards. No proof of
+ * `lock.open` is the odd one out. Haus does not block it — `/napi/ha/call`
+ * takes the whole `lock` domain and gates every `lock.*` with the
+ * authoritative 403 `sensitive_action` (Haus's `internal/napi/home.go`) — but
+ * the *lock* may not have a latch at all. HA advertises one via
+ * `LockEntityFeature.OPEN`, bit 0 of the entity's `supported_features`, which
+ * Haus's card forwards. No proof of
  * that bit ⇒ no door-opening entry: a missing capability must never render as an
  * offer to open the house.
  *

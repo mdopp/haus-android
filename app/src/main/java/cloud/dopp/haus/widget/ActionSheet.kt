@@ -28,7 +28,7 @@ data class ActionItem(
     val service: String? = null,
     val swatchRgb: Int? = null,
     /**
-     * A label the **server** supplied (`tool-actions-titled`, the old server's ADR 0014).
+     * A label **Haus** supplied (`tool-actions-titled`, #169).
      * When present it wins over [labelRes]; the titles arrive ready to read and
      * are not shortened or translated here — the same rule as `status_text`: the
      * server says, the client shows.

@@ -3,7 +3,7 @@
      pending approvals, pending updates — from /napi/box/home. Read-only; a
      tap opens Haus's page. RemoteViews-safe (LinearLayout/TextView/ImageView only). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/sb_root"
+    android:id="@+id/box_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -19,11 +19,11 @@
         android:baselineAligned="false">
 
         <TextView
-            android:id="@+id/sb_title"
+            android:id="@+id/box_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/sb_overview_title"
+            android:text="@string/box_overview_title"
             android:textColor="@color/haus_text"
             android:textSize="15sp"
             android:textStyle="bold"
@@ -31,7 +31,7 @@
             android:ellipsize="end" />
 
         <ImageView
-            android:id="@+id/sb_refresh"
+            android:id="@+id/box_refresh"
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_refresh"
@@ -57,7 +57,7 @@
             android:gravity="center">
 
             <TextView
-                android:id="@+id/sb_services"
+                android:id="@+id/box_services"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="—"
@@ -68,14 +68,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sb_overview_services"
+                android:text="@string/box_overview_services"
                 android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
             <TextView
-                android:id="@+id/sb_services_bad"
+                android:id="@+id/box_services_bad"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
@@ -93,7 +93,7 @@
             android:gravity="center">
 
             <TextView
-                android:id="@+id/sb_approvals"
+                android:id="@+id/box_approvals"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="—"
@@ -104,7 +104,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sb_overview_approvals"
+                android:text="@string/box_overview_approvals"
                 android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
@@ -120,7 +120,7 @@
             android:gravity="center">
 
             <TextView
-                android:id="@+id/sb_updates"
+                android:id="@+id/box_updates"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="—"
@@ -131,7 +131,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sb_overview_updates"
+                android:text="@string/box_overview_updates"
                 android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"

@@ -1,5 +1,7 @@
 package cloud.dopp.haus.data
 
+import cloud.dopp.haus.data.Napi.CellSchemaJson
+import cloud.dopp.haus.data.Napi.ToolDefJson
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -18,8 +20,6 @@ data class ToolDef(
     val label: String,
     /** Item-list path under `/napi/`, or null when the tool has none (or names another). */
     val apiPath: String?,
-    /** Optional search path, same normalisation as [apiPath]. */
-    val searchPath: String?,
     /** `tool-actions` — the declared action ids (plain strings, ADR 0011). */
     val actions: List<String>,
     /**
@@ -111,7 +111,7 @@ object ToolDefs {
 
     /**
      * Parse `GET /napi/defs/tool` → `{ok, kind:"tool", defs:[…]}` into [ToolDef]s,
-     * keeping the server's order (it sorts by name). A bare array is accepted too.
+     * keeping Haus's order. A bare array is accepted too.
      * Malformed input → empty list; a single unparseable def is skipped, never
      * fatal (one bad plugin must not take the whole picker down).
      */
@@ -120,8 +120,8 @@ object ToolDefs {
         return try {
             val t = body.trim()
             val root =
-                if (t.startsWith("[")) JSONObject().put("defs", JSONArray(t)) else JSONObject(t)
-            val arr = root.optJSONArray("defs") ?: root.optJSONArray("tools") ?: return emptyList()
+                if (t.startsWith("[")) JSONObject().put(ToolDefJson.DEFS, JSONArray(t)) else JSONObject(t)
+            val arr = root.optJSONArray(ToolDefJson.DEFS) ?: return emptyList()
             (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { parseDef(it) } }
         } catch (e: Exception) {
             emptyList()
@@ -130,22 +130,21 @@ object ToolDefs {
 
     /** One catalog row → [ToolDef], or null when it carries no usable `tool-id`. */
     fun parseDef(o: JSONObject): ToolDef? {
-        val id = (o.optString("tool-id").ifBlank { o.optString("id") }).trim()
+        val id = o.optString(ToolDefJson.TOOL_ID).trim()
         if (id.isEmpty()) return null
-        val label = o.optString("tool-label").ifBlank { o.optString("name") }.ifBlank { id }
-        val actions = stringList(o.opt("tool-actions"))
-        val schema = parseSchema(o.optJSONObject("tool-cell-schema"))
+        val label = o.optString(ToolDefJson.TOOL_LABEL).ifBlank { id }
+        val actions = stringList(o.opt(ToolDefJson.TOOL_ACTIONS))
+        val schema = parseSchema(o.optJSONObject(ToolDefJson.TOOL_CELL_SCHEMA))
         return ToolDef(
             id = id,
             label = label,
-            apiPath = napiPath(o.optString("tool-api-path")),
-            searchPath = napiPath(o.optString("tool-search-path")),
+            apiPath = napiPath(o.optString(ToolDefJson.TOOL_API_PATH)),
             actions = actions,
             // The schema may only reference ids the def actually declares — an
             // action id we can't dispatch is dropped rather than shown dead.
             schema = schema.copy(actions = schema.actions.filter { it in actions }),
-            actionParams = parseActionParams(o.optJSONObject("tool-action-params")),
-            actionTitles = parseActionTitles(o.optJSONArray("tool-actions-titled")),
+            actionParams = parseActionParams(o.optJSONObject(ToolDefJson.TOOL_ACTION_PARAMS)),
+            actionTitles = parseActionTitles(o.optJSONArray(ToolDefJson.TOOL_ACTIONS_TITLED)),
         )
     }
 
@@ -192,9 +191,9 @@ object ToolDefs {
         val out = LinkedHashMap<String, String?>()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
-            val id = o.optString("id").trim()
+            val id = o.optString(ToolDefJson.ID).trim()
             if (id.isEmpty()) continue
-            out[id] = o.optString("title").trim().ifBlank { null }
+            out[id] = o.optString(ToolDefJson.TITLE).trim().ifBlank { null }
         }
         return out
     }
@@ -212,22 +211,21 @@ object ToolDefs {
     fun parseSchema(o: JSONObject?): ToolCellSchema {
         if (o == null) return ToolCellSchema.EMPTY
         return ToolCellSchema(
-            title = single(o, "title"),
-            subtitle = single(o, "subtitle"),
-            meta = stringList(o.opt("meta")),
+            title = single(o, CellSchemaJson.TITLE),
+            subtitle = single(o, CellSchemaJson.SUBTITLE),
+            meta = stringList(o.opt(CellSchemaJson.META)),
             // `badge` and `state` are the two spellings of the same chip role.
-            badge = single(o, "badge") ?: single(o, "state"),
-            icon = single(o, "icon"),
-            actions = stringList(o.opt("actions")),
+            badge = single(o, CellSchemaJson.BADGE) ?: single(o, CellSchemaJson.STATE),
+            icon = single(o, CellSchemaJson.ICON),
+            actions = stringList(o.opt(CellSchemaJson.ACTIONS)),
         )
     }
 
     /**
-     * Pull the item rows out of a tool's data payload. The shipped endpoints wrap
-     * their list under a handler-specific key (`tasks`, `contacts`, `documents`,
-     * …), so we look for the known names first and otherwise take the payload's
-     * first array — a new tool with a new key still renders. A bare array works
-     * too. Bounded by [cap]; malformed → empty.
+     * Pull the item rows out of a tool's rows reply. Haus wraps the list under
+     * the tool's own key (`tasks`, `contacts`, `documents`, `notes`) next to
+     * `ok`, so the reply's one array is the list — a new tool with a new key
+     * renders too. A bare array works as well. Bounded by [cap]; malformed → empty.
      */
     fun rows(body: String?, cap: Int = MAX_ROWS): List<JSONObject> {
         if (body.isNullOrBlank()) return emptyList()
@@ -247,21 +245,17 @@ object ToolDefs {
     }
 
     /**
-     * Body for `POST /napi/action-callback` (Haus, `internal/napi/tools.go`):
-     * `{"action_id": …, "params": {…}}`, plus `confirmed` on the retry after the
-     * server's 403 confirm-gate. Pure so the wire shape is unit-testable.
+     * Body for `POST /napi/action-callback` ([Napi.ACTION_CALLBACK]):
+     * `{"action_id": …, "params": {…}}`, plus `confirmed` on the retry after a
+     * 403 confirm gate. Pure so the wire shape is unit-testable.
      *
      * The **params** are action-specific (`task.set_status` wants
-     * `entity_id`+`status`), and since the old server the catalog declares where
-     * each one comes from — see [ToolDef.actionParams] — so a generic renderer
-     * resolves them off the row it drew instead of hardcoding the tool.
+     * `entity_id`+`status`), and the catalog declares where each one comes
+     * from — see [ToolDef.actionParams] — so a generic renderer resolves them
+     * off the row it drew instead of hardcoding the tool.
      */
-    fun actionBody(actionId: String, params: JSONObject?, confirmed: Boolean = false): JSONObject {
-        val o = JSONObject().put("action_id", actionId)
-        o.put("params", params ?: JSONObject())
-        if (confirmed) o.put("confirmed", true)
-        return o
-    }
+    fun actionBody(actionId: String, params: JSONObject?, confirmed: Boolean = false): JSONObject =
+        Napi.ACTION_CALLBACK.json(actionId, params ?: JSONObject(), if (confirmed) true else null)
 
     /** Where Haus serves everything a device token may read. */
     private val NAPI_PREFIX = Napi.ROOT
@@ -269,14 +263,8 @@ object ToolDefs {
     /** Hard cap on rendered rows — a RemoteViews collection stays bounded. */
     const val MAX_ROWS = 40
 
-    /** Payload keys known to carry a tool's item list, tried before the fallback. */
-    private val ROW_KEYS = listOf(
-        "items", "results", "rows", "data", "entries", "list",
-        "tasks", "contacts", "documents", "photos", "notes", "cards",
-    )
-
+    /** The reply's first array: the rows, whatever the tool calls them. */
     private fun firstArray(root: JSONObject): JSONArray? {
-        for (k in ROW_KEYS) root.optJSONArray(k)?.let { return it }
         val keys = root.keys()
         while (keys.hasNext()) {
             (root.opt(keys.next()) as? JSONArray)?.let { return it }

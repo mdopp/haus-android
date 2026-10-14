@@ -14,18 +14,12 @@ import androidx.core.content.ContextCompat
 import cloud.dopp.haus.data.Napi
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
+import cloud.dopp.haus.data.request
 import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
 import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
 import cloud.dopp.haus.widget.BoxServicesWidgetProvider
-import cloud.dopp.haus.widget.CameraWidgetProvider
 import cloud.dopp.haus.widget.DeviceWidgetProvider
-import cloud.dopp.haus.widget.DevicesWidgetProvider
-import cloud.dopp.haus.widget.EnergyStatsWidgetProvider
-import cloud.dopp.haus.widget.EnergyTotalsWidgetProvider
-import cloud.dopp.haus.widget.EnergyWidgetProvider
-import cloud.dopp.haus.widget.ToolWidgetProvider
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
@@ -114,18 +108,21 @@ object LiveStream {
     private fun interactive(): Boolean =
         app.getSystemService(PowerManager::class.java)?.isInteractive ?: false
 
-    /** Paired, and at least one of the app's widgets is on a home screen. */
+    /** Paired, and at least one widget the stream feeds ([FED]) is on a home screen. */
     private fun eligible(): Boolean {
         if (!ServerStore.isConfigured(app) || !TokenStore.isPaired(app)) return false
         val mgr = AppWidgetManager.getInstance(app) ?: return false
-        return PROVIDERS.any { p -> runCatching { mgr.getAppWidgetIds(ComponentName(app, p)) }.getOrNull()?.isNotEmpty() == true }
+        return FED.any { p -> runCatching { mgr.getAppWidgetIds(ComponentName(app, p)) }.getOrNull()?.isNotEmpty() == true }
     }
 
-    private val PROVIDERS = listOf(
-        DeviceWidgetProvider::class.java, DevicesWidgetProvider::class.java,
-        ActiveDevicesWidgetProvider::class.java, EnergyWidgetProvider::class.java,
-        EnergyStatsWidgetProvider::class.java, EnergyTotalsWidgetProvider::class.java,
-        CameraWidgetProvider::class.java, ToolWidgetProvider::class.java,
+    /**
+     * The widgets the stream keeps current: the device widgets take its frames,
+     * the active list refetches on them, and all four re-read on [catchUp]. Only
+     * these open the stream, and removing one of them looks again ([refresh]).
+     * The static tiles, the energy and the tool widgets are not fed by it.
+     */
+    val FED: List<Class<*>> = listOf(
+        DeviceWidgetProvider::class.java, ActiveDevicesWidgetProvider::class.java,
         BoxOverviewWidgetProvider::class.java, BoxServicesWidgetProvider::class.java,
     )
 
@@ -139,12 +136,7 @@ object LiveStream {
         main.removeCallbacks(reconnect)
         runCatching { source?.cancel() }
         connectedAtMs = 0L
-        val req = Request.Builder()
-            .url(base + Napi.EVENTS)
-            .header("Authorization", "Bearer $token")
-            .header("Accept", "text/event-stream")
-            .build()
-        source = EventSources.createFactory(client).newEventSource(req, listener)
+        source = EventSources.createFactory(client).newEventSource(Napi.EVENTS.request(base, token), listener)
     }
 
     private fun disconnect() {

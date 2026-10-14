@@ -11,9 +11,11 @@ These rules apply to every session, human or agent.
 
 ## Haus is the contract
 
-- The app calls only the `/napi` paths Haus serves. They are spelled whole in
-  `data/Napi.kt`; `NapiContractTest` holds them to Haus's route table. A path
-  the app needs that Haus lacks is a Haus issue first, never a guess here.
+- The app calls only what Haus serves. Every call is data in `data/Napi.kt`
+  (method, path, query, body fields, reply keys), `data/NapiRequest.kt` alone
+  builds requests from it, and `NapiContractTest` holds it to a copy of Haus's
+  handlers, file and line. A call the app needs that Haus lacks is a Haus
+  issue first, never a guess here.
 - One set of names: package `cloud.dopp.haus`, scheme `cloud.dopp.haus://`,
   token prefix `haus_device_`. `NamesTest` fails on any older name.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the

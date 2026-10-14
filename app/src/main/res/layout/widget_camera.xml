@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Camera trigger tile (#36): unified trigger-tile pattern (#54) — a filled
      accent circle (52dp) with a white camera glyph + a single bold "Kamera"
-     label. Structurally identical to the voice tile (widget_voice.xml); only the
-     glyph + word differ (no #7E9CFF glyph, no truncating "Kamera öffnen" subtitle).
-     A tap opens Haus's page camera view for the bound entity. RemoteViews-safe
+     label. Structurally identical to the devices tile (widget_devices.xml); only
+     the glyph + word differ. A tap opens the app's capture screen. RemoteViews-safe
      (LinearLayout / ImageView / TextView only — no plain <View>). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cam_root"

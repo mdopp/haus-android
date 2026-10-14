@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Camera trigger widget (#36): small (1x1 target), resizable, NO configuration.
-     A tap opens Haus's page cameras view — no per-camera binding, no snapshot loading
-     (mirrors the voice widget). No data to poll → update period 0. -->
+     A tap opens the app's capture screen, which uploads to Haus (/napi/upload) —
+     no per-camera binding, no snapshot. No data to poll → update period 0. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="40dp"
     android:minHeight="40dp"

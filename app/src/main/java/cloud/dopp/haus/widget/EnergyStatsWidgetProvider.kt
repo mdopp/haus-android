@@ -106,7 +106,7 @@ class EnergyStatsWidgetProvider : AppWidgetProvider() {
         val out = mutableListOf<ChartRenderer.Series>()
         for (f in legs) {
             val eid = f?.entityId ?: continue
-            val points = try { api.getEntityHistory(eid, range.apiRange) } catch (e: Exception) { emptyList() }
+            val points = try { api.getEntityHistory(eid, range.history) } catch (e: Exception) { emptyList() }
             if (points.size >= 2) out.add(ChartRenderer.Series(points, EnergyStyle.seriesColor(f.sense)))
         }
         return out

@@ -278,9 +278,16 @@ class NapiContractTest {
         }
     }
 
+    /**
+     * The Haus routes a declared call reaches: its own; for a path with a `{…}`
+     * Haus does not have as such, the routes it is filled in to — for the tool
+     * rows, the paths Haus's catalog names, not every route that shape matches.
+     */
     private fun routesOf(d: Declared): List<Route> {
         val exact = HAUS.filter { it.method == d.method && it.path == d.path }
-        return exact.ifEmpty { HAUS.filter { it.method == d.method && same(d.path, it.path) } }
+        if (exact.isNotEmpty()) return exact
+        val reached = HAUS.filter { it.method == d.method && same(d.path, it.path) }
+        return if (d.name == "TOOL_ROWS") reached.filter { it.path in HAUS_TOOL_PATHS } else reached
     }
 
     private fun failures(check: (Declared, Route) -> List<String>): List<String> =
@@ -401,11 +408,15 @@ class NapiContractTest {
         val text = req.readText()
         assertTrue("the method is not the endpoint's", text.contains(".method(method.name"))
         assertTrue("the token is not sent the way Haus reads it", text.contains(".header(Napi.AUTH_HEADER, Napi.bearer("))
+        // A request is built from a builder (new or copied) or not at all, and only
+        // NapiRequest holds one; the auth header's name and scheme live in Napi.
         val elsewhere = RepoFiles.mainKotlin().filter { RepoFiles.relative(it) != REQUEST_FILE }.flatMap { f ->
+            val rel = RepoFiles.relative(f)
+            val banned = listOf("Request.Builder", ".newBuilder()", ".header(", ".addHeader(", ".method(") +
+                (if (rel == NAPI_FILE) emptyList() else listOf("\"Bearer", "\"Authorization\""))
             f.readLines().mapIndexedNotNull { i, line ->
                 val c = code(line)
-                listOf("Request.Builder", ".header(", ".post(", ".get()", "\"Bearer", "\"Authorization\"")
-                    .firstOrNull { c.contains(it) }?.let { "${RepoFiles.relative(f)}:${i + 1}: $it" }
+                banned.firstOrNull { c.contains(it) }?.let { "$rel:${i + 1}: $it" }
             }
         }
         assertTrue("requests built by hand:\n" + elsewhere.joinToString("\n"), elsewhere.isEmpty())

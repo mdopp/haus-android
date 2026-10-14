@@ -1,5 +1,6 @@
 package cloud.dopp.haus.ui
 
+import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.graphics.Color
@@ -23,6 +24,8 @@ import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.BoxApiClient
 import cloud.dopp.haus.data.PairLinks
+import cloud.dopp.haus.data.Pairing
+import cloud.dopp.haus.data.PersonaIcon
 import cloud.dopp.haus.data.PersonaStore
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
@@ -45,9 +48,15 @@ import kotlin.concurrent.thread
  * **Pairing.** The person enters Haus's address; the app opens
  * `<haus>/pair-device` in a Custom Tab, where their Authelia session is; they
  * confirm; Haus redirects to `cloud.dopp.haus://pair#token=haus_device_…`, which
- * lands back here and is stored. Done. Haus's device page also shows a QR code
+ * lands back here. Haus's device page also shows a QR code
  * (`cloud.dopp.haus://setup?server=…&token=…`), scanned in-app — it has no
  * intent filter, so no web page can point the app at a foreign server.
+ *
+ * Nothing is stored behind the person's back ([Pairing]): a pair link counts
+ * only while a pairing started here is pending, a link or a scanned code asks
+ * first in a dialog naming the host, the token is checked with Haus's
+ * `/napi/whoami` before it is stored, an http address is refused with a
+ * message, and a token that cannot be saved is said so.
  *
  * **Paired.** The persona (name, colours, icon from `/napi/persona`) heads the
  * screen; below it every widget type, the tools from Haus's catalog and the Box
@@ -135,15 +144,39 @@ class HomeActivity : AppCompatActivity() {
         findViewById<View>(R.id.persona_rule).setBackgroundColor(accent)
         val ground = persona?.ground?.let(::color) ?: getColor(R.color.haus_bg)
         findViewById<View>(R.id.home_root).setBackgroundColor(ground)
+        val svg = if (persona?.hasIcon == true) PersonaIcon.accept(PersonaStore.icon(this)) else null
+        showIcon(svg)
+    }
+
+    /** The SVG last drawn, so a redraw does not parse it again. */
+    private var drawnSvg: String? = null
+
+    /**
+     * Draw the persona's [svg], parsed off the main thread: a large or broken
+     * icon costs a missing icon, never a frozen screen. Within
+     * [PersonaIcon.MAX_BYTES] only.
+     */
+    private fun showIcon(svg: String?) {
         val icon = findViewById<ImageView>(R.id.persona_icon)
-        val svg = if (persona?.hasIcon == true) PersonaStore.icon(this) else null
-        val drawable = svg?.let { runCatching { PictureDrawable(SVG.getFromString(it).renderToPicture()) }.getOrNull() }
-        if (drawable == null) {
+        if (svg == null) {
+            drawnSvg = null
             icon.visibility = View.GONE
-        } else {
-            icon.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // a Picture draws in software only
-            icon.setImageDrawable(drawable)
-            icon.visibility = View.VISIBLE
+            return
+        }
+        if (svg == drawnSvg) return
+        drawnSvg = svg
+        thread {
+            val picture = runCatching { SVG.getFromString(svg).renderToPicture() }.getOrNull()
+            runOnUiThread {
+                if (isFinishing || drawnSvg != svg) return@runOnUiThread
+                if (picture == null) {
+                    icon.visibility = View.GONE
+                } else {
+                    icon.setLayerType(View.LAYER_TYPE_SOFTWARE, null) // a Picture draws in software only
+                    icon.setImageDrawable(PictureDrawable(picture))
+                    icon.visibility = View.VISIBLE
+                }
+            }
         }
     }
 
@@ -238,19 +271,30 @@ class HomeActivity : AppCompatActivity() {
 
     // --- pairing --------------------------------------------------------------
 
+    /** The typed address: refused if http, else stored and paired at. */
     private fun onConnect() {
-        val url = findViewById<EditText>(R.id.server_url).text.toString().trim()
-        if (url.isBlank()) {
+        val typed = findViewById<EditText>(R.id.server_url).text.toString().trim()
+        if (typed.isBlank()) {
             toast(getString(R.string.home_enter_url))
             return
         }
-        ServerStore.setBaseUrl(this, url)
-        openPairing()
+        if (ServerStore.refusesHttp(typed)) {
+            toast(getString(R.string.server_http_refused))
+            return
+        }
+        val server = ServerStore.normalize(typed)
+        if (server == null) {
+            toast(getString(R.string.home_enter_url))
+            return
+        }
+        ServerStore.setBaseUrl(this, server)
+        openPairing(server)
     }
 
-    private fun openPairing() {
-        val base = ServerStore.baseUrl(this) ?: return
-        open(Uri.parse(base.trimEnd('/') + HausConfig.PAIR_PATH))
+    /** Open `/pair-device` at [server]; its pair link is taken while this pairing is pending. */
+    private fun openPairing(server: String) {
+        Pairing.start(this, server)
+        open(Uri.parse(server + HausConfig.PAIR_PATH))
     }
 
     private fun startScan() {
@@ -263,45 +307,100 @@ class HomeActivity : AppCompatActivity() {
         )
     }
 
-    /** `cloud.dopp.haus://setup?server=…&token=…` from Haus's device page, or a plain https address. */
+    /**
+     * `cloud.dopp.haus://setup?server=…&token=…` from Haus's device page, or a
+     * plain address. Nothing switches before the person confirms the host.
+     */
     private fun handleScanned(text: String) {
         val setup = PairLinks.parseSetup(text)
-        when {
-            setup != null -> {
-                ServerStore.setBaseUrl(this, setup.server)
-                if (setup.token != null) store(setup.token) else openPairing()
-            }
-            text.startsWith("https://", ignoreCase = true) -> {
-                ServerStore.setBaseUrl(this, text)
-                openPairing()
-            }
-            else -> toast(getString(R.string.qr_invalid))
+        val raw = setup?.server ?: text.trim().takeIf { it.contains("://") }
+        if (raw == null) {
+            toast(getString(R.string.qr_invalid))
+            return
+        }
+        if (ServerStore.refusesHttp(raw)) {
+            toast(getString(R.string.server_http_refused))
+            return
+        }
+        val server = ServerStore.normalize(raw)
+        if (server == null) {
+            toast(getString(R.string.qr_invalid))
+            return
+        }
+        val host = ServerStore.hostOf(server)
+        val token = setup?.token
+        if (token != null) {
+            confirm(getString(R.string.pairing_confirm_setup, host)) { pair(server, token) }
+        } else {
+            confirm(getString(R.string.pairing_confirm_server, host)) { openPairing(server) }
         }
     }
 
-    /** The redirect from /pair-device: `cloud.dopp.haus://pair#token=haus_device_…&id=…`. */
+    /**
+     * The redirect from /pair-device: `cloud.dopp.haus://pair#token=haus_device_…&id=…`.
+     * Taken only while a pairing started here waits for it, and only once the
+     * person confirms the host.
+     */
     private fun handleDeepLink(intent: Intent?) {
-        val data = intent?.data ?: return
+        if (intent == null) return
+        val data = intent.data ?: return
         if (!PairLinks.isPairLink(data)) return
+        intent.data = null // handled once, not again on a recreate
+        val server = Pairing.pending(this)
+        if (server == null) {
+            toast(getString(R.string.pairing_not_started))
+            return
+        }
         val token = PairLinks.pairToken(data)
         if (token == null) {
             toast(getString(R.string.pairing_failed))
             return
         }
-        store(token)
+        confirm(
+            getString(R.string.pairing_confirm_link, ServerStore.hostOf(server)),
+            onNo = { Pairing.cancel(this) },
+        ) { pair(server, token) }
     }
 
-    private fun store(token: String) {
-        TokenStore.save(this, token)
-        toast(getString(R.string.pairing_success))
-        LiveStream.refresh(applicationContext)
-        render()
+    /** Ask before pairing; [message] names the host. */
+    private fun confirm(message: String, onNo: () -> Unit = {}, onYes: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.pairing_confirm_title)
+            .setMessage(message)
+            .setPositiveButton(R.string.pairing_confirm_yes) { _, _ -> onYes() }
+            .setNegativeButton(R.string.pairing_confirm_no) { _, _ -> onNo() }
+            .setOnCancelListener { onNo() }
+            .show()
+    }
+
+    /** Check [token] with the Haus at [server] off the main thread, then store it and say how it went. */
+    private fun pair(server: String, token: String) {
+        val app = applicationContext
+        thread {
+            val checked = Pairing.check(server, token)
+            runOnUiThread {
+                val outcome = if (checked == Pairing.Outcome.PAIRED) Pairing.store(app, server, token) else checked
+                toast(
+                    getString(
+                        when (outcome) {
+                            Pairing.Outcome.PAIRED -> R.string.pairing_success
+                            Pairing.Outcome.REFUSED -> R.string.pairing_refused
+                            Pairing.Outcome.UNREACHABLE -> R.string.pairing_unreachable
+                            Pairing.Outcome.NOT_SAVED -> R.string.pairing_not_saved
+                        },
+                    ),
+                )
+                LiveStream.refresh(app)
+                if (!isFinishing) render()
+            }
+        }
     }
 
     private fun unpair() {
         TokenStore.clear(this)
         ServerStore.clear(this)
         PersonaStore.clear(this)
+        Pairing.cancel(this)
         findViewById<EditText>(R.id.server_url).setText("")
         LiveStream.refresh(applicationContext)
         render()

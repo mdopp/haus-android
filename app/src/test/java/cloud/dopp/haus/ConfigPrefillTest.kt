@@ -111,7 +111,9 @@ class ConfigPrefillTest {
     private fun pair() {
         // Unreachable on purpose: the pickers fall back to the last-seen catalog,
         // which is what a config screen opened offline sees too.
-        ServerStore.setBaseUrl(ctx, "http://127.0.0.1:1")
+        ServerStore.setBaseUrl(ctx, "https://127.0.0.1:1")
+        // Robolectric has no keystore: the token goes to plain prefs here.
+        TokenStore.backend = ctx.getSharedPreferences("test_tokens", Context.MODE_PRIVATE)
         TokenStore.save(ctx, "haus_device_TESTTOKEN123")
         WidgetStore.setToolCatalogJson(ctx, catalog)
     }

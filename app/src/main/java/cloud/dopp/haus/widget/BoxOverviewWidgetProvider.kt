@@ -73,31 +73,33 @@ class BoxOverviewWidgetProvider : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, ids: IntArray) {
         ids.forEach { WidgetCache.clear(context, it) }
+        // The stream feeds this widget: with the last one gone it may close.
+        cloud.dopp.haus.realtime.LiveStream.refresh(context)
     }
 
     private fun render(context: Context, appWidgetId: Int, home: BoxHome?, tap: PendingIntent): RemoteViews {
-        val v = RemoteViews(context.packageName, R.layout.widget_sb_overview)
-        v.setOnClickPendingIntent(R.id.sb_root, tap)
-        v.setOnClickPendingIntent(R.id.sb_refresh, refreshPending(context, appWidgetId))
+        val v = RemoteViews(context.packageName, R.layout.widget_box_overview)
+        v.setOnClickPendingIntent(R.id.box_root, tap)
+        v.setOnClickPendingIntent(R.id.box_refresh, refreshPending(context, appWidgetId))
         if (home == null) {
-            v.setTextViewText(R.id.sb_services, "—")
-            v.setTextViewText(R.id.sb_approvals, "—")
-            v.setTextViewText(R.id.sb_updates, "—")
-            v.setViewVisibility(R.id.sb_services_bad, View.GONE)
+            v.setTextViewText(R.id.box_services, "—")
+            v.setTextViewText(R.id.box_approvals, "—")
+            v.setTextViewText(R.id.box_updates, "—")
+            v.setViewVisibility(R.id.box_services_bad, View.GONE)
             return v
         }
-        v.setTextViewText(R.id.sb_services, home.servicesUp.toString())
-        v.setTextViewText(R.id.sb_approvals, home.pendingApprovals.toString())
-        v.setTextViewText(R.id.sb_updates, home.pendingUpdates.toString())
+        v.setTextViewText(R.id.box_services, home.servicesUp.toString())
+        v.setTextViewText(R.id.box_approvals, home.pendingApprovals.toString())
+        v.setTextViewText(R.id.box_updates, home.pendingUpdates.toString())
         val bad = home.servicesFailed + home.servicesDown
         if (bad > 0) {
-            v.setViewVisibility(R.id.sb_services_bad, View.VISIBLE)
+            v.setViewVisibility(R.id.box_services_bad, View.VISIBLE)
             v.setTextViewText(
-                R.id.sb_services_bad,
-                context.getString(R.string.sb_overview_bad, bad),
+                R.id.box_services_bad,
+                context.getString(R.string.box_overview_bad, bad),
             )
         } else {
-            v.setViewVisibility(R.id.sb_services_bad, View.GONE)
+            v.setViewVisibility(R.id.box_services_bad, View.GONE)
         }
         return v
     }
@@ -113,7 +115,7 @@ class BoxOverviewWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        const val ACTION_REFRESH = "cloud.dopp.haus.widget.SB_OVERVIEW_REFRESH"
+        const val ACTION_REFRESH = "cloud.dopp.haus.widget.BOX_OVERVIEW_REFRESH"
 
         /**
          * Re-fetch and re-render every placed instance (#137).

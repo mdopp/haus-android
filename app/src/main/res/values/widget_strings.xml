@@ -74,25 +74,17 @@
     <!-- Active-devices overview widget (#28). -->
     <string name="active_widget_label">Haus · Aktive Geräte</string>
     <string name="active_widget_description">Übersicht: welche Geräte gerade an/offen sind</string>
-    <string name="active_title">Aktiv</string>
-    <string name="active_loading">wird geladen …</string>
-    <string name="active_pair">koppeln</string>
     <string name="active_none">Alles aus</string>
     <!-- %1$d = Anzahl aktiver Geräte -->
     <string name="active_count">%1$d an</string>
-    <string name="active_more">+%1$d weitere</string>
     <!-- Compact overflow for the grouped-by-type chips: %1$d = weitere Typen. -->
     <string name="active_types_more">+%1$d</string>
 
     <!-- Large device widget 48h history (#29). -->
-    <string name="device_nohistory">kein Verlauf</string>
 
     <!-- Camera trigger widget (#36): a tile that opens Haus's page camera view. -->
     <string name="camera_widget_label">Kamera</string>
     <string name="camera_widget_description">Kachel öffnet die Kamera-Live-Ansicht in der App</string>
-    <string name="camera_config_pick">Kamera wählen:</string>
-    <string name="camera_config_empty">Keine Kameras gefunden.</string>
-    <string name="camera_open_hint">Kamera öffnen</string>
 
     <!-- Generic schema-driven .tool widget (#70/#72): one provider for every tool. -->
     <string name="tool_widget_label">Haus · Tool</string>
@@ -112,5 +104,4 @@
     <!-- 1x1-Tool-Kachel (#71): Erfassen bzw. Chat mit geöffneter Karte. -->
     <!-- Noch nicht gebundene Kachel (#105): der Tipp führt in die Auswahl. -->
 
-    <!-- Voice/mic widget (#17). -->
 </resources>

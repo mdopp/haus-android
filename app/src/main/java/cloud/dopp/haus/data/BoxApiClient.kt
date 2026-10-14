@@ -1,8 +1,9 @@
 package cloud.dopp.haus.data
 
 import android.content.Context
+import cloud.dopp.haus.data.Napi.BoxHomeJson
+import cloud.dopp.haus.data.Napi.BoxServicesJson
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -17,37 +18,22 @@ import java.util.concurrent.TimeUnit
  */
 class BoxApiClient(private val ctx: Context) {
 
-    private val http = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .build()
+    /** One token-authed GET of [endpoint], as JSON; never throws. */
+    private fun get(endpoint: Napi.Endpoint): JSONObject? =
+        bytes(endpoint)?.let { runCatching { JSONObject(it.toString(Charsets.UTF_8)) }.getOrNull() }
 
-    /** One token-authed GET of a whole `/napi/…` [path]; never throws. */
-    private fun get(path: String): JSONObject? {
+    /** The bytes [endpoint] answers, at most [cap] of them, or null; never throws. */
+    private fun bytes(endpoint: Napi.Endpoint, cap: Long = MAX_REPLY_BYTES): ByteArray? {
         val base = ServerStore.baseUrl(ctx)?.trimEnd('/') ?: return null
         val token = TokenStore.get(ctx) ?: return null
         return try {
-            val req = Request.Builder()
-                .url(base + path)
-                .header("Authorization", "Bearer $token")
-                .get()
-                .build()
-            http.newCall(req).execute().use { resp ->
+            http.newCall(endpoint.request(base, token)).execute().use { resp ->
                 if (!resp.isSuccessful) return null
-                resp.body?.string()?.let { JSONObject(it) }
+                val src = resp.body?.source() ?: return null
+                // more than the cap → refuse it whole rather than cut it
+                if (src.request(cap + 1)) return null
+                src.readByteArray()
             }
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /** The bytes of a whole `/napi/…` [path], or null; never throws. */
-    private fun bytes(path: String): ByteArray? {
-        val base = ServerStore.baseUrl(ctx)?.trimEnd('/') ?: return null
-        val token = TokenStore.get(ctx) ?: return null
-        return try {
-            val req = Request.Builder().url(base + path).header("Authorization", "Bearer $token").get().build()
-            http.newCall(req).execute().use { resp -> if (resp.isSuccessful) resp.body?.bytes() else null }
         } catch (e: Exception) {
             null
         }
@@ -56,18 +42,22 @@ class BoxApiClient(private val ctx: Context) {
     /** `GET /napi/persona` → the house persona, or null. */
     fun getPersona(): Persona? = get(Napi.PERSONA)?.let { Persona.parse(it) }
 
-    /** `GET /napi/persona/icon.svg` → the persona's icon as SVG text, or null when it has none. */
-    fun getPersonaIcon(): String? = bytes(Napi.PERSONA_ICON)?.toString(Charsets.UTF_8)?.takeIf { it.contains("<svg") }
+    /**
+     * `GET /napi/persona/icon.svg` → the persona's icon as SVG text, or null
+     * when it has none, it is not SVG, or it is larger than [PersonaIcon.MAX_BYTES].
+     */
+    fun getPersonaIcon(): String? =
+        bytes(Napi.PERSONA_ICON, PersonaIcon.MAX_BYTES.toLong())?.toString(Charsets.UTF_8)?.let(PersonaIcon::accept)
 
     /** `GET /napi/box/home` → the summary counts, or null on any failure. */
     fun getHome(): BoxHome? {
         val o = get(Napi.BOX_HOME) ?: return null
         return BoxHome(
-            servicesUp = o.optInt("servicesUp", 0),
-            servicesFailed = o.optInt("servicesFailed", 0),
-            servicesDown = o.optInt("servicesDown", 0),
-            pendingApprovals = o.optInt("pendingApprovals", 0),
-            pendingUpdates = o.optInt("pendingUpdates", 0),
+            servicesUp = o.optInt(BoxHomeJson.SERVICES_UP, 0),
+            servicesFailed = o.optInt(BoxHomeJson.SERVICES_FAILED, 0),
+            servicesDown = o.optInt(BoxHomeJson.SERVICES_DOWN, 0),
+            pendingApprovals = o.optInt(BoxHomeJson.PENDING_APPROVALS, 0),
+            pendingUpdates = o.optInt(BoxHomeJson.PENDING_UPDATES, 0),
         )
     }
 
@@ -78,16 +68,28 @@ class BoxApiClient(private val ctx: Context) {
      */
     fun listServices(): List<BoxService>? {
         val root = get(Napi.BOX_SERVICES) ?: return null
-        val arr = root.optJSONArray("services") ?: return emptyList()
+        val arr = root.optJSONArray(BoxServicesJson.SERVICES) ?: return emptyList()
         return (0 until arr.length()).mapNotNull { i ->
             arr.optJSONObject(i)?.let {
                 BoxService(
-                    name = it.optString("name"),
-                    activeState = it.optString("activeState"),
-                    subState = it.optString("subState"),
-                    health = it.optString("health"),
+                    name = it.optString(BoxServicesJson.NAME),
+                    activeState = it.optString(BoxServicesJson.ACTIVE_STATE),
+                    subState = it.optString(BoxServicesJson.SUB_STATE),
+                    health = it.optString(BoxServicesJson.HEALTH),
                 )
             }
+        }
+    }
+
+    private companion object {
+        /** No reply here is larger; a bigger one is refused, never half read. */
+        const val MAX_REPLY_BYTES = 1L shl 20
+
+        val http: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .build()
         }
     }
 }

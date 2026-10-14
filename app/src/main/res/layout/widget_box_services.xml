@@ -22,7 +22,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/sb_services_title"
+            android:text="@string/box_services_title"
             android:textColor="@color/haus_text"
             android:textSize="15sp"
             android:textStyle="bold"
@@ -66,7 +66,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sb_health_ok"
+                android:text="@string/box_health_ok"
                 android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
@@ -93,7 +93,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sb_health_warn"
+                android:text="@string/box_health_warn"
                 android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"
@@ -120,7 +120,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sb_health_fail"
+                android:text="@string/box_health_fail"
                 android:textColor="@color/haus_text_muted"
                 android:textSize="11sp"
                 android:maxLines="1"

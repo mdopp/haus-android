@@ -3,6 +3,7 @@ package cloud.dopp.haus.data
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
+import androidx.annotation.VisibleForTesting
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.io.File
@@ -33,6 +34,14 @@ object TokenStore {
     private const val KEY_TOKEN = "device_token"
 
     @Volatile private var memo: SharedPreferences? = null
+
+    /**
+     * A store in place of the encrypted one, for tests: Robolectric has no
+     * AndroidKeyStore. Null in the app.
+     */
+    @VisibleForTesting
+    @Volatile
+    var backend: SharedPreferences? = null
     // Once the token is known (read or saved) it's kept here, so a transient
     // store failure never makes the app look "unpaired".
     @Volatile private var tokenCache: String? = null
@@ -56,6 +65,7 @@ object TokenStore {
      */
     @Synchronized
     private fun prefs(ctx: Context): SharedPreferences {
+        backend?.let { return it }
         memo?.let { return it }
         val app = ctx.applicationContext
         val p = try {
@@ -99,10 +109,19 @@ object TokenStore {
         }
     }
 
-    fun save(ctx: Context, token: String) {
-        tokenCache = token
-        tokenLoaded = true
-        runCatching { prefs(ctx).edit().putString(KEY_TOKEN, token).apply() }
+    /**
+     * Store [token]; true iff it is on disk. A failed write changes nothing —
+     * the app does not pretend to be paired with a token it will lose at the
+     * next start — and the caller says so. Writes synchronously: call it once,
+     * when pairing, not per widget.
+     */
+    fun save(ctx: Context, token: String): Boolean {
+        val ok = runCatching { prefs(ctx).edit().putString(KEY_TOKEN, token).commit() }.getOrDefault(false)
+        if (ok) {
+            tokenCache = token
+            tokenLoaded = true
+        }
+        return ok
     }
 
     fun get(ctx: Context): String? {

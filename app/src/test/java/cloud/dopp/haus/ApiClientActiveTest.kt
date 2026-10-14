@@ -38,12 +38,17 @@ class ApiClientActiveTest {
         assertEquals("light.kitchen", cards[1].entityId)
     }
 
+    /**
+     * Haus answers `{ok, active: [card]}` with `entity_id` on every card
+     * (internal/napi/home.go:254-291). Older shapes — a bare
+     * array, `id` for the entity — are not Haus's and are not read: a key Haus
+     * never sends would be a guess (NapiContractTest).
+     */
     @Test
-    fun parsesBareArray_withIdField() {
-        val json = """
-            [ {"id": "switch.lamp", "name": "Lampe", "domain": "switch", "state": "on"} ]
-        """.trimIndent()
-        val cards = client().parseActive(json)
+    fun readsOnlyHaussShape() {
+        assertTrue(client().parseActive("""[ {"entity_id": "switch.lamp", "state": "on"} ]""").isEmpty())
+        assertTrue(client().parseActive("""{"active": [ {"id": "switch.lamp", "state": "on"} ]}""").isEmpty())
+        val cards = client().parseActive("""{"ok": true, "active": [ {"entity_id": "switch.lamp", "name": "Lampe", "domain": "switch", "state": "on"} ]}""")
         assertEquals(1, cards.size)
         assertEquals("switch.lamp", cards[0].entityId)
         assertEquals("Lampe", cards[0].name)
@@ -52,7 +57,7 @@ class ApiClientActiveTest {
 
     @Test
     fun domainFallsBackToEntityIdPrefix_whenMissing() {
-        val json = """[ {"id": "light.hall", "name": "Flur", "state": "on"} ]"""
+        val json = """{"ok": true, "active": [ {"entity_id": "light.hall", "name": "Flur", "state": "on"} ]}"""
         val cards = client().parseActive(json)
         assertEquals("light", cards[0].domain)
     }

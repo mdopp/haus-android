@@ -13,8 +13,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The lock tile (#84): the door lock is a widget-able domain since the old server
- * v0.41.0, and everything that decides how it reads or what it does is pure
+ * The lock tile (#84): the door lock is a widget-able domain (Haus's
+ * `callDomains`), and everything that decides how it reads or what it does is pure
  * logic — the gate itself stays on the server (403 → confirm dialog).
  *
  * Two properties matter more than the rest and both are asserted here: the tile

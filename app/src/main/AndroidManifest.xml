@@ -162,16 +162,6 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:theme="@style/Theme.Haus" />
 
-        <activity
-            android:name=".widget.CameraWidgetConfigActivity"
-            android:exported="true"
-            android:label="@string/camera_widget_label"
-            android:theme="@style/Theme.Haus.Config">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
-
 
         <!-- Devices tile (#167): one tap to the household start page. -->
         <receiver
@@ -202,31 +192,30 @@
 
 
 
-        <!-- Box overview widget (#42): home-summary from /napi/box/home
-             (legacy /napi/box/home, #174). -->
+        <!-- Box overview widget (#42): the Box's summary from /napi/box/home. -->
         <receiver
             android:name=".widget.BoxOverviewWidgetProvider"
             android:exported="true"
-            android:label="@string/sb_overview_label">
+            android:label="@string/box_overview_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/sb_overview_widget_info" />
+                android:resource="@xml/box_overview_widget_info" />
         </receiver>
 
         <!-- Box service-status summary widget (#44): healthy/warning/failure. -->
         <receiver
             android:name=".widget.BoxServicesWidgetProvider"
             android:exported="true"
-            android:label="@string/sb_services_label">
+            android:label="@string/box_services_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/sb_services_widget_info" />
+                android:resource="@xml/box_services_widget_info" />
         </receiver>
 
         <!-- Generic schema-driven .tool widget (#70): ONE provider that renders any

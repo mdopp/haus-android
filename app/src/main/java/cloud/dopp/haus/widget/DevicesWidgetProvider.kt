@@ -17,8 +17,8 @@ import cloud.dopp.haus.R
  * *on* ([ActiveDevicesWidgetProvider]) cannot help you switch on the lamp that
  * is off — by definition it is not in that list.
  *
- * A pure trigger tile like the voice and camera ones (#54): nothing to poll, so
- * [onUpdate] only (re)binds the tap. What the page then shows is Haus'ss to
+ * A pure trigger tile like the camera one (#54): nothing to poll, so
+ * [onUpdate] only (re)binds the tap. What the page then shows is Haus's to
  * decide — this widget is the way there, not a second opinion about it.
  */
 class DevicesWidgetProvider : AppWidgetProvider() {

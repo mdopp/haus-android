@@ -79,7 +79,7 @@ class DeviceRefreshAllTest {
     fun `box services tile refreshes on connect too`() {
         val ctx = RuntimeEnvironment.getApplication()
         shadowOf(AppWidgetManager.getInstance(ctx))
-            .createWidgets(BoxServicesWidgetProvider::class.java, R.layout.widget_sb_services, 2)
+            .createWidgets(BoxServicesWidgetProvider::class.java, R.layout.widget_box_services, 2)
         val app = shadowOf(ctx)
         app.clearBroadcastIntents()
         BoxServicesWidgetProvider.refreshAll(ctx)

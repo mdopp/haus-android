@@ -13,12 +13,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * A tool row that offers several actions (#169, the old server's ADR 0014).
+ * A tool row that offers several actions (#169).
  *
  * Until now exactly one was reachable: with `$id` on every row, every row could
  * fill every action, so all of them resolved to whichever id stood first. Five
  * lease durations would have become five buttons that all leased one hour — the
- * trap caught in the old server before it shipped.
+ * trap caught before it shipped.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])

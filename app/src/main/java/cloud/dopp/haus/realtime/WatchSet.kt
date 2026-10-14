@@ -3,28 +3,33 @@ package cloud.dopp.haus.realtime
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.os.PowerManager
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.WidgetStore
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 /**
- * The native **watch-set** (#48 Option B): the set of HA
- * entities the device-widgets are bound to, registered with the server so its
- * `ha_watch` emits `card_state` for exactly those entities over the existing
- * `/napi/portal/events` SSE — **without** touching the user's web favorites.
+ * The device's **watch set** (#48): the Home Assistant entities its device
+ * widgets are bound to, posted to `POST /napi/portal/watch` so Haus streams
+ * `card_state` for exactly those entities over `/napi/portal/events`.
  *
- * Only the per-entity [DeviceWidgetProvider] instances bind a single HA entity;
- * the camera/voice/active/energy widgets don't, so they're left out of the set.
+ * Only [DeviceWidgetProvider] instances bind one entity; the active, energy,
+ * tool, camera and Box widgets do not, so they are not in the set.
  *
- * Everything here is **best-effort** and guarded: it only posts when paired +
- * configured, runs off the caller's thread, and swallows any failure — a failed
- * watch-set post must never affect the widgets or the realtime service. It does
- * nothing useful until the old server is live (404 → false, ignored).
+ * Best-effort and guarded: it posts only when paired, off the caller's thread,
+ * and a failure never touches the widgets. Haus answers 503 while Home
+ * Assistant is down; then the post is tried again with backoff
+ * ([RealtimeProtocol.watchRetryMs]) while the screen stays on, and a newer post
+ * replaces an older one's retries.
  */
 object WatchSet {
+
+    /** Bumped by every post: a retry loop that sees a newer one stops. */
+    private val generation = AtomicInteger()
 
     /**
      * The current device-widget entity set: the bound entity of every live
@@ -44,18 +49,25 @@ object WatchSet {
     private fun eligible(ctx: Context): Boolean =
         ServerStore.isConfigured(ctx) && TokenStore.isPaired(ctx)
 
+    private fun screenOn(ctx: Context): Boolean =
+        ctx.getSystemService(PowerManager::class.java)?.isInteractive ?: false
+
     /**
-     * Post the current widget entity set to the server on a **background thread**
-     * (never on the main / SSE-callback thread). No-op when not paired. Any
-     * failure is swallowed. Call after connect / bind / unbind / periodically.
+     * Post the current widget entity set on a background thread. No-op when not
+     * paired. A 503 is retried with backoff while the screen is on and no newer
+     * post started; any other failure is dropped.
      */
     fun postCurrentAsync(ctx: Context) {
         val app = ctx.applicationContext
         if (!eligible(app)) return
+        val mine = generation.incrementAndGet()
         thread {
-            runCatching {
-                val entities = currentEntities(app)
-                ApiClient(app).postWatch(entities)
+            var attempt = 0
+            while (true) {
+                val code = runCatching { ApiClient(app).postWatch(currentEntities(app)) }.getOrDefault(0)
+                val wait = RealtimeProtocol.watchRetryMs(code, attempt++) ?: break
+                Thread.sleep(wait)
+                if (generation.get() != mine || !eligible(app) || !screenOn(app)) break
             }
         }
     }

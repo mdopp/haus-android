@@ -24,4 +24,11 @@ object DeviceSearch {
         if (query.trim().isEmpty()) return devices
         return devices.filter { matches(it, query) }
     }
+
+    /**
+     * What a device widget can show: Haus offers cameras in the addable list too,
+     * but draws no card for one ([Napi.CARD_DOMAINS]), so such a widget would
+     * never render. The picker and the app-icon menu offer only the rest.
+     */
+    fun pickable(devices: List<Device>): List<Device> = devices.filter { it.domain in Napi.CARD_DOMAINS }
 }

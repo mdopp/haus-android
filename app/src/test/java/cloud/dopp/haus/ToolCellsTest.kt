@@ -91,7 +91,7 @@ class ToolCellsTest {
         assertTrue(ToolCells.mapAll(
             cloud.dopp.haus.data.ToolDef(
                 id = "energy", label = "Energie", apiPath = "/napi/portal/energy",
-                searchPath = null, actions = emptyList(), schema = ToolCellSchema.EMPTY,
+                actions = emptyList(), schema = ToolCellSchema.EMPTY,
             ),
             listOf(JSONObject("""{"label":"x"}""")),
         ).isEmpty())
@@ -173,7 +173,7 @@ class ToolCellsTest {
     fun mapAllDropsUnusableRowsAndKeepsTheRest() {
         val def = cloud.dopp.haus.data.ToolDef(
             id = "task", label = "Aufgabe", apiPath = "/napi/portal/tasks",
-            searchPath = null, actions = emptyList(),
+            actions = emptyList(),
             schema = schema("""{"title":"title","meta":["due"]}"""),
         )
         val rows = ToolDefs.rows(
@@ -252,14 +252,14 @@ class ToolCellsTest {
     /** An id the schema doesn't name (or the def doesn't declare) is never offered. */
     @Test
     fun onlySchemaDeclaredActionsBecomeTheButton() {
-        assertNull(ToolCells.resolveAction(emptyList(), JSONObject("""{"id":"t"}"""), taskParams))
+        assertTrue(ToolCells.resolveOffers(emptyList(), JSONObject("""{"id":"t"}"""), taskParams).isEmpty())
         assertEquals(
-            "task.set_status",
-            ToolCells.resolveAction(
+            listOf("task.set_status"),
+            ToolCells.resolveOffers(
                 listOf("task.add", "task.set_status"),
                 JSONObject("""{"id":"t"}"""),
                 taskParams,
-            )!!.first,
+            ).map { it.id },
         )
     }
 

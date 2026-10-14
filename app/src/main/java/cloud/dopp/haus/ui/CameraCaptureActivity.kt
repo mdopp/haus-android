@@ -43,9 +43,9 @@ import kotlin.concurrent.thread
  * Native camera capture + upload (#36). A tap on the camera trigger widget opens
  * this screen (NOT Haus's pages): take one photo or a series, name the file (date/time
  * prefilled + editable), optionally combine the series into a single multi-page
- * PDF, and upload to the paired Haus via `POST /napi/upload`
- * (server contract the old server). The upload gracefully reports when the
- * endpoint isn't deployed yet (404) so the capture flow is testable meanwhile.
+ * PDF, and upload to the paired Haus via `POST /napi/upload` (Haus's
+ * `internal/napi/upload.go`). The upload reports a 404 plainly: Haus serves
+ * the path only when it has an upload folder.
  */
 class CameraCaptureActivity : AppCompatActivity() {
 

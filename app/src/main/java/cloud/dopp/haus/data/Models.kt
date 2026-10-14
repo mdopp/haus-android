@@ -3,8 +3,8 @@ package cloud.dopp.haus.data
 import kotlin.math.roundToInt
 
 /**
- * A renderable device card — mirrors the old server's `card_spec`
- * (engine/tools/ha.py): the live state of one HA entity, incl. the #754
+ * A renderable device card — what Haus sends as a card (`card` in its
+ * `internal/napi/home.go`): the live state of one HA entity, incl. the #754
  * control attributes (brightness / cover position / climate temperature).
  */
 data class Card(
@@ -102,8 +102,8 @@ data class Device(
 val SENSITIVE_COVER_CLASSES = setOf("garage", "door", "gate")
 
 /**
- * Domains the server gates **wholesale**, device class irrelevant — mirrors
- * the old server's `engine/confirm.py` `SENSITIVE_DOMAINS` (#84). Every `lock.*`
+ * Domains Haus gates **wholesale**, device class irrelevant — Haus's
+ * `sensitiveDomains` in `internal/napi/home.go` (#84). Every `lock.*`
  * service is sensitive there, `lock.lock` as much as `lock.unlock`, so a bare
  * tap gets `403 sensitive_action` and only the re-sent `confirmed=true` runs.
  */

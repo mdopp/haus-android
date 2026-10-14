@@ -32,6 +32,11 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
         context: Context, mgr: AppWidgetManager, appWidgetId: Int, newOptions: Bundle?,
     ) = refresh(context, appWidgetId)
 
+    override fun onDeleted(context: Context, ids: IntArray) {
+        // The stream feeds this widget: with the last one gone it may close.
+        cloud.dopp.haus.realtime.LiveStream.refresh(context)
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == ACTION_REFRESH) {

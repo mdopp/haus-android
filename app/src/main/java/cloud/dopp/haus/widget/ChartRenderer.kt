@@ -67,59 +67,6 @@ object ChartRenderer {
         return bmp
     }
 
-    /**
-     * Map a raw history `state` string to a boolean on/off for the timeline (#29).
-     * On/open ← "on"/"open"/"true"/"heat"/"cool"/… or a positive numeric level
-     * (brightness / cover position). Off ← "off"/"closed"/"0"/unknown/unavailable.
-     * Pure — JVM-testable.
-     */
-    fun stateIsOn(state: String?): Boolean {
-        val s = state?.trim()?.lowercase() ?: return false
-        return when (s) {
-            "on", "open", "opened", "true", "home", "active", "playing", "heat", "cool", "auto" -> true
-            "off", "closed", "close", "false", "away", "idle", "unavailable", "unknown", "none", "", "0" -> false
-            else -> s.toFloatOrNull()?.let { it > 0f } ?: false
-        }
-    }
-
-    /**
-     * A 48h on/off **timeline** for a binary device (#29): a horizontal bar tinted
-     * [onColor] where the device was on/open and [offColor] where off/closed, drawn
-     * left→right in chronological order. Empty bitmap when there are no states.
-     * RemoteViews sees only the resulting bitmap (setImageViewBitmap).
-     */
-    fun onOffTimeline(
-        widthPx: Int,
-        heightPx: Int,
-        states: List<Boolean>,
-        onColor: Int,
-        offColor: Int,
-    ): Bitmap {
-        val w = min(MAX_EDGE, max(1, widthPx))
-        val h = min(MAX_EDGE, max(1, heightPx))
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        if (states.isEmpty()) return bmp
-        val c = Canvas(bmp)
-        // Muted baseline so an all-off timeline still reads as "a bar, all off".
-        c.drawColor(offColor)
-        val n = states.size
-        val paint = Paint().apply { color = onColor; style = Paint.Style.FILL; isAntiAlias = false }
-        var i = 0
-        while (i < n) {
-            if (states[i]) {
-                var j = i
-                while (j < n && states[j]) j++
-                val x0 = i.toFloat() / n * w
-                val x1 = j.toFloat() / n * w
-                c.drawRect(x0, 0f, x1, h.toFloat(), paint)
-                i = j
-            } else {
-                i++
-            }
-        }
-        return bmp
-    }
-
     /** One line series with its color, for [multiLine]. */
     data class Series(val points: List<Float>, val color: Int)
 

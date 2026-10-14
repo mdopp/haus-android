@@ -74,6 +74,8 @@ class BoxServicesWidgetProvider : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, ids: IntArray) {
         ids.forEach { WidgetCache.clear(context, it) }
+        // The stream feeds this widget: with the last one gone it may close.
+        cloud.dopp.haus.realtime.LiveStream.refresh(context)
     }
 
     private fun render(
@@ -82,7 +84,7 @@ class BoxServicesWidgetProvider : AppWidgetProvider() {
         counts: Triple<Int, Int, Int>?,
         tap: PendingIntent,
     ): RemoteViews {
-        val v = RemoteViews(context.packageName, R.layout.widget_sb_services)
+        val v = RemoteViews(context.packageName, R.layout.widget_box_services)
         v.setOnClickPendingIntent(R.id.svc_root, tap)
         v.setOnClickPendingIntent(R.id.svc_refresh, refreshPending(context, appWidgetId))
         if (counts == null) {
@@ -108,7 +110,7 @@ class BoxServicesWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        const val ACTION_REFRESH = "cloud.dopp.haus.widget.SB_SERVICES_REFRESH"
+        const val ACTION_REFRESH = "cloud.dopp.haus.widget.BOX_SERVICES_REFRESH"
 
         /**
          * Re-fetch and re-render every placed instance (#137).

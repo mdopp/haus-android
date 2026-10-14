@@ -1,6 +1,6 @@
 package cloud.dopp.haus.data
 
-import android.content.Context
+import cloud.dopp.haus.data.Napi.PersonaJson
 import org.json.JSONObject
 
 /**
@@ -19,56 +19,30 @@ data class Persona(
     companion object {
         /** Haus's answer, or null when it names nobody. */
         fun parse(o: JSONObject): Persona? {
-            val display = o.optString("display").trim()
+            val display = o.optString(PersonaJson.DISPLAY).trim()
             if (display.isEmpty()) return null
             return Persona(
                 display = display,
-                greeting = o.optString("greeting").trim(),
-                accent = o.optString("accent").trim(),
-                ground = o.optString("ground").trim(),
-                hasIcon = o.optString("icon").trim().isNotEmpty(),
+                greeting = o.optString(PersonaJson.GREETING).trim(),
+                accent = o.optString(PersonaJson.ACCENT).trim(),
+                ground = o.optString(PersonaJson.GROUND).trim(),
+                hasIcon = o.optString(PersonaJson.ICON).trim().isNotEmpty(),
             )
         }
     }
 }
 
-/** The last persona Haus named, and its icon; cleared on unpairing. Plain prefs, no secret. */
-object PersonaStore {
-    private const val PREFS = "house_persona"
+/**
+ * The persona's icon: SVG text Haus serves at `/napi/persona/icon.svg`. Kept
+ * small ([MAX_BYTES]) — it is fetched, stored and parsed whole, and parsing
+ * runs off the main thread (`HomeActivity`), so a large or broken SVG costs a
+ * missing icon, never a frozen screen.
+ */
+object PersonaIcon {
+    /** The largest icon the app takes; Haus's personas ship a few KB. */
+    const val MAX_BYTES = 64 * 1024
 
-    private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-
-    fun get(ctx: Context): Persona? {
-        val p = p(ctx)
-        val display = p.getString("display", null) ?: return null
-        return Persona(
-            display = display,
-            greeting = p.getString("greeting", "") ?: "",
-            accent = p.getString("accent", "") ?: "",
-            ground = p.getString("ground", "") ?: "",
-            hasIcon = p.getBoolean("has_icon", false),
-        )
-    }
-
-    fun save(ctx: Context, persona: Persona) {
-        p(ctx).edit()
-            .putString("display", persona.display)
-            .putString("greeting", persona.greeting)
-            .putString("accent", persona.accent)
-            .putString("ground", persona.ground)
-            .putBoolean("has_icon", persona.hasIcon)
-            .apply()
-    }
-
-    /** The icon's SVG text, as last fetched. */
-    fun icon(ctx: Context): String? = p(ctx).getString("icon_svg", null)
-
-    fun saveIcon(ctx: Context, svg: String?) {
-        p(ctx).edit().apply { if (svg == null) remove("icon_svg") else putString("icon_svg", svg) }.apply()
-    }
-
-    fun clear(ctx: Context) = p(ctx).edit().clear().apply()
-
-    /** The name to show: the persona's, else the app's own. */
-    fun name(ctx: Context, fallback: String): String = get(ctx)?.display ?: fallback
+    /** [svg] when it is SVG and within [MAX_BYTES], else null. */
+    fun accept(svg: String?): String? =
+        svg?.takeIf { it.length <= MAX_BYTES && it.toByteArray(Charsets.UTF_8).size <= MAX_BYTES && it.contains("<svg") }
 }

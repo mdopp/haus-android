@@ -102,10 +102,12 @@ class PairingTest {
 
     private fun dialog(): AlertDialog? = ShadowAlertDialog.getLatestAlertDialog()
 
+    /** Say yes; the dialog delivers the click through the main looper. */
     private fun confirm() {
         val d = dialog()
         assertNotNull("no confirmation dialog", d)
         d!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     @Test

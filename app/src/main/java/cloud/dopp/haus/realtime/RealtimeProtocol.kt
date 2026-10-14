@@ -2,6 +2,8 @@ package cloud.dopp.haus.realtime
 
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.Card
+import cloud.dopp.haus.data.Napi
+import cloud.dopp.haus.data.Napi.EventJson
 import org.json.JSONObject
 
 /**
@@ -13,7 +15,7 @@ import org.json.JSONObject
 object RealtimeProtocol {
 
     /** The one event the stream carries: `{"entity_id": …, "card": {…}}`. */
-    const val EVENT_CARD_STATE = "card_state"
+    val EVENT_CARD_STATE: String = requireNotNull(Napi.EVENTS.event)
 
     data class CardStateEvent(val entityId: String, val card: Card)
 
@@ -33,10 +35,10 @@ object RealtimeProtocol {
         if (data.isNullOrBlank()) return null
         return try {
             val root = JSONObject(data)
-            val entityId = root.optString("entity_id")
-                .ifBlank { root.optJSONObject("card")?.optString("entity_id") ?: "" }
+            val entityId = root.optString(EventJson.ENTITY_ID)
+                .ifBlank { root.optJSONObject(EventJson.CARD)?.optString(Napi.CardJson.ENTITY_ID) ?: "" }
             if (entityId.isBlank()) return null
-            val cardObj = root.optJSONObject("card") ?: return null
+            val cardObj = root.optJSONObject(EventJson.CARD) ?: return null
             CardStateEvent(entityId, ApiClient.parseCardJson(cardObj))
         } catch (e: Exception) {
             null
@@ -58,9 +60,28 @@ object RealtimeProtocol {
         return if (grown <= 0L || grown > capMs) capMs else grown
     }
 
-    /** A session that stayed open this long was healthy; only then does the backoff reset (#79). */
-    const val STABLE_SESSION_MS = 20_000L
+    /**
+     * A session that stayed open this long was healthy; only then does the
+     * backoff reset (#79). Longer than Haus's 90 s ping (`live.go`): a proxy
+     * that cuts streams idle for less than that ends each session before the
+     * first ping, and such a session must keep backing off, not reconnect in
+     * 2 s and re-read every widget once a minute.
+     */
+    const val STABLE_SESSION_MS = 120_000L
 
     fun healthySession(connectedAtMs: Long, nowMs: Long): Boolean =
         connectedAtMs != 0L && nowMs - connectedAtMs >= STABLE_SESSION_MS
+
+    /** How often a refused watch post is tried again before the 20-minute re-post takes over. */
+    const val WATCH_RETRIES = 6
+
+    /**
+     * After the [attempt]-th watch post in a row was answered [code]: how long to
+     * wait before posting again, or null to stop. Only a 503 is retried — Haus
+     * sends it while Home Assistant is down (`live.go`), and without its watch
+     * set the open stream carries no frames. 2 s doubling to 60 s, [WATCH_RETRIES]
+     * times (about two minutes); every other answer is final.
+     */
+    fun watchRetryMs(code: Int, attempt: Int): Long? =
+        if (code == 503 && attempt in 0 until WATCH_RETRIES) backoffMillis(attempt) else null
 }

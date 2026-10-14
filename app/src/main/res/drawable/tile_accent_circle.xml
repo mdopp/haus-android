@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Shared filled brand-blue circle behind a trigger-tile glyph (#54).
-     Used by every "öffnet X" tile (camera, voice, …) so they read identically —
-     a gradient oval signalling "antippen". Generalised from the old
-     voice_mic_circle.
+     Used by every "öffnet X" tile (camera, devices) so they read identically —
+     a gradient oval signalling "antippen".
 
      Painted from the brand blue, NOT from the shell accent (#130): these tiles
      are home-screen widgets, sitting among foreign icons rather than beside the

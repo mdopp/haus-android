@@ -39,7 +39,7 @@ data class ToolCell(
      * them: `id`, resolved `params` JSON, and the server's title or null.
      *
      * Until ADR 0014 only the first was reachable, which quietly made five lease
-     * buttons into one — the trap caught in the old server before it shipped.
+     * buttons into one — a trap caught before it shipped.
      * The first entry is always the same one [actionId] names.
      */
     val offers: List<ToolOffer> = emptyList(),
@@ -59,7 +59,7 @@ data class ToolOffer(val id: String, val params: String, val title: String?)
  * outside the vocabulary is **skipped** — a malformed plugin loses a line, it
  * doesn't crash the home screen.
  *
- * Since the old server the catalog also declares **where an action's params come
+ * The catalog also declares **where an action's params come
  * from** (`tool-action-params`), so a row's `/napi/action-callback` body is
  * resolved here — still with no per-tool knowledge — and the row can carry a
  * working button (#90) instead of only opening the web card.
@@ -137,19 +137,6 @@ object ToolCells {
         val mapping = actionParams[id] ?: return@mapNotNull null
         val params = resolveParams(mapping, row) ?: return@mapNotNull null
         ToolOffer(id, params.toString(), actionTitles[id])
-    }
-
-    fun resolveAction(
-        actions: List<String>,
-        row: JSONObject,
-        actionParams: Map<String, Map<String, String>>,
-    ): Pair<String, JSONObject>? {
-        for (id in actions) {
-            val mapping = actionParams[id] ?: continue
-            val params = resolveParams(mapping, row) ?: continue
-            return id to params
-        }
-        return null
     }
 
     /**

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Small pill used for the "deine Widgets" teaser chips: faint accent tint
-     with a hairline edge, matching the card language. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="@color/haus_accent_faint" />
-    <corners android:radius="@dimen/radius_sm" />
-    <stroke android:width="1dp" android:color="@color/haus_card_edge" />
-</shape>

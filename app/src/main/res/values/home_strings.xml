@@ -15,6 +15,17 @@
     <string name="qr_invalid">Kein gültiger Kopplungs-Code.</string>
     <string name="pairing_success">Gekoppelt ✓</string>
     <string name="pairing_failed">Kopplung fehlgeschlagen – ungültiger Zugang</string>
+    <string name="server_http_refused">Die Adresse muss mit https:// beginnen. Über http:// ginge der Zugang unverschlüsselt durchs Netz.</string>
+    <string name="pairing_not_started">Diesen Kopplungs-Link hat die App nicht angefordert. Zum Koppeln die Adresse hier eingeben.</string>
+    <string name="pairing_confirm_title">Koppeln?</string>
+    <string name="pairing_confirm_link">Mit %1$s koppeln? Die App speichert dann den Zugang zu diesem Haus.</string>
+    <string name="pairing_confirm_setup">Mit %1$s koppeln? Die App wechselt dann zu diesem Haus und speichert den Zugang.</string>
+    <string name="pairing_confirm_server">Mit %1$s verbinden und dort koppeln?</string>
+    <string name="pairing_confirm_yes">Koppeln</string>
+    <string name="pairing_confirm_no">Abbrechen</string>
+    <string name="pairing_refused">Haus kennt diesen Zugang nicht. Bitte neu koppeln.</string>
+    <string name="pairing_unreachable">Haus ist gerade nicht erreichbar. Bitte später neu koppeln.</string>
+    <string name="pairing_not_saved">Der Zugang ließ sich auf diesem Telefon nicht speichern. Die App ist nicht gekoppelt; bitte neu koppeln.</string>
     <string name="home_no_browser">Kein Browser gefunden.</string>
     <string name="pairing_action">Mit Haus koppeln</string>
 
