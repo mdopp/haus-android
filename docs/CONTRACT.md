@@ -65,15 +65,23 @@ each row naming the Haus file and lines it came from.
 
 ## (c) The live stream
 
-While the screen is on and a widget the stream feeds is placed (device, active
-devices, the Box widgets), the app holds `GET /napi/portal/events` and reads
-`card_state` frames only. On screen-on it reconnects, posts its watch set
-(`POST /napi/portal/watch`, re-posted inside Haus's one-hour TTL; a 503 while
-Home Assistant is down is retried with backoff, about two minutes) and
-re-reads its widgets. A session counts as healthy — and resets the reconnect
+One foreground service (`realtime/LiveService.kt`, type `specialUse`, a quiet
+"Live-Widgets" notification) runs while the app is paired, its switch is on
+(the default) and a widget the stream keeps current is placed (device, active
+devices, energy, energy statistics, energy totals, tools, the Box widgets). It
+listens for the screen itself. While the screen is on it holds
+`GET /napi/portal/events` and reads `card_state` frames only; on screen-off it
+drops the connection. Once connected it posts its watch set
+(`POST /napi/portal/watch`: the device widgets' entities and, while an energy
+widget is placed, the energy flow's sensors; re-posted inside Haus's one-hour
+TTL; a 503 while Home Assistant is down is retried with backoff, about two
+minutes) and has every fed widget read again. A frame for an energy sensor
+reads the energy widgets again, at most every 10 s, Haus's sensor interval.
+A 401 stops the service; it starts again after boot. A session counts as healthy — and resets the reconnect
 backoff — only after 120 s, longer than Haus's 90 s ping, so a proxy that
-cuts idle streams does not make the app reconnect every minute. With the screen off nothing runs:
-no service, no notification, no poll, no catch-up. Messages to people go
+cuts idle streams does not make the app reconnect every minute. With the screen
+off nothing goes over the network: no stream, no poll (every widget's update
+period is 0), no catch-up. Messages to people go
 through their chat channel, not the app (laib ADR 0022 §3).
 
 ## (d) Pages

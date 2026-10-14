@@ -113,4 +113,19 @@ class RealtimeProtocolTest {
             assertNull("retries a $it", Reach.call(rp, "watchRetryMs", it, 0))
         }
     }
+
+    /** The stream carries card_state and nothing else (moved here from the gate's test). */
+    @Test
+    fun theStreamReadsCardStateAndNothingElse() {
+        val frame = """{"entity_id":"light.kueche","card":{"entity_id":"light.kueche","domain":"light","state":"on"}}"""
+        val ev = RealtimeProtocol.frame("card_state", frame)
+        org.junit.Assert.assertNotNull(ev)
+        assertEquals("light.kueche", ev!!.entityId)
+        assertEquals("on", ev.card.state)
+        for (other in listOf("ha", "notice", "approval", "box", "message", null)) {
+            assertNull("$other is not read", RealtimeProtocol.frame(other, frame))
+        }
+        assertNull("a frame without a card", RealtimeProtocol.frame("card_state", """{"entity_id":"light.x"}"""))
+        assertNull("garbage", RealtimeProtocol.frame("card_state", "{"))
+    }
 }

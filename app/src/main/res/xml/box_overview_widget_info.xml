@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Box overview widget (#42): 2x2-ish summary card, resizable, NO config.
-     Polls /napi/box/home; a tap opens Haus's page. -->
+     Reads /napi/box/home when placed and on screen-on (the live service); a tap opens Haus's page. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="180dp"
     android:minHeight="110dp"

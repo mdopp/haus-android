@@ -25,6 +25,8 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_TAP) return
+        // A widget tap may start the live service (Android 12+ allows it here).
+        cloud.dopp.haus.realtime.Live.ensure(context)
         val id = intent.getIntExtra(
             AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
         )

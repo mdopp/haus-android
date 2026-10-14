@@ -21,6 +21,11 @@ class EnergyWidgetProvider : AppWidgetProvider() {
         ids.forEach { refresh(context, it) }
     }
 
+    override fun onDeleted(context: Context, ids: IntArray) {
+        // The live service feeds this widget: with the last one gone it may stop.
+        cloud.dopp.haus.realtime.Live.recheck(context)
+    }
+
     override fun onAppWidgetOptionsChanged(
         context: Context,
         mgr: AppWidgetManager,
@@ -58,6 +63,8 @@ class EnergyWidgetProvider : AppWidgetProvider() {
                 } catch (e: Exception) {
                     null
                 }
+                // the flow's sensors join the watch set: their frames read this widget again
+                energy?.let { e -> cloud.dopp.haus.realtime.WatchSet.rememberEnergy(context, e.flow.mapNotNull { it.entityId }) }
                 mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, energy, true, tap, onRefresh))
             } catch (t: Throwable) {
                 WidgetFallback.show(context, appWidgetId, onRefresh)

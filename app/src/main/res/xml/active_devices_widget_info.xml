@@ -9,4 +9,4 @@
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/widget_active_small"
     android:previewLayout="@layout/widget_active_large"
-    android:updatePeriodMillis="1800000" />
+    android:updatePeriodMillis="0" />

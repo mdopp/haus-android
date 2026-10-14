@@ -15,7 +15,9 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,7 +33,7 @@ import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.ToolDef
 import cloud.dopp.haus.data.ToolDefs
-import cloud.dopp.haus.realtime.LiveStream
+import cloud.dopp.haus.realtime.Live
 import cloud.dopp.haus.widget.AppShortcuts
 import cloud.dopp.haus.widget.ToolWidgetProvider
 import cloud.dopp.haus.widget.WidgetPin
@@ -68,6 +70,9 @@ class HomeActivity : AppCompatActivity() {
         result.contents?.let { handleScanned(it) }
     }
 
+    /** Android 13+: the live widgets' notification shows only with this permission. */
+    private val notifyLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     @Volatile
     private var toolsLoading = false
 
@@ -77,6 +82,9 @@ class HomeActivity : AppCompatActivity() {
         findViewById<Button>(R.id.connect_btn).setOnClickListener { onConnect() }
         findViewById<Button>(R.id.qr_scan_btn).setOnClickListener { startScan() }
         findViewById<Button>(R.id.logout_btn).setOnClickListener { unpair() }
+        findViewById<SwitchCompat>(R.id.live_switch).setOnCheckedChangeListener { _, on ->
+            if (on != Live.isEnabled(this)) Live.setEnabled(applicationContext, on)
+        }
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
         applySystemBarInsets()
         handleDeepLink(intent)
@@ -95,8 +103,8 @@ class HomeActivity : AppCompatActivity() {
         render()
         // The app-icon long-press menu (#97): picks up a widget removed while away.
         if (paired()) AppShortcuts.refreshAsync(applicationContext)
-        // A widget placed from the launcher tray while away: the live stream looks again.
-        LiveStream.refresh(applicationContext)
+        // The app's screen may start the live service (Android 12+): placed widgets, the switch, the pairing.
+        Live.ensure(applicationContext)
     }
 
     private fun paired() = ServerStore.isConfigured(this) && TokenStore.isPaired(this)
@@ -128,6 +136,7 @@ class HomeActivity : AppCompatActivity() {
         renderPersona()
         if (!connected) return
         findViewById<TextView>(R.id.status).text = getString(R.string.home_connected, ServerStore.host(this) ?: "")
+        findViewById<SwitchCompat>(R.id.live_switch).isChecked = Live.isEnabled(this)
         renderWidgetTypes()
         renderTools()
         refreshPersona()
@@ -390,9 +399,17 @@ class HomeActivity : AppCompatActivity() {
                         },
                     ),
                 )
-                LiveStream.refresh(app)
+                if (outcome == Pairing.Outcome.PAIRED) askToNotify()
+                Live.ensure(app)
                 if (!isFinishing) render()
             }
+        }
+    }
+
+    /** Once paired, ask for the live widgets' notification on Android 13+; without it they still run. */
+    private fun askToNotify() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            runCatching { notifyLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
         }
     }
 
@@ -402,7 +419,7 @@ class HomeActivity : AppCompatActivity() {
         PersonaStore.clear(this)
         Pairing.cancel(this)
         findViewById<EditText>(R.id.server_url).setText("")
-        LiveStream.refresh(applicationContext)
+        Live.ensure(applicationContext)
         render()
         toast(getString(R.string.home_logged_out))
     }

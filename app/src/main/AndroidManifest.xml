@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Haus (#176, laib ADR 0022): home-screen widgets and pairing, nothing else.
-     No foreground service, no notifications, no boot start, no web shell. -->
+     One foreground service keeps the widgets live while the screen is on; no
+     other notification, no poll, no web shell. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The camera widget's capture screen (#36). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- The live widgets (realtime/LiveService.kt): one specialUse foreground service,
+         its notification (shown on Android 13+ only with the permission), its restart after boot. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
     <queries>
@@ -15,7 +22,6 @@
         </intent>
     </queries>
     <application
-        android:name=".HausApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -278,5 +284,24 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
+        <!-- The live widgets: holds /napi/portal/events while the screen is on.
+             specialUse: Android 15 caps the data-sync type at 6 hours a day. -->
+        <service
+            android:name=".realtime.LiveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="A live widget connection to the user's own Haus server: while the screen is on, it keeps the home-screen widgets showing the current state of the household." />
+        </service>
+
+        <!-- Starts the live widgets again after a reboot, when they are wanted. -->
+        <receiver
+            android:name=".realtime.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

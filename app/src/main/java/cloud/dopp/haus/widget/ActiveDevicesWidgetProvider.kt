@@ -33,8 +33,8 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
     ) = refresh(context, appWidgetId)
 
     override fun onDeleted(context: Context, ids: IntArray) {
-        // The stream feeds this widget: with the last one gone it may close.
-        cloud.dopp.haus.realtime.LiveStream.refresh(context)
+        // The live service feeds this widget: with the last one gone it may stop.
+        cloud.dopp.haus.realtime.Live.recheck(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -163,24 +163,6 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "cloud.dopp.haus.widget.ACTIVE_REFRESH"
-
-        /**
-         * Nudge every active-devices widget instance to re-fetch (#48). A device
-         * on/off transition can change the roster, so after a realtime `card_state`
-         * push we re-run the overview widgets (they re-hit `/napi/portal/active`).
-         */
-        fun refreshAll(context: Context) {
-            val mgr = AppWidgetManager.getInstance(context)
-            val ids = mgr.getAppWidgetIds(
-                android.content.ComponentName(context, ActiveDevicesWidgetProvider::class.java),
-            )
-            for (id in ids) {
-                val i = Intent(context, ActiveDevicesWidgetProvider::class.java)
-                    .setAction(ACTION_REFRESH)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-                context.sendBroadcast(i)
-            }
-        }
 
         // Shared ids across both layouts (small + large use the same root/refresh ids).
         private val R_av_root = cloud.dopp.haus.R.id.av_root

@@ -14,4 +14,4 @@
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/widget_tool"
     android:previewLayout="@layout/widget_tool"
-    android:updatePeriodMillis="1800000" />
+    android:updatePeriodMillis="0" />

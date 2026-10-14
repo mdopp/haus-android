@@ -74,8 +74,8 @@ class BoxServicesWidgetProvider : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, ids: IntArray) {
         ids.forEach { WidgetCache.clear(context, it) }
-        // The stream feeds this widget: with the last one gone it may close.
-        cloud.dopp.haus.realtime.LiveStream.refresh(context)
+        // The live service feeds this widget: with the last one gone it may stop.
+        cloud.dopp.haus.realtime.Live.recheck(context)
     }
 
     private fun render(
@@ -111,32 +111,5 @@ class BoxServicesWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "cloud.dopp.haus.widget.BOX_SERVICES_REFRESH"
-
-        /**
-         * Re-fetch and re-render every placed instance (#137).
-         *
-         * These tiles carry `updatePeriodMillis="0"` — Android never calls
-         * `onUpdate` on its own — and the realtime channel cannot wake them either:
-         * `card_state` is built from Home Assistant `state_changed` events, and a
-         * Box service is not an HA entity. Without this the tile shows
-         * whatever it read the last time someone tapped it, so a service that fell
-         * over stays green on the home screen.
-         *
-         * Called from [cloud.dopp.haus.realtime.LiveStream] once the stream is up after screen-on —
-         * the moment the tile is about to be looked at. Deliberately not on a timer:
-         * polling for a surface nobody is watching costs battery for nothing.
-         */
-        fun refreshAll(context: Context) {
-            val mgr = AppWidgetManager.getInstance(context)
-            val ids = mgr.getAppWidgetIds(
-                android.content.ComponentName(context, BoxServicesWidgetProvider::class.java),
-            )
-            for (id in ids) {
-                val i = Intent(context, BoxServicesWidgetProvider::class.java)
-                    .setAction(ACTION_REFRESH)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-                context.sendBroadcast(i)
-            }
-        }
     }
 }

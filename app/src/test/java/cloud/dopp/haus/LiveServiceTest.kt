@@ -155,18 +155,31 @@ class LiveServiceTest {
         assertEquals(0, opened.size)
     }
 
+    /**
+     * The catch-up (#137, #138): Haus sends a card only when it changes, so what
+     * changed while the screen was off reaches a widget only through this. Every
+     * placed instance of every fed widget is asked, each once — a garage door
+     * closed by hand must not keep saying "offen", a Box tile must not freeze.
+     */
     @Test
     fun onceConnectedItPostsTheWatchSetAndReadsEveryFedWidgetAgain() {
         place(*fed.toTypedArray())
+        place(fed[0], fed[0], fed[3])
         start()
         val app = shadowOf(ctx() as android.app.Application)
         app.clearBroadcastIntents()
         listeners.last().onOpen(opened.last(), response(200))
         idle()
         assertTrue("no watch post", watchPosts >= 1)
-        val asked = app.broadcastIntents.mapNotNull { it.component?.className }.toSet()
-        val missed = fed.map { it.first.name }.filter { it !in asked }
-        assertTrue("not read again: $missed", missed.isEmpty())
+        val mgr = AppWidgetManager.getInstance(ctx())
+        fed.forEach { (cls, _) ->
+            val placed = mgr.getAppWidgetIds(ComponentName(ctx(), cls)).sorted()
+            val asked = app.broadcastIntents.filter { it.component?.className == cls.name }.flatMap {
+                it.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)?.toList()
+                    ?: listOf(it.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1))
+            }.sorted()
+            assertEquals("${cls.simpleName}: every placed instance, each once", placed, asked)
+        }
     }
 
     @Test

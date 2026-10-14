@@ -3,8 +3,10 @@
 This repo is the **Haus app**: native Kotlin home-screen widgets and the
 pairing with **Haus** (`https://haus.<domain>`, repo `mdopp/haus`), the
 family's surface of the box Laib runs. It is a widget client and nothing more
-(laib ADR 0022): no web shell, no notifications, no approvals, no diagnostics,
-and no background work while the screen is off. The seam with Haus is
+(laib ADR 0022): no web shell, no messages, no approvals, no diagnostics,
+and no network while the screen is off. The widgets stay live through one
+`specialUse` foreground service (`realtime/LiveService.kt`) that holds the
+stream only while the screen is on. The seam with Haus is
 `docs/CONTRACT.md`.
 
 These rules apply to every session, human or agent.
@@ -19,7 +21,9 @@ These rules apply to every session, human or agent.
 - One set of names: package `cloud.dopp.haus`, scheme `cloud.dopp.haus://`,
   token prefix `haus_device_`. `NamesTest` fails on any older name.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
-  app. Do not add notifications, a foreground service or a poll.
+  app. The live service's quiet notification is the only one; do not add
+  another, a second service, a poll (widget update periods stay 0), a job, an
+  alarm or a wakelock. `ManifestTest` holds this.
 
 ## Commits
 

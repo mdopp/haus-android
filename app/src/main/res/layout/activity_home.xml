@@ -119,6 +119,15 @@
                 android:layout_marginBottom="@dimen/space_md"
                 android:gravity="center_horizontal" />
 
+            <!-- The live widgets (LiveService): on by default once paired. -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/live_switch"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/live_switch" />
+
             <TextView
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"

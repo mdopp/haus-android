@@ -262,7 +262,7 @@ class WidgetConfigActivity : AppCompatActivity() {
         // Refresh the watch set now that one more entity is bound (#48), and let
         // the live stream look again: this may be the first widget.
         cloud.dopp.haus.realtime.WatchSet.postCurrentAsync(applicationContext)
-        cloud.dopp.haus.realtime.LiveStream.refresh(applicationContext)
+        cloud.dopp.haus.realtime.Live.ensure(applicationContext)
         // …and the app-icon long-press menu, which is that same device set (#97).
         AppShortcuts.refreshAsync(applicationContext)
         setResult(RESULT_OK, resultIntent())

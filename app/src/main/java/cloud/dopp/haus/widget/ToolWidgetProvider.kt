@@ -43,6 +43,8 @@ class ToolWidgetProvider : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, ids: IntArray) {
         ids.forEach { WidgetStore.unbindTool(context, it) }
+        // The live service feeds this widget: with the last one gone it may stop.
+        cloud.dopp.haus.realtime.Live.recheck(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
