@@ -26,6 +26,11 @@ class ActiveDevicesRemoteViewsService : RemoteViewsService() {
         ActiveDevicesFactory(applicationContext)
 }
 
+/** What a tap on an active row carries (#178): the device's own page on Haus, or `/start`. */
+object ActiveRow {
+    fun fillIn(card: Card): Intent = Intent().putExtra(ToolActionActivity.EXTRA_PAGE, HausPages.item(card.page))
+}
+
 private class ActiveDevicesFactory(
     private val ctx: Context,
 ) : RemoteViewsService.RemoteViewsFactory {
@@ -61,8 +66,8 @@ private class ActiveDevicesFactory(
         row.setViewVisibility(R.id.av_item_lock, if (card.isSensitive) View.VISIBLE else View.GONE)
 
         // A row completes the ListView's PendingIntentTemplate (set in the
-        // provider): a tap opens the house page, like the tile itself.
-        row.setOnClickFillInIntent(R.id.av_item_root, Intent())
+        // provider): a tap opens the device's own page on Haus.
+        row.setOnClickFillInIntent(R.id.av_item_root, ActiveRow.fillIn(card))
         return row
     }
 

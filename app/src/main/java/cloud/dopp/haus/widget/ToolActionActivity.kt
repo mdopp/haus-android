@@ -1,7 +1,11 @@
 package cloud.dopp.haus.widget
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
@@ -9,7 +13,8 @@ import org.json.JSONObject
 import kotlin.concurrent.thread
 
 /**
- * What a tap on a tool widget row does (#70/#90).
+ * What a tap on a collection row does: a tool widget's row (#70/#90) and an
+ * active-devices row (#178).
  *
  * A collection has exactly one `PendingIntentTemplate`, so every row tap arrives
  * here and the row's fill-in says what this particular row can offer. The row has
@@ -17,9 +22,11 @@ import kotlin.concurrent.thread
  * (#92) proves on the device.
  *
  * - The row offers one or several actions → [ActionDialog] shows
- *   [ActionSheets.toolActions]; the pick runs one, or Abbrechen does nothing.
- * - It offers none → nothing happens: Haus has no page for an item, and a tap
- *   that may change something must never fire on a mis-touch.
+ *   [ActionSheets.toolActions]; the pick runs one, opens the row's page (one
+ *   more entry, after the actions, when it has one), or Abbrechen does nothing.
+ * - It offers none but has a page on Haus → that page opens in the browser.
+ * - Neither → nothing happens: a tap that may change something must never fire
+ *   on a mis-touch, and no address is guessed.
  *
  * The refusals are handled the way Haus spells them out: a `confirm_required`
  * 403 opens the same kind of dialog [WidgetActionActivity] uses and re-sends
@@ -38,23 +45,31 @@ class ToolActionActivity : Activity() {
         val ids = intent.getStringArrayExtra(EXTRA_ACTION_IDS)?.toList().orEmpty()
         val bodies = intent.getStringArrayExtra(EXTRA_ACTION_BODIES)?.toList().orEmpty()
         val titles = intent.getStringArrayExtra(EXTRA_ACTION_TITLES)?.toList().orEmpty()
+        val page = HausPages.page(intent.getStringExtra(EXTRA_PAGE))
         when {
-            ids.size > 1 && ids.size == bodies.size -> offer(ids, bodies.map { json(it) }, titles)
-            actionId != null -> offer(listOf(actionId), listOf(params()), emptyList())
+            ids.size > 1 && ids.size == bodies.size -> offer(ids, bodies.map { json(it) }, titles, page)
+            actionId != null -> offer(listOf(actionId), listOf(params()), emptyList(), page)
+            page != null -> open(page)
             else -> finish()
         }
     }
 
-    private fun offer(ids: List<String>, bodies: List<JSONObject>, titles: List<String>) {
+    private fun offer(ids: List<String>, bodies: List<JSONObject>, titles: List<String>, page: String?) {
         val labels = ids.indices.map { titles.getOrNull(it)?.ifBlank { null } }
         ActionDialog.show(
             activity = this,
             title = rowTitle(),
             message = null,
-            sheet = ActionSheets.toolActions(labels),
-            onPick = { i -> run(ids[i], bodies[i], confirmed = false) },
+            sheet = ActionSheets.toolActions(labels, open = page != null),
+            onPick = { i -> if (i < ids.size) run(ids[i], bodies[i], confirmed = false) else open(page!!) },
             onCancel = { finish() },
         )
+    }
+
+    /** The row's page on Haus, in the browser. */
+    private fun open(page: String) {
+        runCatching { startActivity(HausPages.intent(this, page)) }
+        finish()
     }
 
     private fun json(s: String): JSONObject = try {
@@ -133,5 +148,18 @@ class ToolActionActivity : Activity() {
 
         /** Their server titles, index-aligned; an empty entry means "no title". */
         const val EXTRA_ACTION_TITLES = "action_titles"
+
+        /** The row's own page on Haus, a path ([HausPages.page] checks it here again). Absent ⇒ none. */
+        const val EXTRA_PAGE = "page"
+
+        /**
+         * The one `PendingIntentTemplate` a collection's rows complete (#28
+         * pattern): this screen, **mutable** so a row's fill-in can merge.
+         */
+        fun template(ctx: Context, reqCode: Int): PendingIntent {
+            val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+            val i = Intent(ctx, ToolActionActivity::class.java).addFlags(ActionDialog.TASK_FLAGS)
+            return PendingIntent.getActivity(ctx, reqCode, i, PendingIntent.FLAG_UPDATE_CURRENT or mutable)
+        }
     }
 }

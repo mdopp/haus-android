@@ -83,7 +83,6 @@ class DeviceWidgetProvider : AppWidgetProvider() {
             }
             return
         }
-        val tap = tapPending(context, appWidgetId, entityId)
         val domain = WidgetStore.domain(context, appWidgetId)
         // Immediate render from the last-good cache (#46): show the previous state
         // instantly — even after a reboot/process death, when StateEpochGuard's
@@ -94,7 +93,7 @@ class DeviceWidgetProvider : AppWidgetProvider() {
                 appWidgetId,
                 WidgetRender.build(
                     context, appWidgetId, cached, WidgetStore.name(context, appWidgetId),
-                    domain, tap,
+                    domain, tapPending(context, appWidgetId, cached),
                     if (cached != null) WidgetRender.Load.LOADED else WidgetRender.Load.LOADING,
                 ),
             )
@@ -134,8 +133,8 @@ class DeviceWidgetProvider : AppWidgetProvider() {
                 mgr.updateAppWidget(
                     appWidgetId,
                     WidgetRender.build(
-                        context, appWidgetId, drawn.card,
-                        WidgetStore.name(context, appWidgetId), domain, tap, drawn.load,
+                        context, appWidgetId, drawn.card, WidgetStore.name(context, appWidgetId), domain,
+                        tapPending(context, appWidgetId, drawn.card), drawn.load,
                     ),
                 )
             } catch (t: Throwable) {
@@ -158,9 +157,6 @@ class DeviceWidgetProvider : AppWidgetProvider() {
         )
     }
 
-    private fun tapPending(context: Context, appWidgetId: Int, entityId: String): PendingIntent =
-        // Name/body tap opens Haus's start page (#27); Haus has no page per device.
-        HausPages.tap(context, appWidgetId, HausPages.START)
 
     private fun configPending(context: Context, appWidgetId: Int): PendingIntent {
         val i = Intent(context, WidgetConfigActivity::class.java)
@@ -197,6 +193,10 @@ class DeviceWidgetProvider : AppWidgetProvider() {
             return Drawn(card, if (card != null) WidgetRender.Load.LOADED else WidgetRender.Load.FAILED)
         }
 
+        /** The name/body tap: the device's own page on Haus, or `/start` while none is known (#178). */
+        private fun tapPending(context: Context, appWidgetId: Int, card: Card?): PendingIntent =
+            HausPages.tap(context, appWidgetId, HausPages.item(card?.page))
+
         /** Ask a bound instance to re-fetch and re-render (explicit self-broadcast). */
         fun requestRefresh(context: Context, appWidgetId: Int) {
             val i = Intent(context, DeviceWidgetProvider::class.java)
@@ -214,7 +214,7 @@ class DeviceWidgetProvider : AppWidgetProvider() {
         fun renderCard(context: Context, appWidgetId: Int, card: Card) {
             val mgr = AppWidgetManager.getInstance(context)
             val entityId = WidgetStore.entityId(context, appWidgetId) ?: return
-            val tap = HausPages.tap(context, appWidgetId, HausPages.START)
+            val tap = tapPending(context, appWidgetId, card)
             val domain = WidgetStore.domain(context, appWidgetId)
             try {
                 // Persist the pushed state so a later failed poll keeps it (#46) —

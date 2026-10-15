@@ -36,6 +36,9 @@ data class Card(
     // the lock's latch bit is read today (#92, `LockChooser.FEATURE_OPEN`): a
     // door-opening entry is offered only for a lock that says it has a latch.
     val supportedFeatures: Int? = null,
+    // The thing's own page on Haus (`/raeume/<entity_id>`), as Haus names it: a
+    // tap opens it ([cloud.dopp.haus.widget.HausPages.item]). Null when Haus names none.
+    val page: String? = null,
 ) {
     /**
      * Best-effort "active" reading across the supported domains. For a lock

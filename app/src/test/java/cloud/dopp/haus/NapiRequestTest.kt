@@ -85,7 +85,7 @@ class NapiRequestTest {
         val confirmed = Napi.HA_CALL.json("lock.tuer", "lock.open", null, true)
         assertTrue(confirmed.getBoolean("confirmed"))
         try {
-            Napi.WATCH.json("a", "b")
+            Napi.WATCH.json("a", "b", "c")
             fail("more values than fields")
         } catch (e: IllegalArgumentException) {
         }

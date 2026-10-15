@@ -1,5 +1,6 @@
 package cloud.dopp.haus.widget
 
+import cloud.dopp.haus.data.Napi
 import cloud.dopp.haus.data.ToolDef
 import cloud.dopp.haus.data.ToolCellSchema
 import cloud.dopp.haus.data.ToolDefs
@@ -43,6 +44,8 @@ data class ToolCell(
      * The first entry is always the same one [actionId] names.
      */
     val offers: List<ToolOffer> = emptyList(),
+    /** The item's own page on Haus, a path ([HausPages.page]); null when Haus names none (#178). */
+    val page: String? = null,
 )
 
 /** One entry of a tool row's sheet (#169). */
@@ -110,6 +113,7 @@ object ToolCells {
             actionId = action?.first,
             actionParams = action?.second,
             offers = offers,
+            page = HausPages.page(row.optString(Napi.ToolRowJson.PAGE)),
         )
     }
 
@@ -239,6 +243,7 @@ object ToolCells {
             // must assemble off a cold redraw, without re-reading the catalog.
             c.actionId?.let { o.put("a", it) }
             c.actionParams?.let { o.put("p", it) }
+            c.page?.let { o.put("pg", it) }
             // Every offer rides along too (#169). Without this a cold redraw --
             // the widget's normal state after a reboot -- would fall back to the
             // single action and quietly lose the other choices, which is exactly
@@ -290,6 +295,7 @@ object ToolCells {
                         actionId = o.optString("a").ifBlank { null },
                         actionParams = o.optString("p").ifBlank { null },
                         offers = decodeOffers(o.optJSONArray("o")),
+                        page = o.optString("pg").ifBlank { null },
                     ),
                 )
             }

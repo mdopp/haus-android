@@ -57,6 +57,7 @@ object WidgetCache {
         // here, so it must survive a process restart — otherwise a cold tap would
         // silently drop the "Tür öffnen" entry on a lock that has a latch.
         card.supportedFeatures?.let { o.put("supportedFeatures", it) }
+        o.putOpt("page", card.page)
         write(ctx, "card_$id", o)
         noteFetch(ctx, id)
     }
@@ -80,6 +81,7 @@ object WidgetCache {
                 colorTemp = if (o.has("colorTemp")) o.optInt("colorTemp") else null,
                 updatedAtMs = if (o.has("updatedAtMs")) o.optLong("updatedAtMs") else null,
                 supportedFeatures = if (o.has("supportedFeatures")) o.optInt("supportedFeatures") else null,
+                page = o.optStringOrNull("page"),
             )
         } catch (e: Exception) {
             null

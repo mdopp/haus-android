@@ -39,7 +39,7 @@ object Napi {
         val body: List<String> = emptyList(),
         val reply: List<Any> = emptyList(),
         val accept: String? = null,
-        val event: String? = null,
+        val events: List<String> = emptyList(),
     ) {
         /**
          * [path] with [values] for [query], in order; a null value leaves its
@@ -71,7 +71,7 @@ object Napi {
             val fits = want.size == have.size && want.indices.all { i ->
                 want[i] == have[i] || (want[i].startsWith("{") && have[i].isNotEmpty())
             }
-            return if (fits) Endpoint(method, concrete, query, allowed, body, reply, accept, event) else null
+            return if (fits) Endpoint(method, concrete, query, allowed, body, reply, accept, events) else null
         }
 
         override fun toString() = "$method $path"
@@ -136,6 +136,9 @@ object Napi {
         const val COLOR_TEMP = "color_temp"
         const val UPDATED_AT_MS = "updated_at_ms"
         const val SUPPORTED_FEATURES = "supported_features"
+
+        /** The thing's own page on Haus, a path (`/raeume/<entity_id>`): what a tap opens. */
+        const val PAGE = "page"
     }
 
     /** `GET /napi/portal/state`: `{ok, card}`. */
@@ -178,11 +181,16 @@ object Napi {
         const val DEVICE_CLASS = "device_class"
     }
 
-    /** A `card_state` frame of the stream: `{entity_id, card}`. */
+    /** The stream's frames: `card_state` `{entity_id, card}`, `active_set` `{entity_ids}`. */
     object EventJson {
         const val ENTITY_ID = "entity_id"
         const val CARD = "card"
+        const val ENTITY_IDS = "entity_ids"
     }
+
+    /** The frames the stream carries, by their SSE event name. */
+    const val CARD_STATE = "card_state"
+    const val ACTIVE_SET = "active_set"
 
     /** `GET /napi/defs/tool`: `{ok, defs: [def]}`. */
     object ToolDefJson {
@@ -214,6 +222,12 @@ object Napi {
         const val ACTIONS = "actions"
     }
 
+    /** A tool's row: the keys the app reads beside the ones its `tool-cell-schema` names. */
+    object ToolRowJson {
+        /** The item's own page on Haus, a path: what a tap opens. */
+        const val PAGE = "page"
+    }
+
     /** A refused `POST /napi/action-callback`: `{ok: false, reason}`. */
     object ActionJson {
         const val REASON = "reason"
@@ -224,8 +238,8 @@ object Napi {
     /** The house persona: name, greeting, colours, whether it has an icon. */
     val PERSONA = Endpoint(Method.GET, "/napi/persona", reply = listOf(PersonaJson))
 
-    /** The persona's icon, as SVG text. */
-    val PERSONA_ICON = Endpoint(Method.GET, "/napi/persona/icon.svg")
+    /** The persona's icon, a PNG. */
+    val PERSONA_ICON = Endpoint(Method.GET, "/napi/persona/icon.png")
 
     /** Who owns a device token: the pairing checks a new token here before storing it. */
     val WHOAMI = Endpoint(Method.GET, "/napi/whoami", reply = listOf(WhoamiJson))
@@ -254,20 +268,20 @@ object Napi {
     /** What the device picker and the app-icon menu offer. */
     val ADDABLE = Endpoint(Method.GET, "/napi/portal/start/addable", reply = listOf(AddableJson))
 
-    /** Which entities this device's widgets show; 503 while Home Assistant is down. */
-    val WATCH = Endpoint(Method.POST, "/napi/portal/watch", body = listOf("entity_ids"))
+    /** Which entities this device's widgets show, and whether it wants `active_set`; 503 while HA is down. */
+    val WATCH = Endpoint(Method.POST, "/napi/portal/watch", body = listOf("entity_ids", "active"))
 
-    /** The live stream, only `card_state` frames. */
+    /** The live stream: `card_state` and `active_set` frames. */
     val EVENTS = Endpoint(
         Method.GET, "/napi/portal/events",
-        reply = listOf(EventJson, CardJson), accept = "text/event-stream", event = "card_state",
+        reply = listOf(EventJson, CardJson), accept = "text/event-stream", events = listOf(CARD_STATE, ACTIVE_SET),
     )
 
     /** The tool catalog. */
     val TOOL_DEFS = Endpoint(Method.GET, "/napi/defs/tool", reply = listOf(ToolDefJson, CellSchemaJson))
 
     /** A tool's rows, at the path its catalog entry names ([Endpoint.at]). */
-    val TOOL_ROWS = Endpoint(Method.GET, "/napi/portal/{tool}")
+    val TOOL_ROWS = Endpoint(Method.GET, "/napi/portal/{tool}", reply = listOf(ToolRowJson))
 
     /** A tool row's action. */
     val ACTION_CALLBACK = Endpoint(

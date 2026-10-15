@@ -282,6 +282,90 @@ class LiveServiceTest {
         assertTrue("energy totals not read: $asked", EnergyTotalsWidgetProvider::class.java.name in asked)
     }
 
+    /** Haus's active set for this phone (#178): the ids that are on or open now. */
+    private fun activeSet(vararg ids: String) =
+        org.json.JSONObject().put("entity_ids", org.json.JSONArray(ids.toList())).toString()
+
+    /** The active list as the active widget last read it. */
+    private fun lastRead(vararg ids: String) = cloud.dopp.haus.widget.WidgetStore.setActiveCacheJson(
+        ctx(),
+        cloud.dopp.haus.widget.ActiveCache.encode(
+            ids.map { cloud.dopp.haus.data.Card(it, it, it.substringBefore('.'), null, "on", null) },
+        ),
+    )
+
+    /** How often the active widget was asked to read again while [frames] came in. */
+    private fun activeReadsAfter(vararg frames: Pair<String, String>): Int {
+        place(fed[0], fed[1])
+        start()
+        listeners.last().onOpen(opened.last(), response(200))
+        idle()
+        val app = shadowOf(ctx() as android.app.Application)
+        app.clearBroadcastIntents()
+        frames.forEach { (type, data) -> listeners.last().onEvent(opened.last(), null, type, data) }
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(15))
+        return app.broadcastIntents.count { it.component?.className == ActiveDevicesWidgetProvider::class.java.name }
+    }
+
+    /** A set other than the one last read: the active list is read again, once. */
+    @Test
+    fun anActiveSetThatDiffersReadsTheActiveListOnce() {
+        lastRead("light.a")
+        assertEquals(1, activeReadsAfter("active_set" to activeSet("light.a", "cover.b")))
+    }
+
+    /** The set last read, in any order: nothing is read. */
+    @Test
+    fun anActiveSetEqualToTheLastReadReadsNothing() {
+        lastRead("light.a", "cover.b")
+        assertEquals(0, activeReadsAfter("active_set" to activeSet("cover.b", "light.a")))
+    }
+
+    /** Everything off, as last read: nothing is read; something off that was on: read. */
+    @Test
+    fun anEmptyActiveSetIsASetToo() {
+        lastRead()
+        assertEquals(0, activeReadsAfter("active_set" to activeSet()))
+    }
+
+    @Test
+    fun anActiveSetThatEmptiesTheListReadsIt() {
+        lastRead("light.a")
+        assertEquals(1, activeReadsAfter("active_set" to activeSet()))
+    }
+
+    /** A card alone still reads the active list: a change inside the set (a brightness) shows in its row. */
+    @Test
+    fun aCardReadsTheActiveListOnce() {
+        lastRead("light.a")
+        val card = """{"entity_id":"light.a","card":{"entity_id":"light.a","domain":"light","state":"on","brightness":80}}"""
+        assertEquals(1, activeReadsAfter("card_state" to card))
+    }
+
+    /** A burst — a card and the set it changed — costs one read, not two. */
+    @Test
+    fun aCardAndItsActiveSetShareOneRead() {
+        lastRead()
+        val card = """{"entity_id":"light.a","card":{"entity_id":"light.a","domain":"light","state":"on"}}"""
+        assertEquals(1, activeReadsAfter("card_state" to card, "active_set" to activeSet("light.a")))
+    }
+
+    /** A set wakes no device widget and no energy widget: it names no card. */
+    @Test
+    fun anActiveSetReadsOnlyTheActiveList() {
+        lastRead()
+        place(fed[0], fed[1], fed[4])
+        start()
+        listeners.last().onOpen(opened.last(), response(200))
+        idle()
+        val app = shadowOf(ctx() as android.app.Application)
+        app.clearBroadcastIntents()
+        listeners.last().onEvent(opened.last(), null, "active_set", activeSet("light.a"))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(15))
+        val asked = app.broadcastIntents.mapNotNull { it.component?.className }
+        assertEquals(listOf(ActiveDevicesWidgetProvider::class.java.name), asked)
+    }
+
     /** An app update kills the process; MY_PACKAGE_REPLACED, an allowed start, brings it back. */
     @Test
     fun anUpdateStartsItAgain() {

@@ -7,10 +7,12 @@ import android.os.PowerManager
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
+import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
 import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.EnergyTotalsWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.WidgetStore
+import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
@@ -19,7 +21,9 @@ import kotlin.concurrent.thread
  * show, posted to `POST /napi/portal/watch` so Haus streams `card_state` for
  * exactly those entities over `/napi/portal/events`: the entity of every
  * [DeviceWidgetProvider] instance, and — while an energy widget is placed —
- * the energy flow's sensors, which Haus sends at most every 10 s.
+ * the energy flow's sensors, which Haus sends at most every 10 s. While an
+ * [ActiveDevicesWidgetProvider] is placed the watch says `active`, and Haus
+ * sends the `active_set` frame too (#178).
  *
  * Best-effort and guarded: it posts only when paired, off the caller's thread,
  * and a failure never touches the widgets. Haus answers 503 while Home
@@ -50,6 +54,13 @@ object WatchSet {
         return (devices + if (energyShown) energy(app) else emptySet())
             .filter { eid -> eid.isNotBlank() }
             .distinct()
+    }
+
+    /** What the watch post sends: [currentEntities], and `active` while an active-devices widget is placed. */
+    fun body(ctx: Context): JSONObject {
+        val active = ComponentName(ctx.applicationContext, ActiveDevicesWidgetProvider::class.java)
+        val shown = AppWidgetManager.getInstance(ctx.applicationContext).getAppWidgetIds(active).isNotEmpty()
+        return ApiClient.watchBody(currentEntities(ctx), shown)
     }
 
     /** The energy flow's entities, as the energy widget last read them. */
@@ -83,7 +94,7 @@ object WatchSet {
         thread {
             var attempt = 0
             while (true) {
-                val code = runCatching { ApiClient(app).postWatch(currentEntities(app)) }.getOrDefault(0)
+                val code = runCatching { ApiClient(app).postWatch(body(app)) }.getOrDefault(0)
                 val wait = RealtimeProtocol.watchRetryMs(code, attempt++) ?: break
                 Thread.sleep(wait)
                 if (generation.get() != mine || !eligible(app) || !screenOn(app)) break

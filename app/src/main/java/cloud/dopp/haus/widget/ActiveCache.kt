@@ -29,6 +29,7 @@ object ActiveCache {
             c.brightness?.let { o.put("b", it) }
             c.position?.let { o.put("p", it) }
             c.temperature?.let { o.put("t", it) }
+            c.page?.let { o.put("pg", it) }
             arr.put(o)
         }
         return arr.toString()
@@ -53,6 +54,7 @@ object ActiveCache {
                         brightness = o.optInt("b", -1).takeIf { it >= 0 },
                         position = o.optInt("p", -1).takeIf { it in 0..100 },
                         temperature = o.optDouble("t", Double.NaN).takeIf { !it.isNaN() },
+                        page = o.optString("pg").ifBlank { null },
                     ),
                 )
             }

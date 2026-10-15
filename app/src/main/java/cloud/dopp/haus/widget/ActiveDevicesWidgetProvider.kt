@@ -20,7 +20,9 @@ import kotlin.concurrent.thread
  * devices (icon + name + state), styled like the picker rows. Not bound to a
  * single entity — it reads the whole roster and filters to the active ones via
  * [ApiClient.listActive]. Tap → the household start page with every pinned device
- * ([HausPages.START], #167); a discreet refresh icon re-fetches.
+ * ([HausPages.START], #167); a row opens its device's own page (#178); a
+ * discreet refresh icon re-fetches. Haus's `active_set` frame tells the live
+ * service when the list changed.
  */
 class ActiveDevicesWidgetProvider : AppWidgetProvider() {
 
@@ -36,6 +38,12 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
         // The live service feeds this widget: with the last one gone it may stop.
         cloud.dopp.haus.realtime.Live.recheck(context)
     }
+
+    /** The first one placed: the watch says `active` now, so Haus sends the active set (#178). */
+    override fun onEnabled(context: Context) = cloud.dopp.haus.realtime.Live.postWatch(context)
+
+    /** The last one gone: the watch stops asking for it. */
+    override fun onDisabled(context: Context) = cloud.dopp.haus.realtime.Live.postWatch(context)
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
@@ -84,12 +92,13 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
                     null
                 }
                 // Persist the fresh list so the collection factory renders it (stale→fresh),
-                // then tell the ListView to reload. The real latency fix is a server-side
-                // batch/active endpoint; this cache only hides the wait.
+                // then tell the ListView to reload. A failed read is no news (#120): the
+                // list last read stays, and the live service compares active_set to it.
                 if (active != null) {
                     WidgetStore.setActiveCacheJson(context, ActiveCache.encode(active))
                 }
-                mgr.updateAppWidget(appWidgetId, scaffold(context, appWidgetId, tier, active))
+                val shown = active ?: WidgetStore.activeCacheJson(context)?.let(ActiveCache::decode)
+                mgr.updateAppWidget(appWidgetId, scaffold(context, appWidgetId, tier, shown))
                 if (tier == ActiveDevicesRender.Tier.LARGE) {
                     mgr.notifyAppWidgetViewDataChanged(appWidgetId, R_av_list)
                 }
@@ -131,7 +140,7 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
     /**
      * Build the large tier as a scrollable collection (#28): header + a ListView
      * bound to [ActiveDevicesRemoteViewsService] via setRemoteAdapter, an empty view,
-     * and a PendingIntentTemplate so per-row fill-in taps open Haus's page. The service
+     * and a PendingIntentTemplate so per-row fill-in taps open the row's page. The service
      * intent carries the appWidgetId (unique data Uri) so distinct instances don't
      * share an adapter.
      */
@@ -144,11 +153,8 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
         v.setRemoteAdapter(R_av_list, svc)
         v.setEmptyView(R_av_list, R_av_empty)
 
-        // Template merged with each row's fill-in intent (set in the factory) → tap → Haus's start page.
-        v.setPendingIntentTemplate(
-            R_av_list,
-            HausPages.tap(context, 300_000 + appWidgetId, HausPages.START),
-        )
+        // Template merged with each row's fill-in (set in the factory): the row's page.
+        v.setPendingIntentTemplate(R_av_list, ToolActionActivity.template(context, 300_000 + appWidgetId))
         return v
     }
 

@@ -11,7 +11,8 @@ no web shell, no messages, no approvals, no diagnostics.
   house persona (name, colours, icon) comes from `/napi/persona`.
 - **Current while you look:** one foreground service (`specialUse`, with a
   quiet "Live-Widgets" notification) holds the live stream
-  (`/napi/portal/events`, `card_state` only) while the screen is on, drops it
+  (`/napi/portal/events`: `card_state`, and `active_set` for the active
+  devices) while the screen is on, drops it
   when the screen goes off and re-reads every widget on screen-on. No poll.
   On by default once paired; a switch in the app turns it off. That it comes
   back by itself after the app was killed is what the battery-optimization
