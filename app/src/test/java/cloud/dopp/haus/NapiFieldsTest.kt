@@ -209,6 +209,34 @@ class NapiFieldsTest {
         assertEquals("https://haus.example/start", tapName(id))
     }
 
+    /** A refresh that cannot read the device keeps drawing the card last read, and its page with it. */
+    @Test
+    fun aDeviceKeepsItsPageWhenAReadFails() {
+        TokenStore.clear(ctx()) // the read fails at once, three times
+        val mgr = AppWidgetManager.getInstance(ctx())
+        val id = shadowOf(mgr).createWidget(DeviceWidgetProvider::class.java, R.layout.widget_device_small)
+        WidgetStore.bind(ctx(), id, "light.k", "Küche", "light", null)
+        WidgetCache.putCard(ctx(), id, card("/raeume/light.k"))
+        DeviceWidgetProvider().onUpdate(ctx(), mgr, intArrayOf(id))
+        repeat(50) { idle(); Thread.sleep(100) } // past the three tries, 1.2 s apart
+        assertEquals("https://haus.example/raeume/light.k", tapName(id))
+    }
+
+    /** A failed read of the active list is no news: the widget keeps the list last read, never "…" or "Alles aus". */
+    @Test
+    fun theActiveWidgetKeepsTheListLastReadWhenAReadFails() {
+        ServerStore.setBaseUrl(ctx(), "https://127.0.0.1:1") // paired, but nobody answers
+        val mgr = AppWidgetManager.getInstance(ctx())
+        val id = shadowOf(mgr).createWidget(ActiveDevicesWidgetProvider::class.java, R.layout.widget_active_small)
+        repeat(50) { idle(); Thread.sleep(20) } // the placement's own read fails too
+        WidgetStore.setActiveCacheJson(ctx(), ActiveCache.encode(listOf(card(null))))
+        ActiveDevicesWidgetProvider().onUpdate(ctx(), mgr, intArrayOf(id))
+        val count = { shadowOf(mgr).getViewFor(id).findViewById<TextView>(R.id.av_count).text.toString() }
+        repeat(100) { if (count() != "…") return@repeat; idle(); Thread.sleep(100) }
+        assertEquals(ctx().getString(R.string.active_count, 1), count())
+        assertEquals(1, ActiveCache.decode(WidgetStore.activeCacheJson(ctx())).size)
+    }
+
     /** An active row carries its page, or `/start`, to the row-tap screen. */
     @Test
     fun anActiveRowCarriesItsPage() {
@@ -243,6 +271,25 @@ class NapiFieldsTest {
         assertEquals(Intent.ACTION_VIEW, opened?.action)
         assertEquals("https://haus.example/kontakte/u1", opened?.dataString)
         assertTrue(a.isFinishing)
+    }
+
+    /** A row with an action and a page: its sheet ends with "Öffnen", which opens the page. */
+    @Test
+    fun aRowWithAnActionOpensItsPageFromTheSheet() {
+        val a = tap {
+            putExtra(ToolActionActivity.EXTRA_ACTION_ID, "task.set_status")
+            putExtra(ToolActionActivity.EXTRA_PARAMS, """{"entity_id":"abc","status":"done"}""")
+            putExtra(extraPage(), "/kalender/erinnerung/abc")
+        }
+        idle()
+        val dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog()
+        assertNotNull("no sheet", dialog)
+        val items = dialog.findViewById<android.view.ViewGroup>(R.id.ad_items)
+        val labels = (0 until items.childCount).map { items.getChildAt(it).findViewById<TextView>(R.id.ar_label)?.text?.toString() }
+        assertEquals("the action first, the page after it", listOf(ctx().getString(R.string.tool_action_do), ctx().getString(R.string.tool_open)), labels)
+        items.getChildAt(1).performClick()
+        idle()
+        assertEquals("https://haus.example/kalender/erinnerung/abc", shadowOf(a).nextStartedActivity?.dataString)
     }
 
     @Test

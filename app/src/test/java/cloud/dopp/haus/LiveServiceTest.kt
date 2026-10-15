@@ -334,6 +334,14 @@ class LiveServiceTest {
         assertEquals(1, activeReadsAfter("active_set" to activeSet()))
     }
 
+    /** A card alone still reads the active list: a change inside the set (a brightness) shows in its row. */
+    @Test
+    fun aCardReadsTheActiveListOnce() {
+        lastRead("light.a")
+        val card = """{"entity_id":"light.a","card":{"entity_id":"light.a","domain":"light","state":"on","brightness":80}}"""
+        assertEquals(1, activeReadsAfter("card_state" to card))
+    }
+
     /** A burst — a card and the set it changed — costs one read, not two. */
     @Test
     fun aCardAndItsActiveSetShareOneRead() {
