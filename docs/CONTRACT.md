@@ -134,3 +134,12 @@ with "Öffnen" as one more entry, after the actions, when it has a page — and 
 row with neither does nothing. A collection row has one tap target, so active
 and tool rows go through one translucent screen (`ToolActionActivity`) that
 opens the page or the sheet.
+
+Every page a widget opens carries `von=widget.<kind>` exactly once (`?von=…`,
+or `&von=…` after a query the page already has; a `von` of the page's own is
+replaced), so Haus counts server-side which widget a tap came from (#180).
+The kinds (`WidgetKind` in `widget/HausPages.kt`): `device`, `devices`,
+`active`, `energy`, `energy-stats`, `energy-totals`, `box-overview`,
+`box-services`, `tool`. The camera widget opens no page. The app counts
+nothing and makes no call for it; a launcher shortcut and the app's own
+links carry no `von`.

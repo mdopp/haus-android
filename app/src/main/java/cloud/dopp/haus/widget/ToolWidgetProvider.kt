@@ -149,7 +149,7 @@ class ToolWidgetProvider : AppWidgetProvider() {
             .setData(Uri.parse("haus://tool/$appWidgetId"))
         v.setRemoteAdapter(R.id.tw_list, svc)
         v.setEmptyView(R.id.tw_list, R.id.tw_empty)
-        v.setPendingIntentTemplate(R.id.tw_list, ToolActionActivity.template(context, 410_000 + appWidgetId))
+        v.setPendingIntentTemplate(R.id.tw_list, ToolActionActivity.template(context, 410_000 + appWidgetId, WidgetKind.TOOL))
 
         // Where a body tap goes (#105): bound → Haus's start page, unbound → this
         // instance's picker. A widget that says "Tool wählen" must let the
@@ -158,7 +158,7 @@ class ToolWidgetProvider : AppWidgetProvider() {
         // Armed on the header/empty children too, since a launcher does not reliably
         // deliver a click on the RemoteViews root (#104 again).
         val tap = if (bound) {
-            HausPages.tap(context, appWidgetId, HausPages.START)
+            HausPages.tap(context, appWidgetId, HausPages.START, WidgetKind.TOOL)
         } else {
             configPending(context, appWidgetId)
         }

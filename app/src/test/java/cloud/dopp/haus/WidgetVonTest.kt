@@ -22,8 +22,8 @@ import java.io.File
 /**
  * A widget tap tells Haus which widget it came from (#180): the page it opens
  * carries `von=widget.<kind>` exactly once, so Haus counts it server-side. The
- * app counts nothing and makes no extra call. Solaris did the same with
- * `?src=widget.*` (solarisbay#1026); here the parameter is `von`.
+ * app counts nothing and makes no extra call. The old app did the same with
+ * `?src=widget.*`; here the parameter is `von`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])

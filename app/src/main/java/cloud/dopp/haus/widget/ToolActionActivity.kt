@@ -46,6 +46,7 @@ class ToolActionActivity : Activity() {
         val bodies = intent.getStringArrayExtra(EXTRA_ACTION_BODIES)?.toList().orEmpty()
         val titles = intent.getStringArrayExtra(EXTRA_ACTION_TITLES)?.toList().orEmpty()
         val page = HausPages.page(intent.getStringExtra(EXTRA_PAGE))
+        from = WidgetKind.of(intent.getStringExtra(EXTRA_VON))
         when {
             ids.size > 1 && ids.size == bodies.size -> offer(ids, bodies.map { json(it) }, titles, page)
             actionId != null -> offer(listOf(actionId), listOf(params()), emptyList(), page)
@@ -66,9 +67,12 @@ class ToolActionActivity : Activity() {
         )
     }
 
+    /** The widget this row is on, for the page's `von` (#180); null when the extra names no kind. */
+    private var from: WidgetKind? = null
+
     /** The row's page on Haus, in the browser. */
     private fun open(page: String) {
-        runCatching { startActivity(HausPages.intent(this, page)) }
+        runCatching { startActivity(HausPages.intent(this, page, from)) }
         finish()
     }
 
@@ -152,13 +156,18 @@ class ToolActionActivity : Activity() {
         /** The row's own page on Haus, a path ([HausPages.page] checks it here again). Absent ⇒ none. */
         const val EXTRA_PAGE = "page"
 
+        /** The kind of widget the row is on ([WidgetKind.kind]), carried by the template (#180). */
+        const val EXTRA_VON = "von"
+
         /**
          * The one `PendingIntentTemplate` a collection's rows complete (#28
-         * pattern): this screen, **mutable** so a row's fill-in can merge.
+         * pattern): this screen, **mutable** so a row's fill-in can merge. It
+         * names the widget [from], so a row's page carries `von` (#180).
          */
-        fun template(ctx: Context, reqCode: Int): PendingIntent {
+        fun template(ctx: Context, reqCode: Int, from: WidgetKind): PendingIntent {
             val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
             val i = Intent(ctx, ToolActionActivity::class.java).addFlags(ActionDialog.TASK_FLAGS)
+                .putExtra(EXTRA_VON, from.kind)
             return PendingIntent.getActivity(ctx, reqCode, i, PendingIntent.FLAG_UPDATE_CURRENT or mutable)
         }
     }

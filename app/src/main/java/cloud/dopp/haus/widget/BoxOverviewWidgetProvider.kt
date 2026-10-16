@@ -47,7 +47,7 @@ class BoxOverviewWidgetProvider : AppWidgetProvider() {
     private fun refresh(context: Context, appWidgetId: Int) {
         val mgr = AppWidgetManager.getInstance(context)
         // Tap → Haus's Box page (#109).
-        val tap = HausPages.tap(context, appWidgetId, HausPages.BOX)
+        val tap = HausPages.tap(context, appWidgetId, HausPages.BOX, WidgetKind.BOX_OVERVIEW)
         // Immediate render from the last-good cache (#46) — show the last numbers
         // instantly, not "—", even after a reboot/process death — then live fetch.
         val cached = WidgetCache.getHome(context, appWidgetId)

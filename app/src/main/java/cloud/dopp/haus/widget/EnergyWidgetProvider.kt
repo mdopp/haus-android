@@ -51,7 +51,7 @@ class EnergyWidgetProvider : AppWidgetProvider() {
         val mgr = AppWidgetManager.getInstance(context)
         val paired = TokenStore.isPaired(context)
         // Body tap opens Haus's start page (#27); the icon triggers a refresh (#26).
-        val tap = HausPages.tap(context, appWidgetId, HausPages.START)
+        val tap = HausPages.tap(context, appWidgetId, HausPages.START, WidgetKind.ENERGY)
         val onRefresh = refreshPending(context, appWidgetId)
         // Immediate render (loading / pair hint), then async fetch.
         mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, null, paired, tap, onRefresh))

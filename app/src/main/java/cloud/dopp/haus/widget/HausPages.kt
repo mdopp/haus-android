@@ -24,7 +24,15 @@ object HausPages {
     /** The Box, for admins. */
     const val BOX = "/box"
 
-    fun url(base: String, page: String): String = base.trimEnd('/') + page
+    /** [page] of [base]; from a widget it carries `von=widget.<kind>` exactly once (#180), so Haus counts the tap. */
+    fun url(base: String, page: String, from: WidgetKind? = null): String {
+        val full = base.trimEnd('/') + page
+        if (from == null) return full
+        val fragment = full.substringAfter('#', "").let { if (it.isEmpty()) "" else "#$it" }
+        val noFragment = full.substringBefore('#')
+        val query = noFragment.substringAfter('?', "").split('&').filter { it.isNotEmpty() && !it.startsWith("von=") }
+        return noFragment.substringBefore('?') + "?" + (query + "von=${from.von}").joinToString("&") + fragment
+    }
 
     /**
      * [raw] when it is a page on Haus: a path from its root, as Haus names an
@@ -41,20 +49,45 @@ object HausPages {
     fun item(raw: String?): String = page(raw) ?: START
 
     /** The intent that shows [page] of the paired Haus, or the app when there is none. */
-    fun intent(ctx: Context, page: String): Intent {
+    fun intent(ctx: Context, page: String, from: WidgetKind? = null): Intent {
         val base = ServerStore.baseUrl(ctx)
         val i = if (base.isNullOrBlank()) {
             Intent(ctx.applicationContext, HomeActivity::class.java).setAction(Intent.ACTION_MAIN)
         } else {
-            Intent(Intent.ACTION_VIEW, Uri.parse(url(base, page))).addCategory(Intent.CATEGORY_BROWSABLE)
+            Intent(Intent.ACTION_VIEW, Uri.parse(url(base, page, from))).addCategory(Intent.CATEGORY_BROWSABLE)
         }
         return i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
     /** A widget tap that opens [page]. Resolved when the widget draws, so a new pairing shows on the next draw. */
-    fun tap(ctx: Context, reqCode: Int, page: String): PendingIntent =
+    fun tap(ctx: Context, reqCode: Int, page: String, from: WidgetKind): PendingIntent =
         PendingIntent.getActivity(
-            ctx, reqCode, intent(ctx, page),
+            ctx, reqCode, intent(ctx, page, from),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+}
+
+/**
+ * The widgets that open a Haus page, by the name Haus counts them under
+ * (`von=widget.<kind>`, #180). The camera widget opens no page. The old app did the
+ * same with `?src=widget.*` before; the app itself counts nothing.
+ */
+enum class WidgetKind(val kind: String) {
+    DEVICE("device"),
+    DEVICES("devices"),
+    ACTIVE("active"),
+    ENERGY("energy"),
+    ENERGY_STATS("energy-stats"),
+    ENERGY_TOTALS("energy-totals"),
+    BOX_OVERVIEW("box-overview"),
+    BOX_SERVICES("box-services"),
+    TOOL("tool"),
+    ;
+
+    val von: String get() = "widget.$kind"
+
+    companion object {
+        /** The kind an intent extra names, or null for anything else: nothing foreign reaches Haus's URL. */
+        fun of(raw: String?): WidgetKind? = values().firstOrNull { it.kind == raw }
+    }
 }
