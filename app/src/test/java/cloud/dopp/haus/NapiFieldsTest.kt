@@ -202,11 +202,11 @@ class NapiFieldsTest {
             .createWidget(DeviceWidgetProvider::class.java, R.layout.widget_device_small)
         WidgetStore.bind(ctx(), id, "light.k", "Küche", "light", null)
         DeviceWidgetProvider.renderCard(ctx(), id, card(null))
-        assertEquals("https://haus.example/start", tapName(id))
+        assertEquals("https://haus.example/start?von=widget.device", tapName(id))
         DeviceWidgetProvider.renderCard(ctx(), id, card("/raeume/light.k"))
-        assertEquals("https://haus.example/raeume/light.k", tapName(id))
+        assertEquals("https://haus.example/raeume/light.k?von=widget.device", tapName(id))
         DeviceWidgetProvider.renderCard(ctx(), id, card("https://evil.example/x"))
-        assertEquals("https://haus.example/start", tapName(id))
+        assertEquals("https://haus.example/start?von=widget.device", tapName(id))
     }
 
     /** A refresh that cannot read the device keeps drawing the card last read, and its page with it. */
@@ -219,7 +219,7 @@ class NapiFieldsTest {
         WidgetCache.putCard(ctx(), id, card("/raeume/light.k"))
         DeviceWidgetProvider().onUpdate(ctx(), mgr, intArrayOf(id))
         repeat(50) { idle(); Thread.sleep(100) } // past the three tries, 1.2 s apart
-        assertEquals("https://haus.example/raeume/light.k", tapName(id))
+        assertEquals("https://haus.example/raeume/light.k?von=widget.device", tapName(id))
     }
 
     /** A failed read of the active list is no news: the widget keeps the list last read, never "…" or "Alles aus". */
@@ -251,7 +251,7 @@ class NapiFieldsTest {
         val src = File(RepoFiles.main, "java/cloud/dopp/haus/widget/ActiveDevicesWidgetProvider.kt").readText()
         val template = src.substringAfter("setPendingIntentTemplate(").substringBefore("\n")
         assertTrue("the row template is not the row-tap screen's: $template", template.contains("ToolActionActivity.template("))
-        val t = shadowOf(ToolActionActivity.template(ctx(), 1))
+        val t = shadowOf(ToolActionActivity.template(ctx(), 1, cloud.dopp.haus.widget.WidgetKind.ACTIVE))
         assertTrue(t.isActivityIntent)
         assertEquals(ToolActionActivity::class.java.name, t.savedIntent.component?.className)
         assertTrue("not mutable: a row's fill-in could not land", (t.flags and android.app.PendingIntent.FLAG_MUTABLE) != 0)

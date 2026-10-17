@@ -195,7 +195,7 @@ class DeviceWidgetProvider : AppWidgetProvider() {
 
         /** The name/body tap: the device's own page on Haus, or `/start` while none is known (#178). */
         private fun tapPending(context: Context, appWidgetId: Int, card: Card?): PendingIntent =
-            HausPages.tap(context, appWidgetId, HausPages.item(card?.page))
+            HausPages.tap(context, appWidgetId, HausPages.item(card?.page), WidgetKind.DEVICE)
 
         /** Ask a bound instance to re-fetch and re-render (explicit self-broadcast). */
         fun requestRefresh(context: Context, appWidgetId: Int) {

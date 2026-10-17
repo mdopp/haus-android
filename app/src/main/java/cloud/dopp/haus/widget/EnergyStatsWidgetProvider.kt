@@ -119,7 +119,7 @@ class EnergyStatsWidgetProvider : AppWidgetProvider() {
 
     private fun tapPending(context: Context, appWidgetId: Int): PendingIntent =
         // Body tap opens Haus's start page (#27).
-        HausPages.tap(context, appWidgetId, HausPages.START)
+        HausPages.tap(context, appWidgetId, HausPages.START, WidgetKind.ENERGY_STATS)
 
     /** Broadcast our own [ACTION_REFRESH] to re-fetch this instance (#26). */
     private fun refreshPending(context: Context, appWidgetId: Int): PendingIntent {

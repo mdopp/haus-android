@@ -44,7 +44,7 @@ class BoxServicesWidgetProvider : AppWidgetProvider() {
     private fun refresh(context: Context, appWidgetId: Int) {
         val mgr = AppWidgetManager.getInstance(context)
         // Tap → Haus's Box page (#109).
-        val tap = HausPages.tap(context, 340_000 + appWidgetId, HausPages.BOX)
+        val tap = HausPages.tap(context, 340_000 + appWidgetId, HausPages.BOX, WidgetKind.BOX_SERVICES)
         // Seed the immediate render from the last-good cache (#46) instead of "—".
         val cached = WidgetCache.getServiceCounts(context, appWidgetId)
         try {

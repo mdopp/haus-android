@@ -26,7 +26,7 @@ class DevicesWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
         ids.forEach { id ->
             val v = RemoteViews(context.packageName, R.layout.widget_devices)
-            val tap = HausPages.tap(context, REQ_BASE + id, HausPages.START)
+            val tap = HausPages.tap(context, REQ_BASE + id, HausPages.START, WidgetKind.DEVICES)
             v.setOnClickPendingIntent(R.id.devices_root, tap)
             v.setOnClickPendingIntent(R.id.devices_icon, tap)
             try {

@@ -131,7 +131,7 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
         v.setOnClickPendingIntent(
             // The device page, not the chat (#167). This tile is about devices;
             // landing in an empty conversation answered nothing.
-            R_av_root, HausPages.tap(context, appWidgetId, HausPages.START),
+            R_av_root, HausPages.tap(context, appWidgetId, HausPages.START, WidgetKind.ACTIVE),
         )
         v.setOnClickPendingIntent(R_av_refresh, refreshPending(context, appWidgetId))
         return v
@@ -154,7 +154,7 @@ class ActiveDevicesWidgetProvider : AppWidgetProvider() {
         v.setEmptyView(R_av_list, R_av_empty)
 
         // Template merged with each row's fill-in (set in the factory): the row's page.
-        v.setPendingIntentTemplate(R_av_list, ToolActionActivity.template(context, 300_000 + appWidgetId))
+        v.setPendingIntentTemplate(R_av_list, ToolActionActivity.template(context, 300_000 + appWidgetId, WidgetKind.ACTIVE))
         return v
     }
 
