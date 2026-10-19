@@ -82,7 +82,7 @@ jobs:
         env:
           ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: haus
+          ANDROID_KEY_ALIAS: solaris   # the key in the ANDROID_KEYSTORE_BASE64 secret was made as "solaris" (v2.x); the alias is only its name in the store
         run: ./gradlew :app:assembleRelease :app:bundleRelease --stacktrace
 
       - name: Attach APK/AAB to the release
