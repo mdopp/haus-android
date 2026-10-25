@@ -233,6 +233,20 @@ object Napi {
         const val REASON = "reason"
     }
 
+    /**
+     * `POST /napi/merken` (Share → Haus, haus#120): the note Haus kept, or
+     * `{error}` with a German sentence when it kept none.
+     */
+    object MerkenJson {
+        const val TITLE = "titel"
+        const val KIND = "art"
+        const val SAID = "kurz"
+        const val ALREADY = "schon"
+        const val PARTIAL = "teilweise"
+        const val NOTE = "notiz"
+        const val ERROR = "error"
+    }
+
     // --- the calls -------------------------------------------------------------
 
     /** The house persona: name, greeting, colours, whether it has an icon. */
@@ -291,4 +305,7 @@ object Napi {
 
     /** The camera capture into the share's consume folder, multipart: the name, then the file. */
     val UPLOAD = Endpoint(Method.POST, "/napi/upload", body = listOf("filename", "file"))
+
+    /** Share → Haus: what the phone shared, kept as a note when a link is in it. */
+    val MERKEN = Endpoint(Method.POST, "/napi/merken", body = listOf("text"), reply = listOf(MerkenJson))
 }

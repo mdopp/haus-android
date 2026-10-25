@@ -162,6 +162,23 @@
                 android:resource="@xml/camera_widget_info" />
         </receiver>
 
+        <!-- Share → Haus (haus#120): a link or a text from the share sheet, kept
+             as a note on Haus. Exported for ACTION_SEND text only; translucent
+             with its own task, like the widget action dialog (#114). -->
+        <activity
+            android:name=".ui.ShareActivity"
+            android:exported="true"
+            android:label="@string/share_label"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- Native camera capture + upload screen (#36): opened by the camera
              trigger widget; takes photos, optionally builds a PDF, uploads to /napi. -->
         <activity

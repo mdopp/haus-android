@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Share → Haus (haus#120): the phone's share sheet into a note. -->
+<resources>
+    <string name="share_label">In Haus merken</string>
+    <string name="share_title">Haus</string>
+    <string name="share_running">Merkt sich …</string>
+    <string name="share_kept">Gemerkt</string>
+    <string name="share_already">Schon gemerkt</string>
+    <string name="share_not_kept">Nicht gemerkt</string>
+    <string name="share_open">Notiz öffnen</string>
+    <string name="share_not_paired">Diese App ist mit keinem Haus gekoppelt. Öffne die App und verbinde sie zuerst.</string>
+    <string name="share_unreachable">Haus hat nicht rechtzeitig geantwortet. Ist das Handy im Netz? Teile den Link später noch einmal.</string>
+</resources>
