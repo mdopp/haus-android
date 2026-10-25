@@ -62,6 +62,7 @@ each row naming the Haus file and lines it came from.
 | active devices | `GET /napi/portal/active` |
 | energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
 | camera | `POST /napi/upload` (capture) |
+| Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,contacts,documents,notes}`), `POST /napi/action-callback` |
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
 | live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |

@@ -7,6 +7,7 @@ import cloud.dopp.haus.data.Napi.AddableJson
 import cloud.dopp.haus.data.Napi.CardJson
 import cloud.dopp.haus.data.Napi.EnergyJson
 import cloud.dopp.haus.data.Napi.HistoryJson
+import cloud.dopp.haus.data.Napi.MerkenJson
 import cloud.dopp.haus.data.Napi.StateJson
 import cloud.dopp.haus.data.Napi.WhoamiJson
 import okhttp3.MediaType.Companion.toMediaType
@@ -48,6 +49,19 @@ class ApiClient(private val ctx: Context) {
      * - [UNKNOWN_ACTION] — the id isn't registered (404): leave the row alone.
      */
     enum class ActionOutcome { OK, CONFIRM_REQUIRED, FORBIDDEN, UNKNOWN_ACTION, FAILED }
+
+    /**
+     * What Share → Haus came to (haus#120): [Kept] — Haus has the note, [said]
+     * is its line, [note] its page on Haus or null, [already] when the link
+     * was kept before; [Refused] — Haus's own sentence why not; [NotPaired];
+     * [Unreachable] — no answer in time.
+     */
+    sealed class Merken {
+        data class Kept(val said: String, val note: String?, val already: Boolean) : Merken()
+        data class Refused(val sentence: String) : Merken()
+        object NotPaired : Merken()
+        object Unreachable : Merken()
+    }
 
     private fun base(): String =
         ServerStore.baseUrl(ctx)?.trimEnd('/') ?: throw NotConfiguredException()
@@ -136,6 +150,23 @@ class ApiClient(private val ctx: Context) {
         } catch (e: Exception) {
             0
         }
+    }
+
+    /**
+     * Share → Haus (haus#120): [text] as the phone shared it, to `POST /napi/merken`;
+     * Haus finds the link in it and keeps the page as a note. Blocking, up to
+     * 90 s (Haus reads the page, then its model sums it up): call off the main
+     * thread. Never throws.
+     */
+    fun merken(text: String): Merken = try {
+        val body = Napi.MERKEN.json(text).asBody()
+        slow.newCall(authed(Napi.MERKEN, body = body)).execute().use { resp -> merkenOutcome(resp.code, resp.body?.string()) }
+    } catch (e: NotPairedException) {
+        Merken.NotPaired
+    } catch (e: NotConfiguredException) {
+        Merken.NotPaired
+    } catch (e: Exception) {
+        Merken.Unreachable
     }
 
     /** The house energy picture via `/napi/portal/energy`: the flow legs and the lifetime totals. */
@@ -297,6 +328,9 @@ class ApiClient(private val ctx: Context) {
                 .build()
         }
 
+        /** Share → Haus waits for a page and the house model: the same pool, a longer read. */
+        private val slow: OkHttpClient by lazy { http.newBuilder().readTimeout(90, TimeUnit.SECONDS).build() }
+
         /**
          * Ask the Haus at [server] whose [token] this is: `GET /napi/whoami`.
          * The pairing stores a token only when this answers 200 with a `uid`;
@@ -426,6 +460,21 @@ class ApiClient(private val ctx: Context) {
          * unreadable body degrades to [ActionOutcome.FAILED] rather than to a
          * confirm dialog for an action we can't name. Pure → JVM-testable.
          */
+        fun merkenOutcome(code: Int, body: String?): Merken {
+            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            if (code in 200..299 && o != null) {
+                val note = o.optString(MerkenJson.NOTE).takeIf { it.startsWith("https://") }
+                return Merken.Kept(o.optString(MerkenJson.SAID), note, o.optBoolean(MerkenJson.ALREADY))
+            }
+            val sentence = o?.optString(MerkenJson.ERROR).orEmpty()
+            return when {
+                code == 401 -> Merken.NotPaired // Haus's {"error":"unauthorized"} is no sentence for a person
+                sentence.isNotBlank() -> Merken.Refused(sentence)
+                code == 404 -> Merken.Refused("Diese Box merkt sich noch keine geteilten Links.")
+                else -> Merken.Refused("Haus konnte das gerade nicht merken ($code). Später noch einmal teilen.")
+            }
+        }
+
         fun actionOutcome(code: Int, body: String?): ActionOutcome {
             if (code in 200..299) return ActionOutcome.OK
             val reason = try {

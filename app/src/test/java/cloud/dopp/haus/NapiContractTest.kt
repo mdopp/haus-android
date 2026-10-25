@@ -162,6 +162,11 @@ class NapiContractTest {
                 "POST", "/napi/upload", "internal/napi/upload.go:144-145, the parts upload.go:214-232",
                 body = setOf("filename", "file"), required = setOf("file"), sends = setOf("ok", "error", "id", "files"),
             ),
+            Route(
+                "POST", "/napi/merken", "internal/napi/merken.go:49-94, registered napi.go:233 (haus#120)",
+                body = setOf("text"), required = setOf("text"),
+                sends = setOf("titel", "art", "kurz", "schon", "teilweise", "notiz", "error"),
+            ),
         )
 
         /** Where Haus reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
@@ -192,6 +197,7 @@ class NapiContractTest {
             "GET /napi/portal/entity-history", "GET /napi/portal/active", "GET /napi/portal/start/addable",
             "POST /napi/portal/watch", "GET /napi/portal/events",
             "GET /napi/defs/tool", "POST /napi/action-callback", "POST /napi/upload", "GET /napi/portal/{tool}",
+            "POST /napi/merken",
         )
 
         const val NAPI = "cloud.dopp.haus.data.Napi"
