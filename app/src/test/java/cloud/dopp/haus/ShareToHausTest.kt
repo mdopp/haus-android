@@ -57,4 +57,14 @@ class ShareToHausTest {
         assertTrue(activity, activity.contains("""android:mimeType="text/plain""""))
         assertTrue(activity, activity.contains("""android:taskAffinity="""""))
     }
+
+    /** The owner saw the dialog's text right on the shared page: the window must be a card. */
+    @Test
+    fun theDialogHasACard() {
+        val themes = File(RepoFiles.main, "res/values/themes.xml").readText()
+        val share = themes.substringAfter("""<style name="Theme.Haus.ShareDialog"""").substringBefore("</style>")
+        assertTrue(share, share.contains("""<item name="android:windowBackground">@drawable/card_haus</item>"""))
+        val src = File(RepoFiles.root, "app/src/main/java/cloud/dopp/haus/ui/ShareActivity.kt").readText()
+        assertTrue(src.contains("R.style.Theme_Haus_ShareDialog") && src.contains("ActionDialog.scrim(this)"))
+    }
 }

@@ -40,6 +40,12 @@
         <item name="android:textColorSecondary">@color/haus_text_muted</item>
     </style>
 
+    <!-- Share → Haus (haus#120): a plain AlertDialog, so the window is the card
+         (ActionDialog's sheets draw their own and keep it transparent). -->
+    <style name="Theme.Haus.ShareDialog" parent="Theme.Haus.ActionDialog">
+        <item name="android:windowBackground">@drawable/card_haus</item>
+    </style>
+
     <!-- Filled, rounded, accent-blue primary button. -->
     <style name="Widget.Haus.Button" parent="Widget.AppCompat.Button">
         <item name="android:background">@drawable/btn_haus</item>

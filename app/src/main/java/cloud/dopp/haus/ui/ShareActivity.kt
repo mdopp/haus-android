@@ -8,6 +8,7 @@ import android.os.Bundle
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ApiClient.Merken
+import cloud.dopp.haus.widget.ActionDialog
 import kotlin.concurrent.thread
 
 /**
@@ -27,6 +28,7 @@ class ShareActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ActionDialog.scrim(this) // the browser behind stays dimmed, not read through
         val text = sharedText(intent?.getStringExtra(Intent.EXTRA_SUBJECT), intent?.getStringExtra(Intent.EXTRA_TEXT))
         if (intent?.action != Intent.ACTION_SEND || text == null) {
             finish()
@@ -40,7 +42,7 @@ class ShareActivity : Activity() {
         }
     }
 
-    private fun dialog() = AlertDialog.Builder(this, R.style.Theme_Haus_ActionDialog)
+    private fun dialog() = AlertDialog.Builder(this, R.style.Theme_Haus_ShareDialog)
         .setOnDismissListener { finish() }
 
     private fun answer(result: Merken) {
