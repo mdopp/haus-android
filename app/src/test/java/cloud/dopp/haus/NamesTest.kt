@@ -51,6 +51,8 @@ class NamesTest {
         val hits = mutableListOf<String>()
         for (f in RepoFiles.walk().filterNot(::exempt).filter(RepoFiles::isText)) {
             f.readLines().forEachIndexed { i, line ->
+                // the signing key's alias is the owner's keystore's, not a name of ours (#183)
+                if (line.trimStart().startsWith("ANDROID_KEY_ALIAS:")) return@forEachIndexed
                 says(line)?.let {
                     hits.add("${RepoFiles.relative(f)}:${i + 1}: $it")
                 }

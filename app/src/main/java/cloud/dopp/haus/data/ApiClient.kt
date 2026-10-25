@@ -328,8 +328,14 @@ class ApiClient(private val ctx: Context) {
                 .build()
         }
 
-        /** Share → Haus waits for a page and the house model: the same pool, a longer read. */
-        private val slow: OkHttpClient by lazy { http.newBuilder().readTimeout(90, TimeUnit.SECONDS).build() }
+        /** Share → Haus waits for a page and the house model: a longer read. */
+        private val slow: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(90, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build()
+        }
 
         /**
          * Ask the Haus at [server] whose [token] this is: `GET /napi/whoami`.
