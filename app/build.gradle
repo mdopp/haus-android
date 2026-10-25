@@ -29,8 +29,11 @@ android {
         // needs the AndroidKeyStore-backed master key from API 23.
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 1
-        versionName "1.0.0"
+        // CI sets both (#182): the code is the workflow's run number, so every
+        // build installs over the one before it, dev and tag alike; the name is
+        // the tag, or the next patch with -dev.<run> for a build of main.
+        versionCode(Integer.parseInt(System.getenv("HAUS_VERSION_CODE") ?: "1"))
+        versionName(System.getenv("HAUS_VERSION_NAME") ?: "0.0.0-local")
         // The live e2e on emulators (e2e/, .github/workflows/live-e2e.yml).
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

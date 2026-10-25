@@ -1,8 +1,13 @@
 # CI for the Haus app (plain Gradle).
 #
-# - Every push/PR to main: a debug build proves the project COMPILES.
-# - A tag `v*`: a release-signed APK + AAB, when the keystore secrets are present.
+# - A PR to main: a debug build and the unit tests prove the change.
+# - A push to main: a release-signed APK as a GitHub pre-release
+#   `v<next patch>-dev.<run>`, never marked latest; the newest five are kept.
+#   Obtainium on a phone follows them while the app is not on Play.
+# - A tag `v*`: a release-signed APK + AAB as the release of that tag.
 #   The signing keystore is injected from a CI secret (never committed).
+# Both signed builds take versionCode from the run number and versionName from
+# the tag (#182), so each one installs over the one before.
 #
 # Required repo secrets for signed releases:
 #   ANDROID_KEYSTORE_BASE64    - `base64 -w0 android.keystore`
@@ -13,10 +18,13 @@
 name: android-build
 
 on:
-  # A PR to main compile-checks the change; the merge is NOT rebuilt (it's the
-  # same commit the PR already validated). Release-signing runs on a v* tag only.
+  # A PR to main compile-checks and tests the change; the merge is not tested
+  # again (the PR validated that commit), only signed as a dev pre-release.
+  # The dev tags are made by the workflow's own token and start no run;
+  # the exclusion says so in the trigger as well.
   push:
-    tags: ['v*']
+    branches: [main]
+    tags: ['v*', '!v*-dev.*']
   pull_request:
     branches: [main]
 
@@ -36,6 +44,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # the dev version counts from the last release tag
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -50,24 +61,43 @@ jobs:
           # longer has the "tools" package (#172)
           packages: platform-tools
 
-      # Compile check for PRs. Skipped on a tag run — the signed release build
+      # Compile check for PRs. Skipped on a push — the signed release build
       # below already compiles, so there's no point assembling debug too.
       - name: Build debug
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: github.event_name == 'pull_request'
         run: ./gradlew :app:assembleDebug --stacktrace
 
       # The JVM unit tests (Robolectric) — they existed but no workflow ran them.
       - name: Unit tests
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: github.event_name == 'pull_request'
         run: ./gradlew :app:testDebugUnitTest --stacktrace
 
-      # Signed release only on a tag, and only when the keystore secret exists.
+      # The version both signed builds carry (#182). A tag names itself; a build
+      # of main is the next patch after the last release tag, -dev.<run>, which
+      # sorts above that release and below the next one.
+      - name: Version
+        id: version
+        if: github.event_name == 'push'
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            name="${GITHUB_REF_NAME#v}"
+          else
+            last=$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude '*-dev.*' 2>/dev/null || echo v0.0.0)
+            IFS=. read -r major minor patch <<< "${last#v}"
+            name="$major.$minor.$((patch + 1))-dev.$GITHUB_RUN_NUMBER"
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "HAUS_VERSION_NAME=$name" >> "$GITHUB_ENV"
+          echo "HAUS_VERSION_CODE=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "version $name, code $GITHUB_RUN_NUMBER"
+
+      # Signed builds only on a push, and only when the keystore secret exists.
       # NOTE: the `secrets` context is NOT allowed inside an `if:` expression
       # (GitHub: "Unrecognized named-value: 'secrets'"), so we surface its presence
       # via a step output and gate the signing steps on that instead.
       - name: Detect keystore secret
         id: keystore
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push'
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
@@ -78,7 +108,7 @@ jobs:
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
 
       - name: Build signed release (APK + AAB)
-        if: steps.keystore.outputs.present == 'true'
+        if: steps.keystore.outputs.present == 'true' && startsWith(github.ref, 'refs/tags/')
         env:
           ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -86,12 +116,48 @@ jobs:
         run: ./gradlew :app:assembleRelease :app:bundleRelease --stacktrace
 
       - name: Attach APK/AAB to the release
-        if: steps.keystore.outputs.present == 'true'
+        if: steps.keystore.outputs.present == 'true' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/bundle/release/*.aab
+
+      # A build of main: the APK alone, signed with the same key as the tags,
+      # so a phone moves between dev builds and releases without reinstalling.
+      - name: Build signed dev APK
+        if: steps.keystore.outputs.present == 'true' && github.ref == 'refs/heads/main'
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: solaris   # the key in the ANDROID_KEYSTORE_BASE64 secret was made as "solaris" (v2.x); the alias is only its name in the store
+        run: ./gradlew :app:assembleRelease --stacktrace
+
+      # A pre-release, never latest: the release page and anything that follows
+      # only releases still see the last tag.
+      - name: Publish the dev pre-release
+        if: steps.keystore.outputs.present == 'true' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.name }}
+          name: v${{ steps.version.outputs.name }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          make_latest: false
+          body: A dev build of main at ${{ github.sha }}, for testing on a phone. Not a release.
+          files: app/build/outputs/apk/release/*.apk
+
+      # The newest five dev pre-releases stay; older ones go with their tags.
+      - name: Prune old dev pre-releases
+        if: steps.keystore.outputs.present == 'true' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | test("-dev\\."))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' |
+          while read -r tag; do
+            gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          done
 
       - name: Upload build artifacts
         if: ${{ always() }}

@@ -25,4 +25,16 @@ standard is [`docs/DESIGN.md`](docs/DESIGN.md).
 
 Plain Gradle (`./gradlew :app:assembleDebug`, `./gradlew :app:testDebugUnitTest`).
 CI builds and tests every pull request; a `v*` tag builds a signed release when
-the signing secrets are set.
+the signing secrets are set. Each merge to `main` publishes a signed APK as a
+pre-release `v<next patch>-dev.<run>`; the newest five are kept, none is marked
+latest. Every signed build takes `versionCode` from the workflow's run number,
+so each installs over the one before.
+
+## Test builds on a phone
+
+Until the app is on Play, a phone follows the releases with
+[Obtainium](https://github.com/ImranR98/Obtainium): add
+`https://github.com/mdopp/haus-android`, turn on *Include prereleases*, and
+allow Obtainium to install apps. Dev builds and releases carry the same key,
+so the phone moves between them without reinstalling. A debug build has a
+different key and must be uninstalled first; the app is then paired again.
