@@ -9,6 +9,7 @@ import android.content.ComponentName
 import android.os.Bundle
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.Card
+import cloud.dopp.haus.data.ScreenGate
 import cloud.dopp.haus.data.StateEpochGuard
 import kotlin.concurrent.thread
 
@@ -109,7 +110,8 @@ class DeviceWidgetProvider : AppWidgetProvider() {
                 // stuck on the placeholder. Bounded so we stay inside goAsync's window.
                 var card: Card? = null
                 var attempt = 0
-                while (card == null && attempt < 3) {
+                // no retry while the screen is off: the gate refuses every one (ScreenGate)
+                while (card == null && attempt < 3 && ScreenGate.open(context)) {
                     card = try { api.getCard(entityId) } catch (e: Exception) { null }
                     if (card == null) {
                         attempt++
