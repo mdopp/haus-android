@@ -90,7 +90,6 @@ object Napi {
     /** `GET /napi/persona`. */
     object PersonaJson {
         const val DISPLAY = "display"
-        const val GREETING = "greeting"
         const val ACCENT = "accent"
         const val GROUND = "ground"
         const val ICON = "icon"
@@ -249,7 +248,7 @@ object Napi {
 
     // --- the calls -------------------------------------------------------------
 
-    /** The house persona: name, greeting, colours, whether it has an icon. */
+    /** The house persona: name, colours, whether it has an icon (its greeting is not the app's, #184). */
     val PERSONA = Endpoint(Method.GET, "/napi/persona", reply = listOf(PersonaJson))
 
     /** The persona's icon, a PNG. */

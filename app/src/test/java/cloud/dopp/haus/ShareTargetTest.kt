@@ -46,7 +46,7 @@ class ShareTargetTest {
 
     @Test
     fun noPairingNoTarget() {
-        PersonaStore.save(ctx(), Persona("Joshua", "", ""))
+        PersonaStore.save(ctx(), Persona("Joshua", ""))
         assertNull(ShareTarget.info(ctx()))
     }
 
@@ -59,7 +59,7 @@ class ShareTargetTest {
     @Test
     fun theTargetIsThePersona() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", "", ""))
+        PersonaStore.save(ctx(), Persona("Joshua", ""))
         val info = requireNotNull(ShareTarget.info(ctx()))
         assertEquals(ShareTarget.ID, info.id)
         assertEquals("Joshua", info.shortLabel.toString())
@@ -70,8 +70,8 @@ class ShareTargetTest {
     @Test
     fun theNameFollowsThePersona() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", "", ""))
-        PersonaStore.save(ctx(), Persona("Mira", "", ""))
+        PersonaStore.save(ctx(), Persona("Joshua", ""))
+        PersonaStore.save(ctx(), Persona("Mira", ""))
         assertEquals("Mira", ShareTarget.info(ctx())?.shortLabel.toString())
     }
 

@@ -71,10 +71,11 @@ class HomeScreenTest {
     @Test
     fun theScreenWearsThePersona() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", "Hallo, hier ist Joshua.", "#3ddc84", "#0c120e"))
+        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84", "#0c120e"))
         val a = open()
         assertEquals("Joshua", a.findViewById<TextView>(R.id.persona_name).text.toString())
-        assertEquals("Hallo, hier ist Joshua.", a.findViewById<TextView>(R.id.persona_greeting).text.toString())
+        // the app's line, never the persona's greeting (#184: "Wollen wir ein Spiel spielen?" is the chat's)
+        assertEquals(ctx().getString(R.string.home_claim), a.findViewById<TextView>(R.id.persona_greeting).text.toString())
         // no icon announced → none drawn
         assertEquals(View.GONE, a.findViewById<View>(R.id.persona_icon).visibility)
     }
@@ -82,7 +83,7 @@ class HomeScreenTest {
     @Test
     fun unpairingForgetsHausAndThePersona() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", "", "#3ddc84"))
+        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84"))
         val a = open()
         a.findViewById<View>(R.id.logout_btn).performClick()
         assertNull(TokenStore.get(ctx()))

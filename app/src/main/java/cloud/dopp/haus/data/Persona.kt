@@ -9,11 +9,11 @@ import org.json.JSONObject
  * The house persona (laib ADR 0020, laib#130): who the house is to the family
  * — "Joshua" — as Haus serves it at `GET /napi/persona`: its name, its two
  * colours, and an icon at `/napi/persona/icon.png` when it has one. The app
- * shows the name, the colours and the icon on its home screen.
+ * shows the name, the colours and the icon on its home screen — never the
+ * greeting (#184): that is the chat's easter egg, not a widget app's line.
  */
 data class Persona(
     val display: String,
-    val greeting: String,
     val accent: String,
     val ground: String = "",
     val hasIcon: Boolean = false,
@@ -25,7 +25,6 @@ data class Persona(
             if (display.isEmpty()) return null
             return Persona(
                 display = display,
-                greeting = o.optString(PersonaJson.GREETING).trim(),
                 accent = o.optString(PersonaJson.ACCENT).trim(),
                 ground = o.optString(PersonaJson.GROUND).trim(),
                 hasIcon = o.optString(PersonaJson.ICON).trim().isNotEmpty(),
