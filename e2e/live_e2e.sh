@@ -11,6 +11,7 @@
 #   4 the process killed: with the battery exemption a new OPEN within 30 s;
 #     without it, no notification of a dead service. An app update starts it.
 #   5 a real reboot: OPEN within 60 s of boot
+#   6 the share sheet: the persona's Direct Share target is in it (#188)
 set -uo pipefail
 LOG=${HAUS_LOG:-haus.log}
 OUT=${E2E_OUT:-e2e-out}
@@ -173,6 +174,23 @@ if reboot_once || { say "reboot: one retry"; reboot_once; }; then
 else
   fail "5 the emulator did not come back from the reboot"
 fi
+
+# 6 --------------------------------------------------------------------------
+wake
+on dumpsys shortcut > "$OUT/shortcut-6.txt"
+grep -q "share_persona" "$OUT/shortcut-6.txt" && pass "6 the share target is published" || fail "6 no share target among the shortcuts"
+on am instrument -w -e class cloud.dopp.haus.e2e.LiveE2EShare $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/share.txt"
+seen=no
+for i in $(seq 1 10); do
+  sleep 2
+  on uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  on cat /sdcard/ui.xml > "$OUT/share-sheet.xml"
+  grep -q 'text="Joshua"' "$OUT/share-sheet.xml" && { seen=yes; break; }
+done
+on screencap -p /sdcard/share.png && adb pull /sdcard/share.png "$OUT/share-sheet.png" >/dev/null 2>&1
+[ $seen = yes ] && pass "6 Joshua is in the share sheet" || fail "6 Joshua is not in the share sheet"
+on input keyevent KEYCODE_BACK
+
 adb logcat -d > "$OUT/logcat.txt"
 cp "$LOG" "$OUT/" 2>/dev/null
 
