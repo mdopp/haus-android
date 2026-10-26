@@ -45,7 +45,7 @@ def card(entity_id, state):
 
 REPLIES = {
     "/napi/whoami": {"uid": "e2e", "via": "haus"},
-    "/napi/persona": {"name": "haus", "display": "Haus", "greeting": "", "accent": "#3b82f6", "ground": "", "icon": ""},
+    "/napi/persona": {"name": "haus", "display": "Joshua", "greeting": "", "accent": "#3b82f6", "ground": "", "icon": ""},
     "/napi/portal/active": {"ok": True, "active": []},
     "/napi/portal/energy": {"ok": True, "energy": {"flow": [], "totals": [], "circuits": []}},
     "/napi/portal/start/addable": {"ok": True, "rooms": [], "automations": []},

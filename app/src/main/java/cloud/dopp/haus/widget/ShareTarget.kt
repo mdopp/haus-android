@@ -2,7 +2,6 @@ package cloud.dopp.haus.widget
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.graphics.drawable.IconCompat
 import cloud.dopp.haus.R
@@ -42,7 +41,7 @@ object ShareTarget {
     fun info(ctx: Context, rank: Int = 0): ShortcutInfoCompat? {
         if (!ServerStore.isConfigured(ctx) || !TokenStore.isPaired(ctx)) return null
         val persona = PersonaStore.get(ctx) ?: return null
-        val b = ShortcutInfoCompat.Builder(ctx, ID)
+        return ShortcutInfoCompat.Builder(ctx, ID)
             .setShortLabel(persona.display)
             .setLongLabel(persona.display)
             .setIcon(icon(ctx, persona.hasIcon))
@@ -52,12 +51,10 @@ object ShareTarget {
             // Direct Share sends the share intent to the share activity; this
             // one is only used where the app icon's menu lists the shortcut
             .setIntent(Intent(ctx, HomeActivity::class.java).setAction(Intent.ACTION_VIEW))
-        // Android 13 can keep it out of the app icon's menu. Below that androidx
-        // would not publish an excluded shortcut at all, so there it is in both.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            b.setExcludedFromSurfaces(ShortcutInfoCompat.SURFACE_LAUNCHER)
-        }
-        return b.build()
+            // Not excluded from the launcher: Android 13 and up keep no such
+            // shortcut, so the share sheet never found it (androidx below 13
+            // drops it before publishing). It is in the app icon's menu too.
+            .build()
     }
 
     /** The persona's own icon, else the app's. */

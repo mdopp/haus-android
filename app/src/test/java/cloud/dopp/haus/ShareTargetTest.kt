@@ -9,6 +9,7 @@ import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.widget.ShareTarget
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -64,7 +65,8 @@ class ShareTargetTest {
         assertEquals(ShareTarget.ID, info.id)
         assertEquals("Joshua", info.shortLabel.toString())
         assertEquals(setOf(ShareTarget.CATEGORY), info.categories)
-        assertTrue("the share sheet only", info.isExcludedFromSurfaces(ShortcutInfoCompat.SURFACE_LAUNCHER))
+        // Android 13+ keeps no shortcut excluded from the launcher, so the share sheet never saw it
+        assertFalse("kept out of the launcher", info.isExcludedFromSurfaces(ShortcutInfoCompat.SURFACE_LAUNCHER))
     }
 
     @Test
