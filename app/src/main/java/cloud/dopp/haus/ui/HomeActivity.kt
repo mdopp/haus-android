@@ -4,8 +4,6 @@ import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -180,7 +178,7 @@ class HomeActivity : AppCompatActivity() {
         if (png.contentEquals(drawnPng)) return
         drawnPng = png
         thread {
-            val bitmap = runCatching { decode(png) }.getOrNull()
+            val bitmap = runCatching { PersonaIcon.decode(png, ICON_SIDE) }.getOrNull()
             runOnUiThread {
                 if (isFinishing || drawnPng !== png) return@runOnUiThread
                 icon.setImageBitmap(bitmap)
@@ -189,14 +187,6 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    /** [png] as a bitmap, sampled down to at most [ICON_SIDE] px a side; null when it does not decode. */
-    private fun decode(png: ByteArray): Bitmap? {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeByteArray(png, 0, png.size, bounds)
-        var sample = 1
-        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > ICON_SIDE) sample *= 2
-        return BitmapFactory.decodeByteArray(png, 0, png.size, BitmapFactory.Options().apply { inSampleSize = sample })
-    }
 
     private fun color(hex: String): Int? = runCatching { Color.parseColor(hex.trim()) }.getOrNull()
 
@@ -211,6 +201,8 @@ class HomeActivity : AppCompatActivity() {
             if (!changed) return@thread
             PersonaStore.save(applicationContext, fresh)
             PersonaStore.saveIcon(applicationContext, png)
+            // the share sheet's target follows the persona's name and icon (#188)
+            runCatching { AppShortcuts.refresh(applicationContext) }
             runOnUiThread { if (!isFinishing) renderPersona() }
         }
     }
@@ -460,6 +452,7 @@ class HomeActivity : AppCompatActivity() {
         ServerStore.clear(this)
         PersonaStore.clear(this)
         Pairing.cancel(this)
+        AppShortcuts.refreshAsync(applicationContext) // takes the persona's share target away (#188)
         findViewById<EditText>(R.id.server_url).setText("")
         Live.ensure(applicationContext)
         render()

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The share target behind the persona's sharing shortcut (#188, widget/ShareTarget.kt):
+     a shortcut of this category in the share sheet hands text/plain to the share
+     activity. No static shortcut here: the app icon's menu is dynamic (#97). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="cloud.dopp.haus.ui.ShareActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="cloud.dopp.haus.category.SHARE_TO_HAUS" />
+    </share-target>
+</shortcuts>
