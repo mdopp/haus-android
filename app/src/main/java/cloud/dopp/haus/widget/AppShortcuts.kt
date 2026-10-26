@@ -15,10 +15,10 @@ import kotlin.concurrent.thread
  * Publishes the app-icon long-press menu (#97): one **dynamic** shortcut per
  * device the user has on the home screen.
  *
- * The list has to be dynamic — a static `res/xml/shortcuts.xml` is written at
- * build time and can never know the user's devices (the empty Bubblewrap stub
- * that used to sit there is gone with this change, like the notification icon in
- * #88).
+ * The list has to be dynamic — a static shortcut is written at build time and
+ * can never know the user's devices. `res/xml/shortcuts.xml` holds only the
+ * share target of the persona's sharing shortcut ([ShareTarget], #188), which is
+ * published here with the devices and takes one of the launcher's slots.
  *
  * The device set is the **household catalogue** (#100), cached in [WidgetStore]
  * so the menu survives an offline republish, with the live
@@ -54,14 +54,19 @@ object AppShortcuts {
         // Ask, never assume: launchers commonly show four, but the allowed number
         // is the launcher's to state (0 below API 25 → nothing is published).
         val cap = ShortcutManagerCompat.getMaxShortcutCountPerActivity(app)
+        val share = if (cap > 0) runCatching { ShareTarget.info(app, rank = cap - 1) }.getOrNull() else null
+        if (share == null) {
+            // Android keeps a long-lived shortcut for the share sheet after it left the dynamic set.
+            runCatching { ShortcutManagerCompat.removeLongLivedShortcuts(app, listOf(ShareTarget.ID)) }
+        }
         val entries = DeviceShortcuts.entries(
-            candidates(app), cap, WidgetStore.recentEntities(app),
+            candidates(app), if (share == null) cap else cap - 1, WidgetStore.recentEntities(app),
         )
-        if (entries.isEmpty()) {
+        val infos = entries.mapIndexed { i, e -> info(app, e, i) } + listOfNotNull(share)
+        if (infos.isEmpty()) {
             runCatching { ShortcutManagerCompat.removeAllDynamicShortcuts(app) }
             return
         }
-        val infos = entries.mapIndexed { i, e -> info(app, e, i) }
         runCatching { ShortcutManagerCompat.setDynamicShortcuts(app, infos) }
     }
 

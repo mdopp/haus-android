@@ -1,5 +1,7 @@
 package cloud.dopp.haus.data
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import cloud.dopp.haus.data.Napi.PersonaJson
 import org.json.JSONObject
 
@@ -49,4 +51,13 @@ object PersonaIcon {
     /** [png] when it is a PNG within [MAX_BYTES], else null. */
     fun accept(png: ByteArray?): ByteArray? =
         png?.takeIf { it.size in SIGNATURE.size..MAX_BYTES && it.copyOf(SIGNATURE.size).contentEquals(SIGNATURE) }
+
+    /** [png] as a bitmap, sampled down to at most [maxSide] px a side; null when it does not decode. */
+    fun decode(png: ByteArray, maxSide: Int): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(png, 0, png.size, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxSide) sample *= 2
+        return BitmapFactory.decodeByteArray(png, 0, png.size, BitmapFactory.Options().apply { inSampleSize = sample })
+    }
 }
