@@ -52,7 +52,7 @@
                 android:background="@color/haus_accent" />
 
             <TextView
-                android:id="@+id/persona_greeting"
+                android:id="@+id/home_claim"
                 style="@style/Text.Haus.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

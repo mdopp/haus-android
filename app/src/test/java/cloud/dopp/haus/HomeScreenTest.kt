@@ -12,7 +12,9 @@ import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
 import cloud.dopp.haus.widget.WidgetTypes
 import org.junit.Assert.assertEquals
+import org.json.JSONObject
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -75,9 +77,37 @@ class HomeScreenTest {
         val a = open()
         assertEquals("Joshua", a.findViewById<TextView>(R.id.persona_name).text.toString())
         // the app's line, never the persona's greeting (#184: "Wollen wir ein Spiel spielen?" is the chat's)
-        assertEquals(ctx().getString(R.string.home_claim), a.findViewById<TextView>(R.id.persona_greeting).text.toString())
+        assertEquals(ctx().getString(R.string.home_claim), a.findViewById<TextView>(R.id.home_claim).text.toString())
         // no icon announced → none drawn
         assertEquals(View.GONE, a.findViewById<View>(R.id.persona_icon).visibility)
+    }
+
+    /**
+     * The acceptance of #184: Haus sends the greeting, the app reads it nowhere,
+     * so it is on no text of the screen and no source names its key (the store
+     * only drops what older versions kept).
+     */
+    @Test
+    fun theGreetingIsShownNowhere() {
+        paired()
+        val greeting = "Wollen wir ein Spiel spielen?"
+        val sent = Persona.parse(
+            JSONObject().put("display", "Joshua").put("greeting", "Hallo, hier ist Joshua. $greeting").put("accent", "#3ddc84"),
+        )
+        PersonaStore.save(ctx(), requireNotNull(sent))
+        val a = open()
+        val texts = mutableListOf<String>()
+        fun walk(v: View) {
+            if (v is TextView) texts.add(v.text.toString())
+            if (v is ViewGroup) (0 until v.childCount).forEach { walk(v.getChildAt(it)) }
+        }
+        walk(a.window.decorView)
+        assertTrue("the greeting is on the screen: $texts", texts.none { it.contains(greeting) || it.contains("Hallo, hier ist") })
+
+        val readers = RepoFiles.mainKotlin().filter { f ->
+            f.readLines().any { it.contains("\"greeting\"") && !it.contains(".remove(\"greeting\")") }
+        }
+        assertTrue("sources that read the greeting: $readers", readers.isEmpty())
     }
 
     @Test
