@@ -150,8 +150,8 @@ class HomeActivity : AppCompatActivity() {
     private fun renderPersona() {
         val persona = if (paired()) PersonaStore.get(this) else null
         findViewById<TextView>(R.id.persona_name).text = persona?.display ?: getString(R.string.appName)
-        findViewById<TextView>(R.id.persona_greeting).text =
-            persona?.greeting?.ifBlank { null } ?: getString(R.string.home_claim)
+        // the app's own line, never the persona's greeting (#184)
+        findViewById<TextView>(R.id.persona_greeting).setText(R.string.home_claim)
         val accent = persona?.accent?.let(::color) ?: getColor(R.color.haus_accent)
         findViewById<View>(R.id.persona_rule).setBackgroundColor(accent)
         val ground = persona?.ground?.let(::color) ?: getColor(R.color.haus_bg)

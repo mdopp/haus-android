@@ -115,7 +115,7 @@ class NapiFieldsTest {
     @Test
     fun theScreenDrawsThePng() {
         ServerStore.setBaseUrl(ctx(), "https://127.0.0.1:1") // the screen asks Haus again: nobody answers
-        PersonaStore.save(ctx(), Persona("Joshua", "", "#3ddc84", "#0c120e", hasIcon = true))
+        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84", "#0c120e", hasIcon = true))
         val save = PersonaStore::class.java.methods.firstOrNull {
             it.name == "saveIcon" && it.parameterTypes.getOrNull(1) == ByteArray::class.java
         }
@@ -130,7 +130,7 @@ class NapiFieldsTest {
         }
         assertEquals("the PNG is not drawn", View.VISIBLE, icon.visibility)
 
-        PersonaStore.save(ctx(), Persona("Joshua", "", "#3ddc84", "#0c120e", hasIcon = false))
+        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84", "#0c120e", hasIcon = false))
         val b = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
         idle()
         assertEquals("drawn although Haus names none", View.GONE, b.findViewById<View>(R.id.persona_icon).visibility)

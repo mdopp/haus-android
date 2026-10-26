@@ -14,7 +14,6 @@ object PersonaStore {
         val display = p.getString("display", null) ?: return null
         return Persona(
             display = display,
-            greeting = p.getString("greeting", "") ?: "",
             accent = p.getString("accent", "") ?: "",
             ground = p.getString("ground", "") ?: "",
             hasIcon = p.getBoolean("has_icon", false),
@@ -24,7 +23,7 @@ object PersonaStore {
     fun save(ctx: Context, persona: Persona) {
         p(ctx).edit()
             .putString("display", persona.display)
-            .putString("greeting", persona.greeting)
+            .remove("greeting") // kept by older versions; never shown (#184)
             .putString("accent", persona.accent)
             .putString("ground", persona.ground)
             .putBoolean("has_icon", persona.hasIcon)
