@@ -39,11 +39,12 @@ registered by any other app on the phone and catch the token in the redirect.
   `cloud.dopp.haus://pair` only, so no web page can point the app at a foreign
   server. `server` is required; `token` is optional (present → paired once
   confirmed and checked; absent → the app opens `/pair-device` there).
-- The persona — name, greeting, colours (`accent`, `ground`), icon — comes from
+- The persona — name, colours (`accent`, `ground`), icon — comes from
   `GET /napi/persona` and, when it names an icon, `GET /napi/persona/icon.png`:
   a PNG of at most 256 KB, decoded with `BitmapFactory` off the main thread.
   The app has no SVG decoder; until Laib renders a persona's PNG (laib#191)
-  Haus names no icon and the app shows none.
+  Haus names no icon and the app shows none. The `greeting` Haus also sends
+  is the chat's and is not read (#184).
 
 ## (b) The `/napi` paths the app calls
 
