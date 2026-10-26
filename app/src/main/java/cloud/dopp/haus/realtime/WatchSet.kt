@@ -3,8 +3,8 @@ package cloud.dopp.haus.realtime
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
-import android.os.PowerManager
 import cloud.dopp.haus.data.ApiClient
+import cloud.dopp.haus.data.ScreenGate
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
@@ -79,17 +79,17 @@ object WatchSet {
     private fun eligible(ctx: Context): Boolean =
         ServerStore.isConfigured(ctx) && TokenStore.isPaired(ctx)
 
-    private fun screenOn(ctx: Context): Boolean =
-        ctx.getSystemService(PowerManager::class.java)?.isInteractive ?: false
+    private fun screenOn(ctx: Context): Boolean = ScreenGate.open(ctx)
 
     /**
      * Post the current widget entity set on a background thread. No-op when not
-     * paired. A 503 is retried with backoff while the screen is on and no newer
+     * paired or while the screen is off: the stream posts it when the screen is
+     * on again (LiveService's resync). A 503 is retried with backoff while the screen is on and no newer
      * post started; any other failure is dropped.
      */
     fun postCurrentAsync(ctx: Context) {
         val app = ctx.applicationContext
-        if (!eligible(app)) return
+        if (!eligible(app) || !screenOn(app)) return
         val mine = generation.incrementAndGet()
         thread {
             var attempt = 0

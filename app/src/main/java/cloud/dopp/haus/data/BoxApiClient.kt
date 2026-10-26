@@ -24,6 +24,7 @@ class BoxApiClient(private val ctx: Context) {
 
     /** The bytes [endpoint] answers, at most [cap] of them, or null; never throws. */
     private fun bytes(endpoint: Napi.Endpoint, cap: Long = MAX_REPLY_BYTES): ByteArray? {
+        if (!ScreenGate.open(ctx)) return null
         val base = ServerStore.baseUrl(ctx)?.trimEnd('/') ?: return null
         val token = TokenStore.get(ctx) ?: return null
         return try {

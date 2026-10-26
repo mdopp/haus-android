@@ -68,9 +68,11 @@ class ApiClient(private val ctx: Context) {
 
     private fun token(): String = TokenStore.get(ctx) ?: throw NotPairedException()
 
-    /** [endpoint]'s request to the paired Haus with the device token. */
-    private fun authed(endpoint: Napi.Endpoint, target: String = endpoint.path, body: okhttp3.RequestBody? = null): Request =
-        endpoint.request(base(), token(), target, body)
+    /** [endpoint]'s request to the paired Haus with the device token; none while the screen is off ([ScreenGate]). */
+    private fun authed(endpoint: Napi.Endpoint, target: String = endpoint.path, body: okhttp3.RequestBody? = null): Request {
+        ScreenGate.check(ctx)
+        return endpoint.request(base(), token(), target, body)
+    }
 
     /** One entity's live card via `/napi/portal/state`; null on any refusal. */
     fun getCard(entityId: String): Card? {

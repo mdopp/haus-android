@@ -118,7 +118,9 @@ without a notification, until the next allowed start.) A connection silent for 2
 backoff — only after 120 s, longer than Haus's 90 s ping, so a proxy that
 cuts idle streams does not make the app reconnect every minute. With the screen
 off nothing goes over the network: no stream, no poll (every widget's update
-period is 0), no catch-up. Messages to people go
+period is 0), no catch-up, and no other request: every call to Haus passes
+`data/ScreenGate.kt`, so a widget update Android delivers late reads nothing
+and keeps its last card. Messages to people go
 through their chat channel, not the app (laib ADR 0022 §3).
 
 ## (d) Pages
