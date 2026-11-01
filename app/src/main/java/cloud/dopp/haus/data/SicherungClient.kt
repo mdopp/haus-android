@@ -120,9 +120,9 @@ class SicherungClient(
         }
     }
 
-    /** Start the upload of [pfad] ([groesse] bytes), or resume Haus's partial one: its id and offset. */
-    fun anlegen(quelle: Napi.Quelle, pfad: String, groesse: Long): Pair<String, Long> {
-        val body = Napi.SICHERUNG_UPLOADS.json(quelle.wire, pfad, groesse)
+    /** Start the upload of [pfad] ([groesse] bytes, changed at [geaendert]), or resume Haus's partial one: its id and offset. */
+    fun anlegen(quelle: Napi.Quelle, pfad: String, groesse: Long, geaendert: Long): Pair<String, Long> {
+        val body = Napi.SICHERUNG_UPLOADS.json(quelle.wire, pfad, groesse, geaendert)
         return rufe(json(Napi.SICHERUNG_UPLOADS, body)) { resp ->
             val text = resp.body?.string()
             if (!resp.isSuccessful) throw Abgelehnt(resp.code, satzAus(text))

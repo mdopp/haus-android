@@ -143,7 +143,7 @@ class Uploader(
     }
 
     private fun anlegen(quelle: Napi.Quelle, pfad: String, datei: Datei): Pair<String, Long> {
-        val (id, offset) = client.anlegen(quelle, pfad, datei.groesse)
+        val (id, offset) = client.anlegen(quelle, pfad, datei.groesse, datei.geaendert)
         merker.merkeUpload(quelle, pfad, Zeile(datei.groesse, datei.geaendert, id).text())
         return id to offset
     }

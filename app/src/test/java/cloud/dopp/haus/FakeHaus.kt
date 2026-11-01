@@ -125,8 +125,9 @@ class FakeHaus : Dispatcher() {
         val quelle = o.getString("quelle")
         val pfad = o.getString("pfad")
         val groesse = o.getLong("groesse")
+        val geaendert = o.optLong("geaendert", 0)
         if (versteckt(pfad)) return fehler(400, "Der Pfad geht nicht: nichts Verstecktes.")
-        val id = "%032x".format((quelle + "\u0000" + pfad + "\u0000" + groesse).hashCode().toLong() and 0xffffffffL)
+        val id = "%032x".format((quelle + "\u0000" + pfad + "\u0000" + groesse + "\u0000" + geaendert).hashCode().toLong() and 0xffffffffL)
         val alt = uploads[id]
         // a file put in place before is sent again from the start
         val u = if (alt == null || alt.fertig) Upload(id, quelle, pfad, groesse).also { uploads[id] = it } else alt

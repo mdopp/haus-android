@@ -398,10 +398,13 @@ object Napi {
     /** The most files one `fehlend` call asks about. */
     const val FEHLEND_MAX = 5000
 
-    /** Start a resumable upload, or resume the partial one of the same source, path and size. */
+    /**
+     * Start a resumable upload, or resume the partial one of the same source, path, size and
+     * mtime (`geaendert`, epoch ms): WhatsApp's msgstore keeps its name daily and can keep its size.
+     */
     val SICHERUNG_UPLOADS = Endpoint(
         Method.POST, "/napi/sicherung/uploads",
-        body = listOf("quelle", "pfad", "groesse"), reply = listOf(UploadJson),
+        body = listOf("quelle", "pfad", "groesse", "geaendert"), reply = listOf(UploadJson),
     )
 
     /** How far an upload got: 204 with [UPLOAD_OFFSET], 404 when Haus does not know it. */

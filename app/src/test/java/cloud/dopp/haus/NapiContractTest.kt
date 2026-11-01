@@ -184,7 +184,7 @@ class NapiContractTest {
             ),
             Route(
                 "POST", "/napi/sicherung/uploads", "internal/napi/sicherung.go:479-539",
-                body = setOf("quelle", "pfad", "groesse"), required = setOf("quelle", "pfad", "groesse"),
+                body = setOf("quelle", "pfad", "groesse", "geaendert"), required = setOf("quelle", "pfad", "groesse"),
                 sends = setOf("id", "offset", "fehler"),
             ),
             Route(
