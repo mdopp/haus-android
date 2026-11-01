@@ -8,8 +8,14 @@
 
     <string name="sicherung_whatsapp">WhatsApp</string>
     <string name="sicherung_signal">Signal</string>
-    <string name="sicherung_ordner_ja">Ordner freigegeben: ja</string>
-    <string name="sicherung_ordner_nein">Ordner freigegeben: nein</string>
+    <string name="sicherung_ordner_ja">Ordner: %1$s</string>
+    <string name="sicherung_ordner_nein">Noch kein Ordner gewählt</string>
+    <string name="sicherung_ordner_weg">Ordner nicht mehr freigegeben: %1$s</string>
+    <string name="sicherung_fund_sucht">Sieht im Ordner nach …</string>
+    <string name="sicherung_fund_signal">Gefunden: Sicherung vom %1$s (%2$s)</string>
+    <string name="sicherung_fund_signal_keine">Hier liegt keine Signal-Sicherung. Ist das der Ordner, den du in Signal unter Chat-Backups gewählt hast?</string>
+    <string name="sicherung_fund_whatsapp">Gefunden: Chat-Datenbank vom %1$s (%2$s)</string>
+    <string name="sicherung_fund_whatsapp_keine">Keine Chat-Datenbank gefunden: WhatsApp legt sie nachts an. Die Fotos und Sprachnachrichten werden trotzdem gesichert.</string>
     <string name="sicherung_ordner_waehlen">Ordner wählen</string>
     <string name="sicherung_ordner_neu">Ordner neu wählen</string>
     <string name="sicherung_ordner_falsch">Das ist nicht der WhatsApp-Ordner: darin fehlen „Databases“ und „Media“. Wähle „Android/media/com.whatsapp/WhatsApp“.</string>

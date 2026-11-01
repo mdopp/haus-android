@@ -81,14 +81,19 @@ object Auswahl {
 
     /** WhatsApp: `Databases/msgstore.db.crypt15` from [datenbanken] (the files in `Databases`), if new. */
     fun msgstore(datenbanken: List<Datei>, zuletzt: Gesendet?, jetzt: Long): Wahl =
-        gegen(datenbanken.firstOrNull { it.pfad == MSGSTORE_PFAD && it.groesse > 0 }, zuletzt, jetzt)
+        gegen(msgstoreDatei(datenbanken), zuletzt, jetzt)
 
     /** Signal: the newest `signal-….backup` directly in its folder, if newer than the one sent last. */
-    fun signal(dateien: List<Datei>, zuletzt: Gesendet?, jetzt: Long): Wahl {
-        val neueste = dateien.filter { '/' !in it.pfad && SIGNAL.matches(it.name) && it.groesse > 0 }
+    fun signal(dateien: List<Datei>, zuletzt: Gesendet?, jetzt: Long): Wahl = gegen(neuesteSignal(dateien), zuletzt, jetzt)
+
+    /** The newest `signal-….backup` directly in Signal's folder, or null: what the screen shows as found. */
+    fun neuesteSignal(dateien: List<Datei>): Datei? =
+        dateien.filter { '/' !in it.pfad && SIGNAL.matches(it.name) && it.groesse > 0 }
             .maxWithOrNull(compareBy<Datei>({ it.geaendert }, { it.name }))
-        return gegen(neueste, zuletzt, jetzt)
-    }
+
+    /** WhatsApp's current chat database in `Databases`, or null: what the screen shows as found. */
+    fun msgstoreDatei(datenbanken: List<Datei>): Datei? =
+        datenbanken.firstOrNull { it.pfad == MSGSTORE_PFAD && it.groesse > 0 }
 
     /**
      * WhatsApp's media worth asking Haus about: below `Media/`, no dot-name on

@@ -3,6 +3,7 @@ package cloud.dopp.haus.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -46,6 +47,9 @@ class SicherungActivity : AppCompatActivity() {
     @Volatile
     private var stand: SicherungClient.Stand? = null
 
+    /** What a look into each granted folder found, as the line under the folder; null while it looks. */
+    private val funde = HashMap<Quelle, String?>()
+
     private val waehleWhatsapp = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let { gewaehlt(Quelle.WHATSAPP, it) }
     }
@@ -73,6 +77,39 @@ class SicherungActivity : AppCompatActivity() {
         super.onResume()
         render()
         ladeStand()
+        Lauf.QUELLEN.forEach(::schaueNach)
+    }
+
+    /** Look into [q]'s granted folder off the main thread: is the backup the app would send there? */
+    private fun schaueNach(q: Quelle) {
+        val baum = store.ordner(q)?.takeIf { freigegeben(q) } ?: return
+        funde[q] = null
+        val app = applicationContext
+        thread {
+            val o = SafOrdner(app, baum)
+            val satz = if (q == Quelle.SIGNAL) {
+                Auswahl.neuesteSignal(o.dateien("", false).orEmpty())?.let {
+                    getString(R.string.sicherung_fund_signal, Anzeige.zeit(it.geaendert), Anzeige.groesse(it.groesse))
+                } ?: getString(R.string.sicherung_fund_signal_keine)
+            } else {
+                Auswahl.msgstoreDatei(o.dateien(Auswahl.DATENBANKEN, false).orEmpty())?.let {
+                    getString(R.string.sicherung_fund_whatsapp, Anzeige.zeit(it.geaendert), Anzeige.groesse(it.groesse))
+                } ?: getString(R.string.sicherung_fund_whatsapp_keine)
+            }
+            runOnUiThread {
+                funde[q] = satz
+                if (!isFinishing) renderQuelle(q)
+            }
+        }
+    }
+
+    /** The folder as the Files app names it, and below it what is in there. */
+    private fun ordnerZeile(q: Quelle): String {
+        val baum = store.ordner(q) ?: return getString(R.string.sicherung_ordner_nein)
+        val name = runCatching { Anzeige.ordner(DocumentsContract.getTreeDocumentId(baum)) }.getOrDefault(baum.toString())
+        if (!freigegeben(q)) return getString(R.string.sicherung_ordner_weg, name)
+        val fund = if (funde.containsKey(q)) funde[q] ?: getString(R.string.sicherung_fund_sucht) else null
+        return getString(R.string.sicherung_ordner_ja, name) + (fund?.let { "\n$it" } ?: "")
     }
 
     private fun karte(q: Quelle): View =
@@ -128,7 +165,10 @@ class SicherungActivity : AppCompatActivity() {
                 }
                 store.setzeOrdner(q, baum)
                 SicherungWorker.planen(app)
-                if (!isFinishing) render()
+                if (!isFinishing) {
+                    render()
+                    schaueNach(q)
+                }
             }
         }
     }
@@ -150,7 +190,7 @@ class SicherungActivity : AppCompatActivity() {
     private fun renderQuelle(q: Quelle) {
         val k = karte(q)
         val frei = freigegeben(q)
-        k.findViewById<TextView>(R.id.quelle_ordner).setText(if (frei) R.string.sicherung_ordner_ja else R.string.sicherung_ordner_nein)
+        k.findViewById<TextView>(R.id.quelle_ordner).text = ordnerZeile(q)
         k.findViewById<Button>(R.id.quelle_waehlen).setText(
             if (store.ordner(q) == null) R.string.sicherung_ordner_waehlen else R.string.sicherung_ordner_neu,
         )

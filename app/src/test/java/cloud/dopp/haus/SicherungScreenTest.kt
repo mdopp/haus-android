@@ -81,7 +81,7 @@ class SicherungScreenTest {
         assertEquals("WhatsApp", whatsapp.findViewById<TextView>(R.id.quelle_name).text.toString())
         assertEquals("Signal", signal.findViewById<TextView>(R.id.quelle_name).text.toString())
         listOf(whatsapp, signal).forEach {
-            assertEquals("Ordner freigegeben: nein", it.findViewById<TextView>(R.id.quelle_ordner).text.toString())
+            assertEquals("Noch kein Ordner gewählt", it.findViewById<TextView>(R.id.quelle_ordner).text.toString())
             assertEquals("Letzte Übertragung: noch keine", it.findViewById<TextView>(R.id.quelle_zuletzt).text.toString())
             assertEquals("Ordner wählen", it.findViewById<TextView>(R.id.quelle_waehlen).text.toString())
         }
