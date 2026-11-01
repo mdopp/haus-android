@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Haus (#176, laib ADR 0022): home-screen widgets and pairing, nothing else.
+<!-- Haus (#176, laib ADR 0022): home-screen widgets and pairing, and the daily
+     pick-up of the phone's message backups (#194, laib ADR 0029).
      One foreground service keeps the widgets live while the screen is on; no
      other notification, no poll, no web shell. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The camera widget's capture screen (#36). -->
@@ -182,6 +184,22 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <!-- Mehr → Nachrichten sichern (#194): the two folders, the state, „Jetzt
+             sichern“, the guide. The folders come through the system picker
+             (storage access framework): no storage permission. -->
+        <activity
+            android:name=".ui.SicherungActivity"
+            android:exported="false"
+            android:label="@string/sicherung_title"
+            android:theme="@style/Theme.Haus" />
+
+        <!-- WorkManager (the backup job, #194) brings a foreground service of its
+             own; the job never goes foreground and posts no notification, so it
+             is taken out: LiveService stays the app's one foreground service. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
 
         <!-- Native camera capture + upload screen (#36): opened by the camera
              trigger widget; takes photos, optionally builds a PDF, uploads to /napi. -->

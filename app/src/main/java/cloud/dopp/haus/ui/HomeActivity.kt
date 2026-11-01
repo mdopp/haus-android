@@ -61,7 +61,8 @@ import kotlin.concurrent.thread
  *
  * **Paired.** The persona (name, colours, icon from `/napi/persona`) heads the
  * screen; below it every widget type, the tools from Haus's catalog and the Box
- * widgets, each one tap from the home screen; and the way to unpair.
+ * widgets, each one tap from the home screen; under Mehr, Nachrichten sichern
+ * (#194); and the way to unpair.
  */
 class HomeActivity : AppCompatActivity() {
 
@@ -210,6 +211,18 @@ class HomeActivity : AppCompatActivity() {
     private fun renderWidgetTypes() {
         fill(findViewById(R.id.widgets_group), WidgetTypes.ALL.filter { !it.admin })
         fill(findViewById(R.id.box_group), WidgetTypes.ALL.filter { it.admin })
+        renderMehr()
+    }
+
+    /** Mehr: Nachrichten sichern (#194). */
+    private fun renderMehr() {
+        val group = findViewById<ViewGroup>(R.id.mehr_group)
+        group.removeAllViews()
+        group.addView(
+            row(group, R.drawable.ic_backup, getString(R.string.sicherung_title)) {
+                startActivity(Intent(this, SicherungActivity::class.java))
+            },
+        )
     }
 
     private fun fill(group: ViewGroup, entries: List<WidgetTypes.Entry>) {

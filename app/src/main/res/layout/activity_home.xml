@@ -195,6 +195,22 @@
                 android:background="@drawable/card_haus"
                 android:orientation="vertical" />
 
+            <!-- Mehr (#194): what the app does beyond the widgets. -->
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_lg"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/home_mehr" />
+
+            <LinearLayout
+                android:id="@+id/mehr_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_haus"
+                android:orientation="vertical" />
+
             <Button
                 android:id="@+id/logout_btn"
                 style="@style/Widget.Haus.Button.Ghost"

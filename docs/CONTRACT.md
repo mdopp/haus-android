@@ -63,6 +63,7 @@ each row naming the Haus file and lines it came from.
 | active devices | `GET /napi/portal/active` |
 | energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
 | camera | `POST /napi/upload` (capture) |
+| Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`: see (e) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,contacts,documents,notes}`), `POST /napi/action-callback` |
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
@@ -118,10 +119,11 @@ without a notification, until the next allowed start.) A connection silent for 2
 90 s) counts as dead and is reopened. A session counts as healthy — and resets the reconnect
 backoff — only after 120 s, longer than Haus's 90 s ping, so a proxy that
 cuts idle streams does not make the app reconnect every minute. With the screen
-off nothing goes over the network: no stream, no poll (every widget's update
-period is 0), no catch-up, and no other request: every call to Haus passes
-`data/ScreenGate.kt`, so a widget update Android delivers late reads nothing
-and keeps its last card. Messages to people go
+off nothing goes over the network for the widgets: no stream, no poll (every
+widget's update period is 0), no catch-up, and no other request: every widget
+call to Haus passes `data/ScreenGate.kt`, so a widget update Android delivers
+late reads nothing and keeps its last card. The one exception is the backup
+job of (e). Messages to people go
 through their chat channel, not the app (laib ADR 0022 §3).
 
 ## (d) Pages
@@ -147,3 +149,48 @@ The kinds (`WidgetKind` in `widget/HausPages.kt`): `device`, `devices`,
 `box-services`, `tool`. The camera widget opens no page. The app counts
 nothing and makes no call for it; a launcher shortcut and the app's own
 links carry no `von`.
+
+## (e) Nachrichten sichern
+
+(#194, laib ADR 0029; Haus's side is haus#207.) Under Mehr → Nachrichten
+sichern the person grants two folders through the system folder picker
+(`ACTION_OPEN_DOCUMENT_TREE`, a persisted read grant; no storage permission):
+WhatsApp's, `Android/media/com.whatsapp/WhatsApp` (the picker opens there),
+and the one they chose in Signal for its backups. The app only reads them.
+
+One WorkManager job (`sicherung/SicherungWorker.kt`) runs daily on an
+unmetered network while the phone charges and its battery is not low, and
+once at once on „Jetzt sichern“ (unmetered network only). It never goes
+foreground. It sends:
+
+- **WhatsApp:** `Databases/msgstore.db.crypt15` when it is not the one sent
+  last (name, size, time kept in the app's prefs), and the files under
+  `Media/` Haus reports missing (`POST /napi/sicherung/fehlend`, at most 5000
+  paths a call). A path with a dot-name at any level (`.Statuses`,
+  `.nomedia`) is never asked about or sent: Haus refuses the whole question
+  for one.
+- **Signal:** the newest `signal-….backup` directly in its folder, only when
+  it is newer than the one sent last. Its `pfad` is its file name.
+
+A file changed in the last ten minutes waits for the next run (it may still
+be being written).
+
+The upload: `POST /napi/sicherung/uploads` `{quelle, pfad, groesse}` → 201
+`{id, offset}`; then `PATCH /napi/sicherung/uploads/{id}` with
+`Upload-Offset` and `Content-Type: application/offset+octet-stream`, 8 MiB a
+piece (Haus takes 16), → `{offset, fertig}`. The id is kept per file until it
+is whole; after any interruption the next run asks `HEAD …/{id}`
+(`Upload-Offset`) and goes on from there. An offset equal to the size — after
+HEAD (Haus keeps a finished upload known for seven days) or straight from
+the creation — is a finished file. A 409, or a 408 after a partial write,
+goes on from the `offset` Haus returns; a 404 starts a new upload; a 429 (the
+box takes other pieces) and no answer end the run and WorkManager runs it
+again with backoff. 507 (full), 503 (no archive), 403 (a device of nobody)
+and 401 stop the run with a German sentence on the screen. Errors are
+`{"fehler": …}`, except the 401 of the shared login check
+(`{"error":"unauthorized"}`), for which the app says to pair again.
+
+`GET /napi/sicherung/stand` → `{quellen: {whatsapp|signal|discord: {zuletzt,
+dateien, bytes, wartend}}, frei_bytes}` is shown per source on the screen.
+The app never asks for or stores a messenger's key: keys go into the
+person's vault on the box (laib#986).

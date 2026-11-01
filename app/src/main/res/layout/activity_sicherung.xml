@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mehr → Nachrichten sichern (#194): the two folders, the state, „Jetzt
+     sichern“, and the guide. Edge-to-edge like the home screen. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sicherung_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/haus_bg"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/screen_gutter"
+        android:paddingEnd="@dimen/screen_gutter"
+        android:paddingTop="@dimen/space_lg"
+        android:paddingBottom="@dimen/space_xl">
+
+        <TextView
+            style="@style/Text.Haus.Headline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_sm"
+            android:text="@string/sicherung_title" />
+
+        <TextView
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sicherung_intro" />
+
+        <TextView
+            android:id="@+id/sicherung_frei"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm" />
+
+        <include
+            android:id="@+id/sicherung_whatsapp"
+            layout="@layout/item_sicherung_quelle" />
+
+        <include
+            android:id="@+id/sicherung_signal"
+            layout="@layout/item_sicherung_quelle" />
+
+        <Button
+            android:id="@+id/sicherung_jetzt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_lg"
+            android:text="@string/sicherung_jetzt" />
+
+        <ProgressBar
+            android:id="@+id/sicherung_balken"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm"
+            android:max="1000"
+            android:progressTint="@color/haus_accent"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/sicherung_zustand"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:text="@string/sicherung_ruht" />
+
+        <TextView
+            style="@style/Text.Haus.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xl"
+            android:text="@string/sicherung_anleitung_title" />
+
+        <LinearLayout
+            android:id="@+id/sicherung_anleitung"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:background="@drawable/card_haus"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_whatsapp_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_whatsapp" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_signal_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_signal" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_ordner_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_ordner" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_discord_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_discord" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_versionen" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_nie_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_nie" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

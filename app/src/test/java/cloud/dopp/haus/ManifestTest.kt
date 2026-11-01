@@ -11,9 +11,14 @@ import java.io.File
  * live). It is widgets and pairing, kept live by one foreground service of
  * type `specialUse` that holds the stream while the screen is on, restarts
  * after boot, and shows one quiet notification for it. It is not a poll: no
- * widget update period, no job, no worker, no alarm, no wakelock. Not
- * `dataSync` either — Android 15 caps that at 6 hours a day. No web shell, no
- * voice, no other notification.
+ * widget update period, no alarm, no wakelock of its own. Not `dataSync`
+ * either — Android 15 caps that at 6 hours a day. No web shell, no voice, no
+ * other notification.
+ *
+ * One job, and only one (the owner's call in #194, laib ADR 0029): the daily
+ * pick-up of the phone's WhatsApp and Signal backups, a WorkManager worker
+ * that never goes foreground and posts nothing. The folders come through the
+ * system picker: no storage permission.
  */
 class ManifestTest {
 
@@ -24,32 +29,68 @@ class ManifestTest {
     /** The one file that may hold a foreground service and post its notification. */
     private val serviceFile = "app/src/main/java/cloud/dopp/haus/realtime/LiveService.kt"
 
+    /** The one file that may name WorkManager: the backup job (#194). */
+    private val workerFile = "app/src/main/java/cloud/dopp/haus/sicherung/SicherungWorker.kt"
+
+    /** The source manifest's entries that take a library's entry out of the merged one. */
+    private val removed = Regex("""<(service|receiver|provider|uses-permission)\b[^>]*tools:node="remove"[^>]*/>""")
+
+    /** The manifest as Gradle merged it with the libraries', as the unit tests' Robolectric reads it. */
+    private val merged by lazy {
+        val props = java.util.Properties()
+        javaClass.classLoader!!.getResourceAsStream("com/android/tools/test_config.properties")!!.use { props.load(it) }
+        val path = props.getProperty("android_merged_manifest")!!
+        val f = File(path).let { if (it.isAbsolute) it else File(RepoFiles.root, "app/$path") }
+        f.readText()
+    }
+
+    private fun permissions(xml: String): Set<String> =
+        Regex("""<uses-permission[^>]*android:name="([^"]+)"""").findAll(xml.replace(removed, ""))
+            .map { it.groupValues[1].removePrefix("android.permission.") }.toSet()
+
     private fun noneSay(vararg needles: String, except: Set<String> = emptySet()): List<String> =
         sources.filterKeys { it !in except }
             .flatMap { (path, text) -> needles.filter { text.contains(it) }.map { "$path: $it" } }
 
-    /** Exactly these permissions: the network, the camera capture, and what the live service needs. */
+    private val ours = setOf(
+        "INTERNET", "CAMERA",
+        "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", // the live service
+        "RECEIVE_BOOT_COMPLETED", // its restart after boot
+        "POST_NOTIFICATIONS", // its notification, shown on Android 13+
+        // its restart after the process died: on the exemption list a restart may go foreground
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+    )
+
+    /** Exactly these permissions: the network, the camera capture, and what the live service needs. No storage. */
     @Test
     fun thePermissionsAreExactlyTheseAndNoOthers() {
-        val asked = Regex("""<uses-permission[^>]*android:name="([^"]+)"""").findAll(manifest)
-            .map { it.groupValues[1].removePrefix("android.permission.") }.toSet()
+        assertEquals(ours, permissions(manifest))
+    }
+
+    /**
+     * What the libraries add, and nothing more: WorkManager (the backup job,
+     * #194) brings its job service and, for it, the wake lock and the network
+     * state; androidx.core its receiver guard. No storage permission in any form.
+     */
+    @Test
+    fun theMergedManifestAddsOnlyWorkManagersOwn() {
         assertEquals(
-            setOf(
-                "INTERNET", "CAMERA",
-                "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", // the live service
-                "RECEIVE_BOOT_COMPLETED", // its restart after boot
-                "POST_NOTIFICATIONS", // its notification, shown on Android 13+
-                // its restart after the process died: on the exemption list a restart may go foreground
-                "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
-            ),
-            asked,
+            ours + setOf("WAKE_LOCK", "ACCESS_NETWORK_STATE", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"),
+            permissions(merged),
         )
+        listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION").forEach { word ->
+            assertFalse("a storage permission: $word", permissions(merged).any { it.contains(word) })
+        }
+        val foreground = Regex("""android:foregroundServiceType="([^"]+)"""").findAll(merged).map { it.groupValues[1] }.toList()
+        assertEquals("one foreground service, the live one", listOf("specialUse"), foreground)
+        assertFalse("WorkManager's foreground service is taken out", merged.contains("androidx.work.impl.foreground.SystemForegroundService"))
+        assertTrue("the job runs through JobScheduler", merged.contains("androidx.work.impl.background.systemjob.SystemJobService"))
     }
 
     /** Exactly one foreground service, `specialUse` only, with the reason Play asks for. */
     @Test
     fun oneSpecialUseForegroundServiceAndTheWidgetLists() {
-        val services = Regex("""<service\b[^>]*>""").findAll(manifest).map { it.value }.toList()
+        val services = Regex("""<service\b[^>]*>""").findAll(manifest.replace(removed, "")).map { it.value }.toList()
         val foreground = services.filter { it.contains("foregroundServiceType") }
         assertEquals("foreground services: $foreground", 1, foreground.size)
         val fgs = foreground.single()
@@ -106,8 +147,9 @@ class ManifestTest {
     }
 
     @Test
-    fun noBackgroundWorkAndNoWebShellInTheBuild() {
-        assertFalse("WorkManager (the rescue worker)", gradle.contains("androidx.work"))
+    fun oneWorkerLibraryAndNoWebShellInTheBuild() {
+        val work = Regex("""implementation\s+'(androidx\.work:[^:']+)""").findAll(gradle).map { it.groupValues[1] }.toList()
+        assertEquals("WorkManager for the backup job only (#194)", listOf("androidx.work:work-runtime"), work)
         assertFalse("the Bubblewrap TWA block", gradle.contains("twaManifest"))
         assertFalse("android-browser-helper", gradle.contains("androidbrowserhelper"))
     }
@@ -127,26 +169,55 @@ class ManifestTest {
     }
 
     /**
-     * Nothing that runs the app later or keeps the CPU up: no job (JobScheduler),
-     * no worker (WorkManager), no alarm (AlarmManager), no wakelock (PowerManager).
-     * Asking PowerManager whether the screen is on is fine; holding it awake is not.
+     * Nothing that runs the app later or keeps the CPU up — no job (JobScheduler),
+     * no alarm (AlarmManager), no wakelock (PowerManager) — but the one worker of
+     * the backup (#194), in its one file, which never goes foreground. Asking
+     * PowerManager whether the screen is on is fine; holding it awake is not.
      */
     @Test
-    fun noJobNoWorkerNoAlarmNoWakelockInTheSources() {
+    fun noJobNoAlarmNoWakelockAndOneWorkerInTheSources() {
         val hits = noneSay(
             "JobScheduler", "JobService", "JobInfo", "JOB_SCHEDULER_SERVICE",
-            "androidx.work", "WorkManager", "WorkRequest", "CoroutineWorker",
             "AlarmManager", "ALARM_SERVICE", "setExactAndAllowWhileIdle", "setAndAllowWhileIdle", "setAlarmClock",
             "newWakeLock", "WakeLock", "PARTIAL_WAKE_LOCK", "acquire(",
-        )
+            "setForeground", "ForegroundInfo", "CoroutineWorker",
+        ) + noneSay("androidx.work", "WorkManager", "WorkRequest", except = setOf(workerFile))
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
+        val worker = sources.getValue(workerFile)
+        assertEquals("one worker", 1, Regex(""": Worker\(""").findAll(sources.values.joinToString("\n")).count())
+        assertTrue(worker.contains("class SicherungWorker(") && worker.contains(": Worker("))
     }
 
     @Test
     fun noJobServiceOrAlarmReceiverInTheManifest() {
+        val own = manifest.replace(removed, "")
         listOf("BIND_JOB_SERVICE", "SCHEDULE_EXACT_ALARM", "USE_EXACT_ALARM", "androidx.work", "WAKE_LOCK").forEach {
-            assertFalse("manifest names $it", manifest.contains(it))
+            assertFalse("manifest names $it", own.contains(it))
         }
+        val taken = removed.findAll(manifest).map { it.value }.toList()
+        assertEquals(1, taken.size)
+        assertTrue(taken.single(), taken.single().contains("androidx.work.impl.foreground.SystemForegroundService"))
+    }
+
+    /**
+     * The backup folders come through the system picker and a persisted read
+     * grant (#194): no broad storage access, and nothing in the app writes,
+     * moves or deletes a document in WhatsApp's or Signal's folder.
+     */
+    @Test
+    fun theFoldersAreReadThroughThePickerOnly() {
+        val hits = noneSay(
+            "MANAGE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "getExternalStorageDirectory",
+            "deleteDocument", "renameDocument", "moveDocument", "copyDocument", "createDocument", "removeDocument",
+            "openOutputStream", "FLAG_GRANT_WRITE_URI_PERMISSION",
+        )
+        assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
+        val saf = sources.getValue("app/src/main/java/cloud/dopp/haus/sicherung/SafOrdner.kt")
+        assertTrue(saf.contains("takePersistableUriPermission(baum, Intent.FLAG_GRANT_READ_URI_PERMISSION)"))
+        val modes = Regex("""openFileDescriptor\([^)]*"(\w+)"\)""").findAll(saf).map { it.groupValues[1] }.toSet()
+        assertEquals("read only", setOf("r"), modes)
+        val screen = sources.getValue("app/src/main/java/cloud/dopp/haus/ui/SicherungActivity.kt")
+        assertTrue(screen.contains("ActivityResultContracts.OpenDocumentTree()"))
     }
 
     @Test

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One source on „Nachrichten sichern“ (#194): its folder, its last transfer,
+     what the box reports, its last word, and the folder picker. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/space_md"
+    android:background="@drawable/card_haus"
+    android:orientation="vertical"
+    android:padding="@dimen/card_padding">
+
+    <TextView
+        android:id="@+id/quelle_name"
+        style="@style/Text.Haus.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/space_xs" />
+
+    <TextView
+        android:id="@+id/quelle_ordner"
+        style="@style/Text.Haus.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/quelle_zuletzt"
+        style="@style/Text.Haus.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/quelle_box"
+        style="@style/Text.Haus.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- The last word: a German sentence with the next step; a folder problem opens the picker. -->
+    <TextView
+        android:id="@+id/quelle_meldung"
+        style="@style/Text.Haus.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:background="?android:attr/selectableItemBackground"
+        android:textColor="@color/haus_accent"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/quelle_waehlen"
+        style="@style/Widget.Haus.Button.Ghost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm" />
+</LinearLayout>

@@ -24,7 +24,20 @@ object Napi {
     /** The root every path shares. A tool's rows path must sit under it, see [TOOL_ROWS]. */
     const val ROOT = "/napi/"
 
-    enum class Method { GET, POST }
+    /** HEAD and PATCH are the resumable upload's (`/napi/sicherung/uploads/{id}`, #194). */
+    enum class Method { GET, POST, HEAD, PATCH }
+
+    /**
+     * The resumable upload's offset: a reply header of HEAD, a request header of
+     * PATCH (`/napi/sicherung/uploads/{id}`, #194).
+     */
+    const val UPLOAD_OFFSET = "Upload-Offset"
+
+    /** A PATCH's body: the next bytes of the file, as they stand on the phone. */
+    const val OFFSET_STREAM = "application/offset+octet-stream"
+
+    /** Where a backup comes from, as Haus names it (`quelle`, #194). */
+    enum class Quelle(val wire: String) { WHATSAPP("whatsapp"), SIGNAL("signal"), DISCORD("discord") }
 
     /**
      * One call. [query] and [body] are the names the client sends, in the order
@@ -40,6 +53,10 @@ object Napi {
         val reply: List<Any> = emptyList(),
         val accept: String? = null,
         val events: List<String> = emptyList(),
+        /** Request headers the client sends, by name; [NapiRequest] sends no others. */
+        val headers: List<String> = emptyList(),
+        /** Reply headers the client reads. */
+        val replyHeaders: List<String> = emptyList(),
     ) {
         /**
          * [path] with [values] for [query], in order; a null value leaves its
@@ -71,7 +88,22 @@ object Napi {
             val fits = want.size == have.size && want.indices.all { i ->
                 want[i] == have[i] || (want[i].startsWith("{") && have[i].isNotEmpty())
             }
-            return if (fits) Endpoint(method, concrete, query, allowed, body, reply, accept, events) else null
+            return if (fits) Endpoint(method, concrete, query, allowed, body, reply, accept, events, headers, replyHeaders) else null
+        }
+
+        /** This endpoint with its `{…}` segments filled by [values], in order, each one URL-encoded. */
+        fun with(vararg values: String): Endpoint {
+            val rest = values.iterator()
+            val filled = path.split('/').joinToString("/") { seg ->
+                if (seg.startsWith("{")) {
+                    require(rest.hasNext()) { "$path takes more values" }
+                    URLEncoder.encode(rest.next(), "UTF-8").replace("+", "%20")
+                } else {
+                    seg
+                }
+            }
+            require(!rest.hasNext()) { "$path takes fewer values" }
+            return requireNotNull(at(filled)) { "$filled is not $path" }
         }
 
         override fun toString() = "$method $path"
@@ -246,6 +278,50 @@ object Napi {
         const val ERROR = "error"
     }
 
+    /**
+     * `GET /napi/sicherung/stand` (#194): per source what reached the box,
+     * `{quellen: {whatsapp: {zuletzt, dateien, bytes, wartend}, …}, frei_bytes}`;
+     * `{fehler}` with a German sentence when the box has no archive (503).
+     */
+    object StandJson {
+        const val QUELLEN = "quellen"
+        const val ZULETZT = "zuletzt"
+        const val DATEIEN = "dateien"
+        const val BYTES = "bytes"
+        const val WARTEND = "wartend"
+        const val FREI_BYTES = "frei_bytes"
+        const val FEHLER = "fehler"
+    }
+
+    /** `POST /napi/sicherung/fehlend`: the paths of the files Haus does not have yet. */
+    object FehlendJson {
+        const val FEHLEND = "fehlend"
+        const val FEHLER = "fehler"
+    }
+
+    /** The body of `POST /napi/sicherung/fehlend`: one entry of `dateien`. */
+    object DateiJson {
+        const val PFAD = "pfad"
+        const val GROESSE = "groesse"
+    }
+
+    /** `POST /napi/sicherung/uploads`: `{id, offset}`, or `{fehler}`. */
+    object UploadJson {
+        const val ID = "id"
+        const val OFFSET = "offset"
+        const val FEHLER = "fehler"
+    }
+
+    /**
+     * A PATCH's reply: `{offset, fertig}`; `{fehler, offset}` on a mismatch (409)
+     * or after a partial write (408, 507); `{fehler}` otherwise.
+     */
+    object TeilJson {
+        const val OFFSET = "offset"
+        const val FERTIG = "fertig"
+        const val FEHLER = "fehler"
+    }
+
     // --- the calls -------------------------------------------------------------
 
     /** The house persona: name, colours, whether it has an icon (its greeting is not the app's, #184). */
@@ -307,4 +383,34 @@ object Napi {
 
     /** Share → Haus: what the phone shared, kept as a note when a link is in it. */
     val MERKEN = Endpoint(Method.POST, "/napi/merken", body = listOf("text"), reply = listOf(MerkenJson))
+
+    // --- Nachrichten sichern (#194, laib ADR 0029; Haus's side is haus#207) ---
+
+    /** What reached the box per source, and the room left. */
+    val SICHERUNG_STAND = Endpoint(Method.GET, "/napi/sicherung/stand", reply = listOf(StandJson))
+
+    /** Which of these WhatsApp media Haus does not have yet: at most [FEHLEND_MAX] per call. */
+    val SICHERUNG_FEHLEND = Endpoint(
+        Method.POST, "/napi/sicherung/fehlend",
+        body = listOf("quelle", "dateien"), reply = listOf(FehlendJson),
+    )
+
+    /** The most files one `fehlend` call asks about. */
+    const val FEHLEND_MAX = 5000
+
+    /** Start a resumable upload, or resume the partial one of the same source, path and size. */
+    val SICHERUNG_UPLOADS = Endpoint(
+        Method.POST, "/napi/sicherung/uploads",
+        body = listOf("quelle", "pfad", "groesse"), reply = listOf(UploadJson),
+    )
+
+    /** How far an upload got: 204 with [UPLOAD_OFFSET], 404 when Haus does not know it. */
+    val SICHERUNG_UPLOAD_STAND = Endpoint(
+        Method.HEAD, "/napi/sicherung/uploads/{id}", replyHeaders = listOf(UPLOAD_OFFSET),
+    )
+
+    /** The next bytes of an upload, at [UPLOAD_OFFSET]: at most 16 MiB a request. */
+    val SICHERUNG_UPLOAD_TEIL = Endpoint(
+        Method.PATCH, "/napi/sicherung/uploads/{id}", reply = listOf(TeilJson), headers = listOf(UPLOAD_OFFSET),
+    )
 }

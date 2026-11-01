@@ -2,11 +2,13 @@
 
 This repo is the **Haus app**: native Kotlin home-screen widgets and the
 pairing with **Haus** (`https://haus.<domain>`, repo `mdopp/haus`), the
-family's surface of the box Laib runs. It is a widget client and nothing more
-(laib ADR 0022): no web shell, no messages, no approvals, no diagnostics,
-and no network while the screen is off. The widgets stay live through one
+family's surface of the box Laib runs. It is a widget client (laib ADR 0022):
+no web shell, no messages, no approvals, no diagnostics, and for the widgets
+no network while the screen is off. The widgets stay live through one
 `specialUse` foreground service (`realtime/LiveService.kt`) that holds the
-stream only while the screen is on. The seam with Haus is
+stream only while the screen is on. The one thing beyond the widgets is
+Nachrichten sichern (#194, laib ADR 0029): it picks up the phone's WhatsApp
+and Signal backups and uploads them to Haus. The seam with Haus is
 `docs/CONTRACT.md`.
 
 These rules apply to every session, human or agent.
@@ -22,10 +24,17 @@ These rules apply to every session, human or agent.
   token prefix `haus_device_`. `NamesTest` fails on any older name.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
   app. The live service's quiet notification is the only one; do not add
-  another, a second service, a poll (widget update periods stay 0), a job, an
+  another, a second service, a poll (widget update periods stay 0), an
   alarm, a wakelock or a rescue worker. Recovery after a killed process rests
   on the battery-optimization exemption the person grants. `ManifestTest`
   holds this; `e2e/` proves it on emulators (`.github/workflows/live-e2e.yml`).
+- One job, and only this one (the owner's call in #194): the backup pick-up,
+  `sicherung/SicherungWorker.kt`, a WorkManager worker — daily on an unmetered
+  network while charging, and once on „Jetzt sichern“. It never goes
+  foreground, posts nothing, reads the granted folders only (storage access
+  framework, no storage permission) and is the one caller that does not pass
+  `ScreenGate`. Without a granted folder it makes no request. `ManifestTest`
+  holds it to its one file; do not add a second job or reuse this one.
 
 ## Commits
 
