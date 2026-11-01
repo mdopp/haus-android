@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nachrichten sichern (#194, laib ADR 0029). The guide is the same text as
+     Haus's page „Nachrichten sichern“ (haus#207): change both together. -->
+<resources>
+    <string name="home_mehr">Mehr</string>
+    <string name="sicherung_title">Nachrichten sichern</string>
+    <string name="sicherung_intro">Die App holt die tägliche Sicherung von WhatsApp und Signal von diesem Handy ab und legt sie auf deine Box: einmal am Tag, nur im WLAN und während das Handy lädt. Sie liest dabei nur; in WhatsApp und Signal ändert und löscht sie nichts. Nach einem Schlüssel fragt sie nie.</string>
+
+    <string name="sicherung_whatsapp">WhatsApp</string>
+    <string name="sicherung_signal">Signal</string>
+    <string name="sicherung_ordner_ja">Ordner freigegeben: ja</string>
+    <string name="sicherung_ordner_nein">Ordner freigegeben: nein</string>
+    <string name="sicherung_ordner_waehlen">Ordner wählen</string>
+    <string name="sicherung_ordner_neu">Ordner neu wählen</string>
+    <string name="sicherung_ordner_falsch">Das ist nicht der WhatsApp-Ordner: darin fehlen „Databases“ und „Media“. Wähle „Android/media/com.whatsapp/WhatsApp“.</string>
+    <string name="sicherung_ordner_verweigert">Android hat die Freigabe nicht dauerhaft erteilt. Bitte den Ordner noch einmal wählen.</string>
+    <string name="sicherung_kein_picker">Auf diesem Handy gibt es keine Ordnerauswahl.</string>
+    <string name="sicherung_zuletzt_nie">Letzte Übertragung: noch keine</string>
+    <plurals name="sicherung_zuletzt">
+        <item quantity="one">Letzte Übertragung: %1$s (%2$d Datei)</item>
+        <item quantity="other">Letzte Übertragung: %1$s (%2$d Dateien)</item>
+    </plurals>
+    <string name="sicherung_geprueft">Zuletzt geprüft: %1$s, alles auf der Box</string>
+    <plurals name="sicherung_box">
+        <item quantity="one">Auf der Box: %1$d Datei, %2$s, zuletzt %3$s</item>
+        <item quantity="other">Auf der Box: %1$d Dateien, %2$s, zuletzt %3$s</item>
+    </plurals>
+    <string name="sicherung_box_nie">Auf der Box: noch nichts angekommen</string>
+    <plurals name="sicherung_box_wartend">
+        <item quantity="one">%1$d wartet auf den Import.</item>
+        <item quantity="other">%1$d warten auf den Import.</item>
+    </plurals>
+    <string name="sicherung_box_laedt">Auf der Box: wird gelesen …</string>
+    <string name="sicherung_box_unerreichbar">Auf der Box: Haus ist gerade nicht erreichbar.</string>
+    <string name="sicherung_box_frei">Frei auf der Box: %1$s</string>
+
+    <string name="sicherung_jetzt">Jetzt sichern</string>
+    <string name="sicherung_jetzt_angestossen">Sicherung angestoßen …</string>
+    <string name="sicherung_jetzt_ohne_ordner">Erst einen Ordner freigeben, dann sichern.</string>
+    <string name="sicherung_wartet">Wartet auf WLAN …</string>
+    <string name="sicherung_laeuft">Sicherung läuft …</string>
+    <string name="sicherung_laeuft_datei">%1$s: %2$s, Datei %3$d von %4$d\n%5$s von %6$s</string>
+    <string name="sicherung_ruht">Die nächste Sicherung läuft von selbst, wenn das Handy im WLAN lädt.</string>
+
+    <!-- The guide: word for word the steps of Haus's page (internal/pages/nachrichten.go, haus#208). -->
+    <string name="sicherung_anleitung_title">So richtest du es ein</string>
+    <string name="sicherung_anleitung_whatsapp_title">WhatsApp, auf dem Handy</string>
+    <string name="sicherung_anleitung_whatsapp">1. WhatsApp öffnen: Einstellungen → Chats → Chat-Backup.\n2. „Ende-zu-Ende-verschlüsseltes Backup“ antippen und einschalten.\n3. „64-stelligen Schlüssel verwenden“ wählen, nicht ein Passwort.\n4. Den Schlüssel in Vaultwarden ablegen, als eigenen Eintrag „WhatsApp-Schlüssel“. Wer ihn verliert, kann keine dieser Sicherungen mehr lesen.\n\nWhatsApp legt dann jede Nacht eine Sicherung auf dem Handy an.</string>
+    <string name="sicherung_anleitung_signal_title">Signal, auf dem Handy</string>
+    <string name="sicherung_anleitung_signal">1. Signal öffnen: Einstellungen → Chats → Chat-Backups (je nach Version: Backups → Auf dem Gerät).\n2. Einschalten und einen Ordner auf dem Handy wählen, zum Beispiel „Signal-Backups“.\n3. Die 30-stellige Passphrase in Vaultwarden ablegen, als eigenen Eintrag „Signal-Passphrase“. Signal zeigt sie nur dieses eine Mal.</string>
+    <string name="sicherung_anleitung_ordner_title">In der Haus-App</string>
+    <string name="sicherung_anleitung_ordner">1. Mehr → Nachrichten sichern.\n2. Den WhatsApp-Ordner freigeben (Android → media → com.whatsapp → WhatsApp).\n3. Den Signal-Ordner freigeben, den du oben gewählt hast.\n\nDanach bringt die App neue Sicherungen auf die Box. Bricht die Verbindung ab, macht sie später dort weiter, wo sie war.</string>
+    <string name="sicherung_anleitung_discord_title">Discord</string>
+    <string name="sicherung_anleitung_discord">1. Server-Kanäle kommen später: über einen Bot, den du in deine Server einlädst.\n2. Direktnachrichten gibt es nur über dein Datenpaket: Discord → Einstellungen → Daten &amp; Datenschutz → Daten anfordern. Discord schickt dir nach einigen Tagen eine Mail mit einem Zip.\n3. Das Zip teilst du später per „Teilen“ an Haus. Bis dahin heb es auf.</string>
+    <string name="sicherung_anleitung_versionen">Die Menüs heißen je nach App-Version etwas anders. Findest du einen Punkt nicht, such in den Einstellungen der App nach „Backup“.</string>
+    <string name="sicherung_anleitung_nie_title">Was nie ins Archiv kommt</string>
+    <string name="sicherung_anleitung_nie">• Nachrichten, die sich selbst löschen (verschwindende Nachrichten): sie stehen in keiner Sicherung.\n• Fotos und Videos zur einmaligen Ansicht.</string>
+</resources>

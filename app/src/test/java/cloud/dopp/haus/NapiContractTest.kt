@@ -17,6 +17,10 @@ import java.lang.reflect.Modifier
  * Haus file and lines it was copied from (mdopp/haus at 8c1251e). When Haus
  * changes a handler, the row changes with it, in the same breath.
  *
+ * The rows of Nachrichten sichern (`/napi/sicherung/…`, #194) are copied from
+ * Haus's PR for haus#207 (mdopp/haus#208 at ad8c269, not merged yet): when it
+ * merges, the commit above moves on and the lines are checked again.
+ *
  * The declarations are read by reflection: every static field of `Napi` is
  * looked at, so a path declared outside an endpoint is caught too. The
  * sources are read as text for what reflection cannot see: that no other file
@@ -36,6 +40,7 @@ class NapiContractTest {
         val sends: Set<String> = emptySet(),
         val accept: String? = null,
         val events: List<String> = emptyList(),
+        val headers: Set<String> = emptySet(),
     ) {
         override fun toString() = "$method $path ($at)"
     }
@@ -167,6 +172,29 @@ class NapiContractTest {
                 body = setOf("text"), required = setOf("text"),
                 sends = setOf("titel", "art", "kurz", "schon", "teilweise", "notiz", "error"),
             ),
+            // Nachrichten sichern (haus#208 at ad8c269, routes sicherung.go:112-118; errors {fehler} :121-124).
+            Route(
+                "GET", "/napi/sicherung/stand", "internal/napi/sicherung.go:283-291, the shape :208-220",
+                sends = setOf("quellen", "whatsapp", "signal", "discord", "zuletzt", "dateien", "bytes", "wartend", "frei_bytes", "fehler"),
+            ),
+            Route(
+                "POST", "/napi/sicherung/fehlend", "internal/napi/sicherung.go:301-339, an entry :294-297",
+                body = setOf("quelle", "dateien", "pfad", "groesse"), required = setOf("quelle", "dateien"),
+                sends = setOf("fehlend", "fehler"),
+            ),
+            Route(
+                "POST", "/napi/sicherung/uploads", "internal/napi/sicherung.go:479-539",
+                body = setOf("quelle", "pfad", "groesse", "geaendert"), required = setOf("quelle", "pfad", "groesse"),
+                sends = setOf("id", "offset", "fehler"),
+            ),
+            Route(
+                "HEAD", "/napi/sicherung/uploads/{id}", "internal/napi/sicherung.go:541-555",
+                headers = setOf("Upload-Offset"),
+            ),
+            Route(
+                "PATCH", "/napi/sicherung/uploads/{id}", "internal/napi/sicherung.go:588-676",
+                sends = setOf("offset", "fertig", "fehler"), headers = setOf("Upload-Offset"),
+            ),
         )
 
         /** Where Haus reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
@@ -198,6 +226,8 @@ class NapiContractTest {
             "POST /napi/portal/watch", "GET /napi/portal/events",
             "GET /napi/defs/tool", "POST /napi/action-callback", "POST /napi/upload", "GET /napi/portal/{tool}",
             "POST /napi/merken",
+            "GET /napi/sicherung/stand", "POST /napi/sicherung/fehlend", "POST /napi/sicherung/uploads",
+            "HEAD /napi/sicherung/uploads/{id}", "PATCH /napi/sicherung/uploads/{id}",
         )
 
         const val NAPI = "cloud.dopp.haus.data.Napi"
@@ -213,6 +243,7 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/haus/data/Persona.kt",
             "app/src/main/java/cloud/dopp/haus/data/ToolDefs.kt",
             "app/src/main/java/cloud/dopp/haus/realtime/RealtimeProtocol.kt",
+            "app/src/main/java/cloud/dopp/haus/data/SicherungClient.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")
@@ -257,6 +288,8 @@ class NapiContractTest {
         val reads: Set<String>,
         val accept: String?,
         val events: List<String>,
+        val headers: List<String>,
+        val replyHeaders: List<String>,
     ) {
         override fun toString() = "$name ($method $path)"
     }
@@ -287,6 +320,8 @@ class NapiContractTest {
                     .flatMap { keysOf(it) }.toSet(),
                 accept = Reach.get(e, "accept") as String?,
                 events = runCatching { Reach.get(e, "events") as List<String> }.getOrDefault(emptyList()),
+                headers = Reach.get(e, "headers") as List<String>,
+                replyHeaders = Reach.get(e, "replyHeaders") as List<String>,
             )
         }
     }
@@ -354,6 +389,18 @@ class NapiContractTest {
         assertTrue("no endpoints", declared.isNotEmpty())
         val wrong = failures { d, r -> d.reads.filter { it !in r.sends }.map { "Haus never sends '$it'" } }
         assertTrue(wrong.joinToString("\n"), wrong.isEmpty())
+    }
+
+    /** The resumable upload's offset header goes and comes where Haus reads and sends it. */
+    @Test
+    fun everyHeaderIsOneHausReadsOrSends() {
+        assertTrue("no endpoints", declared.isNotEmpty())
+        val wrong = failures { d, r -> (d.headers + d.replyHeaders).filter { it !in r.headers }.map { "Haus has no header '$it' here" } }
+        assertTrue(wrong.joinToString("\n"), wrong.isEmpty())
+        val upload = declared.filter { it.path.startsWith("/napi/sicherung/uploads/") }.associateBy { it.method }
+        assertEquals(setOf("HEAD", "PATCH"), upload.keys)
+        assertEquals("HEAD reads the offset", listOf("Upload-Offset"), upload.getValue("HEAD").replyHeaders)
+        assertEquals("PATCH sends the offset", listOf("Upload-Offset"), upload.getValue("PATCH").headers)
     }
 
     @Test
@@ -439,11 +486,13 @@ class NapiContractTest {
         // NapiRequest holds one; the auth header's name and scheme live in Napi.
         val elsewhere = RepoFiles.mainKotlin().filter { RepoFiles.relative(it) != REQUEST_FILE }.flatMap { f ->
             val rel = RepoFiles.relative(f)
-            val banned = listOf("Request.Builder", ".newBuilder()", ".header(", ".addHeader(", ".method(") +
+            val banned = listOf(".newBuilder()", ".header(", ".addHeader(", ".method(") +
                 (if (rel == NAPI_FILE) emptyList() else listOf("\"Bearer", "\"Authorization\""))
+            // OkHttp's Request.Builder; WorkManager's WorkRequest.Builder (the backup job) is no HTTP request
+            val builder = Regex("""(?<![A-Za-z])Request\.Builder""")
             f.readLines().mapIndexedNotNull { i, line ->
                 val c = code(line)
-                banned.firstOrNull { c.contains(it) }?.let { "$rel:${i + 1}: $it" }
+                (banned.firstOrNull { c.contains(it) } ?: builder.find(c)?.value)?.let { "$rel:${i + 1}: $it" }
             }
         }
         assertTrue("requests built by hand:\n" + elsewhere.joinToString("\n"), elsewhere.isEmpty())
@@ -520,7 +569,7 @@ class NapiContractTest {
     @Test
     fun theTableItselfReadsAsHausWritesIt() {
         HAUS.forEach { r ->
-            assertTrue(r.toString(), r.method == "GET" || r.method == "POST")
+            assertTrue(r.toString(), r.method in setOf("GET", "POST", "HEAD", "PATCH"))
             assertTrue(r.toString(), r.path.startsWith("/napi/"))
             assertTrue(r.toString(), r.at.startsWith("internal/napi/"))
         }

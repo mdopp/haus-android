@@ -1,0 +1,178 @@
+package cloud.dopp.haus.sicherung
+
+import android.content.Context
+import androidx.lifecycle.LifecycleOwner
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import cloud.dopp.haus.data.Napi.Quelle
+import cloud.dopp.haus.data.ServerStore
+import cloud.dopp.haus.data.SicherungClient
+import cloud.dopp.haus.data.TokenStore
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+
+/**
+ * Nachrichten sichern's one job (#194, laib ADR 0029): a [Lauf] over the
+ * folders the person granted. Daily on an unmetered network while the phone
+ * charges and its battery is not low, and once at once on "Jetzt sichern".
+ *
+ * The one background job of the app (the owner's call in #194; CLAUDE.md,
+ * ManifestTest). It never goes foreground and posts no notification: when
+ * Android stops it (constraints lost, its ten minutes up) it ends between two
+ * pieces and WorkManager runs it again with backoff; the upload resumes.
+ */
+class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
+
+    @Volatile
+    private var client: SicherungClient? = null
+
+    override fun doWork(): Result {
+        // The daily and the one-off run share the folders and the uploads: one at a time.
+        if (!LAEUFT.compareAndSet(false, true)) return Result.success()
+        try {
+            val ctx = applicationContext
+            val store = SicherungStore(ctx)
+            val ordner = Lauf.QUELLEN.associateWith { q -> store.ordner(q)?.let { SafOrdner(ctx, it) } }
+            if (ordner.values.all { it == null }) return Result.success()
+            val base = ServerStore.baseUrl(ctx)
+            val token = TokenStore.get(ctx)
+            if (base == null || token.isNullOrBlank()) {
+                ordner.filterValues { it != null }.keys.forEach { q ->
+                    store.melde(q, Meldung(System.currentTimeMillis(), Meldung.Art.HAUS, Lauf.NICHT_GEKOPPELT))
+                }
+                return Result.success()
+            }
+            val c = SicherungClient(base, token)
+            client = c
+            val lauf = Lauf(
+                client = c,
+                gedaechtnis = store,
+                ordner = { q -> ordner[q] },
+                halt = { isStopped },
+                melde = { f -> setProgressAsync(daten(f)) },
+            )
+            return when (lauf.laufen()) {
+                // More to send, no answer, or a busy box: soon again, with backoff.
+                // Refused (full, no archive, not paired) or done: the next daily run.
+                Lauf.Ergebnis.WEITER, Lauf.Ergebnis.UNERREICHBAR, Lauf.Ergebnis.BESCHAEFTIGT ->
+                    if (isStopped) Result.success() else Result.retry()
+                else -> Result.success()
+            }
+        } finally {
+            client = null
+            LAEUFT.set(false)
+        }
+    }
+
+    override fun onStopped() {
+        client?.abbrechen()
+    }
+
+    companion object {
+        private val LAEUFT = AtomicBoolean(false)
+
+        const val TAEGLICH = "sicherung-taeglich"
+        const val JETZT = "sicherung-jetzt"
+
+        private const val QUELLE = "quelle"
+        private const val NAME = "name"
+        private const val GESENDET = "gesendet"
+        private const val GESAMT = "gesamt"
+        private const val NR = "nr"
+        private const val VON = "von"
+
+        /** The daily run: unmetered network, charging, battery not low. */
+        fun taeglichBedingungen(): Constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiresCharging(true)
+            .setRequiresBatteryNotLow(true)
+            .build()
+
+        /** "Jetzt sichern": at once, but still never over mobile data. */
+        fun jetztBedingungen(): Constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .build()
+
+        fun taeglich(): PeriodicWorkRequest =
+            PeriodicWorkRequest.Builder(SicherungWorker::class.java, 1, TimeUnit.DAYS)
+                .setConstraints(taeglichBedingungen())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
+                .build()
+
+        fun jetztAnfrage(): OneTimeWorkRequest =
+            OneTimeWorkRequest.Builder(SicherungWorker::class.java)
+                .setConstraints(jetztBedingungen())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
+                .build()
+
+        /** The daily run, once a folder is granted; an existing schedule is kept. */
+        fun planen(ctx: Context) {
+            WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(TAEGLICH, ExistingPeriodicWorkPolicy.KEEP, taeglich())
+        }
+
+        /** "Jetzt sichern": a run now; a tap while one waits or runs adds none. */
+        fun jetzt(ctx: Context) {
+            WorkManager.getInstance(ctx).enqueueUniqueWork(JETZT, ExistingWorkPolicy.KEEP, jetztAnfrage())
+        }
+
+        /** No folder left: no daily run either. */
+        fun abbestellen(ctx: Context) {
+            WorkManager.getInstance(ctx).cancelUniqueWork(TAEGLICH)
+        }
+
+        private fun daten(f: Fortschritt): Data = Data.Builder()
+            .putString(QUELLE, f.quelle.wire)
+            .putString(NAME, f.name)
+            .putLong(GESENDET, f.gesendet)
+            .putLong(GESAMT, f.gesamt)
+            .putInt(NR, f.nr)
+            .putInt(VON, f.von)
+            .build()
+
+        private fun fortschritt(d: Data): Fortschritt? {
+            val q = Quelle.entries.firstOrNull { it.wire == d.getString(QUELLE) } ?: return null
+            return Fortschritt(q, d.getString(NAME).orEmpty(), d.getLong(GESENDET, 0), d.getLong(GESAMT, 0), d.getInt(NR, 0), d.getInt(VON, 0))
+        }
+
+        /** Follow both runs for [owner]'s lifetime: [zeige] gets the state as it changes. */
+        fun beobachten(ctx: Context, owner: LifecycleOwner, zeige: (Zustand) -> Unit) {
+            val wm = WorkManager.getInstance(ctx)
+            var taeglich: List<WorkInfo> = emptyList()
+            var jetzt: List<WorkInfo> = emptyList()
+            fun neu() {
+                val alle = taeglich + jetzt
+                val laeuft = alle.firstOrNull { it.state == WorkInfo.State.RUNNING }
+                zeige(
+                    when {
+                        laeuft != null -> Zustand.Laeuft(fortschritt(laeuft.progress))
+                        jetzt.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.BLOCKED } -> Zustand.Wartet
+                        else -> Zustand.Ruht
+                    },
+                )
+            }
+            wm.getWorkInfosForUniqueWorkLiveData(TAEGLICH).observe(owner) { taeglich = it.orEmpty(); neu() }
+            wm.getWorkInfosForUniqueWorkLiveData(JETZT).observe(owner) { jetzt = it.orEmpty(); neu() }
+        }
+    }
+}
+
+/** What „Nachrichten sichern“ shows of the two runs. */
+sealed class Zustand {
+    object Ruht : Zustand()
+
+    /** „Jetzt sichern“ waits for its network (an unmetered one). */
+    object Wartet : Zustand()
+
+    /** A run is on; [fortschritt] once a file is under way. */
+    data class Laeuft(val fortschritt: Fortschritt?) : Zustand()
+}

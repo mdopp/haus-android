@@ -100,12 +100,17 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp-sse:4.12.0'
     // Self-contained QR scanner for onboarding (no Google Play Services).
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    // Nachrichten sichern (#194): the one background job, daily on WLAN while charging.
+    implementation 'androidx.work:work-runtime:2.10.0'
 
     // JVM tests (Robolectric — runs Android components on the JVM, no emulator/VM).
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.13'
     testImplementation 'androidx.test:core:1.6.1'
     testImplementation 'androidx.test.ext:junit:1.2.1'
+    // A fake Haus for the resumable upload (#194), and WorkManager in tests.
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+    testImplementation 'androidx.work:work-testing:2.10.0'
 
     // The live e2e's setup on the emulator: pair and place widgets (e2e/live_e2e.sh).
     androidTestImplementation 'androidx.test:runner:1.6.2'
