@@ -33,6 +33,24 @@ object Anzeige {
     fun zeit(ms: Long, zone: TimeZone = TimeZone.getDefault()): String =
         SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMANY).apply { timeZone = zone }.format(Date(ms))
 
+    /**
+     * A granted folder as a person finds it in the Files app, from its tree
+     * document id: `primary:Android/media/com.whatsapp/WhatsApp` →
+     * `Interner Speicher › Android › media › com.whatsapp › WhatsApp`; another
+     * volume (`1A2B-3C4D:Signal`) is the memory card; anything else as it is.
+     */
+    fun ordner(dokumentId: String): String {
+        val (volume, pfad) = dokumentId.split(':', limit = 2).let { if (it.size == 2) it[0] to it[1] else return dokumentId }
+        val wurzel = when {
+            volume == "primary" -> "Interner Speicher"
+            volume == "raw" -> return pfad
+            Regex("[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}").matches(volume) -> "Speicherkarte"
+            else -> return dokumentId
+        }
+        val teile = pfad.split('/').filter { it.isNotEmpty() }
+        return (listOf(wurzel) + teile).joinToString(" › ")
+    }
+
     /** `3,4 GB`, `120 MB`, `512 KB`, `12 B`: decimal units, as a person reads a disk. */
     fun groesse(bytes: Long): String {
         val einheiten = listOf("B", "KB", "MB", "GB", "TB")

@@ -140,4 +140,28 @@ class SicherungAuswahlTest {
         assertEquals("120 MB", Anzeige.groesse(120_000_000))
         assertEquals("12 B", Anzeige.groesse(12))
     }
+
+    @Test
+    fun theFolderReadsAsInTheFilesApp() {
+        assertEquals(
+            "Interner Speicher › Android › media › com.whatsapp › WhatsApp",
+            Anzeige.ordner("primary:Android/media/com.whatsapp/WhatsApp"),
+        )
+        assertEquals("Interner Speicher", Anzeige.ordner("primary:"))
+        assertEquals("Speicherkarte › Signal › Backups", Anzeige.ordner("1A2B-3C4D:Signal/Backups"))
+        assertEquals("/storage/emulated/0/Download/x", Anzeige.ordner("raw:/storage/emulated/0/Download/x"))
+        assertEquals("msf:1234", Anzeige.ordner("msf:1234"))
+        assertEquals("ohne-doppelpunkt", Anzeige.ordner("ohne-doppelpunkt"))
+    }
+
+    @Test
+    fun whatTheScreenShowsAsFound() {
+        val alt = d("signal-2026-10-30-02-00-00.backup", alter = 48 * stunde)
+        val neu = d("signal-2026-11-01-02-00-00.backup", alter = 2 * stunde)
+        assertEquals(neu, Auswahl.neuesteSignal(listOf(alt, neu, d("notizen.txt"), d("Unter/signal-2026-11-02.backup"))))
+        assertNull(Auswahl.neuesteSignal(listOf(d("notizen.txt"), d("signal-leer.backup", groesse = 0))))
+        val db = d("Databases/msgstore.db.crypt15")
+        assertEquals(db, Auswahl.msgstoreDatei(listOf(d("Databases/msgstore-2026-10-31.1.db.crypt15"), db)))
+        assertNull(Auswahl.msgstoreDatei(listOf(d("Databases/msgstore-2026-10-31.1.db.crypt15"))))
+    }
 }
