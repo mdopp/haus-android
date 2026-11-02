@@ -12,7 +12,8 @@ no web shell, no messages, no approvals, no diagnostics.
 - **Share → Haus:** a link becomes a note; a photo (or several) from the
   camera app goes into Haus's document inbox, HEIC made JPEG on the phone.
 - **Pairing:** enter Haus's address, confirm on `/pair-device`, done. The
-  house persona (name, colours, icon) comes from `/napi/persona`.
+  assistant's name — „Homes“ unless the box names another — comes from
+  `/napi/assistent`; its look (green on a dark ground) and icon are the app's.
 - **Current while you look:** one foreground service (`specialUse`, with a
   quiet "Live-Widgets" notification) holds the live stream
   (`/napi/portal/events`: `card_state` for the energy sensors) while the

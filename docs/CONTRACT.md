@@ -39,12 +39,13 @@ registered by any other app on the phone and catch the token in the redirect.
   `cloud.dopp.haus://pair` only, so no web page can point the app at a foreign
   server. `server` is required; `token` is optional (present → paired once
   confirmed and checked; absent → the app opens `/pair-device` there).
-- The persona — name, colours (`accent`, `ground`), icon — comes from
-  `GET /napi/persona` and, when it names an icon, `GET /napi/persona/icon.png`:
-  a PNG of at most 256 KB, decoded with `BitmapFactory` off the main thread.
-  The app has no SVG decoder; until Laib renders a persona's PNG (laib#191)
-  Haus names no icon and the app shows none. The `greeting` Haus also sends
-  is the chat's and is not read (#184).
+- The assistant's name comes from `GET /napi/assistent` → `{"name": "Homes"}`
+  (the box's one setting, Laib's box.yml `assistant`; „Homes“ when unset). The
+  app keeps the last name in plain prefs, forgets it on unpairing and shows
+  „Homes“ until Haus answered. Nothing else about the assistant comes from the
+  box: its colours are fixed in the app (`terminal_green` `#3DDC84` on
+  `terminal_ground` `#0C120E`) and its icon is the app's own launcher icon.
+  (This replaced the per-box persona of laib ADR 0020, owner 2026-11-02.)
 
 ## (b) The `/napi` paths the app calls
 
@@ -58,14 +59,14 @@ each row naming the Haus file and lines it came from.
 
 | Widget | Path |
 |---|---|
-| pairing | `GET /napi/whoami`, `GET /napi/persona`, `GET /napi/persona/icon.png` |
+| pairing | `GET /napi/whoami`, `GET /napi/assistent` |
 | the start screen's devices | `GET /napi/portal/favorites` (the person's ☆ things on Haus, as cards in their order; haus#213), `POST /napi/ha/call`, `GET /napi/portal/state` (a cover's or a lock's state before its toggle) |
 | app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
 | energy | `GET /napi/portal/energy`: the flow now and, per total, `today` (kWh since the house's midnight; haus#213) |
 | Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
 | Share → Haus, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Haus's refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
-| Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120) |
+| Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120); the share sheet's Direct Share target carries the assistant's name (#188) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,documents,notes}`; Haus also lists `contacts`, which the app no longer offers as a widget, owner 2026-11-02), `POST /napi/action-callback` |
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
 | live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |
