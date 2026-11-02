@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mehr → Standortverlauf (owner 2026-11-02): the switch with its permissions,
+     the two modes, whether Reitti is connected, what waits, „Jetzt senden“. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/standort_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/haus_bg"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/screen_gutter"
+        android:paddingEnd="@dimen/screen_gutter"
+        android:paddingTop="@dimen/space_lg"
+        android:paddingBottom="@dimen/space_xl">
+
+        <TextView
+            style="@style/Text.Haus.Headline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_sm"
+            android:text="@string/standort_title" />
+
+        <TextView
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/standort_intro" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="@drawable/card_haus"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Text.Haus.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/standort_schalter_titel" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/standort_an"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/standort_schalter" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/standort_was" />
+
+            <!-- Why it is off or what is missing; a tap leads on (App-Info, Haus's page). -->
+            <TextView
+                android:id="@+id/standort_meldung"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:background="?android:attr/selectableItemBackground"
+                android:textColor="@color/haus_accent"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="@drawable/card_haus"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/standort_modus_titel" />
+
+            <RadioGroup
+                android:id="@+id/standort_modus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/standort_detailliert"
+                    style="@style/Text.Haus.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/standort_detailliert" />
+
+                <TextView
+                    style="@style/Text.Haus.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="@dimen/space_lg"
+                    android:textColor="@color/haus_text_muted"
+                    android:text="@string/standort_detailliert_was" />
+
+                <RadioButton
+                    android:id="@+id/standort_sparsam"
+                    style="@style/Text.Haus.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/standort_sparsam" />
+
+                <TextView
+                    style="@style/Text.Haus.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="@dimen/space_lg"
+                    android:textColor="@color/haus_text_muted"
+                    android:text="@string/standort_sparsam_was" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/standort_reitti"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/standort_stand"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm" />
+
+        <Button
+            android:id="@+id/standort_jetzt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_lg"
+            android:text="@string/standort_jetzt" />
+
+        <TextView
+            android:id="@+id/standort_zustand"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm" />
+    </LinearLayout>
+</ScrollView>

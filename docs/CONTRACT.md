@@ -64,6 +64,7 @@ each row naming the Haus file and lines it came from.
 | energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
 | camera | `POST /napi/upload` (capture) |
 | Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
+| Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,contacts,documents,notes}`), `POST /napi/action-callback` |
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
@@ -226,3 +227,35 @@ after the folders, only while the switch is on and the permission granted.
 On Android 13+ an app installed outside a store cannot even ask for SMS and
 the call log ("restricted settings"): the screen then says to open App-Info →
 ⋮ → „Eingeschränkte Einstellungen zulassen“ and turn the switch on again.
+
+## (f) Standortverlauf
+
+The owner's call, 2026-11-02. Off until the person turns its switch on
+(Mehr → Standortverlauf), behind its own permissions: the location with
+„Immer zulassen“ (`ACCESS_FINE/COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`)
+and, optional, „Körperliche Aktivitäten“ (`ACTIVITY_RECOGNITION`).
+
+- The phone: the fused location provider and activity recognition's
+  still/moving transitions (Play services), both delivered by
+  PendingIntent to `standort/StandortEmpfaenger` — no service, job, alarm or
+  wakelock of the app's. The rate (`standort/Plan.kt`, chosen, not
+  measured): „Detailliert“ on the move every 15 s (high accuracy), resting
+  5 min, resting on a Wi-Fi hourly; „Sparsam“ on the move every 2 min
+  (balanced), resting 15 min, resting on a Wi-Fi every 2 h. Resting is
+  activity recognition's word, never a GPS poll; any Wi-Fi counts (owner:
+  „Wenn WLAN, bewegt sich selten“); without the activity permission the
+  phone counts as moving.
+- The points wait in a file of the app's (`standort/Puffer.kt`, at most
+  50 000, the oldest dropped beyond and said on the screen) and go in
+  batches of ≤ 500 when 200 wait or the oldest waited 15 min
+  (Detailliert) / 30 min (Sparsam), at a location delivery that woke the
+  phone anyway, or at once on „Jetzt senden“ and when the screen opens.
+- `POST /napi/standort {punkte:[{zeit, breite, laenge, genauigkeit, hoehe?,
+  tempo?}]}` → 200 `{angenommen, verworfen}` once Reitti has them: only then
+  do they leave the phone. Any other answer keeps the batch, with a pause of
+  5 min doubling to 2 h: 409 `{fehler, grund: kein_schluessel |
+  schluessel_abgelehnt}`, 503 `{fehler, grund: reitti_weg |
+  nicht_eingerichtet}`, 401 (pair again), no answer.
+- `GET /napi/standort` → `{verbunden, seit?}`: without a connection the
+  screen says in one sentence to paste the Reitti token on Haus's page
+  `/standort`, and a tap opens it there. The token never reaches the phone.

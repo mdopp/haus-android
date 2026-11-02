@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Standortverlauf (owner 2026-11-02): one switch, off until the person turns it
+     on, its own permissions, two modes; the points go through Haus to Reitti. -->
+<resources>
+    <string name="standort_title">Standortverlauf</string>
+    <string name="standort_intro">Die Haus-App zeichnet auf, wo du unterwegs warst, und schickt es über Haus in deinen eigenen Zeitstrahl in Reitti. Der Verlauf bleibt auf eurer Box.</string>
+    <string name="standort_schalter_titel">Aufzeichnen</string>
+    <!-- what a screen reader says for the switch -->
+    <string name="standort_schalter">Standort aufzeichnen</string>
+    <string name="standort_was">Braucht den Standort „Immer zulassen“. Ruht das Handy in einem WLAN, fragt die App nur sehr selten nach dem Ort; sobald es sich bewegt oder das WLAN weg ist, wieder normal.</string>
+
+    <string name="standort_modus_titel">Wie genau</string>
+    <string name="standort_detailliert">Detailliert (mehr Akku)</string>
+    <string name="standort_detailliert_was">Unterwegs etwa alle 15 Sekunden: genug für Wege und Routen.</string>
+    <string name="standort_sparsam">Sparsam</string>
+    <string name="standort_sparsam_was">Unterwegs etwa alle 2 Minuten, ungefährer: genug für „wo war ich wann“.</string>
+
+    <string name="standort_wartet">%1$d Punkte warten auf dem Handy.</string>
+    <string name="standort_wartet_keine">Alle Punkte sind bei Reitti.</string>
+    <string name="standort_zuletzt">Zuletzt an Reitti: %1$s, %2$d Punkte.</string>
+    <string name="standort_zuletzt_nie">Noch nichts an Reitti geschickt.</string>
+    <string name="standort_verloren">Der Speicher auf dem Handy war voll: %1$d ältere Punkte sind verloren.</string>
+    <string name="standort_jetzt">Jetzt senden</string>
+    <string name="standort_sendet">Sendet …</string>
+    <string name="standort_gesendet">Gesendet.</string>
+    <string name="standort_nichts">Es wartet nichts.</string>
+
+    <string name="standort_reitti_laedt">Fragt Haus, ob Reitti verbunden ist …</string>
+    <string name="standort_reitti_verbunden">Reitti ist verbunden.</string>
+    <string name="standort_reitti_fehlt">Verbinde zuerst Reitti: tippe hier und füge in Haus unter Standortverlauf einmal deinen Reitti-Schlüssel ein.</string>
+    <string name="standort_reitti_unerreichbar">Haus ist gerade nicht erreichbar; die Punkte warten auf dem Handy.</string>
+
+    <string name="standort_abgelehnt">Ohne die Erlaubnis für den Standort bleibt das aus.</string>
+    <string name="standort_immer">Fast fertig: wähle beim Standort „Immer zulassen“, sonst zeichnet die App nur auf, während sie offen ist. Tippe hier, wenn Android nicht fragt.</string>
+    <string name="standort_einstellungen">Android fragt nicht mehr nach. Tippe hier, erlaube unter „Berechtigungen“ den Standort mit „Immer zulassen“ und schalte es dann hier wieder ein.</string>
+    <string name="standort_ohne_aktivitaet">Ohne „Körperliche Aktivitäten“ weiß die App nicht, wann das Handy ruht, und fragt öfter nach dem Ort (mehr Akku). Tippe hier, um es zu erlauben.</string>
+    <string name="standort_weg">Die App darf den Standort nicht mehr immer abfragen: schalte den Schalter noch einmal ein.</string>
+</resources>

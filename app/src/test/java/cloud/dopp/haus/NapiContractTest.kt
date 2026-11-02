@@ -21,7 +21,8 @@ import java.lang.reflect.Modifier
  * Haus's PR for haus#207 (mdopp/haus#208 at ad8c269, not merged yet): when it
  * merges, the commit above moves on and the lines are checked again. The
  * archive key and the contacts (laib ADR 0029) are copied from mdopp/haus
- * main at 7c88b6c (the merge of haus#210).
+ * main at 7c88b6c (the merge of haus#210); Standortverlauf from main at
+ * 145ec05 (the merge of haus#212).
  *
  * The declarations are read by reflection: every static field of `Napi` is
  * looked at, so a path declared outside an endpoint is caught too. The
@@ -207,6 +208,17 @@ class NapiContractTest {
                 "internal/napi/kontakte.go:49-122 (text/vcard :65-69), registered napi.go:242, the reply internal/caldav/spiegel.go:277-282",
                 sends = setOf("kontakte", "neu", "geaendert", "entfernt", "fehler"),
             ),
+            // Standortverlauf (mdopp/haus main at 145ec05, the merge of haus#212).
+            Route(
+                "GET", "/napi/standort",
+                "internal/napi/standort.go:115-122 (refusals :88-112), registered :84, napi.go:249",
+                sends = setOf("verbunden", "seit", "fehler", "grund"),
+            ),
+            Route(
+                "POST", "/napi/standort",
+                "internal/napi/standort.go:126-177, the point :49-56, registered :85, napi.go:249",
+                body = setOf("punkte"), sends = setOf("angenommen", "verworfen", "fehler", "grund"),
+            ),
         )
 
         /** Where Haus reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
@@ -227,7 +239,7 @@ class NapiContractTest {
          * and every path Haus does not serve land on Start (main.go:77), so a
          * wrong page would never fail loudly — only this list catches it.
          */
-        val PAGES = setOf("/start", "/raeume", "/kalender", "/notizen", "/box", "/box/geraete", "/pair-device")
+        val PAGES = setOf("/start", "/raeume", "/kalender", "/notizen", "/box", "/box/geraete", "/pair-device", "/standort")
 
         /** What the widgets and the pairing need: each must be declared. */
         val NEEDED = setOf(
@@ -241,6 +253,7 @@ class NapiContractTest {
             "GET /napi/sicherung/stand", "POST /napi/sicherung/fehlend", "POST /napi/sicherung/uploads",
             "HEAD /napi/sicherung/uploads/{id}", "PATCH /napi/sicherung/uploads/{id}",
             "GET /napi/sicherung/schluessel", "POST /napi/kontakte",
+            "GET /napi/standort", "POST /napi/standort",
         )
 
         const val NAPI = "cloud.dopp.haus.data.Napi"
@@ -257,6 +270,7 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/haus/data/ToolDefs.kt",
             "app/src/main/java/cloud/dopp/haus/realtime/RealtimeProtocol.kt",
             "app/src/main/java/cloud/dopp/haus/data/SicherungClient.kt",
+            "app/src/main/java/cloud/dopp/haus/data/StandortClient.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")

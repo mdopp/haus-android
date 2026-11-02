@@ -433,6 +433,8 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             Live.ensure(context)
+            // Standortverlauf: Android forgets location requests over a reboot and an update
+            cloud.dopp.haus.standort.Aufzeichnung.nachStart(context)
         }
     }
 }
