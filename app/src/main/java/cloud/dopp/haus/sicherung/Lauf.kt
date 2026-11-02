@@ -112,7 +112,8 @@ class Lauf(
                 when (q) {
                     Quelle.WHATSAPP -> whatsapp(o)
                     Quelle.SIGNAL -> signal(o)
-                    Quelle.DISCORD -> Ergebnis.FERTIG
+                    // Discord comes as a data package; SMS and calls have their own run (NachrichtenLauf)
+                    Quelle.DISCORD, Quelle.SMS -> Ergebnis.FERTIG
                 }
             } catch (e: Ende) {
                 schluss(q, 0, e.ergebnis)

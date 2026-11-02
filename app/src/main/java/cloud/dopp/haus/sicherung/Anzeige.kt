@@ -66,4 +66,13 @@ object Anzeige {
             String.format(Locale.GERMANY, "%.1f %s", v, einheiten[i])
         }
     }
+
+    /**
+     * What Haus's mirror of the contacts came to, as a sentence:
+     * `123 Kontakte gespiegelt, 2 neu, 1 geändert, 0 entfernt`.
+     */
+    fun kontakte(kontakte: Int, neu: Int, geaendert: Int, entfernt: Int): String {
+        val wort = if (kontakte == 1) "Kontakt" else "Kontakte"
+        return "$kontakte $wort gespiegelt, $neu neu, $geaendert geändert, $entfernt entfernt"
+    }
 }

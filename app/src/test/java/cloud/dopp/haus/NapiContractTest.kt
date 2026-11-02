@@ -19,7 +19,9 @@ import java.lang.reflect.Modifier
  *
  * The rows of Nachrichten sichern (`/napi/sicherung/…`, #194) are copied from
  * Haus's PR for haus#207 (mdopp/haus#208 at ad8c269, not merged yet): when it
- * merges, the commit above moves on and the lines are checked again.
+ * merges, the commit above moves on and the lines are checked again. The
+ * archive key and the contacts (laib ADR 0029) are copied from mdopp/haus
+ * main at 7c88b6c (the merge of haus#210).
  *
  * The declarations are read by reflection: every static field of `Napi` is
  * looked at, so a path declared outside an endpoint is caught too. The
@@ -175,7 +177,7 @@ class NapiContractTest {
             // Nachrichten sichern (haus#208 at ad8c269, routes sicherung.go:112-118; errors {fehler} :121-124).
             Route(
                 "GET", "/napi/sicherung/stand", "internal/napi/sicherung.go:283-291, the shape :208-220",
-                sends = setOf("quellen", "whatsapp", "signal", "discord", "zuletzt", "dateien", "bytes", "wartend", "frei_bytes", "fehler"),
+                sends = setOf("quellen", "whatsapp", "signal", "sms", "discord", "zuletzt", "dateien", "bytes", "wartend", "frei_bytes", "fehler"),
             ),
             Route(
                 "POST", "/napi/sicherung/fehlend", "internal/napi/sicherung.go:301-339, an entry :294-297",
@@ -194,6 +196,16 @@ class NapiContractTest {
             Route(
                 "PATCH", "/napi/sicherung/uploads/{id}", "internal/napi/sicherung.go:588-676",
                 sends = setOf("offset", "fertig", "fehler"), headers = setOf("Upload-Offset"),
+            ),
+            // The archive key and the contacts (mdopp/haus main at 7c88b6c, the merge of haus#210).
+            Route(
+                "GET", "/napi/sicherung/schluessel", "internal/napi/sicherung.go:304-318, registered :129",
+                sends = setOf("empfaenger", "fehler"),
+            ),
+            Route(
+                "POST", "/napi/kontakte",
+                "internal/napi/kontakte.go:49-122 (text/vcard :65-69), registered napi.go:242, the reply internal/caldav/spiegel.go:277-282",
+                sends = setOf("kontakte", "neu", "geaendert", "entfernt", "fehler"),
             ),
         )
 
@@ -228,6 +240,7 @@ class NapiContractTest {
             "POST /napi/merken",
             "GET /napi/sicherung/stand", "POST /napi/sicherung/fehlend", "POST /napi/sicherung/uploads",
             "HEAD /napi/sicherung/uploads/{id}", "PATCH /napi/sicherung/uploads/{id}",
+            "GET /napi/sicherung/schluessel", "POST /napi/kontakte",
         )
 
         const val NAPI = "cloud.dopp.haus.data.Napi"

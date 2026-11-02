@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.NetworkType
@@ -99,11 +100,57 @@ class SicherungScreenTest {
         val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
         a.findViewById<View>(R.id.sicherung_jetzt).performClick()
         assertEquals(
-            "Erst einen Ordner freigeben, dann sichern.",
+            "Erst einen Ordner freigeben oder einen Schalter einschalten, dann sichern.",
             a.findViewById<TextView>(R.id.sicherung_zustand).text.toString(),
         )
         val offen = WorkManager.getInstance(ctx()).getWorkInfosForUniqueWork(SicherungWorker.JETZT).get().filter { !it.state.isFinished }
         assertTrue("nothing enqueued: $offen", offen.isEmpty())
+    }
+
+    /** Kontakte, SMS und Anrufe (laib ADR 0029): two switches, off, each saying what goes where. */
+    @Test
+    fun theTwoSwitchesAreOffAndSayWhatGoesWhere() {
+        val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
+        val kontakte = a.findViewById<SwitchCompat>(R.id.handy_kontakte)
+        val sms = a.findViewById<SwitchCompat>(R.id.handy_sms)
+        assertEquals("Kontakte übertragen", kontakte.text.toString())
+        assertEquals("SMS und Anrufliste übertragen", sms.text.toString())
+        assertFalse(kontakte.isChecked)
+        assertFalse(sms.isChecked)
+        val text = texte(a.findViewById(R.id.sicherung_handy))
+        listOf("„Handy-Kontakte“", "wie deinen Kalender", "auf dem Handy für dein Archiv verschlüsselt", "wenn du dein Archiv öffnest")
+            .forEach { assertTrue("the section lacks „$it“", text.contains(it)) }
+    }
+
+    /** Refused: the switch stays off and says why. */
+    @Test
+    fun aRefusedPermissionLeavesTheSwitchOff() {
+        val app = shadowOf(ctx() as android.app.Application)
+        app.denyPermissions(android.Manifest.permission.READ_CONTACTS)
+        val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
+        a.findViewById<SwitchCompat>(R.id.handy_kontakte).performClick()
+        val anfrage = shadowOf(a).lastRequestedPermission
+        assertTrue(anfrage.requestedPermissions.contains(android.Manifest.permission.READ_CONTACTS))
+        a.onRequestPermissionsResult(anfrage.requestCode, anfrage.requestedPermissions, IntArray(anfrage.requestedPermissions.size) { -1 })
+        assertFalse(a.findViewById<SwitchCompat>(R.id.handy_kontakte).isChecked)
+        assertFalse(cloud.dopp.haus.sicherung.SicherungStore(ctx()).kontakteAn())
+        val satz = a.findViewById<TextView>(R.id.handy_kontakte_meldung)
+        assertEquals(View.VISIBLE, satz.visibility)
+        assertTrue(satz.text.toString(), satz.text.contains("Kontakte"))
+    }
+
+    /** Allowed: the switch is on and the daily run is planned. */
+    @Test
+    fun anAllowedPermissionTurnsTheSwitchOn() {
+        shadowOf(ctx() as android.app.Application).grantPermissions(android.Manifest.permission.READ_CONTACTS)
+        val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
+        a.findViewById<SwitchCompat>(R.id.handy_kontakte).performClick()
+        assertTrue(a.findViewById<SwitchCompat>(R.id.handy_kontakte).isChecked)
+        assertTrue(cloud.dopp.haus.sicherung.SicherungStore(ctx()).kontakteAn())
+        val geplant = WorkManager.getInstance(ctx()).getWorkInfosForUniqueWork(SicherungWorker.TAEGLICH).get()
+        assertTrue(geplant.any { !it.state.isFinished })
+        WorkManager.getInstance(ctx()).cancelAllWork()
+        cloud.dopp.haus.sicherung.SicherungStore(ctx()).setzeKontakteAn(false)
     }
 
     @Test

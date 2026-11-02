@@ -18,6 +18,15 @@ no web shell, no messages, no approvals, no diagnostics.
   back by itself after the app was killed is what the battery-optimization
   exemption guarantees; the app asks for it once.
 
+- **Nachrichten sichern:** daily, on WLAN while charging, the phone's
+  WhatsApp and Signal backups go to the box. Two optional switches, off by
+  default, each asking for its own permission: „Kontakte übertragen“
+  (READ_CONTACTS; into the person's address book „Handy-Kontakte“ on the box)
+  and „SMS und Anrufliste übertragen“ (READ_SMS, READ_CALL_LOG; age-encrypted
+  on the phone for the person's archive). On Android 13+ a sideloaded app
+  must first get App-Info → ⋮ → „Eingeschränkte Einstellungen zulassen“ for
+  SMS and calls; the screen says so.
+
 The seam with Haus is [`docs/CONTRACT.md`](docs/CONTRACT.md); the visual
 standard is [`docs/DESIGN.md`](docs/DESIGN.md).
 

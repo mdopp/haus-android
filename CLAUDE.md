@@ -8,7 +8,9 @@ no network while the screen is off. The widgets stay live through one
 `specialUse` foreground service (`realtime/LiveService.kt`) that holds the
 stream only while the screen is on. The one thing beyond the widgets is
 Nachrichten sichern (#194, laib ADR 0029): it picks up the phone's WhatsApp
-and Signal backups and uploads them to Haus. The seam with Haus is
+and Signal backups and uploads them to Haus, and, each behind its own switch
+and permission, mirrors the contacts and sends the SMS and call log
+age-encrypted. The seam with Haus is
 `docs/CONTRACT.md`.
 
 These rules apply to every session, human or agent.
@@ -32,8 +34,10 @@ These rules apply to every session, human or agent.
   `sicherung/SicherungWorker.kt`, a WorkManager worker — daily on an unmetered
   network while charging, and once on „Jetzt sichern“. It never goes
   foreground, posts nothing, reads the granted folders only (storage access
-  framework, no storage permission) and is the one caller that does not pass
-  `ScreenGate`. Without a granted folder it makes no request. `ManifestTest`
+  framework, no storage permission) and, with their switches on, the
+  contacts, SMS and call log (read permissions only), and is the one caller
+  that does not pass `ScreenGate`. Without a granted folder or a switch on it
+  makes no request. `ManifestTest`
   holds it to its one file; do not add a second job or reuse this one.
 
 ## Commits

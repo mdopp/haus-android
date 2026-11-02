@@ -8,6 +8,7 @@
 
     <string name="sicherung_whatsapp">WhatsApp</string>
     <string name="sicherung_signal">Signal</string>
+    <string name="sicherung_sms">SMS und Anrufe</string>
     <string name="sicherung_ordner_ja">Ordner: %1$s</string>
     <string name="sicherung_ordner_nein">Noch kein Ordner gewählt</string>
     <string name="sicherung_ordner_weg">Ordner nicht mehr freigegeben: %1$s</string>
@@ -42,7 +43,7 @@
 
     <string name="sicherung_jetzt">Jetzt sichern</string>
     <string name="sicherung_jetzt_angestossen">Sicherung angestoßen …</string>
-    <string name="sicherung_jetzt_ohne_ordner">Erst einen Ordner freigeben, dann sichern.</string>
+    <string name="sicherung_jetzt_ohne_ordner">Erst einen Ordner freigeben oder einen Schalter einschalten, dann sichern.</string>
     <string name="sicherung_wartet">Wartet auf WLAN …</string>
     <string name="sicherung_laeuft">Sicherung läuft …</string>
     <string name="sicherung_laeuft_datei">%1$s: %2$s, Datei %3$d von %4$d\n%5$s von %6$s</string>

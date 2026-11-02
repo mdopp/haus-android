@@ -64,6 +64,12 @@ class FakeHaus : Dispatcher() {
     /** The next this many PATCHes answer 429: the box takes other pieces. */
     @Volatile var beschaeftigt = 0
 
+    /** The person's archive key (`GET /napi/sicherung/schluessel`); null: 404 with Haus's sentence. */
+    @Volatile var empfaenger: String? = AgeTest.EMPFAENGER
+
+    /** What `POST /napi/kontakte` received, each body as text with its content type. */
+    val kontakte = ArrayList<Pair<String?, String>>()
+
     @Volatile var voll = false
     @Volatile var keinArchiv = false
     @Volatile var fehlendAntworten = 0
@@ -82,6 +88,9 @@ class FakeHaus : Dispatcher() {
         return synchronized(this) {
             when {
                 request.method == "GET" && path == "/napi/sicherung/stand" -> stand()
+                request.method == "GET" && path == "/napi/sicherung/schluessel" -> empfaenger?.let { json(200, JSONObject().put("empfaenger", it)) }
+                    ?: fehler(404, KEIN_SCHLUESSEL)
+                request.method == "POST" && path == "/napi/kontakte" -> kontakte(request.getHeader("Content-Type"), String(body, Charsets.UTF_8))
                 request.method == "POST" && path == "/napi/sicherung/fehlend" -> fehlend(JSONObject(String(body)))
                 request.method == "POST" && path == "/napi/sicherung/uploads" -> anlegen(JSONObject(String(body)))
                 request.method == "HEAD" && path.startsWith("/napi/sicherung/uploads/") -> head(path.substringAfterLast('/'))
@@ -94,7 +103,7 @@ class FakeHaus : Dispatcher() {
 
     private fun stand(): MockResponse {
         val q = JSONObject()
-        listOf("whatsapp", "signal", "discord").forEach { name ->
+        listOf("whatsapp", "signal", "sms", "discord").forEach { name ->
             val dateien = fertig.filterKeys { it.startsWith("$name|") }
             q.put(
                 name,
@@ -103,6 +112,16 @@ class FakeHaus : Dispatcher() {
             )
         }
         return json(200, JSONObject().put("quellen", q).put("frei_bytes", 1_000_000_000_000L))
+    }
+
+    /** Haus's mirror, as haus#210 answers it: each card needs a UID; none at all is a 409. */
+    private fun kontakte(typ: String?, text: String): MockResponse {
+        if (typ?.substringBefore(';')?.trim() != "text/vcard") return fehler(415, "Die Kontakte kommen als text/vcard.")
+        kontakte += typ to text
+        val karten = text.split("BEGIN:VCARD").drop(1)
+        if (karten.isEmpty()) return fehler(409, "Auf dem Handy sind keine Kontakte.")
+        if (karten.any { !it.contains("\r\nUID:") }) return fehler(400, "Ein Kontakt hat keine UID.")
+        return json(200, JSONObject().put("kontakte", karten.size).put("neu", karten.size).put("geaendert", 0).put("entfernt", 0))
     }
 
     private fun fehlend(o: JSONObject): MockResponse {
@@ -190,6 +209,7 @@ class FakeHaus : Dispatcher() {
 
     companion object {
         const val TOKEN = "haus_device_TEST"
+        const val KEIN_SCHLUESSEL = "Dein Archiv hat noch keinen Schlüssel: öffne es einmal auf der Box."
 
         fun json(code: Int, o: JSONObject): MockResponse =
             MockResponse().setResponseCode(code).setHeader("Content-Type", "application/json").setBody(o.toString())

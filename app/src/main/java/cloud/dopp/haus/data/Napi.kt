@@ -36,8 +36,14 @@ object Napi {
     /** A PATCH's body: the next bytes of the file, as they stand on the phone. */
     const val OFFSET_STREAM = "application/offset+octet-stream"
 
-    /** Where a backup comes from, as Haus names it (`quelle`, #194). */
-    enum class Quelle(val wire: String) { WHATSAPP("whatsapp"), SIGNAL("signal"), DISCORD("discord") }
+    /**
+     * Where a backup comes from, as Haus names it (`quelle`, #194). `sms` is
+     * the phone's SMS, MMS and call log, age-encrypted on the phone (laib ADR 0029).
+     */
+    enum class Quelle(val wire: String) { WHATSAPP("whatsapp"), SIGNAL("signal"), DISCORD("discord"), SMS("sms") }
+
+    /** The body of `POST /napi/kontakte`: the contacts as concatenated vCards. */
+    const val VCARD = "text/vcard"
 
     /**
      * One call. [query] and [body] are the names the client sends, in the order
@@ -322,6 +328,21 @@ object Napi {
         const val FEHLER = "fehler"
     }
 
+    /** `GET /napi/sicherung/schluessel`: the person's archive key, `{empfaenger: "age1…"}`, or `{fehler}` (404). */
+    object SchluesselJson {
+        const val EMPFAENGER = "empfaenger"
+        const val FEHLER = "fehler"
+    }
+
+    /** `POST /napi/kontakte`: `{kontakte, neu, geaendert, entfernt}`, or `{fehler}` (409 for no card). */
+    object KontakteJson {
+        const val KONTAKTE = "kontakte"
+        const val NEU = "neu"
+        const val GEAENDERT = "geaendert"
+        const val ENTFERNT = "entfernt"
+        const val FEHLER = "fehler"
+    }
+
     // --- the calls -------------------------------------------------------------
 
     /** The house persona: name, colours, whether it has an icon (its greeting is not the app's, #184). */
@@ -416,4 +437,17 @@ object Napi {
     val SICHERUNG_UPLOAD_TEIL = Endpoint(
         Method.PATCH, "/napi/sicherung/uploads/{id}", reply = listOf(TeilJson), headers = listOf(UPLOAD_OFFSET),
     )
+
+    /**
+     * The person's archive Briefkasten as an age X25519 recipient: SMS and
+     * calls are encrypted to it on the phone before they go up as `quelle`
+     * `sms` (laib ADR 0029). 404 with Haus's sentence when there is none.
+     */
+    val SICHERUNG_SCHLUESSEL = Endpoint(Method.GET, "/napi/sicherung/schluessel", reply = listOf(SchluesselJson))
+
+    /**
+     * The phone's contacts into the person's own address book „Handy-Kontakte“
+     * on the box: every card, each with a UID, as [VCARD]; Haus mirrors the set.
+     */
+    val KONTAKTE = Endpoint(Method.POST, "/napi/kontakte", reply = listOf(KontakteJson))
 }
