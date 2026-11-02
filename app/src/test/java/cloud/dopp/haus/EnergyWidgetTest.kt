@@ -55,7 +55,11 @@ class EnergyWidgetTest {
         ),
     )!!
 
-    /** Draw [e] into a placed widget of [w]×[h] dp; the views as the launcher shows them. */
+    /**
+     * Draw the picture into a placed widget of [w]×[h] dp, applied to a view of
+     * our own: the provider's own refresh of the placed widget runs on a thread
+     * and must not draw over what is asserted here.
+     */
     private fun drawn(w: Int, h: Int, paired: Boolean = true): View {
         val mgr = AppWidgetManager.getInstance(ctx)
         val id = shadowOf(mgr).createWidget(EnergyWidgetProvider::class.java, R.layout.widget_energy)
@@ -70,8 +74,7 @@ class EnergyWidgetTest {
             ctx, id, energy, paired,
             EnergyWidgetProvider.tapPending(ctx, id), EnergyWidgetProvider.refreshPending(ctx, id),
         )
-        mgr.updateAppWidget(id, views)
-        return shadowOf(mgr).getViewFor(id)
+        return views.apply(ctx, android.widget.FrameLayout(ctx))
     }
 
     private fun View.text(name: String): String {

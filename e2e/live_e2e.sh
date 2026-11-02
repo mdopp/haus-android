@@ -197,8 +197,12 @@ on input keyevent KEYCODE_BACK
 # 7 --------------------------------------------------------------------------
 wake
 m=$(mark)
-on am instrument -w -e class cloud.dopp.haus.e2e.LiveE2EPhoto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/photo.txt"
-grep -q "OK (1 test)" "$OUT/photo.txt" || say "photo setup: $(grep -m1 -E 'Error|Exception' "$OUT/photo.txt")"
+on am instrument -w -r -e class cloud.dopp.haus.e2e.LiveE2EPhoto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/photo.txt"
+photo=$(grep -m1 -o 'uri=content://[^ ]*' "$OUT/photo.txt" | cut -d= -f2-)
+[ -n "$photo" ] || say "photo setup: $(grep -m1 -E 'Error|Exception' "$OUT/photo.txt")"
+sleep 2
+on am start -a android.intent.action.SEND -t image/png --eu android.intent.extra.STREAM "$photo" \
+  --grant-read-uri-permission -n $PKG/.ui.ShareActivity >/dev/null
 wait_for "$m" "UPLOAD" 1 30 && pass "7 the photo reaches Haus's upload" || fail "7 no upload of the shared photo"
 [ "$(since "$m" "UPLOAD ok")" -eq 1 ] && [ "$(since "$m" "UPLOAD")" -eq 1 ] \
   && pass "7 exactly one upload, in Haus's shape" || fail "7 uploads: $(since "$m" "UPLOAD ok") ok of $(since "$m" "UPLOAD")"
