@@ -9,6 +9,8 @@ no web shell, no messages, no approvals, no diagnostics.
 - **Widgets:** one energy widget (jetzt and heute; a tap opens Haus's Energie
   page), the household's tools (reminders with check-off, documents, notes)
   and, for admins, the Box.
+- **Share → Haus:** a link becomes a note; a photo (or several) from the
+  camera app goes into Haus's document inbox, HEIC made JPEG on the phone.
 - **Pairing:** enter Haus's address, confirm on `/pair-device`, done. The
   house persona (name, colours, icon) comes from `/napi/persona`.
 - **Current while you look:** one foreground service (`specialUse`, with a

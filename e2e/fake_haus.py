@@ -6,6 +6,7 @@ what the e2e asserts on, one timestamped line each:
 
   OPEN / CLOSE      an SSE stream on /napi/portal/events opened or went away
   WATCH <body>      a POST /napi/portal/watch
+  UPLOAD ok|bad     a POST /napi/upload, whether it is Haus's multipart shape
   GET <path>        every other authed GET
   FRAME <id> -> n   a card_state pushed through /ctl/frame to n open streams
   ACTIVE_SET <ids> -> n
@@ -101,6 +102,11 @@ class Haus(BaseHTTPRequestHandler):
         if url.path == "/napi/portal/watch":
             log("WATCH " + body)
             return self.reply(200, {"ok": True})
+        if url.path == "/napi/upload":
+            # Haus's upload.go reads a "filename" part, then a "file" part
+            good = 'name="filename"' in body and 'name="file"; filename="Foto-' in body and "PNG" in body
+            log("UPLOAD " + ("ok" if good else "bad"))
+            return self.reply(200, {"ok": True, "id": "Foto.png"})
         log("POST " + url.path)
         return self.reply(200, {"ok": True})
 

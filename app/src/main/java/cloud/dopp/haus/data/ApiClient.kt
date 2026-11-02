@@ -9,6 +9,8 @@ import cloud.dopp.haus.data.Napi.FavoritesJson
 import cloud.dopp.haus.data.Napi.MerkenJson
 import cloud.dopp.haus.data.Napi.StateJson
 import cloud.dopp.haus.data.Napi.WhoamiJson
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -58,6 +60,15 @@ class ApiClient(private val ctx: Context) {
         data class Refused(val sentence: String) : Merken()
         object NotPaired : Merken()
         object Unreachable : Merken()
+    }
+
+    /** What became of one photo shared to Haus (`POST /napi/upload`). */
+    sealed class Upload {
+        /** Haus placed it under [id] in the folder Paperless consumes. */
+        data class Stored(val id: String) : Upload()
+        data class Refused(val sentence: String) : Upload()
+        object NotPaired : Upload()
+        object Unreachable : Upload()
     }
 
     private fun base(): String =
@@ -144,6 +155,22 @@ class ApiClient(private val ctx: Context) {
         Merken.NotPaired
     } catch (e: Exception) {
         Merken.Unreachable
+    }
+
+    /**
+     * A photo shared to Haus: [bytes] as [filename] of type [mime], one
+     * `POST /napi/upload`. Blocking, up to 90 s for the answer; call off the
+     * main thread. Never throws.
+     */
+    fun upload(bytes: ByteArray, filename: String, mime: String): Upload = try {
+        slow.newCall(authed(Napi.UPLOAD, body = uploadBody(bytes, filename, mime))).execute()
+            .use { resp -> uploadOutcome(resp.code, resp.body?.string()) }
+    } catch (e: NotPairedException) {
+        Upload.NotPaired
+    } catch (e: NotConfiguredException) {
+        Upload.NotPaired
+    } catch (e: Exception) {
+        Upload.Unreachable
     }
 
     /** The house energy picture via `/napi/portal/energy`: the flow legs and the lifetime totals. */
@@ -399,6 +426,40 @@ class ApiClient(private val ctx: Context) {
                 sentence.isNotBlank() -> Merken.Refused(sentence)
                 code == 404 -> Merken.Refused("Diese Box merkt sich noch keine geteilten Links.")
                 else -> Merken.Refused("Haus konnte das gerade nicht merken ($code). Später noch einmal teilen.")
+            }
+        }
+
+        /** The multipart body of `POST /napi/upload`: the name, then the file (Haus's `upload.go`). */
+        fun uploadBody(bytes: ByteArray, filename: String, mime: String): MultipartBody {
+            val (nameField, fileField) = Napi.UPLOAD.body
+            return MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(nameField, filename)
+                .addFormDataPart(fileField, filename, bytes.toRequestBody(mime.toMediaType()))
+                .build()
+        }
+
+        /**
+         * Haus's answer to one upload, in words for the person. Haus says why
+         * in a code (`busy`, `insufficient_storage` …), so the sentence comes
+         * from the status.
+         */
+        fun uploadOutcome(code: Int, body: String?): Upload {
+            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            if (code in 200..299 && o != null && o.optBoolean(Napi.PhotoJson.OK)) {
+                return Upload.Stored(o.optString(Napi.PhotoJson.ID))
+            }
+            return when (code) {
+                401 -> Upload.NotPaired
+                403 -> Upload.Refused("Haus nimmt von diesem Telefon nichts an. Koppel es in der App neu.")
+                404 -> Upload.Refused("Diese Box hat keinen Ablageordner für Fotos eingerichtet.")
+                408 -> Upload.Refused("Das Hochladen hat zu lange gedauert. Teile das Foto im WLAN noch einmal.")
+                413 -> Upload.Refused("Das Foto ist zu groß für Haus (höchstens 25 MB).")
+                415 -> Upload.Refused("Dieses Bildformat nimmt Haus nicht an.")
+                429 -> Upload.Refused("Haus legt gerade andere Dateien ab. Teile das Foto gleich noch einmal.")
+                503 -> Upload.Refused("Der Ablageordner auf der Box ist gerade nicht erreichbar. Später noch einmal teilen.")
+                507 -> Upload.Refused("Auf der Box ist kein Platz mehr für Fotos.")
+                else -> Upload.Refused("Haus konnte das Foto nicht ablegen ($code). Später noch einmal teilen.")
             }
         }
 

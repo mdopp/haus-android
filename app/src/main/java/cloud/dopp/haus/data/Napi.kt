@@ -175,6 +175,13 @@ object Napi {
         const val CARD = "card"
     }
 
+    /** `POST /napi/upload`: `{ok, id}` (the name Haus placed), or `{ok: false, error}`. */
+    object PhotoJson {
+        const val OK = "ok"
+        const val ID = "id"
+        const val ERROR = "error"
+    }
+
     /** `GET /napi/portal/favorites`: `{ok, favorites: [card]}`, the person's ☆ things in their order. */
     object FavoritesJson {
         const val FAVORITES = "favorites"
@@ -427,6 +434,13 @@ object Napi {
         Method.POST, "/napi/action-callback",
         body = listOf("action_id", "params", "confirmed"), reply = listOf(ActionJson),
     )
+
+    /**
+     * Share → Haus, a photo (owner, 2026-11-02: „Foto machen und mit der Haus
+     * App teilen“): multipart, the name, then the file; Haus puts it into the
+     * share Paperless consumes. One file a request.
+     */
+    val UPLOAD = Endpoint(Method.POST, "/napi/upload", body = listOf("filename", "file"), reply = listOf(PhotoJson))
 
     /** Share → Haus: what the phone shared, kept as a note when a link is in it. */
     val MERKEN = Endpoint(Method.POST, "/napi/merken", body = listOf("text"), reply = listOf(MerkenJson))
