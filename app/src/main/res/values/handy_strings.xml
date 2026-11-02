@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kontakte, SMS und Anrufe on „Nachrichten sichern“ (laib ADR 0029): two
+     switches, each with its own permission; what goes where in one line. -->
+<resources>
+    <string name="handy_titel">Kontakte, SMS und Anrufe</string>
+
+    <string name="handy_kontakte">Kontakte übertragen</string>
+    <string name="handy_kontakte_was">Kommen in dein eigenes Adressbuch „Handy-Kontakte“ auf der Box. Wer die Box verwaltet, kann es lesen, wie deinen Kalender.</string>
+    <string name="handy_sms">SMS und Anrufliste übertragen</string>
+    <string name="handy_sms_was">Werden schon auf dem Handy für dein Archiv verschlüsselt. Lesbar erst, wenn du dein Archiv öffnest.</string>
+
+    <string name="handy_kontakte_stand">Zuletzt am %1$s: %2$s</string>
+    <string name="handy_kontakte_nie">Noch nicht übertragen: das geschieht beim nächsten Sichern.</string>
+
+    <string name="handy_kontakte_abgelehnt">Ohne die Erlaubnis für Kontakte bleibt das aus.</string>
+    <string name="handy_sms_abgelehnt">Ohne die Erlaubnis für SMS und Anrufliste bleibt das aus.</string>
+    <string name="handy_kontakte_einstellungen">Android fragt nicht mehr nach. Tippe hier, erlaube unter „Berechtigungen“ die Kontakte und schalte es dann hier wieder ein.</string>
+    <string name="handy_sms_einstellungen">Android fragt nicht mehr nach. Tippe hier, erlaube unter „Berechtigungen“ SMS und Anrufliste und schalte es dann hier wieder ein.</string>
+    <string name="handy_sms_gesperrt">Android sperrt SMS und Anrufliste für Apps, die nicht aus dem Play Store kommen. So gibst du es frei:\n1. Tippe hier: das öffnet die App-Info der Haus-App.\n2. Oben rechts auf ⋮ tippen.\n3. „Eingeschränkte Einstellungen zulassen“ wählen und bestätigen.\n4. Zurück hierher und den Schalter noch einmal einschalten.\nFehlt der Punkt unter ⋮, erlaube SMS und Anrufliste dort unter „Berechtigungen“.</string>
+</resources>

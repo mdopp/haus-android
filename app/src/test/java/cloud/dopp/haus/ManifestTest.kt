@@ -18,7 +18,10 @@ import java.io.File
  * One job, and only one (the owner's call in #194, laib ADR 0029): the daily
  * pick-up of the phone's WhatsApp and Signal backups, a WorkManager worker
  * that never goes foreground and posts nothing. The folders come through the
- * system picker: no storage permission.
+ * system picker: no storage permission. Beside it, optional and each behind
+ * its own switch and permission (laib ADR 0029): the contacts (READ_CONTACTS),
+ * the SMS and the call log (READ_SMS, READ_CALL_LOG). Read only: never a
+ * permission to write or send them.
  */
 class ManifestTest {
 
@@ -59,9 +62,15 @@ class ManifestTest {
         "POST_NOTIFICATIONS", // its notification, shown on Android 13+
         // its restart after the process died: on the exemption list a restart may go foreground
         "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        // Kontakte, SMS und Anrufe (laib ADR 0029): read only, each behind its own switch
+        "READ_CONTACTS", "READ_SMS", "READ_CALL_LOG",
     )
 
-    /** Exactly these permissions: the network, the camera capture, and what the live service needs. No storage. */
+    /**
+     * Exactly these permissions: the network, the camera capture, what the
+     * live service needs, and reading contacts, SMS and calls. No storage, and
+     * nothing that writes or sends contacts or messages.
+     */
     @Test
     fun thePermissionsAreExactlyTheseAndNoOthers() {
         assertEquals(ours, permissions(manifest))
@@ -78,7 +87,7 @@ class ManifestTest {
             ours + setOf("WAKE_LOCK", "ACCESS_NETWORK_STATE", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"),
             permissions(merged),
         )
-        listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION").forEach { word ->
+        listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION", "WRITE_CONTACTS", "SEND_SMS", "WRITE_CALL_LOG", "RECEIVE_SMS").forEach { word ->
             assertFalse("a storage permission: $word", permissions(merged).any { it.contains(word) })
         }
         val foreground = Regex("""android:foregroundServiceType="([^"]+)"""").findAll(merged).map { it.groupValues[1] }.toList()

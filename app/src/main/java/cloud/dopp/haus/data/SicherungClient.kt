@@ -2,6 +2,8 @@ package cloud.dopp.haus.data
 
 import cloud.dopp.haus.data.Napi.DateiJson
 import cloud.dopp.haus.data.Napi.FehlendJson
+import cloud.dopp.haus.data.Napi.KontakteJson
+import cloud.dopp.haus.data.Napi.SchluesselJson
 import cloud.dopp.haus.data.Napi.StandJson
 import cloud.dopp.haus.data.Napi.TeilJson
 import cloud.dopp.haus.data.Napi.UploadJson
@@ -9,10 +11,12 @@ import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -71,6 +75,9 @@ class SicherungClient(
         /** 507: the box is full; [satz] says so. */
         data class Voll(val satz: String) : Teil()
     }
+
+    /** What Haus's mirror of the contacts came to: all it holds now, and what changed. */
+    data class Kontakte(val kontakte: Int, val neu: Int, val geaendert: Int, val entfernt: Int)
 
     @Volatile
     private var laufend: Call? = null
@@ -153,7 +160,39 @@ class SicherungClient(
         return rufe(req) { resp -> teilAus(resp.code, resp.body?.string()) }
     }
 
+    /**
+     * The person's archive key, an age X25519 recipient (`age1…`). Haus's
+     * 404 says in its sentence why there is none; that is [Abgelehnt].
+     */
+    fun schluessel(): String = rufe(Napi.SICHERUNG_SCHLUESSEL.request(base, token)) { resp ->
+        val text = resp.body?.string()
+        if (!resp.isSuccessful) throw Abgelehnt(resp.code, satzAus(text))
+        runCatching { JSONObject(text.orEmpty()).optString(SchluesselJson.EMPFAENGER) }.getOrNull()?.trim()?.ifBlank { null }
+            ?: throw Abgelehnt(resp.code, null)
+    }
+
+    /** [datei] (the contacts as concatenated vCards) to the person's address book „Handy-Kontakte“ on the box. */
+    fun kontakte(datei: File): Kontakte {
+        val req = Napi.KONTAKTE.request(base, token, body = datei.asRequestBody(VCARD))
+        return rufe(req) { resp -> kontakteAus(resp.code, resp.body?.string()) }
+    }
+
     companion object {
+        private val VCARD = Napi.VCARD.toMediaType()
+
+        /** A `kontakte` reply: the counts, or [Abgelehnt] with Haus's sentence. */
+        fun kontakteAus(code: Int, body: String?): Kontakte {
+            if (code !in 200..299) throw Abgelehnt(code, satzAus(body))
+            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull() ?: throw Abgelehnt(code, null)
+            if (!o.has(KontakteJson.KONTAKTE)) throw Abgelehnt(code, null)
+            return Kontakte(
+                o.optInt(KontakteJson.KONTAKTE),
+                o.optInt(KontakteJson.NEU),
+                o.optInt(KontakteJson.GEAENDERT),
+                o.optInt(KontakteJson.ENTFERNT),
+            )
+        }
+
         /** One client for the backups: a PATCH is up to 8 MiB, and Haus writes it to disk before it answers. */
         private val HTTP: OkHttpClient by lazy {
             OkHttpClient.Builder()

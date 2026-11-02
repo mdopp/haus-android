@@ -18,12 +18,15 @@ import cloud.dopp.haus.data.Napi.Quelle
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.SicherungClient
 import cloud.dopp.haus.data.TokenStore
+import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Nachrichten sichern's one job (#194, laib ADR 0029): a [Lauf] over the
- * folders the person granted. Daily on an unmetered network while the phone
+ * folders the person granted, then, each when its switch is on and its
+ * permission granted, the contacts ([KontakteLauf]) and the SMS and calls
+ * ([NachrichtenLauf]). Daily on an unmetered network while the phone
  * charges and its battery is not low, and once at once on "Jetzt sichern".
  *
  * The one background job of the app (the owner's call in #194; CLAUDE.md,
@@ -43,17 +46,24 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
             val ctx = applicationContext
             val store = SicherungStore(ctx)
             val ordner = Lauf.QUELLEN.associateWith { q -> store.ordner(q)?.let { SafOrdner(ctx, it) } }
-            if (ordner.values.all { it == null }) return Result.success()
+            val kontakte = store.kontakteAn()
+            val sms = store.smsAn()
+            // Nothing granted, nothing switched on: no request at all.
+            if (ordner.values.all { it == null } && !kontakte && !sms) return Result.success()
             val base = ServerStore.baseUrl(ctx)
             val token = TokenStore.get(ctx)
             if (base == null || token.isNullOrBlank()) {
-                ordner.filterValues { it != null }.keys.forEach { q ->
-                    store.melde(q, Meldung(System.currentTimeMillis(), Meldung.Art.HAUS, Lauf.NICHT_GEKOPPELT))
-                }
+                val jetzt = System.currentTimeMillis()
+                ordner.filterValues { it != null }.keys.forEach { q -> store.melde(q, Meldung(jetzt, Meldung.Art.HAUS, Lauf.NICHT_GEKOPPELT)) }
+                if (kontakte) store.meldeKontakte(Meldung(jetzt, Meldung.Art.HAUS, Lauf.NICHT_GEKOPPELT))
+                if (sms) store.melde(Quelle.SMS, Meldung(jetzt, Meldung.Art.HAUS, Lauf.NICHT_GEKOPPELT))
                 return Result.success()
             }
             val c = SicherungClient(base, token)
             client = c
+            val start = System.currentTimeMillis()
+            val halt = { isStopped || System.currentTimeMillis() - start > Lauf.FRIST_MS }
+            val ergebnisse = ArrayList<Lauf.Ergebnis>()
             val lauf = Lauf(
                 client = c,
                 gedaechtnis = store,
@@ -61,18 +71,63 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
                 halt = { isStopped },
                 melde = { f -> setProgressAsync(daten(f)) },
             )
-            return when (lauf.laufen()) {
-                // More to send, no answer, or a busy box: soon again, with backoff.
-                // Refused (full, no archive, not paired) or done: the next daily run.
-                Lauf.Ergebnis.WEITER, Lauf.Ergebnis.UNERREICHBAR, Lauf.Ergebnis.BESCHAEFTIGT ->
-                    if (isStopped) Result.success() else Result.retry()
-                else -> Result.success()
+            ergebnisse += lauf.laufen()
+            val cache = File(ctx.cacheDir, CACHE)
+            // a part left out for the time: the next try runs it
+            var ausgelassen = false
+            if (kontakte && halt()) ausgelassen = true
+            if (kontakte && weiter(ergebnisse) && !halt()) {
+                ergebnisse += if (Erlaubnis.hat(ctx, Erlaubnis.KONTAKTE)) {
+                    sicher({ store.meldeKontakte(it) }) { KontakteLauf(c, store, HandyKontakte(ctx), File(cache, "kontakte")).laufen() }
+                } else {
+                    store.meldeKontakte(Meldung(System.currentTimeMillis(), Meldung.Art.KEINE, KontakteLauf.KEINE_ERLAUBNIS))
+                    Lauf.Ergebnis.FERTIG
+                }
             }
+            if (sms && halt()) ausgelassen = true
+            if (sms && weiter(ergebnisse) && !halt()) {
+                ergebnisse += if (Erlaubnis.hat(ctx, Erlaubnis.SMS)) {
+                    sicher({ store.melde(Quelle.SMS, it) }) {
+                        NachrichtenLauf(
+                            client = c,
+                            gedaechtnis = store,
+                            marken = store,
+                            telefon = HandyTelefon(ctx),
+                            ordner = File(cache, NachrichtenLauf.SMS),
+                            halt = halt,
+                            melde = { f -> setProgressAsync(daten(f)) },
+                        ).laufen()
+                    }
+                } else {
+                    store.melde(Quelle.SMS, Meldung(System.currentTimeMillis(), Meldung.Art.KEINE, NachrichtenLauf.KEINE_ERLAUBNIS))
+                    Lauf.Ergebnis.FERTIG
+                }
+            }
+            // More to send, no answer, or a busy box: soon again, with backoff.
+            // Refused (full, no archive, not paired) or done: the next daily run.
+            val nochmal = ausgelassen ||
+                ergebnisse.any { it == Lauf.Ergebnis.WEITER || it == Lauf.Ergebnis.UNERREICHBAR || it == Lauf.Ergebnis.BESCHAEFTIGT }
+            return if (nochmal && !isStopped) Result.retry() else Result.success()
         } finally {
             client = null
             LAEUFT.set(false)
         }
     }
+
+    /**
+     * A part that failed on the phone itself (a provider that threw, a full
+     * cache): its sentence, and the next daily run tries again.
+     */
+    private fun sicher(melde: (Meldung) -> Unit, teil: () -> Lauf.Ergebnis): Lauf.Ergebnis = try {
+        teil()
+    } catch (e: Exception) {
+        melde(Meldung(System.currentTimeMillis(), Meldung.Art.SPAETER, AUF_DEM_HANDY))
+        Lauf.Ergebnis.FERTIG
+    }
+
+    /** Whether the next part may still ask Haus: not after it was unreachable or busy (the retry comes soon). */
+    private fun weiter(bisher: List<Lauf.Ergebnis>): Boolean =
+        bisher.none { it == Lauf.Ergebnis.UNERREICHBAR || it == Lauf.Ergebnis.BESCHAEFTIGT }
 
     override fun onStopped() {
         client?.abbrechen()
@@ -80,6 +135,11 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
 
     companion object {
         private val LAEUFT = AtomicBoolean(false)
+
+        /** The app's cache folder for the files under way: the contacts' vCards, the encrypted SMS and calls. */
+        private const val CACHE = "sicherung"
+
+        const val AUF_DEM_HANDY = "Beim Lesen auf dem Handy ging etwas schief: die App versucht es beim nächsten Mal wieder."
 
         const val TAEGLICH = "sicherung-taeglich"
         const val JETZT = "sicherung-jetzt"

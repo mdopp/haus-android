@@ -1,0 +1,131 @@
+package cloud.dopp.haus.sicherung
+
+/** One phone number, e-mail address or web address, with its vCard types (`cell`, `work`, …). */
+data class Eintrag(val wert: String, val typen: List<String> = emptyList())
+
+/** A postal address, in the order of the vCard ADR components. */
+data class Adresse(
+    val typen: List<String> = emptyList(),
+    val postfach: String? = null,
+    val zusatz: String? = null,
+    val strasse: String? = null,
+    val ort: String? = null,
+    val region: String? = null,
+    val plz: String? = null,
+    val land: String? = null,
+)
+
+/** One contact as the address book has it, keyed by its lookup key ([uid]). */
+data class Kontakt(
+    val uid: String,
+    val anzeigename: String? = null,
+    val nachname: String? = null,
+    val vorname: String? = null,
+    val weitere: String? = null,
+    val praefix: String? = null,
+    val suffix: String? = null,
+    val telefone: List<Eintrag> = emptyList(),
+    val mails: List<Eintrag> = emptyList(),
+    val adressen: List<Adresse> = emptyList(),
+    val firma: String? = null,
+    val abteilung: String? = null,
+    val titel: String? = null,
+    /** `yyyy-MM-dd`; anything else is left out. */
+    val geburtstag: String? = null,
+    val notiz: String? = null,
+    val webseiten: List<String> = emptyList(),
+)
+
+/**
+ * A contact as a vCard 3.0 (RFC 2426) for Haus's mirror (`POST /napi/kontakte`,
+ * haus#210): written by the app itself, not Android's 2.1 export, whose
+ * QUOTED-PRINTABLE and CHARSET parameters the box's Radicale may refuse.
+ * Every card carries `UID:<lookup key>`, by which Haus tells a changed
+ * contact from a new one. Text values escaped (backslash, comma, semicolon,
+ * newline as `\n`), lines folded at 75 octets without splitting a character,
+ * CRLF line ends. Pure.
+ */
+object Vcard {
+
+    private const val CRLF = "\r\n"
+
+    /** [k] as one card, ending in CRLF so cards can be concatenated. */
+    fun karte(k: Kontakt): String {
+        val zeilen = ArrayList<String>()
+        zeilen += "BEGIN:VCARD"
+        zeilen += "VERSION:3.0"
+        zeilen += "UID:${text(k.uid)}"
+        zeilen += "FN:${text(anzeigename(k))}"
+        zeilen += "N:" + listOf(k.nachname, k.vorname, k.weitere, k.praefix, k.suffix).joinToString(";") { text(it.orEmpty()) }
+        k.telefone.filter { it.wert.isNotBlank() }.forEach { zeilen += "TEL${typen(it.typen)}:${text(it.wert)}" }
+        k.mails.filter { it.wert.isNotBlank() }.forEach { zeilen += "EMAIL${typen(listOf("internet") + it.typen)}:${text(it.wert)}" }
+        k.adressen.forEach { a ->
+            val teile = listOf(a.postfach, a.zusatz, a.strasse, a.ort, a.region, a.plz, a.land)
+            if (teile.any { !it.isNullOrBlank() }) zeilen += "ADR${typen(a.typen)}:" + teile.joinToString(";") { text(it.orEmpty()) }
+        }
+        if (!k.firma.isNullOrBlank() || !k.abteilung.isNullOrBlank()) {
+            zeilen += "ORG:" + listOfNotNull(k.firma.orEmpty(), k.abteilung?.takeIf { it.isNotBlank() }).joinToString(";") { text(it) }
+        }
+        k.titel?.takeIf { it.isNotBlank() }?.let { zeilen += "TITLE:${text(it)}" }
+        k.geburtstag?.trim()?.takeIf { DATUM.matches(it) }?.let { zeilen += "BDAY:$it" }
+        k.notiz?.takeIf { it.isNotBlank() }?.let { zeilen += "NOTE:${text(it)}" }
+        k.webseiten.filter { it.isNotBlank() }.forEach { zeilen += "URL:${text(it.trim())}" }
+        zeilen += "END:VCARD"
+        return zeilen.joinToString("") { falte(it) + CRLF }
+    }
+
+    /** FN is required: the display name, else the name's parts, the company, a number or an address. */
+    fun anzeigename(k: Kontakt): String =
+        k.anzeigename?.takeIf { it.isNotBlank() }
+            ?: listOf(k.praefix, k.vorname, k.weitere, k.nachname, k.suffix).filter { !it.isNullOrBlank() }.joinToString(" ").ifBlank { null }
+            ?: k.firma?.takeIf { it.isNotBlank() }
+            ?: k.telefone.firstOrNull { it.wert.isNotBlank() }?.wert
+            ?: k.mails.firstOrNull { it.wert.isNotBlank() }?.wert
+            ?: "Ohne Namen"
+
+    /** `;TYPE=cell,voice`, or nothing; types are tokens the app chose, upper case as RFC 2426 writes them. */
+    private fun typen(t: List<String>): String {
+        val sauber = t.map { it.trim().uppercase() }.filter { TYP.matches(it) }.distinct()
+        return if (sauber.isEmpty()) "" else ";TYPE=" + sauber.joinToString(",")
+    }
+
+    /** A text value: backslash, comma and semicolon escaped, any line break as `\n`. */
+    fun text(s: String): String =
+        s.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;")
+            .replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
+
+    /**
+     * [zeile] folded: at most 75 octets (UTF-8) a line, each continuation
+     * starting with one space, never inside a character. Without the CRLFs.
+     */
+    fun falte(zeile: String): String {
+        val out = StringBuilder()
+        var laenge = 0
+        var i = 0
+        while (i < zeile.length) {
+            val cp = zeile.codePointAt(i)
+            val n = Character.charCount(cp)
+            val oktette = when {
+                cp < 0x80 -> 1
+                cp < 0x800 -> 2
+                cp < 0x10000 -> 3
+                else -> 4
+            }
+            if (laenge + oktette > MAX) {
+                out.append(CRLF).append(' ')
+                laenge = 1
+            }
+            out.append(zeile, i, i + n)
+            laenge += oktette
+            i += n
+        }
+        return out.toString()
+    }
+
+    /** How many cards [text] holds. */
+    fun anzahl(text: String): Int = Regex("(?im)^BEGIN:VCARD\\s*$").findAll(text).count()
+
+    private const val MAX = 75
+    private val DATUM = Regex("""\d{4}-\d{2}-\d{2}""")
+    private val TYP = Regex("""[A-Z][A-Z0-9-]*""")
+}

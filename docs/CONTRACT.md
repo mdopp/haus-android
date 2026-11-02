@@ -63,7 +63,7 @@ each row naming the Haus file and lines it came from.
 | active devices | `GET /napi/portal/active` |
 | energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
 | camera | `POST /napi/upload` (capture) |
-| Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`: see (e) |
+| Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,contacts,documents,notes}`), `POST /napi/action-callback` |
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
@@ -190,7 +190,39 @@ and 401 stop the run with a German sentence on the screen. Errors are
 `{"fehler": …}`, except the 401 of the shared login check
 (`{"error":"unauthorized"}`), for which the app says to pair again.
 
-`GET /napi/sicherung/stand` → `{quellen: {whatsapp|signal|discord: {zuletzt,
+`GET /napi/sicherung/stand` → `{quellen: {whatsapp|signal|sms|discord: {zuletzt,
 dateien, bytes, wartend}}, frei_bytes}` is shown per source on the screen.
 The app never asks for or stores a messenger's key: keys go into the
 person's vault on the box (laib#986).
+
+### Kontakte, SMS und Anrufe
+
+(laib ADR 0029; Haus's side is haus#210.) Two switches on the same screen,
+off until the person turns one on, each asking for its own permission when
+turned on; refused, it stays off with a sentence. The same job runs them,
+after the folders, only while the switch is on and the permission granted.
+
+- **„Kontakte übertragen“** (READ_CONTACTS): every contact, read from
+  `ContactsContract.Data` and written by the app as vCard 3.0 (not Android's
+  2.1 export, which Radicale may refuse) with `UID:<lookup key>`, escaped
+  text, lines folded at 75 octets and CRLF, all concatenated into one
+  `POST /napi/kontakte` (`Content-Type: text/vcard`) → `{kontakte, neu,
+  geaendert, entfernt}`. Haus mirrors the set into the person's own address
+  book „Handy-Kontakte“, which the box's admin can read like the calendar.
+  No contact on the phone: no request. No photos.
+- **„SMS und Anrufliste übertragen“** (READ_SMS, READ_CALL_LOG): the SMS and
+  MMS, and the calls, newer than a high-water mark per kind (the largest
+  date that reached the box; the first run takes everything), as XML in the
+  format of „SMS Backup & Restore“ by SyncTech (`<smses>` and `<calls>`, what
+  `msgvault import-synctech-sms` reads), written as a stream into the app's
+  cache. Each file is age-encrypted on the phone (age v1, one X25519
+  recipient: `GET /napi/sicherung/schluessel` → `{empfaenger: "age1…"}`, or
+  404 with Haus's sentence, shown as it is), the plaintext deleted, and the
+  `.age` file uploaded through the resumable upload above as `quelle` `sms`,
+  `pfad` `sms-<UTC yyyyMMddTHHmmssZ>.xml.age` and `anrufe-<…>.xml.age`. A
+  mark moves only once its file is whole on the box; an unfinished file is
+  sent on by the next run before anything new is read.
+
+On Android 13+ an app installed outside a store cannot even ask for SMS and
+the call log ("restricted settings"): the screen then says to open App-Info →
+⋮ → „Eingeschränkte Einstellungen zulassen“ and turn the switch on again.
