@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Mehr → Nachrichten sichern (#194): the two folders, the switches for
-     contacts and for SMS and calls (laib ADR 0029), the state, „Jetzt
+<!-- Mehr → Nachrichten sichern (#194): the two folders, the cards with the
+     switches for contacts and for SMS and calls (laib ADR 0029), the state, „Jetzt
      sichern“, and the guide. Edge-to-edge like the home screen. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/sicherung_root"
@@ -47,10 +47,10 @@
             android:id="@+id/sicherung_signal"
             layout="@layout/item_sicherung_quelle" />
 
-        <!-- Kontakte, SMS und Anrufe (laib ADR 0029): two switches, off until the
-             person turns one on; each asks for its own permission. -->
+        <!-- Kontakte (laib ADR 0029): a card like WhatsApp's and Signal's, the switch
+             in its title row, off until the person turns it on. -->
         <LinearLayout
-            android:id="@+id/sicherung_handy"
+            android:id="@+id/handy_kontakte_karte"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
@@ -58,22 +58,29 @@
             android:orientation="vertical"
             android:padding="@dimen/card_padding">
 
-            <TextView
-                style="@style/Text.Haus.Title"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_xs"
-                android:text="@string/handy_titel" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/handy_kontakte"
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/handy_kontakte" />
+                <TextView
+                    style="@style/Text.Haus.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/handy_kontakte_titel" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/handy_kontakte"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/handy_kontakte" />
+            </LinearLayout>
 
             <TextView
-                style="@style/Text.Haus.Label"
+                style="@style/Text.Haus.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/handy_kontakte_was" />
@@ -95,17 +102,42 @@
                 android:background="?android:attr/selectableItemBackground"
                 android:textColor="@color/haus_accent"
                 android:visibility="gone" />
+        </LinearLayout>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/handy_sms"
-                style="@style/Text.Haus.Body"
+        <!-- SMS und Anrufe (laib ADR 0029): a card like WhatsApp's and Signal's, the switch
+             in its title row, off until the person turns it on. -->
+        <LinearLayout
+            android:id="@+id/handy_sms_karte"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="@drawable/card_haus"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_md"
-                android:text="@string/handy_sms" />
+                android:layout_marginBottom="@dimen/space_xs"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Text.Haus.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/handy_sms_titel" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/handy_sms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/handy_sms" />
+            </LinearLayout>
 
             <TextView
-                style="@style/Text.Haus.Label"
+                style="@style/Text.Haus.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/handy_sms_was" />
@@ -117,6 +149,7 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
 
+            <!-- Why it is off or what went wrong; a tap opens App-Info when the way is through there. -->
             <TextView
                 android:id="@+id/handy_sms_meldung"
                 style="@style/Text.Haus.Body"
@@ -207,6 +240,32 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_ordner" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_kontakte_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_kontakte" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_sms_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_sms" />
 
             <TextView
                 style="@style/Text.Haus.Title"

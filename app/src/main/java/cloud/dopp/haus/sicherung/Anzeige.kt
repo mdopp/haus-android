@@ -67,12 +67,25 @@ object Anzeige {
         }
     }
 
+    /** `1.234`: a count as a person reads it in German. */
+    fun zahl(n: Int): String = java.text.NumberFormat.getIntegerInstance(Locale.GERMANY).format(n)
+
     /**
-     * What Haus's mirror of the contacts came to, as a sentence:
-     * `123 Kontakte gespiegelt, 2 neu, 1 geändert, 0 entfernt`.
+     * What Haus's mirror of the contacts came to: `412 Kontakte, 3 neu,
+     * 1 geändert`, with `2 entfernt` when any were; a change of none is left out.
      */
-    fun kontakte(kontakte: Int, neu: Int, geaendert: Int, entfernt: Int): String {
-        val wort = if (kontakte == 1) "Kontakt" else "Kontakte"
-        return "$kontakte $wort gespiegelt, $neu neu, $geaendert geändert, $entfernt entfernt"
-    }
+    fun kontakte(kontakte: Int, neu: Int, geaendert: Int, entfernt: Int): String =
+        (listOf("${zahl(kontakte)} ${if (kontakte == 1) "Kontakt" else "Kontakte"}") +
+            listOfNotNull(
+                neu.takeIf { it > 0 }?.let { "${zahl(it)} neu" },
+                geaendert.takeIf { it > 0 }?.let { "${zahl(it)} geändert" },
+                entfernt.takeIf { it > 0 }?.let { "${zahl(it)} entfernt" },
+            )).joinToString(", ")
+
+    /** What the last transfer of SMS and calls carried: `1.234 SMS, 56 MMS, 789 Anrufe`; a kind with none is left out. */
+    fun nachrichten(zahlen: Map<Art, Int>): String = listOfNotNull(
+        zahlen[Art.SMS]?.takeIf { it > 0 }?.let { "${zahl(it)} SMS" },
+        zahlen[Art.MMS]?.takeIf { it > 0 }?.let { "${zahl(it)} MMS" },
+        zahlen[Art.ANRUFE]?.takeIf { it > 0 }?.let { "${zahl(it)} ${if (it == 1) "Anruf" else "Anrufe"}" },
+    ).joinToString(", ")
 }

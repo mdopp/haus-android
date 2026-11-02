@@ -100,6 +100,29 @@ class SicherungStore(ctx: Context) : Gedaechtnis, Marken, Kontaktgedaechtnis {
         }
     }
 
+    override fun zahlen(name: String): Map<Art, Int> =
+        ausstehendAus(p.getString(ZAHLEN + name, null))?.mapValues { it.value.toInt() }.orEmpty()
+
+    override fun merkeZahlen(name: String, zahlen: Map<Art, Int>?) {
+        if (zahlen == null) {
+            p.edit().remove(ZAHLEN + name).commit()
+        } else {
+            p.edit().putString(ZAHLEN + name, ausstehendZeile(zahlen.mapValues { it.value.toLong() })).commit()
+        }
+    }
+
+    override fun merkeLetzte(zeit: Long, zahlen: Map<Art, Int>) {
+        p.edit().putString(LETZTE, "$zeit|" + ausstehendZeile(zahlen.mapValues { it.value.toLong() })).apply()
+    }
+
+    /** The last transfer of SMS and calls: when, and how many of each; null when never. */
+    fun letzte(): Pair<Long, Map<Art, Int>>? {
+        val t = p.getString(LETZTE, null)?.split('|', limit = 2) ?: return null
+        if (t.size != 2) return null
+        val zahlen = ausstehendAus(t[1]) ?: return null
+        return (t[0].toLongOrNull() ?: return null) to zahlen.mapValues { it.value.toInt() }
+    }
+
     override fun meldeKontakte(meldung: Meldung) {
         p.edit().putString(KONTAKTE_MELDUNG, "${meldung.zeit}|${meldung.art.name}|${meldung.satz.orEmpty()}").apply()
     }
@@ -145,6 +168,8 @@ class SicherungStore(ctx: Context) : Gedaechtnis, Marken, Kontaktgedaechtnis {
         private const val SMS_AN = "sms_an"
         private const val MARKE = "marke."
         private const val AUSSTEHEND = "ausstehend."
+        private const val ZAHLEN = "zahlen."
+        private const val LETZTE = "letzte"
         private const val KONTAKTE_MELDUNG = "kontakte_meldung"
         private const val KONTAKTE_ERGEBNIS = "kontakte_ergebnis"
 

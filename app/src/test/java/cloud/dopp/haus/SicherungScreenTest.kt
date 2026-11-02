@@ -107,19 +107,72 @@ class SicherungScreenTest {
         assertTrue("nothing enqueued: $offen", offen.isEmpty())
     }
 
-    /** Kontakte, SMS und Anrufe (laib ADR 0029): two switches, off, each saying what goes where. */
+    /**
+     * Kontakte, SMS und Anrufe (laib ADR 0029): two cards like WhatsApp's and
+     * Signal's, the switch in the title row, off, one plain sentence in the
+     * body style (not the small capitals of a label) and, while off, nothing else.
+     */
     @Test
-    fun theTwoSwitchesAreOffAndSayWhatGoesWhere() {
+    fun twoCardsWithTheSwitchInTheTitleAndNothingElseWhileOff() {
         val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
-        val kontakte = a.findViewById<SwitchCompat>(R.id.handy_kontakte)
-        val sms = a.findViewById<SwitchCompat>(R.id.handy_sms)
-        assertEquals("Kontakte übertragen", kontakte.text.toString())
-        assertEquals("SMS und Anrufliste übertragen", sms.text.toString())
-        assertFalse(kontakte.isChecked)
-        assertFalse(sms.isChecked)
-        val text = texte(a.findViewById(R.id.sicherung_handy))
-        listOf("„Handy-Kontakte“", "wie deinen Kalender", "auf dem Handy für dein Archiv verschlüsselt", "wenn du dein Archiv öffnest")
-            .forEach { assertTrue("the section lacks „$it“", text.contains(it)) }
+        mapOf(
+            R.id.handy_kontakte_karte to Triple(R.id.handy_kontakte, "Kontakte", "„Handy-Kontakte“"),
+            R.id.handy_sms_karte to Triple(R.id.handy_sms, "SMS und Anrufe", "für dein Archiv verschlüsselt"),
+        ).forEach { (karteId, t) ->
+            val (schalterId, titel, satz) = t
+            val karte = a.findViewById<ViewGroup>(karteId)
+            val zeile = karte.getChildAt(0) as ViewGroup
+            assertEquals(titel, (zeile.getChildAt(0) as TextView).text.toString())
+            val schalter = zeile.getChildAt(1) as SwitchCompat
+            assertEquals(schalterId, schalter.id)
+            assertFalse(schalter.isChecked)
+            val sichtbar = (1 until karte.childCount).map { karte.getChildAt(it) }.filter { it.visibility == View.VISIBLE }
+            assertEquals("off: only the sentence", 1, sichtbar.size)
+            val text = sichtbar.single() as TextView
+            assertTrue(text.text.toString(), text.text.contains(satz))
+            assertFalse("no capitals", text.isAllCaps)
+            assertEquals("no letter spacing", 0f, text.letterSpacing, 0f)
+        }
+    }
+
+    /** On and never sent: both cards say the same words; after a run, date and what. */
+    @Test
+    fun theStatusLinesFollowTheOtherCards() {
+        val app = shadowOf(ctx() as android.app.Application)
+        app.grantPermissions(android.Manifest.permission.READ_CONTACTS, android.Manifest.permission.READ_SMS, android.Manifest.permission.READ_CALL_LOG)
+        val store = cloud.dopp.haus.sicherung.SicherungStore(ctx())
+        store.setzeKontakteAn(true)
+        store.setzeSmsAn(true)
+        var a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
+        listOf(R.id.handy_kontakte_stand, R.id.handy_sms_stand).forEach {
+            assertEquals("Letzte Übertragung: noch keine – geschieht beim nächsten Sichern", a.findViewById<TextView>(it).text.toString())
+        }
+        store.merkeKontakte(1_762_050_000_000, cloud.dopp.haus.data.SicherungClient.Kontakte(412, 3, 1, 0))
+        store.merkeLetzte(
+            1_762_050_000_000,
+            mapOf(cloud.dopp.haus.sicherung.Art.SMS to 1234, cloud.dopp.haus.sicherung.Art.MMS to 56, cloud.dopp.haus.sicherung.Art.ANRUFE to 789),
+        )
+        a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
+        val zeit = cloud.dopp.haus.sicherung.Anzeige.zeit(1_762_050_000_000)
+        assertEquals("Letzte Übertragung: $zeit – 412 Kontakte, 3 neu, 1 geändert", a.findViewById<TextView>(R.id.handy_kontakte_stand).text.toString())
+        assertEquals("Letzte Übertragung: $zeit – 1.234 SMS, 56 MMS, 789 Anrufe", a.findViewById<TextView>(R.id.handy_sms_stand).text.toString())
+        WorkManager.getInstance(ctx()).cancelAllWork()
+    }
+
+    /** The intro covers all of it; the guide has the passkey warning and the two switches. */
+    @Test
+    fun theIntroAndTheGuideCoverContactsSmsAndCalls() {
+        val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
+        val intro = a.getString(R.string.sicherung_intro)
+        listOf("WhatsApp", "Signal", "Kontakte", "SMS", "Anrufe", "Nach einem Schlüssel fragt sie nie").forEach {
+            assertTrue("the intro lacks „$it“", intro.contains(it))
+        }
+        val anleitung = texte(a.findViewById(R.id.sicherung_anleitung))
+        listOf(
+            "nicht Passwort und nicht Passkey", "aus einem Passkey lässt sich der Schlüssel nicht auslesen",
+            "deaktivieren und sofort wieder aktivieren", "Kontakte, in der Haus-App", "SMS und Anrufe, in der Haus-App",
+            "„Eingeschränkte Einstellungen zulassen“",
+        ).forEach { assertTrue("the guide lacks „$it“", anleitung.contains(it)) }
     }
 
     /** Refused: the switch stays off and says why. */

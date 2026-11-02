@@ -3,6 +3,7 @@ package cloud.dopp.haus
 import cloud.dopp.haus.data.Napi.Quelle
 import cloud.dopp.haus.data.SicherungClient
 import cloud.dopp.haus.sicherung.Adressbuch
+import cloud.dopp.haus.sicherung.Anzeige
 import cloud.dopp.haus.sicherung.Art
 import cloud.dopp.haus.sicherung.Auszug
 import cloud.dopp.haus.sicherung.Kontakt
@@ -33,6 +34,13 @@ import java.io.File
 /** [Marken] in memory. */
 class MapMarken : Marken {
     val marken = HashMap<Art, Long>()
+    val zahlen = HashMap<String, Map<Art, Int>>()
+    var letzte: Pair<Long, Map<Art, Int>>? = null
+    override fun zahlen(name: String) = zahlen[name].orEmpty()
+    override fun merkeZahlen(name: String, zahlen: Map<Art, Int>?) {
+        if (zahlen == null) this.zahlen.remove(name) else this.zahlen[name] = zahlen
+    }
+    override fun merkeLetzte(zeit: Long, zahlen: Map<Art, Int>) { letzte = zeit to zahlen }
     val ausstehend = HashMap<String, Map<Art, Long>>()
     override fun marke(art: Art) = marken[art] ?: 0L
     override fun ausstehend(name: String) = ausstehend[name]
@@ -119,13 +127,13 @@ class HandyLaufTest {
             val ab = sms.filter { it.first >= seitSms }
             if (ab.isEmpty()) return null
             datei.writeText("<smses count=\"${ab.size}\">" + ab.joinToString("") { "<sms date=\"${it.first}\" body=\"${it.second}\" />" } + "</smses>")
-            return Auszug(ab.size, mapOf(Art.SMS to ab.maxOf { it.first }, Art.MMS to seitMms), ab.count { it.first > seitSms })
+            return Auszug(ab.size, mapOf(Art.SMS to ab.maxOf { it.first }, Art.MMS to seitMms), mapOf(Art.SMS to ab.count { it.first > seitSms }))
         }
         override fun anrufe(datei: File, seit: Long): Auszug? {
             val ab = anrufe.filter { it >= seit }
             if (ab.isEmpty()) return null
             datei.writeText("<calls count=\"${ab.size}\">" + ab.joinToString("") { "<call date=\"$it\" />" } + "</calls>")
-            return Auszug(ab.size, mapOf(Art.ANRUFE to ab.max()), ab.count { it > seit })
+            return Auszug(ab.size, mapOf(Art.ANRUFE to ab.max()), mapOf(Art.ANRUFE to ab.count { it > seit }))
         }
     }
 
@@ -149,6 +157,8 @@ class HandyLaufTest {
         assertTrue(m.ausstehend.isEmpty())
         assertEquals(Meldung.Art.OK, g.meldungen[Quelle.SMS]?.art)
         assertEquals(2, g.uebertragen[Quelle.SMS]?.second)
+        assertEquals("what the screen counts", mapOf(Art.SMS to 2, Art.ANRUFE to 1), m.letzte?.second)
+        assertTrue(m.zahlen.isEmpty())
 
         // the next run: only the boundary entries again, nothing asked, not even the key
         val vorher = haus.anfragen.size
@@ -209,6 +219,15 @@ class HandyLaufTest {
         assertEquals(Lauf.Ergebnis.FERTIG, lauf(FakeTelefon(emptyList(), emptyList()), ordner).laufen())
         assertTrue(ordner.listFiles()!!.isEmpty())
         assertTrue(haus.anfragen.isEmpty())
+    }
+
+    @Test
+    fun theCountsReadAsAPersonSaysThem() {
+        assertEquals("412 Kontakte, 3 neu, 1 geändert", Anzeige.kontakte(412, 3, 1, 0))
+        assertEquals("1 Kontakt", Anzeige.kontakte(1, 0, 0, 0))
+        assertEquals("1.200 Kontakte, 2 entfernt", Anzeige.kontakte(1200, 0, 0, 2))
+        assertEquals("1.234 SMS, 56 MMS, 789 Anrufe", Anzeige.nachrichten(mapOf(Art.SMS to 1234, Art.MMS to 56, Art.ANRUFE to 789)))
+        assertEquals("3 SMS, 1 Anruf", Anzeige.nachrichten(mapOf(Art.SMS to 3, Art.MMS to 0, Art.ANRUFE to 1)))
     }
 
     @Test
