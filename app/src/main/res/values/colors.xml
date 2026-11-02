@@ -3,8 +3,8 @@
     <!-- Legacy Google-template shortcut background (kept for shortcut drawables). -->
     <color name="shortcut_background">#F5F5F5</color>
 
-    <!-- Adaptive launcher-icon background: the brand blue (#130). -->
-    <color name="ic_launcher_background">@color/haus_brand_blue</color>
+    <!-- Adaptive launcher-icon background: the icon's ground (art/icon.svg). -->
+    <color name="ic_launcher_background">#0C120E</color>
 
     <!-- ── Haus palette ───────────────────────────────────────────────── -->
     <color name="haus_bg">#070709</color>            <!-- window background -->
@@ -46,6 +46,4 @@
     <!-- Energy leg colors, shared by web + widgets. -->
     <color name="energy_supply">#66BB6A</color>        <!-- PV / feed-in / discharge -->
     <color name="energy_draw">#EF5350</color>          <!-- consumption / import / charge -->
-    <color name="energy_neutral">#B0BEC5</color>
-    <color name="energy_battery">#7E9CFF</color>
 </resources>
