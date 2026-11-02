@@ -58,13 +58,13 @@ object ShortcutUsage {
 /**
  * Last-seen **device catalogue**, cached so the app-icon menu can be rebuilt
  * without waiting for (or reaching) the server (#100) — the same stale-then-fresh
- * contract as [ActiveCache] and [WidgetStore.toolCatalogJson].
+ * contract as [WidgetStore.toolCatalogJson].
  *
- * The menu is republished from a background thread on every widget change and on
- * every visit to the hub; refetching the household each time and blanking the
- * menu when the phone is offline would be the wrong trade. Only the four fields a
- * shortcut needs are kept — id, name, domain, device class — not the picker's
- * room grouping. Pure → JVM-testable; [WidgetStore] holds the string.
+ * The menu is republished from a background thread on every visit to the
+ * app's screen; refetching the household each time and blanking the menu when
+ * the phone is offline would be the wrong trade. Only the four fields a
+ * shortcut needs are kept — id, name, domain, device class. Pure →
+ * JVM-testable; [WidgetStore] holds the string.
  */
 object ShortcutCatalog {
 
@@ -82,11 +82,7 @@ object ShortcutCatalog {
         return arr.toString()
     }
 
-    /**
-     * Parse a cached catalogue. Every entry comes back **without** an
-     * `appWidgetId`: the cache is the household, not the home screen — the live
-     * widget ids are merged on top by [AppShortcuts].
-     */
+    /** Parse a cached catalogue; anything malformed reads as none. */
     fun decode(json: String?): List<ShortcutDevice> {
         if (json.isNullOrBlank()) return emptyList()
         return try {
@@ -98,7 +94,6 @@ object ShortcutCatalog {
                 if (eid.isBlank()) continue
                 out.add(
                     ShortcutDevice(
-                        appWidgetId = null,
                         entityId = eid,
                         name = o.optString("n"),
                         domain = o.optString("d"),

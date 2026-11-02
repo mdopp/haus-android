@@ -11,9 +11,11 @@ import cloud.dopp.haus.data.TokenStore
 import kotlin.concurrent.thread
 
 /**
- * House energy widget (#8). Shows the live grid net (small) or the full
- * PV/Haus/Netz/Akku flow (large). No per-instance config — one house picture.
- * A tap opens the Haus app (or pairing if not yet paired).
+ * The one energy widget (owner, 2026-11-02; it replaces "Jetzt", "Verlauf" and
+ * "Gesamt"): what flows now and what came together today, from
+ * `/napi/portal/energy` ([EnergyRender]). No per-instance config — one house
+ * picture. A tap opens Haus's Energie page at the paired address
+ * (`https://haus.<domain>/energie`), the arrows read again.
  */
 class EnergyWidgetProvider : AppWidgetProvider() {
 
@@ -50,8 +52,7 @@ class EnergyWidgetProvider : AppWidgetProvider() {
     private fun refresh(context: Context, appWidgetId: Int) {
         val mgr = AppWidgetManager.getInstance(context)
         val paired = TokenStore.isPaired(context)
-        // Body tap opens Haus's start page (#27); the icon triggers a refresh (#26).
-        val tap = HausPages.tap(context, appWidgetId, HausPages.START, WidgetKind.ENERGY)
+        val tap = tapPending(context, appWidgetId)
         val onRefresh = refreshPending(context, appWidgetId)
         // Immediate render (loading / pair hint), then async fetch.
         mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, null, paired, tap, onRefresh))
@@ -75,18 +76,22 @@ class EnergyWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    /** Broadcast our own [ACTION_REFRESH] to re-fetch this instance (#26). */
-    private fun refreshPending(context: Context, appWidgetId: Int): PendingIntent {
-        val intent = Intent(context, EnergyWidgetProvider::class.java)
-            .setAction(ACTION_REFRESH)
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        return PendingIntent.getBroadcast(
-            context, appWidgetId + 730_000, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-    }
-
     companion object {
         const val ACTION_REFRESH = "cloud.dopp.haus.widget.ENERGY_REFRESH"
+
+        /** The body's tap: Haus's Energie page in the browser, counted as this widget's (#180). */
+        fun tapPending(context: Context, appWidgetId: Int): PendingIntent =
+            HausPages.tap(context, appWidgetId, HausPages.ENERGIE, WidgetKind.ENERGY)
+
+        /** Broadcast our own [ACTION_REFRESH] to re-fetch this instance (#26). */
+        fun refreshPending(context: Context, appWidgetId: Int): PendingIntent {
+            val intent = Intent(context, EnergyWidgetProvider::class.java)
+                .setAction(ACTION_REFRESH)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            return PendingIntent.getBroadcast(
+                context, appWidgetId + 730_000, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
     }
 }

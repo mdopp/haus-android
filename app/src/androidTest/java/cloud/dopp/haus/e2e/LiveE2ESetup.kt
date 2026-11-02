@@ -7,17 +7,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
-import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
-import cloud.dopp.haus.widget.DeviceWidgetProvider
-import cloud.dopp.haus.widget.WidgetStore
+import cloud.dopp.haus.widget.EnergyWidgetProvider
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
  * The live e2e's starting point (e2e/live_e2e.sh): the app paired to the fake
- * Haus on the emulator's host, a device widget and an active-devices widget
- * placed. Binding needs `appwidget grantbind` for the app, which the script
+ * Haus on the emulator's host, the energy widget placed (since 2026-11-02 the
+ * one widget whose sensors the stream watches). Binding needs `appwidget grantbind` for the app, which the script
  * does first; the widgets are bound to a host of the app's own, which is all
  * the live service looks at.
  */
@@ -31,14 +29,10 @@ class LiveE2ESetup {
         assertTrue("token", TokenStore.save(ctx, "haus_device_E2E"))
         val mgr = AppWidgetManager.getInstance(ctx)
         val host = AppWidgetHost(ctx, HOST_ID)
-        val device = host.allocateAppWidgetId()
-        assertTrue("bind the device widget", mgr.bindAppWidgetIdIfAllowed(device, ComponentName(ctx, DeviceWidgetProvider::class.java)))
-        WidgetStore.bind(ctx, device, "light.e2e", "E2E", "light", null)
-        val active = host.allocateAppWidgetId()
-        assertTrue("bind the active widget", mgr.bindAppWidgetIdIfAllowed(active, ComponentName(ctx, ActiveDevicesWidgetProvider::class.java)))
+        val energy = host.allocateAppWidgetId()
+        assertTrue("bind the energy widget", mgr.bindAppWidgetIdIfAllowed(energy, ComponentName(ctx, EnergyWidgetProvider::class.java)))
         // The stores write with apply(); the process ends with the instrumentation.
         assertTrue("server not on disk", written(ctx, "haus_server", "10.0.2.2"))
-        assertTrue("widget binding not on disk", written(ctx, "haus_widgets", "light.e2e"))
     }
 
     /** Wait until the prefs file [name] holds [needle]: apply() writes in the background. */

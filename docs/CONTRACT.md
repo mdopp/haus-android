@@ -59,23 +59,25 @@ each row naming the Haus file and lines it came from.
 | Widget | Path |
 |---|---|
 | pairing | `GET /napi/whoami`, `GET /napi/persona`, `GET /napi/persona/icon.png` |
-| device | `GET /napi/portal/state`, `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
-| active devices | `GET /napi/portal/active` |
-| energy | `GET /napi/portal/energy`, `GET /napi/portal/entity-history` (`range` 24h or 7d) |
-| camera | `POST /napi/upload` (capture) |
+| the start screen's devices | `GET /napi/portal/favorites` (the person's ☆ things on Haus, as cards in their order; haus#213), `POST /napi/ha/call`, `GET /napi/portal/state` (a cover's or a lock's state before its toggle) |
+| app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
+| energy | `GET /napi/portal/energy`: the flow now and, per total, `today` (kWh since the house's midnight; haus#213) |
 | Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120) |
-| tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,contacts,documents,notes}`), `POST /napi/action-callback` |
+| tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,documents,notes}`; Haus also lists `contacts`, which the app no longer offers as a widget, owner 2026-11-02), `POST /napi/action-callback` |
 | Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
 | live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |
 
 Fields the widgets read beyond a value to show:
 
-- `page` on every card (`/napi/portal/state`, `/napi/portal/active`, the
-  stream's `card_state`) and on every tool row with an id: the item's own page
-  on Haus, a path (`/raeume/<entity_id>`, `/kalender/erinnerung/<uid>`,
-  `/kontakte/<uid>`, `/dokumente/<id>`, `/notizen/<file>`). See (d).
+- `page` on every card (`/napi/portal/state`, `/napi/portal/favorites`) and
+  on every tool row with an id: the item's own page on Haus, a path
+  (`/raeume/<entity_id>`, `/kalender/erinnerung/<uid>`, `/dokumente/<id>`,
+  `/notizen/<file>`). See (d).
+- `today` on every energy total: what it added since the house's midnight,
+  in kWh, by the Energie page's rule; absent when HA's history does not say,
+  and then the widget shows a dash, never the lifetime count.
 - `pendingApprovals` and `pendingUpdates` of `/napi/box/home`: Haus counts a
   template update once, as an update, never as an approval. The Box widget
   shows the two numbers apart.
@@ -84,29 +86,21 @@ Fields the widgets read beyond a value to show:
 
 One foreground service (`realtime/LiveService.kt`, type `specialUse`, a quiet
 "Live-Widgets" notification) runs while the app is paired, its switch is on
-(the default) and a widget the stream keeps current is placed (device, active
-devices, energy, energy statistics, energy totals, tools, the Box widgets). It
-listens for the screen itself. While the screen is on it holds
-`GET /napi/portal/events` and reads two frames, `card_state` and `active_set`;
-on screen-off it drops the connection. Once connected it posts its watch set
-(`POST /napi/portal/watch`: `entity_ids`, the device widgets' entities and,
-while an energy widget is placed, the energy flow's sensors; `active: true`
-while an active-devices widget is placed, left out otherwise; re-posted inside
-Haus's one-hour TTL, and at once when the first active-devices widget is placed
-or the last one removed; a 503 while Home Assistant is down is retried with
-backoff, about two minutes) and has every fed widget read again.
+(the default) and a widget the stream keeps current is placed (energy, tools,
+the Box widgets). It listens for the screen itself. While the screen is on it
+holds `GET /napi/portal/events` and reads one frame, `card_state`; on
+screen-off it drops the connection. Once connected it posts its watch set
+(`POST /napi/portal/watch`: `entity_ids`, while the energy widget is placed
+the energy flow's sensors; re-posted inside Haus's one-hour TTL; a 503 while
+Home Assistant is down is retried with backoff, about two minutes) and has
+every fed widget read again.
 
-- `card_state` (`{entity_id, card}`) draws the device widgets of that entity
-  and reads the active list again; a frame for an energy sensor reads the
-  energy widgets again, at most every 10 s, Haus's sensor interval.
-- `active_set` (`{entity_ids}`) comes only while the watch says `active`: at
-  once when the stream opens or the watch turns active, then when the set of
-  things that are on or open changes, at most every 10 s. The app reads
-  `/napi/portal/active` again unless the ids are exactly the ones it last read
-  (order aside). A failed read keeps the list last read.
+- `card_state` (`{entity_id, card}`) for an energy sensor reads the energy
+  widget again, at most every 10 s, Haus's sensor interval. Any other frame
+  reads nothing. The app never asks for `active_set` (no `active` in its
+  watch), and a stray one is not read.
 
-A card and the set it changed arrive together; they cost one read of the
-active list, not two. A 401 stops the service.
+A 401 stops the service.
 
 It starts from allowed starts only (Android 12+): the app's screen, a widget
 tap, a configure screen (the fed widgets without a choice have a no-UI one,
@@ -129,27 +123,42 @@ through their chat channel, not the app (laib ADR 0022 §3).
 
 ## (d) Pages
 
-A widget's body tap opens one of Haus's pages in the browser: `/start` for the
-house, `/box` for the Box. The app has no web shell of its own.
+A widget's body tap opens one of Haus's pages in the browser at the paired
+address: `/energie` for the energy widget, `/start` for a tool widget's
+header, `/box` for the Box. The app has no web shell of its own; its start
+screen opens Haus's pages in a Custom Tab: „Alle Geräte“ `/raeume`, a
+favorite's own page on a long press (or on a tap, for a device a tap cannot
+switch).
 
-An item opens its own page, base + `page`: a device widget's name, a row of
-the active devices, a tool row. Only a path on Haus is taken (it starts with a
-single `/`, has no `..`, no backslash, no whitespace); an absolute URL or
-anything else is never opened. Without a page a device and an active row open
-`/start`, and a tool row keeps its tap: a row with actions opens its sheet —
-with "Öffnen" as one more entry, after the actions, when it has a page — and a
-row with neither does nothing. A collection row has one tap target, so active
-and tool rows go through one translucent screen (`ToolActionActivity`) that
-opens the page or the sheet.
+An item opens its own page, base + `page`: a favorite on the start screen, a
+tool row. Only a path on Haus is taken (it starts with a single `/`, has no
+`..`, no backslash, no whitespace); an absolute URL or anything else is never
+opened. Without a page a favorite opens `/start`, and a tool row keeps its
+tap: a row with actions opens its sheet — with "Öffnen" as one more entry,
+after the actions, when it has a page — and a row with neither does nothing.
+A collection row has one tap target, so tool rows go through one translucent
+screen (`ToolActionActivity`) that opens the page or the sheet.
 
 Every page a widget opens carries `von=widget.<kind>` exactly once (`?von=…`,
 or `&von=…` after a query the page already has; a `von` of the page's own is
 replaced), so Haus counts server-side which widget a tap came from (#180).
-The kinds (`WidgetKind` in `widget/HausPages.kt`): `device`, `devices`,
-`active`, `energy`, `energy-stats`, `energy-totals`, `box-overview`,
-`box-services`, `tool`. The camera widget opens no page. The app counts
-nothing and makes no call for it; a launcher shortcut and the app's own
-links carry no `von`.
+The kinds (`WidgetKind` in `widget/HausPages.kt`): `energy`, `box-overview`,
+`box-services`, `tool`. The app counts nothing and makes no call for it; a
+launcher shortcut and the app's own links carry no `von`.
+
+## (d2) The start screen's devices
+
+(Owner, 2026-11-02: the devices live in the app, the device, active-devices
+and camera widgets are gone.) Paired, the app's screen shows first the
+person's favorite devices — `GET /napi/portal/favorites`, the things they
+pinned with ☆ on Haus, in their order — and below them „Alle Geräte“, which
+opens Haus's `/raeume`. The list read last is kept and drawn at once; a read
+that fails keeps it. A tap acts as the device widget's did, through
+`widget/WidgetActionReceiver`: a light or a switch toggles, a cover opens or
+closes (a garage, a door, a gate asks first: Haus's 403), a lock opens its
+chooser (#92: „Tür öffnen“ only when the card's `supported_features` names a
+latch); anything else opens its page. When the call is done the list is read
+again. With no favorites the screen says in one sentence how to get some.
 
 ## (e) Nachrichten sichern
 

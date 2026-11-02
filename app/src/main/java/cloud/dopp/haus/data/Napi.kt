@@ -115,10 +115,7 @@ object Napi {
         override fun toString() = "$method $path"
     }
 
-    /** The history windows the app shows, as Haus names them (`historyRanges`). */
-    enum class HistoryRange(val wire: String) { DAY("24h"), WEEK("7d") }
-
-    /** The domains Haus draws as a card: only these can be a device widget. */
+    /** The domains Haus draws as a card. */
     val CARD_DOMAINS: Set<String> = setOf(
         "sensor", "binary_sensor", "cover", "light", "switch", "climate", "media_player", "lock",
     )
@@ -167,11 +164,6 @@ object Napi {
         const val BRIGHTNESS = "brightness"
         const val CURRENT_POSITION = "current_position"
         const val CURRENT_TEMPERATURE = "current_temperature"
-        const val RGB_COLOR = "rgb_color"
-        const val SUPPORTED_COLOR_MODES = "supported_color_modes"
-        const val COLOR_MODE = "color_mode"
-        const val COLOR_TEMP = "color_temp"
-        const val UPDATED_AT_MS = "updated_at_ms"
         const val SUPPORTED_FEATURES = "supported_features"
 
         /** The thing's own page on Haus, a path (`/raeume/<entity_id>`): what a tap opens. */
@@ -183,12 +175,12 @@ object Napi {
         const val CARD = "card"
     }
 
-    /** `GET /napi/portal/active`: `{ok, active: [card]}`. */
-    object ActiveJson {
-        const val ACTIVE = "active"
+    /** `GET /napi/portal/favorites`: `{ok, favorites: [card]}`, the person's ☆ things in their order. */
+    object FavoritesJson {
+        const val FAVORITES = "favorites"
     }
 
-    /** `GET /napi/portal/energy`: `{ok, energy: {flow: [meter], totals: [meter]}}`. */
+    /** `GET /napi/portal/energy`: `{ok, energy: {flow: [meter], totals: [meter + today]}}`. */
     object EnergyJson {
         const val OK = "ok"
         const val ENERGY = "energy"
@@ -199,12 +191,9 @@ object Napi {
         const val UNIT = "unit"
         const val SENSE = "sense"
         const val ENTITY_ID = "entity_id"
-    }
 
-    /** `GET /napi/portal/entity-history`: `{ok, history: [{t, state}]}`. */
-    object HistoryJson {
-        const val HISTORY = "history"
-        const val STATE = "state"
+        /** A total's kWh since the house's midnight; absent when HA's history does not say. */
+        const val TODAY = "today"
     }
 
     /** `GET /napi/portal/start/addable`: `{ok, rooms: [{room, cards: [device]}]}`. */
@@ -218,16 +207,17 @@ object Napi {
         const val DEVICE_CLASS = "device_class"
     }
 
-    /** The stream's frames: `card_state` `{entity_id, card}`, `active_set` `{entity_ids}`. */
+    /** The stream's frame: `card_state` `{entity_id, card}`. */
     object EventJson {
         const val ENTITY_ID = "entity_id"
         const val CARD = "card"
-        const val ENTITY_IDS = "entity_ids"
     }
 
-    /** The frames the stream carries, by their SSE event name. */
+    /** The contacts tool of `/napi/defs/tool`: Haus lists it, the app no longer offers it (owner, 2026-11-02). */
+    const val TOOL_CONTACTS = "contacts"
+
+    /** The frame the stream carries, by its SSE event name. */
     const val CARD_STATE = "card_state"
-    const val ACTIVE_SET = "active_set"
 
     /** `GET /napi/defs/tool`: `{ok, defs: [def]}`. */
     object ToolDefJson {
@@ -411,25 +401,19 @@ object Napi {
 
     val ENERGY = Endpoint(Method.GET, "/napi/portal/energy", reply = listOf(EnergyJson))
 
-    val HISTORY = Endpoint(
-        Method.GET, "/napi/portal/entity-history",
-        query = listOf("entity_id", "range"),
-        allowed = mapOf("range" to HistoryRange.entries.map { it.wire }),
-        reply = listOf(HistoryJson),
-    )
+    /** The person's favorite devices, the start screen's first rows. */
+    val FAVORITES = Endpoint(Method.GET, "/napi/portal/favorites", reply = listOf(FavoritesJson, CardJson))
 
-    val ACTIVE = Endpoint(Method.GET, "/napi/portal/active", reply = listOf(ActiveJson, CardJson))
-
-    /** What the device picker and the app-icon menu offer. */
+    /** What the app-icon menu offers. */
     val ADDABLE = Endpoint(Method.GET, "/napi/portal/start/addable", reply = listOf(AddableJson))
 
-    /** Which entities this device's widgets show, and whether it wants `active_set`; 503 while HA is down. */
-    val WATCH = Endpoint(Method.POST, "/napi/portal/watch", body = listOf("entity_ids", "active"))
+    /** Which entities this device's widgets show; 503 while HA is down. */
+    val WATCH = Endpoint(Method.POST, "/napi/portal/watch", body = listOf("entity_ids"))
 
-    /** The live stream: `card_state` and `active_set` frames. */
+    /** The live stream: `card_state` frames. */
     val EVENTS = Endpoint(
         Method.GET, "/napi/portal/events",
-        reply = listOf(EventJson, CardJson), accept = "text/event-stream", events = listOf(CARD_STATE, ACTIVE_SET),
+        reply = listOf(EventJson, CardJson), accept = "text/event-stream", events = listOf(CARD_STATE),
     )
 
     /** The tool catalog. */
@@ -443,9 +427,6 @@ object Napi {
         Method.POST, "/napi/action-callback",
         body = listOf("action_id", "params", "confirmed"), reply = listOf(ActionJson),
     )
-
-    /** The camera capture into the share's consume folder, multipart: the name, then the file. */
-    val UPLOAD = Endpoint(Method.POST, "/napi/upload", body = listOf("filename", "file"))
 
     /** Share → Haus: what the phone shared, kept as a note when a link is in it. */
     val MERKEN = Endpoint(Method.POST, "/napi/merken", body = listOf("text"), reply = listOf(MerkenJson))

@@ -4,15 +4,17 @@
 its server, [Haus](https://github.com/mdopp/haus). Nothing else (laib ADR 0022):
 no web shell, no messages, no approvals, no diagnostics.
 
-- **Widgets:** a device and all devices (with colours and brightness), energy
-  (flow, totals, chart), camera capture, active devices, the household's tools
-  (tasks with check-off, contacts, documents, notes) and, for admins, the Box.
+- **Start screen:** your favorite devices first (what you pinned with ☆ on
+  Haus), a tap switches one; below them „Alle Geräte“, Haus's devices page.
+- **Widgets:** one energy widget (jetzt and heute; a tap opens Haus's Energie
+  page), the household's tools (reminders with check-off, documents, notes)
+  and, for admins, the Box.
 - **Pairing:** enter Haus's address, confirm on `/pair-device`, done. The
   house persona (name, colours, icon) comes from `/napi/persona`.
 - **Current while you look:** one foreground service (`specialUse`, with a
   quiet "Live-Widgets" notification) holds the live stream
-  (`/napi/portal/events`: `card_state`, and `active_set` for the active
-  devices) while the screen is on, drops it
+  (`/napi/portal/events`: `card_state` for the energy sensors) while the
+  screen is on, drops it
   when the screen goes off and re-reads every widget on screen-on. No poll.
   On by default once paired; a switch in the app turns it off. That it comes
   back by itself after the app was killed is what the battery-optimization

@@ -24,12 +24,12 @@ enum class LockChoice(val service: String) {
 }
 
 /**
- * What the 1×1 lock tile's chooser offers (#92).
+ * What a lock's chooser offers (#92).
  *
- * On the tiny tier a tap used to run [WidgetActionReceiver.lockToggleService]
- * blind: the tile shows barely any state there, so a mistap flipped the bolt of
- * the front door. The tap now opens a chooser instead, and **the chooser is the
- * confirmation** — there is no longer any path that acts without an explicit
+ * A tap on a lock used to run [WidgetActionReceiver.lockToggleService] blind:
+ * the 1×1 tile showed barely any state, so a mistap flipped the bolt of the
+ * front door. A tap on a lock — on the start screen, from its app-icon
+ * shortcut — opens a chooser instead, and **the chooser is the confirmation** — there is no longer any path that acts without an explicit
  * pick, and no second dialog on top of it.
  *
  * `lock.open` is the odd one out. Haus does not block it — `/napi/ha/call`

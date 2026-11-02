@@ -2,12 +2,10 @@ package cloud.dopp.haus
 
 import androidx.test.core.app.ApplicationProvider
 import android.content.Context
-import cloud.dopp.haus.data.Card
 import cloud.dopp.haus.widget.ConfirmVerb
 import cloud.dopp.haus.widget.LockChoice
 import cloud.dopp.haus.widget.LockChooser
 import cloud.dopp.haus.widget.WidgetActionReceiver
-import cloud.dopp.haus.widget.WidgetRender
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -86,28 +84,21 @@ class LockChooserTest {
         )
         for (s in states) {
             assertNotEquals("state $s", "lock.open", WidgetActionReceiver.lockToggleService(s))
-            // A lock tap on 1×1 does not act — it asks.
-            assertEquals(
-                "state $s",
-                WidgetActionReceiver.OP_LOCK_CHOOSE,
-                WidgetRender.tinyToggleOp("lock", card(s)),
-            )
         }
-        assertNotEquals(
-            WidgetActionReceiver.OP_TOGGLE,
-            WidgetRender.tinyToggleOp("lock", null),
-        )
+        // A lock's tap on the start screen does not act — it asks.
+        assertEquals(WidgetActionReceiver.OP_LOCK_CHOOSE, op("lock.home"))
         // The chooser op is inert by construction: it carries no service.
         assertFalse(WidgetActionReceiver.OP_LOCK_CHOOSE.contains("."))
     }
 
-    /** Every other domain — and the rest of the tile — keeps what it had (#57). */
-    @Test fun otherDomainsKeepTheirToggle() {
-        assertEquals(WidgetActionReceiver.OP_TOGGLE, WidgetRender.tinyToggleOp("light", null))
-        assertEquals(WidgetActionReceiver.OP_TOGGLE, WidgetRender.tinyToggleOp("switch", null))
-        assertEquals(WidgetActionReceiver.OP_COVER_OPEN, WidgetRender.tinyToggleOp("cover", null))
-        assertEquals(WidgetActionReceiver.OP_REFRESH, WidgetRender.tinyToggleOp("sensor", null))
+    /** Every other domain toggles on a tap (#57). */
+    @Test fun otherDomainsToggle() {
+        for (e in listOf("light.flur", "switch.kaffee", "cover.rollo")) assertEquals(e, WidgetActionReceiver.OP_TOGGLE, op(e))
     }
+
+    private fun op(entityId: String): String? =
+        WidgetActionReceiver.tap(ApplicationProvider.getApplicationContext(), entityId, "x", null)
+            .getStringExtra(WidgetActionReceiver.EXTRA_OP)
 
     /** The wording is #85's, not a parallel set of words invented here. */
     @Test fun theWordsComeFromTheConfirmTable() {
@@ -149,15 +140,6 @@ class LockChooserTest {
             }
         }
     }
-
-    private fun card(state: String?) = Card(
-        entityId = "lock.home",
-        name = "Haustür",
-        domain = "lock",
-        deviceClass = null,
-        state = state,
-        unit = null,
-    )
 
     /** Unit tests run from the module dir, but don't depend on it. */
     private fun locate(rel: String): File {

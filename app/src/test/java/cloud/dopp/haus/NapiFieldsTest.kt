@@ -18,10 +18,7 @@ import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.ToolDefs
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
-import cloud.dopp.haus.widget.ActiveCache
-import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
 import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
-import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.ToolActionActivity
 import cloud.dopp.haus.widget.ToolCells
 import cloud.dopp.haus.widget.ToolRow
@@ -50,10 +47,10 @@ import java.io.File
  * - the persona's icon is a PNG at `/napi/persona/icon.png`, drawn with
  *   BitmapFactory; no SVG library, no SVG code;
  * - every card and every tool row with an id names its own page on Haus
- *   (`page`): a device, an active row and a tool row open base + page, a
+ *   (`page`): a start-screen device and a tool row open base + page, a
  *   card without one opens `/start`, and only a path on Haus is ever opened;
- * - the watch says `active: true` while an active-devices widget is placed,
- *   so Haus sends it the `active_set` frame;
+ * - the watch names entities only: no active widget asks for `active_set`
+ *   any more (owner, 2026-11-02);
  * - the Box widget shows approvals and updates apart, as Haus now counts them.
  *
  * Written before the code (red first): new names are reached through [Reach].
@@ -178,83 +175,9 @@ class NapiFieldsTest {
     )
 
     @Test
-    fun aCardCarriesItsPageThroughBothCaches() {
-        val c = card("/raeume/light.k")
-        assertEquals("/raeume/light.k", Reach.get(c, "page"))
+    fun aCardCarriesItsPage() {
+        assertEquals("/raeume/light.k", Reach.get(card("/raeume/light.k"), "page"))
         assertNull(Reach.get(card(null), "page"))
-        WidgetCache.putCard(ctx(), 5, c)
-        assertEquals("/raeume/light.k", Reach.get(WidgetCache.getCard(ctx(), 5)!!, "page"))
-        assertEquals("/raeume/light.k", Reach.get(ActiveCache.decode(ActiveCache.encode(listOf(c))).single(), "page"))
-        assertNull(Reach.get(ActiveCache.decode(ActiveCache.encode(listOf(card(null)))).single(), "page"))
-    }
-
-    /** What a tap on [id]'s name opens, as the launcher would fire it. */
-    private fun tapName(id: Int): String? {
-        val v = shadowOf(AppWidgetManager.getInstance(ctx())).getViewFor(id)
-        v.findViewById<View>(R.id.w_name).performClick()
-        idle()
-        return shadowOf(ctx() as android.app.Application).nextStartedActivity?.dataString
-    }
-
-    @Test
-    fun aDeviceOpensItsPage() {
-        val id = shadowOf(AppWidgetManager.getInstance(ctx()))
-            .createWidget(DeviceWidgetProvider::class.java, R.layout.widget_device_small)
-        WidgetStore.bind(ctx(), id, "light.k", "Küche", "light", null)
-        DeviceWidgetProvider.renderCard(ctx(), id, card(null))
-        assertEquals("https://haus.example/start?von=widget.device", tapName(id))
-        DeviceWidgetProvider.renderCard(ctx(), id, card("/raeume/light.k"))
-        assertEquals("https://haus.example/raeume/light.k?von=widget.device", tapName(id))
-        DeviceWidgetProvider.renderCard(ctx(), id, card("https://evil.example/x"))
-        assertEquals("https://haus.example/start?von=widget.device", tapName(id))
-    }
-
-    /** A refresh that cannot read the device keeps drawing the card last read, and its page with it. */
-    @Test
-    fun aDeviceKeepsItsPageWhenAReadFails() {
-        TokenStore.clear(ctx()) // the read fails at once, three times
-        val mgr = AppWidgetManager.getInstance(ctx())
-        val id = shadowOf(mgr).createWidget(DeviceWidgetProvider::class.java, R.layout.widget_device_small)
-        WidgetStore.bind(ctx(), id, "light.k", "Küche", "light", null)
-        WidgetCache.putCard(ctx(), id, card("/raeume/light.k"))
-        DeviceWidgetProvider().onUpdate(ctx(), mgr, intArrayOf(id))
-        repeat(50) { idle(); Thread.sleep(100) } // past the three tries, 1.2 s apart
-        assertEquals("https://haus.example/raeume/light.k?von=widget.device", tapName(id))
-    }
-
-    /** A failed read of the active list is no news: the widget keeps the list last read, never "…" or "Alles aus". */
-    @Test
-    fun theActiveWidgetKeepsTheListLastReadWhenAReadFails() {
-        ServerStore.setBaseUrl(ctx(), "https://127.0.0.1:1") // paired, but nobody answers
-        val mgr = AppWidgetManager.getInstance(ctx())
-        val id = shadowOf(mgr).createWidget(ActiveDevicesWidgetProvider::class.java, R.layout.widget_active_small)
-        repeat(50) { idle(); Thread.sleep(20) } // the placement's own read fails too
-        WidgetStore.setActiveCacheJson(ctx(), ActiveCache.encode(listOf(card(null))))
-        ActiveDevicesWidgetProvider().onUpdate(ctx(), mgr, intArrayOf(id))
-        val count = { shadowOf(mgr).getViewFor(id).findViewById<TextView>(R.id.av_count).text.toString() }
-        repeat(100) { if (count() != "…") return@repeat; idle(); Thread.sleep(100) }
-        assertEquals(ctx().getString(R.string.active_count, 1), count())
-        assertEquals(1, ActiveCache.decode(WidgetStore.activeCacheJson(ctx())).size)
-    }
-
-    /** An active row carries its page, or `/start`, to the row-tap screen. */
-    @Test
-    fun anActiveRowCarriesItsPage() {
-        val row = "cloud.dopp.haus.widget.ActiveRow"
-        assertEquals("/raeume/light.k", (Reach.call(row, "fillIn", card("/raeume/light.k")) as Intent).getStringExtra(extraPage()))
-        assertEquals("/start", (Reach.call(row, "fillIn", card(null)) as Intent).getStringExtra(extraPage()))
-    }
-
-    /** The active list's rows open through the row-tap screen, the one target a collection row has. */
-    @Test
-    fun theActiveListsRowsGoToTheRowTapScreen() {
-        val src = File(RepoFiles.main, "java/cloud/dopp/haus/widget/ActiveDevicesWidgetProvider.kt").readText()
-        val template = src.substringAfter("setPendingIntentTemplate(").substringBefore("\n")
-        assertTrue("the row template is not the row-tap screen's: $template", template.contains("ToolActionActivity.template("))
-        val t = shadowOf(ToolActionActivity.template(ctx(), 1, cloud.dopp.haus.widget.WidgetKind.ACTIVE))
-        assertTrue(t.isActivityIntent)
-        assertEquals(ToolActionActivity::class.java.name, t.savedIntent.component?.className)
-        assertTrue("not mutable: a row's fill-in could not land", (t.flags and android.app.PendingIntent.FLAG_MUTABLE) != 0)
     }
 
     // --- the row-tap screen ------------------------------------------------------
@@ -341,48 +264,12 @@ class NapiFieldsTest {
         assertNull(ToolRow.fillIn(row(null), 7).getStringExtra(extraPage()))
     }
 
-    // --- the watch: active while the active-devices widget is placed -------------
-
-    private fun watchBody(ids: List<String>, active: Boolean): JSONObject {
-        val m = ApiClient.Companion::class.java.methods.firstOrNull { it.name == "watchBody" && it.parameterCount == 2 }
-        assertNotNull("watchBody takes no active flag", m)
-        return m!!.invoke(ApiClient.Companion, ids, active) as JSONObject
-    }
+    // --- the watch: entities only ------------------------------------------------
 
     @Test
-    fun theWatchSaysActiveOnlyWhenAsked() {
-        assertEquals("""{"entity_ids":["light.k"],"active":true}""", watchBody(listOf("light.k"), true).toString())
-        assertEquals("""{"entity_ids":["light.k"]}""", watchBody(listOf("light.k"), false).toString())
-        assertEquals(listOf("entity_ids", "active"), Napi.WATCH.body)
-    }
-
-    @Test
-    fun theWatchIsActiveWhileAnActiveWidgetIsPlaced() {
-        val ws = "cloud.dopp.haus.realtime.WatchSet"
-        val shadow = shadowOf(AppWidgetManager.getInstance(ctx()))
-        val device = shadow.createWidget(DeviceWidgetProvider::class.java, R.layout.widget_device_small)
-        WidgetStore.bind(ctx(), device, "light.k", "Küche", "light", null)
-        assertEquals("""{"entity_ids":["light.k"]}""", Reach.call(ws, "body", ctx()).toString())
-        shadow.createWidget(ActiveDevicesWidgetProvider::class.java, R.layout.widget_active_small)
-        assertEquals("""{"entity_ids":["light.k"],"active":true}""", Reach.call(ws, "body", ctx()).toString())
-    }
-
-    /** Placing the first active widget and removing the last tell Haus at once, not at the next re-post. */
-    @Test
-    fun theFirstAndLastActiveWidgetPostTheWatch() {
-        val live = "cloud.dopp.haus.realtime.Live"
-        val before = Reach.get(Reach.obj(live), "postWatch")
-        var posts = 0
-        Reach.set(live, "postWatch", { _: Context -> posts++ })
-        try {
-            val p = ActiveDevicesWidgetProvider()
-            p.onEnabled(ctx())
-            assertEquals("placing the first active widget posts no watch", 1, posts)
-            p.onDisabled(ctx())
-            assertEquals("removing the last active widget posts no watch", 2, posts)
-        } finally {
-            Reach.set(live, "postWatch", before)
-        }
+    fun theWatchNamesEntitiesOnly() {
+        assertEquals("""{"entity_ids":["sensor.pv"]}""", ApiClient.watchBody(listOf("sensor.pv")).toString())
+        assertEquals(listOf("entity_ids"), Napi.WATCH.body)
     }
 
     // --- the Box: approvals and updates apart ------------------------------------

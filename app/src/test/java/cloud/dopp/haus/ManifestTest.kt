@@ -65,7 +65,7 @@ class ManifestTest {
             .flatMap { (path, text) -> needles.filter { text.contains(it) }.map { "$path: $it" } }
 
     private val ours = setOf(
-        "INTERNET", "CAMERA",
+        "INTERNET",
         "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", // the live service
         "RECEIVE_BOOT_COMPLETED", // its restart after boot
         "POST_NOTIFICATIONS", // its notification, shown on Android 13+
@@ -79,8 +79,9 @@ class ManifestTest {
     )
 
     /**
-     * Exactly these permissions: the network, the camera capture, what the
-     * live service needs, and reading contacts, SMS and calls. No storage, and
+     * Exactly these permissions: the network, what the live service needs,
+     * and reading contacts, SMS and calls. No camera of the app's own: its
+     * capture screen is gone (owner, 2026-11-02); the QR scanner brings its own. No storage, and
      * nothing that writes or sends contacts or messages.
      */
     @Test
@@ -91,12 +92,14 @@ class ManifestTest {
     /**
      * What the libraries add, and nothing more: WorkManager (the backup job,
      * #194) brings its job service and, for it, the wake lock and the network
-     * state; androidx.core its receiver guard. No storage permission in any form.
+     * state; androidx.core its receiver guard; the QR scanner of the pairing
+     * (zxing-android-embedded) the camera it scans with. No storage permission
+     * in any form.
      */
     @Test
     fun theMergedManifestAddsOnlyWorkManagersOwn() {
         assertEquals(
-            ours + setOf("WAKE_LOCK", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"),
+            ours + setOf("WAKE_LOCK", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION", "CAMERA"),
             permissions(merged),
         )
         listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION", "WRITE_CONTACTS", "SEND_SMS", "WRITE_CALL_LOG", "RECEIVE_SMS").forEach { word ->
@@ -142,10 +145,7 @@ class ManifestTest {
      */
     @Test
     fun theFedWidgetsWithoutAScreenStartTheServiceWhenPlaced() {
-        listOf(
-            "energy_widget_info.xml", "energy_stats_widget_info.xml", "energy_totals_widget_info.xml",
-            "active_devices_widget_info.xml", "box_overview_widget_info.xml", "box_services_widget_info.xml",
-        ).forEach { name ->
+        listOf("energy_widget_info.xml", "box_overview_widget_info.xml", "box_services_widget_info.xml").forEach { name ->
             val info = File(RepoFiles.main, "res/xml/$name").readText()
             assertTrue(name, info.contains("""android:configure="cloud.dopp.haus.widget.LiveConfigActivity""""))
             assertFalse("$name: an optional configure step is skipped at placement", info.contains("configuration_optional"))
@@ -276,6 +276,38 @@ class ManifestTest {
         assertEquals("read only", setOf("r"), modes)
         val screen = sources.getValue("app/src/main/java/cloud/dopp/haus/ui/SicherungActivity.kt")
         assertTrue(screen.contains("ActivityResultContracts.OpenDocumentTree()"))
+    }
+
+    /**
+     * The widgets the owner took out on 2026-11-02 are gone from the manifest,
+     * so the launcher's picker no longer offers them: the device widgets, the
+     * active devices, the camera and the two energy widgets beside the one that
+     * stays — with their configure screen, list service, capture screen and
+     * file provider. Their sources and widget infos are gone too.
+     */
+    @Test
+    fun theRemovedWidgetsAreNotInTheManifest() {
+        val gone = listOf(
+            "DeviceWidgetProvider", "DevicesWidgetProvider", "ActiveDevicesWidgetProvider", "CameraWidgetProvider",
+            "EnergyStatsWidgetProvider", "EnergyTotalsWidgetProvider", "WidgetConfigActivity",
+            "ActiveDevicesRemoteViewsService", "CameraCaptureActivity",
+        )
+        gone.forEach { name ->
+            assertFalse("$name is still in the manifest", Regex("""android:name="\.(widget|ui)\.$name"""").containsMatchIn(manifest))
+            assertFalse("$name is still in the merged manifest", merged.contains(".$name\""))
+            assertTrue("$name.kt is still there", RepoFiles.mainKotlin().none { it.name == "$name.kt" })
+        }
+        assertFalse("the capture's file provider", manifest.contains("androidx.core.content.FileProvider"))
+        assertFalse("the camera", manifest.contains("android.hardware.camera"))
+        val providers = Regex("""<receiver\s+android:name="\.widget\.(\w+WidgetProvider)"""").findAll(manifest).map { it.groupValues[1] }.toSet()
+        assertEquals(
+            setOf("EnergyWidgetProvider", "BoxOverviewWidgetProvider", "BoxServicesWidgetProvider", "ToolWidgetProvider"),
+            providers,
+        )
+        listOf(
+            "device_widget_info", "devices_widget_info", "active_devices_widget_info", "camera_widget_info",
+            "energy_stats_widget_info", "energy_totals_widget_info",
+        ).forEach { assertFalse("res/xml/$it.xml is still there", File(RepoFiles.main, "res/xml/$it.xml").exists()) }
     }
 
     @Test

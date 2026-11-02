@@ -109,20 +109,18 @@ class PinBindingTest {
 
     // --- the guard itself ----------------------------------------------------
 
-    @Test fun everyKindOfBindingCountsAsBound() {
-        assertFalse(WidgetStore.isBound(ctx, id))
-        WidgetStore.bind(ctx, id, "light.flur", "Flur", "light", null)
-        assertTrue(WidgetStore.isBound(ctx, id))
-        WidgetStore.unbind(ctx, id)
+    @Test fun aToolBindingCountsAsBound() {
         assertFalse(WidgetStore.isBound(ctx, id))
         WidgetStore.bindTool(ctx, id, "documents", "Dokumente")
         assertTrue(WidgetStore.isBound(ctx, id))
+        WidgetStore.unbindTool(ctx, id)
+        assertFalse(WidgetStore.isBound(ctx, id))
     }
 
     // --- pins with nothing to bind -------------------------------------------
 
     @Test fun aPinWithoutAToolIsLeftToItsOwnConfiguration() {
-        // The device/energy/camera offers: no tool rides along, so the callback
+        // The energy and Box offers: no tool rides along, so the callback
         // only nudges the tile into drawing its "einrichten" state.
         assertEquals(
             WidgetPin.Outcome.NEEDS_CONFIG, WidgetPin.onPinned(ctx, id, null, null),

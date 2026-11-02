@@ -7,11 +7,7 @@ import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ScreenGate
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
-import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
-import cloud.dopp.haus.widget.DeviceWidgetProvider
-import cloud.dopp.haus.widget.EnergyTotalsWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
-import cloud.dopp.haus.widget.WidgetStore
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
@@ -19,11 +15,8 @@ import kotlin.concurrent.thread
 /**
  * The device's **watch set** (#48): the Home Assistant entities its widgets
  * show, posted to `POST /napi/portal/watch` so Haus streams `card_state` for
- * exactly those entities over `/napi/portal/events`: the entity of every
- * [DeviceWidgetProvider] instance, and — while an energy widget is placed —
- * the energy flow's sensors, which Haus sends at most every 10 s. While an
- * [ActiveDevicesWidgetProvider] is placed the watch says `active`, and Haus
- * sends the `active_set` frame too (#178).
+ * exactly those entities over `/napi/portal/events`: while the energy widget
+ * is placed, the energy flow's sensors, which Haus sends at most every 10 s.
  *
  * Best-effort and guarded: it posts only when paired, off the caller's thread,
  * and a failure never touches the widgets. Haus answers 503 while Home
@@ -40,28 +33,18 @@ object WatchSet {
     private const val KEY_ENERGY = "energy"
 
     /**
-     * The current watch set: the bound entity of every [DeviceWidgetProvider]
-     * instance, plus the energy flow's entities while an energy widget is placed;
-     * non-blank, de-duplicated.
+     * The current watch set: the energy flow's entities while the energy widget
+     * is placed; non-blank, de-duplicated.
      */
     fun currentEntities(ctx: Context): List<String> {
         val app = ctx.applicationContext
-        val mgr = AppWidgetManager.getInstance(app)
-        val ids = mgr.getAppWidgetIds(ComponentName(app, DeviceWidgetProvider::class.java))
-        val devices = ids.toList().mapNotNull { id -> WidgetStore.entityId(app, id) }
-        val energyShown = listOf(EnergyWidgetProvider::class.java, EnergyTotalsWidgetProvider::class.java)
-            .any { mgr.getAppWidgetIds(ComponentName(app, it)).isNotEmpty() }
-        return (devices + if (energyShown) energy(app) else emptySet())
-            .filter { eid -> eid.isNotBlank() }
-            .distinct()
+        val placed = AppWidgetManager.getInstance(app)
+            .getAppWidgetIds(ComponentName(app, EnergyWidgetProvider::class.java)).isNotEmpty()
+        return (if (placed) energy(app) else emptySet()).filter { it.isNotBlank() }.distinct()
     }
 
-    /** What the watch post sends: [currentEntities], and `active` while an active-devices widget is placed. */
-    fun body(ctx: Context): JSONObject {
-        val active = ComponentName(ctx.applicationContext, ActiveDevicesWidgetProvider::class.java)
-        val shown = AppWidgetManager.getInstance(ctx.applicationContext).getAppWidgetIds(active).isNotEmpty()
-        return ApiClient.watchBody(currentEntities(ctx), shown)
-    }
+    /** What the watch post sends: [currentEntities]. */
+    fun body(ctx: Context): JSONObject = ApiClient.watchBody(currentEntities(ctx))
 
     /** The energy flow's entities, as the energy widget last read them. */
     fun energy(ctx: Context): Set<String> =

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Haus launcher icon: a white house on the brand blue. -->
+<!-- The Haus launcher icon (owner, 2026-11-02): the terminal prompt inside a
+     green house on the dark ground, monochrome for themed icons (API 33).
+     The PNGs come from art/icon.svg through scripts/icons; never by hand. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_house" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />
 </adaptive-icon>

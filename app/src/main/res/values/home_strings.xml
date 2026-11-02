@@ -40,20 +40,20 @@
     <string name="home_logout">Kopplung aufheben</string>
     <string name="home_logged_out">Kopplung aufgehoben.</string>
 
-    <!-- The widget types the home screen offers (#34). -->
-    <string name="widget_type_device">Gerät</string>
-    <string name="widget_type_devices">Alle Geräte</string>
-    <string name="widget_type_energy_now">Energie · Jetzt</string>
-    <string name="widget_type_energy_history">Energie · Verlauf</string>
-    <string name="widget_type_energy_totals">Energie · Gesamt</string>
-    <string name="widget_type_active">Aktive Geräte</string>
-    <string name="widget_type_camera">Kamera</string>
+    <!-- The widget types the app offers (#34). -->
+    <string name="widget_type_energy">Energie · Jetzt und heute</string>
     <string name="widget_type_box_overview">Box · Übersicht</string>
     <string name="widget_type_box_services">Box · Dienste</string>
 
-    <string name="devices_widget_cta">Geräte</string>
-    <string name="devices_widget_label">Alle Geräte öffnen</string>
-    <string name="devices_widget_description">Alle Geräte auf einen Blick — öffnet die Startseite von Haus.</string>
+    <!-- The start screen's devices (owner, 2026-11-02). -->
+    <string name="home_devices_title">Deine Geräte</string>
+    <string name="home_devices_hint">Tippen schaltet, lange drücken öffnet das Gerät in Haus.</string>
+    <string name="home_devices_none">Noch keine Favoriten. Markiere in Haus ein Gerät mit ☆, dann steht es hier.</string>
+    <string name="home_devices_unreadable">Deine Favoriten lassen sich gerade nicht laden.</string>
+    <string name="home_devices_loading">Lädt …</string>
+    <string name="home_devices_all">Alle Geräte</string>
+    <string name="home_device_switching">schaltet …</string>
+
     <!-- The live widgets (LiveService). -->
     <string name="live_switch">Live-Widgets: aktuell, solange der Bildschirm an ist</string>
     <string name="live_channel">Live-Widgets</string>

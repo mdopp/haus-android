@@ -41,7 +41,7 @@ class WidgetVonTest {
     @Test
     fun theKinds() {
         assertEquals(
-            listOf("device", "devices", "active", "energy", "energy-stats", "energy-totals", "box-overview", "box-services", "tool"),
+            listOf("energy", "box-overview", "box-services", "tool"),
             WidgetKind.values().map { it.kind },
         )
         WidgetKind.values().forEach {
@@ -61,8 +61,8 @@ class WidgetVonTest {
     @Test
     fun aPageWithAQueryGetsItAppended() {
         assertEquals(
-            "https://haus.example/raeume/light.flur?tab=1&von=widget.device",
-            HausPages.url("https://haus.example", "/raeume/light.flur?tab=1", WidgetKind.DEVICE),
+            "https://haus.example/raeume/light.flur?tab=1&von=widget.tool",
+            HausPages.url("https://haus.example", "/raeume/light.flur?tab=1", WidgetKind.TOOL),
         )
     }
 
@@ -99,11 +99,11 @@ class WidgetVonTest {
         assertEquals(HomeActivity::class.java.name, saved.component?.className)
     }
 
-    /** A row of the tool and the active widget opens its page through ToolActionActivity. */
+    /** A row of the tool widget opens its page through ToolActionActivity. */
     @Test
     fun aRowsTemplateCarriesItsWidgetsKind() {
-        val saved = shadowOf(ToolActionActivity.template(ctx, 9_600, WidgetKind.ACTIVE)).savedIntent
-        assertEquals("active", saved.getStringExtra(ToolActionActivity.EXTRA_VON))
+        val saved = shadowOf(ToolActionActivity.template(ctx, 9_600, WidgetKind.TOOL)).savedIntent
+        assertEquals("tool", saved.getStringExtra(ToolActionActivity.EXTRA_VON))
     }
 
     @Test
@@ -134,12 +134,7 @@ class WidgetVonTest {
     fun eachProviderTapsWithItsOwnKind() {
         val widget = File(RepoFiles.main, "java/cloud/dopp/haus/widget")
         val expected = mapOf(
-            "DeviceWidgetProvider.kt" to WidgetKind.DEVICE,
-            "DevicesWidgetProvider.kt" to WidgetKind.DEVICES,
-            "ActiveDevicesWidgetProvider.kt" to WidgetKind.ACTIVE,
             "EnergyWidgetProvider.kt" to WidgetKind.ENERGY,
-            "EnergyStatsWidgetProvider.kt" to WidgetKind.ENERGY_STATS,
-            "EnergyTotalsWidgetProvider.kt" to WidgetKind.ENERGY_TOTALS,
             "BoxOverviewWidgetProvider.kt" to WidgetKind.BOX_OVERVIEW,
             "BoxServicesWidgetProvider.kt" to WidgetKind.BOX_SERVICES,
             "ToolWidgetProvider.kt" to WidgetKind.TOOL,

@@ -6,9 +6,10 @@ import cloud.dopp.haus.R
 
 /**
  * The typed table of pinnable widget types (#34): one entry per home-screen
- * widget provider with a fixed purpose, so the home screen can offer every one
+ * widget provider with a fixed purpose, so the app's screen can offer every one
  * of them and pin the picked provider via `requestPinAppWidget`. The tool widget
- * is not here: it is offered once per tool in Haus's catalog.
+ * is not here: it is offered once per tool in Haus's catalog. The devices are
+ * not widgets (owner, 2026-11-02): they are on the app's start screen.
  *
  * Pure (label/icon are resource ids, provider is a class reference) → the table
  * itself is unit-testable on the JVM.
@@ -25,13 +26,7 @@ object WidgetTypes {
 
     /** Ordered as shown: the house first, the Box last. */
     val ALL: List<Entry> = listOf(
-        Entry(DeviceWidgetProvider::class.java, R.string.widget_type_device, R.drawable.ic_device),
-        Entry(DevicesWidgetProvider::class.java, R.string.widget_type_devices, R.drawable.ic_light),
-        Entry(ActiveDevicesWidgetProvider::class.java, R.string.widget_type_active, R.drawable.ic_switch),
-        Entry(EnergyWidgetProvider::class.java, R.string.widget_type_energy_now, R.drawable.ic_bolt),
-        Entry(EnergyStatsWidgetProvider::class.java, R.string.widget_type_energy_history, R.drawable.ic_bolt),
-        Entry(EnergyTotalsWidgetProvider::class.java, R.string.widget_type_energy_totals, R.drawable.ic_bolt),
-        Entry(CameraWidgetProvider::class.java, R.string.widget_type_camera, R.drawable.ic_camera),
+        Entry(EnergyWidgetProvider::class.java, R.string.widget_type_energy, R.drawable.ic_bolt),
         Entry(BoxOverviewWidgetProvider::class.java, R.string.widget_type_box_overview, R.drawable.ic_box, admin = true),
         Entry(BoxServicesWidgetProvider::class.java, R.string.widget_type_box_services, R.drawable.ic_services, admin = true),
     )

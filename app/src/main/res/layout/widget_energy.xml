@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one energy widget (owner, 2026-11-02): "jetzt", the four flow legs
+     (PV / Haus / Netz / Akku, coloured by direction), above "heute", what the
+     counters added since midnight (kWh). A tap opens Haus's /energie; the
+     arrows read again. Cells are inlined, not <include>d, so RemoteViews can
+     address each one by its own id. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/e_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginEnd="6dp"
+            android:src="@drawable/ic_bolt"
+            android:tint="#FF3DDC84"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/e_now_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:text="@string/energy_now"
+            android:textAllCaps="true"
+            android:letterSpacing="0.06"
+            android:textColor="#FFB0BEC5"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+
+        <ImageView
+            android:id="@+id/e_refresh"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:padding="3dp"
+            android:src="@drawable/ic_refresh"
+            android:tint="#FFB0BEC5"
+            android:contentDescription="@string/widget_refresh" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_now_l0" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_now_v0" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="17sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_now_l1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_now_v1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="17sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_now_l2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_now_v2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="17sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_now_l3" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_now_v3" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="17sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/e_today_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:maxLines="1"
+        android:text="@string/energy_today"
+        android:textAllCaps="true"
+        android:letterSpacing="0.06"
+        android:textColor="#FFB0BEC5"
+        android:textStyle="bold"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_today_l0" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_today_v0" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="15sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_today_l1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_today_v1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="15sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_today_l2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_today_v2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="15sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:paddingEnd="4dp">
+            <TextView android:id="@+id/e_today_l3" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:textColor="#FF9AA0AE" android:textSize="11sp" />
+            <TextView android:id="@+id/e_today_v3" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="—" android:textColor="#FFF2F2F5"
+                android:textStyle="bold" android:textSize="15sp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

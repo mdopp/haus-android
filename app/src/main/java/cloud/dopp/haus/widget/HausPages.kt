@@ -10,8 +10,8 @@ import cloud.dopp.haus.ui.HomeActivity
 /**
  * Where a widget's body tap goes: one of Haus's own pages, in the person's
  * browser — where their Authelia session is (laib ADR 0022: the app has no web
- * shell of its own; Haus's pages run in any browser). A device, an active row
- * and a tool row open the item's own page when Haus names one ([item]).
+ * shell of its own; Haus's pages run in any browser). A tool row opens the
+ * item's own page when Haus names one ([item]).
  *
  * The pages are Haus's (`cmd/haus/main.go`); `NapiContractTest` holds the app
  * to them. Unpaired, a tap opens the app instead, which asks for Haus's address.
@@ -20,6 +20,12 @@ object HausPages {
 
     /** The house: rooms, devices, energy. */
     const val START = "/start"
+
+    /** Every device, by room: the start screen's „Alle Geräte“. */
+    const val RAEUME = "/raeume"
+
+    /** The house's power, jetzt and heute: the energy widget's tap. */
+    const val ENERGIE = "/energie"
 
     /** The Box, for admins. */
     const val BOX = "/box"
@@ -72,16 +78,11 @@ object HausPages {
 
 /**
  * The widgets that open a Haus page, by the name Haus counts them under
- * (`von=widget.<kind>`, #180). The camera widget opens no page. The old app did the
- * same with `?src=widget.*` before; the app itself counts nothing.
+ * (`von=widget.<kind>`, #180). The old app did the same with `?src=widget.*`
+ * before; the app itself counts nothing.
  */
 enum class WidgetKind(val kind: String) {
-    DEVICE("device"),
-    DEVICES("devices"),
-    ACTIVE("active"),
     ENERGY("energy"),
-    ENERGY_STATS("energy-stats"),
-    ENERGY_TOTALS("energy-totals"),
     BOX_OVERVIEW("box-overview"),
     BOX_SERVICES("box-services"),
     TOOL("tool"),

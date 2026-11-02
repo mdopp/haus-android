@@ -31,8 +31,6 @@
 
     <!-- Misc -->
     <dimen name="hero_glow_size">190dp</dimen>
-    <dimen name="tile_icon">26dp</dimen>
-    <dimen name="tile_min_height">76dp</dimen>
 
     <!-- ── Brand lockup, two sizes (#130) ───────────────────────────────────
          The wordmark in its glow is the header of BOTH home states, but a paired

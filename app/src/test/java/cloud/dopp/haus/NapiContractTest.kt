@@ -22,7 +22,8 @@ import java.lang.reflect.Modifier
  * merges, the commit above moves on and the lines are checked again. The
  * archive key and the contacts (laib ADR 0029) are copied from mdopp/haus
  * main at 7c88b6c (the merge of haus#210); Standortverlauf from main at
- * 145ec05 (the merge of haus#212).
+ * 145ec05 (the merge of haus#212). The favorites and the energy totals'
+ * `today` (owner, 2026-11-02) from mdopp/haus#213 at a709b9f.
  *
  * The declarations are read by reflection: every static field of `Napi` is
  * looked at, so a path declared outside an endpoint is caught too. The
@@ -106,8 +107,8 @@ class NapiContractTest {
                 sends = setOf("ok", "error", "card") + CARD,
             ),
             Route(
-                "GET", "/napi/portal/energy", "internal/napi/energy.go:107-130",
-                sends = setOf("ok", "error", "energy", "flow", "totals", "circuits") + METER,
+                "GET", "/napi/portal/energy", "internal/napi/energy.go:49-81, today :67 and :83-125 (haus#213)",
+                sends = setOf("ok", "error", "energy", "flow", "totals", "circuits", "today") + METER,
             ),
             Route(
                 "GET", "/napi/portal/entity-history", "internal/napi/home.go:219-252, ranges home.go:47",
@@ -117,6 +118,10 @@ class NapiContractTest {
             Route(
                 "GET", "/napi/portal/active", "internal/napi/home.go:254-291, the same set as active_set: live.go:324-350",
                 sends = setOf("ok", "error", "active", "room") + CARD,
+            ),
+            Route(
+                "GET", "/napi/portal/favorites", "internal/napi/home.go:199-244, registered :62 (haus#213)",
+                sends = setOf("ok", "error", "favorites") + CARD,
             ),
             Route("GET", "/napi/portal/camera/{entity_id}/snapshot", "internal/napi/camera.go:27-53"),
             Route(
@@ -239,16 +244,16 @@ class NapiContractTest {
          * and every path Haus does not serve land on Start (main.go:77), so a
          * wrong page would never fail loudly — only this list catches it.
          */
-        val PAGES = setOf("/start", "/raeume", "/kalender", "/notizen", "/box", "/box/geraete", "/pair-device", "/standort")
+        val PAGES = setOf("/start", "/raeume", "/energie", "/kalender", "/notizen", "/box", "/box/geraete", "/pair-device", "/standort")
 
         /** What the widgets and the pairing need: each must be declared. */
         val NEEDED = setOf(
             "GET /napi/persona", "GET /napi/persona/icon.png", "GET /napi/whoami",
             "GET /napi/box/home", "GET /napi/box/services",
             "POST /napi/ha/call", "GET /napi/portal/state", "GET /napi/portal/energy",
-            "GET /napi/portal/entity-history", "GET /napi/portal/active", "GET /napi/portal/start/addable",
+            "GET /napi/portal/favorites", "GET /napi/portal/start/addable",
             "POST /napi/portal/watch", "GET /napi/portal/events",
-            "GET /napi/defs/tool", "POST /napi/action-callback", "POST /napi/upload", "GET /napi/portal/{tool}",
+            "GET /napi/defs/tool", "POST /napi/action-callback", "GET /napi/portal/{tool}",
             "POST /napi/merken",
             "GET /napi/sicherung/stand", "POST /napi/sicherung/fehlend", "POST /napi/sicherung/uploads",
             "HEAD /napi/sicherung/uploads/{id}", "PATCH /napi/sicherung/uploads/{id}",
@@ -436,21 +441,22 @@ class NapiContractTest {
         assertTrue("no events endpoint", events != null)
         val route = HAUS.single { it.path == "/napi/portal/events" }
         assertEquals(route.accept, events!!.accept)
-        assertEquals("the frames the app reads", route.events, events.events)
+        // Haus also sends active_set, but only to a watch that asks for it; the app no longer does
+        assertEquals("the frames the app reads", listOf("card_state"), events.events)
+        assertTrue("a frame Haus does not send", route.events.containsAll(events.events))
     }
 
     /**
-     * What Haus added for the app (#178, haus#30) is read: the card's and the
-     * tool row's page, the active set's ids, and the watch's active flag.
+     * What Haus added for the app (#178, haus#30, haus#213) is read: the card's
+     * and the tool row's page, a favorite's page, and a total's today.
      */
     @Test
     fun theAppReadsHaussNewFields() {
         val byName = declared.associateBy { it.name }
         assertTrue("a card's page is not read", "page" in byName.getValue("STATE").reads)
-        assertTrue("an active card's page is not read", "page" in byName.getValue("ACTIVE").reads)
+        assertTrue("a favorite's page is not read", "page" in byName.getValue("FAVORITES").reads)
         assertTrue("a tool row's page is not read", "page" in byName.getValue("TOOL_ROWS").reads)
-        assertTrue("the active set's ids are not read", "entity_ids" in byName.getValue("EVENTS").reads)
-        assertTrue("the watch says nothing of the active set", "active" in byName.getValue("WATCH").body)
+        assertTrue("a total's today is not read", "today" in byName.getValue("ENERGY").reads)
     }
 
     @Test

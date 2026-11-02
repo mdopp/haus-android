@@ -2,16 +2,13 @@ package cloud.dopp.haus.data
 
 import android.content.Context
 import cloud.dopp.haus.data.Napi.ActionJson
-import cloud.dopp.haus.data.Napi.ActiveJson
 import cloud.dopp.haus.data.Napi.AddableJson
 import cloud.dopp.haus.data.Napi.CardJson
 import cloud.dopp.haus.data.Napi.EnergyJson
-import cloud.dopp.haus.data.Napi.HistoryJson
+import cloud.dopp.haus.data.Napi.FavoritesJson
 import cloud.dopp.haus.data.Napi.MerkenJson
 import cloud.dopp.haus.data.Napi.StateJson
 import cloud.dopp.haus.data.Napi.WhoamiJson
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -118,7 +115,7 @@ class ApiClient(private val ctx: Context) {
     /**
      * Register this device's watch set via `POST /napi/portal/watch` ([watchBody]):
      * Haus then streams `card_state` for exactly these entities over
-     * `/napi/portal/events`, and `active_set` when the body says `active`.
+     * `/napi/portal/events`.
      *
      * Returns Haus's status (503 while Home Assistant is down, which
      * [cloud.dopp.haus.realtime.RealtimeProtocol.watchRetryMs] retries), or 0
@@ -127,28 +124,6 @@ class ApiClient(private val ctx: Context) {
     fun postWatch(body: JSONObject): Int {
         return try {
             http.newCall(authed(Napi.WATCH, body = body.asBody())).execute().use { it.code }
-        } catch (e: Exception) {
-            0
-        }
-    }
-
-    /**
-     * Upload one captured file (image or PDF) to `POST /napi/upload` (camera #36)
-     * as `multipart/form-data`: the chosen name, then the file.
-     *
-     * Returns the HTTP status code so the UI can tell "uploaded" (2xx) from
-     * "Haus has no upload folder" (404) from other errors; a transport failure
-     * (no server/token/network) returns 0. Blocking — call off the main thread.
-     */
-    fun uploadFile(bytes: ByteArray, filename: String, mime: String): Int {
-        return try {
-            val (nameField, fileField) = Napi.UPLOAD.body
-            val body = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart(nameField, filename)
-                .addFormDataPart(fileField, filename, bytes.toRequestBody(mime.toMediaType()))
-                .build()
-            http.newCall(authed(Napi.UPLOAD, body = body)).execute().use { resp -> resp.code }
         } catch (e: Exception) {
             0
         }
@@ -181,40 +156,12 @@ class ApiClient(private val ctx: Context) {
     }
 
     /**
-     * The household's currently **active** devices (lights on, covers open,
-     * switches on, …) for the overview widget (#28) — one GET of
-     * `/napi/portal/active`, which answers the already-active entities as cards.
-     * Bounded by [cap]. Null when the read failed: that is no news about the
-     * house, so the widget keeps the list it last read instead of "Alles aus".
+     * The person's favorite devices via `GET /napi/portal/favorites`: the
+     * things they pinned with ☆ on Haus, as cards in their order — the start
+     * screen's first rows. The raw body, so the screen can keep it for its next
+     * start; parse it with [parseFavorites]. Null on any failure — never throws.
      */
-    fun listActive(cap: Int = 40): List<Card>? {
-        try {
-            http.newCall(authed(Napi.ACTIVE)).execute().use { resp ->
-                if (!resp.isSuccessful) return null
-                val body = resp.body?.string() ?: return null
-                return parseActive(body).take(cap)
-            }
-        } catch (e: Exception) {
-            return null
-        }
-    }
-
-    /**
-     * Parse the `/napi/portal/active` reply, `{ok, active: [card]}`, into
-     * [Card]s ordered by domain, then name, for a stable list. A row without an
-     * `entity_id` is skipped. Anything else is not Haus's answer and yields nothing.
-     */
-    internal fun parseActive(body: String): List<Card> {
-        val arr = runCatching { JSONObject(body.trim()).optJSONArray(ActiveJson.ACTIVE) }.getOrNull()
-            ?: return emptyList()
-        val out = ArrayList<Card>(arr.length())
-        for (i in 0 until arr.length()) {
-            val o = arr.optJSONObject(i) ?: continue
-            if (o.optString(CardJson.ENTITY_ID).isBlank()) continue
-            out.add(parseCardJson(o))
-        }
-        return out.sortedWith(compareBy({ it.domain }, { it.name }))
-    }
+    fun favoritesBody(): String? = getBody(Napi.FAVORITES, Napi.FAVORITES.path)
 
     /**
      * The tool catalog via `GET /napi/defs/tool` (#72): every tool Haus offers,
@@ -270,26 +217,6 @@ class ApiClient(private val ctx: Context) {
             }
         } catch (e: Exception) {
             null
-        }
-    }
-
-    /**
-     * Recent state history for one entity via `/napi/portal/entity-history`
-     * (#755): the numeric series (non-numeric states dropped), for the energy
-     * statistics chart. [range] is one Haus keeps.
-     */
-    fun getEntityHistory(entityId: String, range: Napi.HistoryRange): List<Float> {
-        val target = Napi.HISTORY.target(entityId, range.wire)
-        http.newCall(authed(Napi.HISTORY, target)).execute().use { resp ->
-            if (!resp.isSuccessful) return emptyList()
-            val body = resp.body?.string() ?: return emptyList()
-            val arr = JSONObject(body).optJSONArray(HistoryJson.HISTORY) ?: return emptyList()
-            val out = ArrayList<Float>(arr.length())
-            for (i in 0 until arr.length()) {
-                val p = arr.optJSONObject(i) ?: continue
-                p.optString(HistoryJson.STATE).toFloatOrNull()?.let { out.add(it) }
-            }
-            return out
         }
     }
 
@@ -375,19 +302,28 @@ class ApiClient(private val ctx: Context) {
             brightness = o.optInt(CardJson.BRIGHTNESS, -1).takeIf { it >= 0 },
             position = o.optInt(CardJson.CURRENT_POSITION, -1).takeIf { it in 0..100 },
             temperature = o.optDouble(CardJson.CURRENT_TEMPERATURE, Double.NaN).takeIf { !it.isNaN() },
-            // Light colour (#87). Absent keys stay null/empty, so a plain bulb is unchanged.
-            rgbColor = packRgb(o.optJSONArray(CardJson.RGB_COLOR)),
-            supportedColorModes = stringList(o.optJSONArray(CardJson.SUPPORTED_COLOR_MODES)),
-            colorMode = o.optString(CardJson.COLOR_MODE).ifBlank { null },
-            colorTemp = o.optInt(CardJson.COLOR_TEMP, -1).takeIf { it > 0 },
-            // HA's `last_updated` in epoch-ms, as Haus forwards it — the ordering
-            // stamp for the staleness guard. Absent → null → guard inert.
-            updatedAtMs = o.optLong(CardJson.UPDATED_AT_MS, -1L).takeIf { it >= 0 },
             // HA's capability bitmask (#92). Absent ⇒ null ⇒ "capability unproven",
             // which the lock chooser reads as "no latch".
             supportedFeatures = o.optInt(CardJson.SUPPORTED_FEATURES, -1).takeIf { it >= 0 },
             page = o.optString(CardJson.PAGE).ifBlank { null },
         )
+
+        /**
+         * The `/napi/portal/favorites` reply, `{ok, favorites: [card]}`, as
+         * [Card]s in the person's order; a row without an `entity_id` is
+         * skipped. Anything else is not Haus's answer: null.
+         */
+        internal fun parseFavorites(body: String): List<Card>? {
+            val arr = runCatching { JSONObject(body.trim()).optJSONArray(FavoritesJson.FAVORITES) }.getOrNull()
+                ?: return null
+            val out = ArrayList<Card>(arr.length())
+            for (i in 0 until arr.length()) {
+                val o = arr.optJSONObject(i) ?: continue
+                if (o.optString(CardJson.ENTITY_ID).isBlank()) continue
+                out.add(parseCardJson(o))
+            }
+            return out
+        }
 
         /** `{ok, energy: {flow, totals}}` → [Energy], or null when Haus says it has none. */
         internal fun parseEnergy(root: JSONObject): Energy? {
@@ -422,25 +358,12 @@ class ApiClient(private val ctx: Context) {
                             // classifies a slot from its entity id and label.
                             key = entityId,
                             entityId = entityId.ifBlank { null },
+                            today = if (o.has(EnergyJson.TODAY)) o.optDouble(EnergyJson.TODAY).takeUnless { it.isNaN() } else null,
                         ),
                     )
                 }
             }
             return Energy(legs, totals)
-        }
-
-        /**
-         * HA's `rgb_color` (`[r, g, b]`) packed into 0xRRGGBB. Null for a missing,
-         * short or out-of-range triple — a half-read colour must not become a
-         * wrong one.
-         */
-        internal fun packRgb(a: JSONArray?): Int? {
-            if (a == null || a.length() < 3) return null
-            val r = a.optInt(0, -1)
-            val g = a.optInt(1, -1)
-            val b = a.optInt(2, -1)
-            if (r !in 0..255 || g !in 0..255 || b !in 0..255) return null
-            return (r shl 16) or (g shl 8) or b
         }
 
         /** A JSON string array (e.g. `supported_color_modes`) as a lower-case list. */
@@ -454,12 +377,8 @@ class ApiClient(private val ctx: Context) {
             return out
         }
 
-        /**
-         * The `POST /napi/portal/watch` body, `{"entity_ids":[…]}` (#48), with
-         * `"active":true` while this phone shows the active devices (#178).
-         */
-        fun watchBody(entityIds: List<String>, active: Boolean = false): JSONObject =
-            Napi.WATCH.json(JSONArray(entityIds), if (active) true else null)
+        /** The `POST /napi/portal/watch` body, `{"entity_ids":[…]}` (#48). */
+        fun watchBody(entityIds: List<String>): JSONObject = Napi.WATCH.json(JSONArray(entityIds))
 
         /**
          * Classify an `/napi/action-callback` reply (#90). Both refusals Haus can

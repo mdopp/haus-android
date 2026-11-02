@@ -2,7 +2,6 @@ package cloud.dopp.haus
 
 import cloud.dopp.haus.data.EnergyFlow
 import cloud.dopp.haus.data.EnergyTotal
-import cloud.dopp.haus.widget.EnergyRange
 import cloud.dopp.haus.widget.EnergyStyle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -13,36 +12,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * JVM coverage for the pure energy logic behind the #16 widgets — the 24h/7d
- * toggle state, the flow color/direction mapping, and the totals-slot mapping.
- * No pixels are asserted (chart rendering is device-verified).
+ * JVM coverage for the pure logic of the one energy widget — the flow
+ * color/direction mapping, the size tiers and the totals-slot mapping.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class EnergyLogicTest {
-
-    // ── EnergyRange: the Verlauf 24h ⇄ 7d toggle ──────────────────────────────
-
-    @Test fun rangeToggleFlipsBothWays() {
-        assertSame(EnergyRange.WEEK, EnergyRange.DAY.toggled())
-        assertSame(EnergyRange.DAY, EnergyRange.WEEK.toggled())
-    }
-
-    @Test fun rangeDefaultsTo24hForUnknownOrNull() {
-        assertSame(EnergyRange.DAY, EnergyRange.fromKey(null))
-        assertSame(EnergyRange.DAY, EnergyRange.fromKey("nonsense"))
-    }
-
-    @Test fun rangeRoundTripsThroughItsKey() {
-        for (r in EnergyRange.entries) {
-            assertSame(r, EnergyRange.fromKey(r.key))
-        }
-    }
-
-    @Test fun rangeApiValuesAreTheServerRanges() {
-        assertEquals("24h", EnergyRange.DAY.apiRange)
-        assertEquals("7d", EnergyRange.WEEK.apiRange)
-    }
 
     // ── EnergyStyle: color + direction per leg ────────────────────────────────
 
@@ -80,21 +55,17 @@ class EnergyLogicTest {
 
     // ── EnergyStyle: compact grid in/out balance (#25) ────────────────────────
 
-    @Test fun gridBalanceImportPointsInExportPointsOut() {
-        assertEquals("→ in", EnergyStyle.gridBalanceLabel(500.0))
-        assertEquals("→ in", EnergyStyle.gridBalanceLabel(0.0)) // zero counts as import side
-        assertEquals("← out", EnergyStyle.gridBalanceLabel(-500.0))
+    @Test fun theSmallTierShowsHeuteWithALittleRoom() {
+        // the bare 2×1: jetzt only; a touch more room: a line of heute
+        assertEquals(false, cloud.dopp.haus.widget.EnergyRender.showToday(110, 40))
+        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showToday(110, 80))
+        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showToday(150, 40))
     }
 
-    @Test fun gridBalanceMissingWattsIsDash() {
-        assertEquals("—", EnergyStyle.gridBalanceLabel(null))
-    }
-
-    @Test fun tinyTierHidesPvExtraSpaceShowsPv() {
-        // 1×1 tight cell → grid balance only; a taller/wider box adds PV.
-        assertEquals(false, cloud.dopp.haus.widget.EnergyRender.showPv(80, 80))
-        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showPv(80, 110))
-        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showPv(140, 80))
+    @Test fun twoCellsHighDrawJetztAndHeuteAsCells() {
+        assertEquals(false, cloud.dopp.haus.widget.EnergyRender.full(250, 40))
+        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.full(250, 110))
+        assertEquals("a size the launcher did not tell: the placed default, 4×2", true, cloud.dopp.haus.widget.EnergyRender.full(0, 0))
     }
 
     // ── EnergyStyle: totals-slot mapping for the Gesamt grid ──────────────────

@@ -2,7 +2,6 @@ package cloud.dopp.haus
 
 import android.app.Activity
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -14,15 +13,10 @@ import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
-import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
 import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
 import cloud.dopp.haus.widget.BoxServicesWidgetProvider
-import cloud.dopp.haus.widget.DeviceWidgetProvider
-import cloud.dopp.haus.widget.EnergyStatsWidgetProvider
-import cloud.dopp.haus.widget.EnergyTotalsWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
-import cloud.dopp.haus.widget.WidgetActionReceiver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -58,7 +52,7 @@ class LiveHooksTest {
         ServerStore.setBaseUrl(ctx(), "https://haus.example")
         TokenStore.backend = ctx().getSharedPreferences("test_tokens", Context.MODE_PRIVATE)
         TokenStore.save(ctx(), "haus_device_T1")
-        shadowOf(AppWidgetManager.getInstance(ctx())).createWidget(DeviceWidgetProvider::class.java, R.layout.widget_device_small)
+        shadowOf(AppWidgetManager.getInstance(ctx())).createWidget(EnergyWidgetProvider::class.java, R.layout.widget_energy)
         drain()
     }
 
@@ -79,32 +73,21 @@ class LiveHooksTest {
     fun everyWidgetTapStartsIt() {
         val taps = listOf(
             EnergyWidgetProvider::class.java to EnergyWidgetProvider.ACTION_REFRESH,
-            EnergyStatsWidgetProvider::class.java to EnergyStatsWidgetProvider.ACTION_REFRESH,
-            EnergyStatsWidgetProvider::class.java to EnergyStatsWidgetProvider.ACTION_TOGGLE,
-            EnergyTotalsWidgetProvider::class.java to EnergyTotalsWidgetProvider.ACTION_REFRESH,
-            ActiveDevicesWidgetProvider::class.java to ActiveDevicesWidgetProvider.ACTION_REFRESH,
             BoxOverviewWidgetProvider::class.java to BoxOverviewWidgetProvider.ACTION_REFRESH,
             BoxServicesWidgetProvider::class.java to BoxServicesWidgetProvider.ACTION_REFRESH,
             ToolWidgetProvider::class.java to ToolWidgetProvider.ACTION_REFRESH,
-            WidgetActionReceiver::class.java to WidgetActionReceiver.ACTION_TAP,
         )
         val layouts = mapOf(
-            EnergyWidgetProvider::class.java to R.layout.widget_energy_small,
-            EnergyStatsWidgetProvider::class.java to R.layout.widget_energy_stats,
-            EnergyTotalsWidgetProvider::class.java to R.layout.widget_energy_totals,
-            ActiveDevicesWidgetProvider::class.java to R.layout.widget_active_small,
+            EnergyWidgetProvider::class.java to R.layout.widget_energy,
             BoxOverviewWidgetProvider::class.java to R.layout.widget_box_overview,
             BoxServicesWidgetProvider::class.java to R.layout.widget_box_services,
             ToolWidgetProvider::class.java to R.layout.widget_tool,
         )
         val shadow = shadowOf(AppWidgetManager.getInstance(ctx()))
         val ids = layouts.mapValues { (cls, layout) -> shadow.createWidget(cls, layout) }
-        val device = AppWidgetManager.getInstance(ctx()).getAppWidgetIds(ComponentName(ctx(), DeviceWidgetProvider::class.java)).first()
         val missed = taps.filter { (cls, action) ->
             drain()
-            val id = ids[cls] ?: device
-            val tap = Intent(ctx(), cls).setAction(action).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-            if (cls == WidgetActionReceiver::class.java) tap.putExtra(WidgetActionReceiver.EXTRA_OP, WidgetActionReceiver.OP_REFRESH)
+            val tap = Intent(ctx(), cls).setAction(action).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, ids.getValue(cls))
             (cls.getDeclaredConstructor().newInstance() as android.content.BroadcastReceiver).onReceive(ctx(), tap)
             shadowOf(Looper.getMainLooper()).idle()
             !started()
@@ -122,7 +105,7 @@ class LiveHooksTest {
     /** The configure screens with a UI start it when they bind a widget. */
     @Test
     fun theConfigureScreensStartIt() {
-        listOf("WidgetConfigActivity.kt", "ToolWidgetConfigActivity.kt").forEach { f ->
+        listOf("ToolWidgetConfigActivity.kt").forEach { f ->
             val src = File(RepoFiles.main, "java/cloud/dopp/haus/widget/$f").readText()
             val done = src.substringBefore("setResult(RESULT_OK, resultIntent())").substringAfterLast("fun ")
             assertTrue("$f does not start the live service where it binds", done.contains("Live.ensure("))

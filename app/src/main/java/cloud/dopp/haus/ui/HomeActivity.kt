@@ -2,7 +2,10 @@ package cloud.dopp.haus.ui
 
 import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -19,12 +22,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.haus.HausConfig
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.BoxApiClient
+import cloud.dopp.haus.data.Card
 import cloud.dopp.haus.data.PairLinks
 import cloud.dopp.haus.data.Pairing
 import cloud.dopp.haus.data.PersonaIcon
@@ -35,7 +40,11 @@ import cloud.dopp.haus.data.ToolDef
 import cloud.dopp.haus.data.ToolDefs
 import cloud.dopp.haus.realtime.Live
 import cloud.dopp.haus.widget.AppShortcuts
+import cloud.dopp.haus.widget.DeviceIcons
+import cloud.dopp.haus.widget.DeviceTaps
+import cloud.dopp.haus.widget.HausPages
 import cloud.dopp.haus.widget.ToolWidgetProvider
+import cloud.dopp.haus.widget.WidgetActionReceiver
 import cloud.dopp.haus.widget.WidgetPin
 import cloud.dopp.haus.widget.WidgetStore
 import cloud.dopp.haus.widget.WidgetTypes
@@ -60,9 +69,11 @@ import kotlin.concurrent.thread
  * message, and a token that cannot be saved is said so.
  *
  * **Paired.** The persona (name, colours, icon from `/napi/persona`) heads the
- * screen; below it every widget type, the tools from Haus's catalog and the Box
- * widgets, each one tap from the home screen; under Mehr, Nachrichten sichern
- * (#194); and the way to unpair.
+ * screen; first below it the person's favorite devices, a tap switches one, and
+ * „Alle Geräte“, Haus's devices page ([StartDevices], owner 2026-11-02: the
+ * devices live in the app, not in widgets); then the widget types, the tools
+ * from Haus's catalog and the Box widgets, each one tap from the home screen;
+ * under Mehr, Nachrichten sichern (#194); and the way to unpair.
  */
 class HomeActivity : AppCompatActivity() {
 
@@ -75,6 +86,22 @@ class HomeActivity : AppCompatActivity() {
 
     @Volatile
     private var toolsLoading = false
+
+    @Volatile
+    private var devicesLoading = false
+
+    /** The favorites drawn last; null until the first read or the cache. */
+    private var devices: List<Card>? = null
+
+    /** The last read failed and nothing was ever read: say so instead of an empty card. */
+    private var devicesFailed = false
+
+    /** A device tap finished (WidgetActionReceiver, WidgetActionActivity): read the favorites again. */
+    private val tapDone = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            refreshDevices()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,11 +128,18 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        ContextCompat.registerReceiver(this, tapDone, IntentFilter(DeviceTaps.ACTION_DONE), ContextCompat.RECEIVER_NOT_EXPORTED)
         render()
+        if (paired()) refreshDevices()
         // The app-icon long-press menu (#97): picks up a widget removed while away.
         if (paired()) AppShortcuts.refreshAsync(applicationContext)
         // The app's screen may start the live service (Android 12+): placed widgets, the switch, the pairing.
         Live.ensure(applicationContext)
+    }
+
+    override fun onPause() {
+        runCatching { unregisterReceiver(tapDone) }
+        super.onPause()
     }
 
     private fun paired() = ServerStore.isConfigured(this) && TokenStore.isPaired(this)
@@ -141,6 +175,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.live_battery).setText(
             if (Live.exempt(this)) R.string.live_battery_on else R.string.live_battery_off,
         )
+        renderDevices()
         renderWidgetTypes()
         renderTools()
         refreshPersona()
@@ -206,6 +241,89 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    // --- the devices (owner, 2026-11-02) --------------------------------------
+
+    /** The favorites, then „Alle Geräte“; the list read last draws at once. */
+    private fun renderDevices() {
+        val shown = devices ?: StartDevices.load(this).also { devices = it }
+        val group = findViewById<ViewGroup>(R.id.devices_group)
+        group.removeAllViews()
+        when {
+            shown == null && devicesFailed -> group.addView(note(group, getString(R.string.home_devices_unreadable)))
+            shown == null -> group.addView(note(group, getString(R.string.home_devices_loading)))
+            shown.isEmpty() -> group.addView(note(group, getString(R.string.home_devices_none)))
+            else -> shown.forEach { group.addView(deviceRow(group, it)) }
+        }
+        group.addView(
+            row(group, R.drawable.ic_device, getString(R.string.home_devices_all)) {
+                openHaus(HausPages.RAEUME)
+            },
+        )
+    }
+
+    /** Read the favorites from Haus, keep them, draw them; a failed read keeps what is shown. */
+    private fun refreshDevices() {
+        if (devicesLoading) return
+        devicesLoading = true
+        val app = applicationContext
+        thread {
+            val fresh = runCatching { ApiClient(app).favoritesBody() }.getOrNull()
+            val parsed = fresh?.let { ApiClient.parseFavorites(it) }
+            if (fresh != null && parsed != null) StartDevices.save(app, fresh)
+            runOnUiThread {
+                devicesLoading = false
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                if (parsed != null) {
+                    devices = parsed
+                    devicesFailed = false
+                } else {
+                    devicesFailed = true
+                }
+                if (paired()) renderDevices()
+            }
+        }
+    }
+
+    private fun deviceRow(group: ViewGroup, card: Card): View {
+        val v = layoutInflater.inflate(R.layout.item_device_row, group, false)
+        val icon = v.findViewById<ImageView>(R.id.row_icon)
+        icon.setImageResource(DeviceIcons.forState(card.domain, card.state))
+        icon.setColorFilter(getColor(if (card.isOn) R.color.haus_accent else R.color.haus_text_muted))
+        v.findViewById<TextView>(R.id.row_name).text = card.name
+        val state = v.findViewById<TextView>(R.id.row_room)
+        state.text = StartDevices.stateText(card)
+        v.contentDescription = card.name + ", " + state.text
+        v.setOnClickListener {
+            if (StartDevices.acts(card)) {
+                // the tap answers at once; the fresh state comes with DeviceTaps.ACTION_DONE
+                if (card.domain != "lock") state.text = getString(R.string.home_device_switching)
+                sendBroadcast(WidgetActionReceiver.tap(this, card.entityId, card.name, card.supportedFeatures))
+            } else {
+                openHaus(HausPages.item(card.page))
+            }
+        }
+        v.setOnLongClickListener {
+            openHaus(HausPages.item(card.page))
+            true
+        }
+        return v
+    }
+
+    private fun note(group: ViewGroup, text: String): View =
+        layoutInflater.inflate(R.layout.item_device_row, group, false).apply {
+            findViewById<ImageView>(R.id.row_icon).visibility = View.GONE
+            findViewById<TextView>(R.id.row_name).visibility = View.GONE
+            findViewById<TextView>(R.id.row_room).text = text
+            isClickable = false
+            background = null
+        }
+
+    /** [page] of the paired Haus in a Custom Tab. */
+    private fun openHaus(page: String) {
+        val base = ServerStore.baseUrl(this) ?: return
+        open(Uri.parse(HausPages.url(base, page)))
+    }
+
     // --- the widgets ----------------------------------------------------------
 
     private fun renderWidgetTypes() {
@@ -248,7 +366,7 @@ class HomeActivity : AppCompatActivity() {
     /**
      * The tools from Haus's catalog (`/napi/defs/tool`): the last one seen draws
      * at once, then the fresh one replaces it. Only tools that fill a list are
-     * offered ([ToolDef.isListable]).
+     * offered, and not the contacts ([ToolDef.isOffered]).
      */
     private fun renderTools() {
         showTools(listable(WidgetStore.toolCatalogJson(this)))
@@ -264,7 +382,7 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun listable(json: String?): List<ToolDef> = ToolDefs.parseCatalog(json).filter { it.isListable }
+    private fun listable(json: String?): List<ToolDef> = ToolDefs.parseCatalog(json).filter { it.isOffered }
 
     private fun showTools(defs: List<ToolDef>) {
         val group = findViewById<ViewGroup>(R.id.tools_group)
@@ -464,6 +582,9 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun unpair() {
+        StartDevices.clear(this)
+        devices = null
+        devicesFailed = false
         TokenStore.clear(this)
         ServerStore.clear(this)
         PersonaStore.clear(this)

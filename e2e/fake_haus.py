@@ -47,7 +47,11 @@ REPLIES = {
     "/napi/whoami": {"uid": "e2e", "via": "haus"},
     "/napi/persona": {"name": "haus", "display": "Joshua", "greeting": "", "accent": "#3b82f6", "ground": "", "icon": ""},
     "/napi/portal/active": {"ok": True, "active": []},
-    "/napi/portal/energy": {"ok": True, "energy": {"flow": [], "totals": [], "circuits": []}},
+    "/napi/portal/favorites": {"ok": True, "favorites": []},
+    "/napi/portal/energy": {"ok": True, "energy": {
+        "flow": [{"entity_id": "sensor.e2e_power", "name": "E2E", "state": "812", "unit": "W", "label": "PV", "sense": "supply"}],
+        "totals": [{"entity_id": "sensor.e2e_total", "name": "E2E", "state": "5012.4", "unit": "kWh", "label": "PV-Erzeugung", "today": 12.4}],
+        "circuits": []}},
     "/napi/portal/start/addable": {"ok": True, "rooms": [], "automations": []},
     "/napi/defs/tool": {"ok": True, "kind": "tool", "defs": []},
     "/napi/box/home": {"servicesUp": 1, "servicesFailed": 0, "servicesDown": 0, "pendingApprovals": 0, "pendingUpdates": 0},

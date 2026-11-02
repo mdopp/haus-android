@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Haus (#176, laib ADR 0022): home-screen widgets and pairing, and the daily
+<!-- Haus (#176, laib ADR 0022): the start screen with the favorite devices,
+     home-screen widgets and pairing, and the daily
      pick-up of the phone's message backups (#194, laib ADR 0029).
      One foreground service keeps the widgets live while the screen is on; no
      other notification, no poll, no web shell. -->
@@ -7,9 +8,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- The camera widget's capture screen (#36). -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- The live widgets (realtime/LiveService.kt): one specialUse foreground service,
          its notification (shown on Android 13+ only with the permission), its restart after boot. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -72,21 +70,7 @@
                 <data android:scheme="cloud.dopp.haus" android:host="pair" />
             </intent-filter>
         </activity>
-        <!-- Universal device widget (#4). -->
-
-        <receiver
-            android:name=".widget.DeviceWidgetProvider"
-            android:exported="true"
-            android:label="@string/widget_device_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/device_widget_info" />
-        </receiver>
-
-        <!-- House energy widget (#8). -->
+        <!-- The one energy widget (owner, 2026-11-02): jetzt and heute together. -->
         <receiver
             android:name=".widget.EnergyWidgetProvider"
             android:exported="true"
@@ -99,17 +83,8 @@
                 android:resource="@xml/energy_widget_info" />
         </receiver>
 
-        <activity
-            android:name=".widget.WidgetConfigActivity"
-            android:exported="true"
-            android:label="@string/widget_device_label"
-            android:theme="@style/Theme.Haus.Config">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
-
-        <!-- Headless tap handler for the device widget (no visible screen). -->
+        <!-- Headless tap handler for a device: the start screen's favorites and the
+             app-icon shortcuts (no visible screen). -->
         <receiver
             android:name=".widget.WidgetActionReceiver"
             android:exported="false" />
@@ -134,53 +109,6 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
-
-
-        <!-- Energy statistics widget (#9): 48h house-consumption sparkline. -->
-        <receiver
-            android:name=".widget.EnergyStatsWidgetProvider"
-            android:exported="true"
-            android:label="@string/stats_widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/energy_stats_widget_info" />
-        </receiver>
-
-        <!-- Active-devices overview widget (#28): which devices are on/open. -->
-        <receiver
-            android:name=".widget.ActiveDevicesWidgetProvider"
-            android:exported="true"
-            android:label="@string/active_widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/active_devices_widget_info" />
-        </receiver>
-
-        <!-- Collection service backing the scrollable active-devices ListView (#28). -->
-        <service
-            android:name=".widget.ActiveDevicesRemoteViewsService"
-            android:permission="android.permission.BIND_REMOTEVIEWS"
-            android:exported="false" />
-
-        <!-- Camera snapshot widget (#30): a bound camera's current frame. -->
-        <receiver
-            android:name=".widget.CameraWidgetProvider"
-            android:exported="true"
-            android:label="@string/camera_widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/camera_widget_info" />
-        </receiver>
 
         <!-- Share → Haus (haus#120): a link or a text from the share sheet, kept
              as a note on Haus. Exported for ACTION_SEND text only; translucent
@@ -227,45 +155,6 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
-
-        <!-- Native camera capture + upload screen (#36): opened by the camera
-             trigger widget; takes photos, optionally builds a PDF, uploads to /napi. -->
-        <activity
-            android:name=".ui.CameraCaptureActivity"
-            android:exported="false"
-            android:label="@string/camera_capture_title"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.Haus" />
-
-
-        <!-- Devices tile (#167): one tap to the household start page. -->
-        <receiver
-            android:name=".widget.DevicesWidgetProvider"
-            android:exported="true"
-            android:label="@string/devices_widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/devices_widget_info" />
-        </receiver>
-
-
-        <!-- Energy totals widget (#16): 2x2 kWh totals grid (Gesamt). -->
-        <receiver
-            android:name=".widget.EnergyTotalsWidgetProvider"
-            android:exported="true"
-            android:label="@string/totals_widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/energy_totals_widget_info" />
-        </receiver>
-
-
 
         <!-- Box overview widget (#42): the Box's summary from /napi/box/home. -->
         <receiver
@@ -335,23 +224,6 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
-
-
-
-
-
-        <!-- Share captured photos with the system camera app for ACTION_IMAGE_CAPTURE
-             (#36). Authority mirrors the fileprovider used by FileProvider.getUriForFile. -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths" />
-        </provider>
 
         <!-- The live widgets: holds /napi/portal/events while the screen is on.
              specialUse: Android 15 caps the data-sync type at 6 hours a day. -->

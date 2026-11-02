@@ -58,8 +58,8 @@ class ScreenGateTest {
         assertFalse(ScreenGate.open(ctx()))
         val refused = runCatching { ApiClient(ctx()).getCard("light.flur") }.exceptionOrNull()
         assertTrue("refused at the gate, not at the socket: $refused", refused is ScreenGate.ScreenOffException)
-        assertEquals(0, ApiClient(ctx()).postWatch(ApiClient.watchBody(listOf("light.flur"), false)))
-        assertNull(ApiClient(ctx()).listActive())
+        assertEquals(0, ApiClient(ctx()).postWatch(ApiClient.watchBody(listOf("sensor.pv"))))
+        assertNull(ApiClient(ctx()).favoritesBody())
         assertNull(BoxApiClient(ctx()).getPersona())
     }
 

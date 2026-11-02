@@ -31,10 +31,11 @@ import kotlin.concurrent.thread
  * a new plugin become a widget without an app rebuild — with the last-seen catalog
  * as the offline fallback.
  *
- * Only tools that can actually fill a list card are offered ([ToolDef.isListable]):
+ * Only tools that can actually fill a list card are offered ([ToolDef.isOffered]):
  * a tool without a `tool-api-path` (`.note`) has nothing to fetch, and one with an
  * empty `tool-cell-schema` (`.energy`, `.home`) is a bespoke browser card. Pinning
- * either would leave a permanently blank widget.
+ * either would leave a permanently blank widget. Contacts are not offered either
+ * (owner, 2026-11-02).
  *
  * When the user picked the tool in the in-app section (#72) the id is already
  * parked ([WidgetStore.consumePendingToolId]) and this screen binds and closes
@@ -114,7 +115,7 @@ class ToolWidgetConfigActivity : AppCompatActivity() {
             WidgetStore.consumePendingToolId(applicationContext)
         }
         thread {
-            val defs = loadCatalog().filter { it.isListable }
+            val defs = loadCatalog().filter { it.isOffered }
             val preset = pending?.let { id -> defs.firstOrNull { it.id == id } }
             runOnUiThread {
                 if (preset != null) pick(preset) else showTools(list, status, defs)

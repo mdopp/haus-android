@@ -1,6 +1,5 @@
 package cloud.dopp.haus
 
-import android.appwidget.AppWidgetManager
 import android.content.Intent
 import cloud.dopp.haus.widget.DeviceShortcuts
 import cloud.dopp.haus.widget.ShortcutCatalog
@@ -11,7 +10,6 @@ import cloud.dopp.haus.widget.WidgetActionReceiver
 import cloud.dopp.haus.widget.WidgetStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -87,16 +85,10 @@ class ShortcutSourcesTest {
 
     @Test fun theCatalogueSurvivesARoundTrip() {
         val devices = listOf(
-            ShortcutDevice(null, "light.flur", "Flur", "light"),
-            ShortcutDevice(null, "cover.garage", "Garage", "cover", "garage"),
+            ShortcutDevice("light.flur", "Flur", "light"),
+            ShortcutDevice("cover.garage", "Garage", "cover", "garage"),
         )
         assertEquals(devices, ShortcutCatalog.decode(ShortcutCatalog.encode(devices)))
-    }
-
-    /** The cache is the household, not the home screen — no widget ids come back. */
-    @Test fun aCachedDeviceCarriesNoWidgetId() {
-        val json = ShortcutCatalog.encode(listOf(ShortcutDevice(7, "light.flur", "Flur", "light")))
-        assertNull(ShortcutCatalog.decode(json).single().appWidgetId)
     }
 
     @Test fun anUnreadableCatalogueIsNoCatalogue() {
@@ -108,19 +100,18 @@ class ShortcutSourcesTest {
     @Test fun aFreshInstallHasNoFreshCatalogue() {
         val ctx = RuntimeEnvironment.getApplication()
         assertFalse(WidgetStore.shortcutCatalogFresh(ctx))
-        WidgetStore.setShortcutCatalog(ctx, listOf(ShortcutDevice(null, "light.flur", "Flur", "light")))
+        WidgetStore.setShortcutCatalog(ctx, listOf(ShortcutDevice("light.flur", "Flur", "light")))
         assertTrue(WidgetStore.shortcutCatalogFresh(ctx))
         assertEquals("light.flur", WidgetStore.shortcutCatalog(ctx).single().entityId)
     }
 
-    // --- the widget-less action path -------------------------------------------
+    // --- the action path -------------------------------------------------------
 
-    private fun shortcutTap(entityId: String, appWidgetId: Int? = null) =
+    private fun shortcutTap(entityId: String) =
         Intent(RuntimeEnvironment.getApplication(), WidgetActionActivity::class.java)
             .setAction(Intent.ACTION_VIEW)
             .putExtra(WidgetActionReceiver.EXTRA_ENTITY, entityId)
             .putExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, true)
-            .apply { appWidgetId?.let { putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, it) } }
 
     /** Everything the trampoline handed on, since the last time we looked. */
     private fun tapsFrom(intent: Intent): List<Intent> {
@@ -131,24 +122,16 @@ class ShortcutSourcesTest {
             .filter { it.action == WidgetActionReceiver.ACTION_TAP }
     }
 
-    /** A device with no widget can be switched — the entity id is the whole handle. */
-    @Test fun aWidgetLessLampIsSwitchedFromItsEntityIdAlone() {
+    /** A device is switched from its entity id alone — the whole handle. */
+    @Test fun aLampIsSwitchedFromItsEntityIdAlone() {
         val taps = tapsFrom(shortcutTap("light.keller"))
         assertEquals(1, taps.size)
         assertEquals("light.keller", taps[0].getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
         assertEquals(WidgetActionReceiver.OP_TOGGLE, taps[0].getStringExtra(WidgetActionReceiver.EXTRA_OP))
-        // No placeholder id was invented — that would name another instance's binding.
-        assertEquals(
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-            taps[0].getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID),
-        )
     }
 
-    /**
-     * The guard that must not have loosened: a `lock` entity reaches the receiver
-     * from nowhere, with or without a widget behind it.
-     */
-    @Test fun aWidgetLessLockIsNeverSwitched() {
+    /** The guard that must not have loosened: a `lock` entity reaches the receiver from nowhere. */
+    @Test fun aLockIsNeverSwitched() {
         assertTrue(tapsFrom(shortcutTap("lock.haustuer")).isEmpty())
         assertTrue(tapsFrom(shortcutTap("lock.keller")).isEmpty())
         // Nor is any other safety-gated device.
@@ -160,24 +143,6 @@ class ShortcutSourcesTest {
         for (junk in listOf("", "haustuer", ".")) {
             assertTrue("junk '$junk'", tapsFrom(shortcutTap(junk)).isEmpty())
         }
-    }
-
-    /**
-     * With a widget behind it the identity still comes from the **store**: a
-     * forged shortcut naming a lamp but pointing at a lock's instance must not
-     * switch anything.
-     */
-    @Test fun aWidgetBackedTapStillTrustsTheStoreOverTheIntent() {
-        val ctx = RuntimeEnvironment.getApplication()
-        WidgetStore.bind(ctx, 11, "lock.haustuer", "Haustür", "lock", null)
-        assertTrue(tapsFrom(shortcutTap("light.keller", appWidgetId = 11)).isEmpty())
-
-        WidgetStore.bind(ctx, 12, "light.flur", "Flur", "light", null)
-        val taps = tapsFrom(shortcutTap("light.flur", appWidgetId = 12))
-        assertEquals(1, taps.size)
-        assertEquals(12, taps[0].getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1))
-        // The store answers the identity, so no entity rides along.
-        assertNull(taps[0].getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
     }
 
     /** And the rule tables agree with all of the above. */

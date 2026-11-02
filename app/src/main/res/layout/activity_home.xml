@@ -103,13 +103,36 @@
                 android:text="@string/qr_scan" />
         </LinearLayout>
 
-        <!-- Paired: where to, and the widgets to add. -->
+        <!-- Paired: the person's favorite devices first (owner, 2026-11-02), then
+             where to, and the widgets to add. -->
         <LinearLayout
             android:id="@+id/connected_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone">
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/home_devices_title" />
+
+            <TextView
+                style="@style/Text.Haus.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/home_devices_hint" />
+
+            <!-- The favorites from Haus (/napi/portal/favorites), then „Alle Geräte“. -->
+            <LinearLayout
+                android:id="@+id/devices_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_lg"
+                android:background="@drawable/card_haus"
+                android:orientation="vertical" />
 
             <TextView
                 android:id="@+id/status"

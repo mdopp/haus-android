@@ -19,14 +19,12 @@ enum class ActionTone {
 
 /**
  * One offered action in an action dialog. [service] is the only thing that ever
- * leaves the app; [swatchRgb] is drawn as a dot in front of the label (the colour
- * palette, #87) and names nothing.
+ * leaves the app.
  */
 data class ActionItem(
     val labelRes: Int,
     val tone: ActionTone = ActionTone.NORMAL,
     val service: String? = null,
-    val swatchRgb: Int? = null,
     /**
      * A label **Haus** supplied (`tool-actions-titled`, #169).
      * When present it wins over [labelRes]; the titles arrive ready to read and
@@ -55,9 +53,9 @@ sealed interface ActionRow {
 /**
  * The one shape every widget action dialog has (#113).
  *
- * Three dialogs used to sit side by side in [WidgetActionActivity]: a confirm
- * with a positive button, the lock chooser with a list plus a *neutral* button,
- * and the colour palette with a list. Material puts the neutral button far left
+ * Three dialogs used to sit side by side in the device widget's action screen:
+ * a confirm with a positive button, the lock chooser with a list plus a
+ * *neutral* button, and a colour palette with a list. Material puts the neutral button far left
  * and negative/positive right, so "Abbrechen" landed in a different place per
  * dialog — reported from the device as dangerous, because muscle memory then
  * hits the wrong thing.
@@ -168,7 +166,7 @@ object ActionSheets {
         )
 
     /**
-     * The 1×1 lock tile's chooser (#92). What is offered still comes from
+     * A lock's chooser (#92). What is offered still comes from
      * [LockChooser] — the latch appears only for a lock that advertises one — and
      * the pick is the confirmation, so no second dialog is stacked on top.
      *
@@ -190,16 +188,4 @@ object ActionSheets {
             noteRes = R.string.widget_open_door_note,
         )
     }
-
-    /**
-     * The named-colour list of a colour-capable light (#87), in palette order —
-     * the pick's index is [LightColors.PALETTE]'s index. Colour is not a
-     * sensitive action: no entry here is dangerous.
-     */
-    fun colors(): ActionSheet =
-        ActionSheet(
-            LightColors.PALETTE.map {
-                ActionItem(labelRes = it.labelRes, swatchRgb = it.rgb)
-            },
-        )
 }
