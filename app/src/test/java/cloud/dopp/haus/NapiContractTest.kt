@@ -253,7 +253,7 @@ class NapiContractTest {
             "POST /napi/ha/call", "GET /napi/portal/state", "GET /napi/portal/energy",
             "GET /napi/portal/favorites", "GET /napi/portal/start/addable",
             "POST /napi/portal/watch", "GET /napi/portal/events",
-            "GET /napi/defs/tool", "POST /napi/action-callback", "GET /napi/portal/{tool}",
+            "GET /napi/defs/tool", "POST /napi/action-callback", "GET /napi/portal/{tool}", "POST /napi/upload",
             "POST /napi/merken",
             "GET /napi/sicherung/stand", "POST /napi/sicherung/fehlend", "POST /napi/sicherung/uploads",
             "HEAD /napi/sicherung/uploads/{id}", "PATCH /napi/sicherung/uploads/{id}",

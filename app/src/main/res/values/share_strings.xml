@@ -10,4 +10,23 @@
     <string name="share_open">Notiz öffnen</string>
     <string name="share_not_paired">Diese App ist mit keinem Haus gekoppelt. Öffne die App und verbinde sie zuerst.</string>
     <string name="share_unreachable">Haus hat nicht rechtzeitig geantwortet. Ist das Handy im Netz? Teile den Link später noch einmal.</string>
+
+    <!-- A photo shared from the camera app (owner, 2026-11-02): into Haus's document inbox. -->
+    <plurals name="share_photos_running">
+        <item quantity="one">Legt das Foto ab …</item>
+        <item quantity="other">Legt Foto %1$d von %2$d ab …</item>
+    </plurals>
+    <string name="share_photos_kept">Abgelegt</string>
+    <plurals name="share_photos_kept_text">
+        <item quantity="one">Das Foto liegt jetzt in den Dokumenten von Haus. Paperless liest es gleich ein; du findest es danach unter Dokumente.</item>
+        <item quantity="other">Die %1$d Fotos liegen jetzt in den Dokumenten von Haus. Paperless liest sie gleich ein; du findest sie danach unter Dokumente.</item>
+    </plurals>
+    <string name="share_photos_not_kept">Nicht abgelegt</string>
+    <string name="share_photos_partly">Nicht alles abgelegt</string>
+    <!-- %1$d abgelegt, %2$d geteilt, %3$s warum nicht -->
+    <string name="share_photos_partly_text">%1$d von %2$d Fotos liegen jetzt in den Dokumenten von Haus. Die übrigen nicht: %3$s</string>
+    <!-- %1$d höchstens, %2$d übrig -->
+    <string name="share_photos_too_many">Haus nimmt höchstens %1$d auf einmal; %2$d blieben übrig. Teile sie danach noch einmal.</string>
+    <string name="share_photo_unreadable">Ein Bild ließ sich auf dem Handy nicht lesen.</string>
+    <string name="share_photos_unreachable">Haus hat nicht rechtzeitig geantwortet. Ist das Handy im Netz? Teile die Fotos später noch einmal.</string>
 </resources>

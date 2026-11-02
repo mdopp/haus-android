@@ -12,6 +12,7 @@
 #     without it, no notification of a dead service. An app update starts it.
 #   5 a real reboot: OPEN within 60 s of boot
 #   6 the share sheet: the persona's Direct Share target is in it (#188)
+#   7 a photo shared from the camera's way: one upload in Haus's shape, „Abgelegt“
 set -uo pipefail
 LOG=${HAUS_LOG:-haus.log}
 OUT=${E2E_OUT:-e2e-out}
@@ -191,6 +192,29 @@ for sheet in 1 2 3; do
   sleep 2
 done
 [ $seen = yes ] && pass "6 Joshua is in the share sheet (sheet $sheet)" || fail "6 Joshua is not in the share sheet"
+on input keyevent KEYCODE_BACK
+
+# 7 --------------------------------------------------------------------------
+wake
+m=$(mark)
+on am instrument -w -r -e class cloud.dopp.haus.e2e.LiveE2EPhoto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/photo.txt"
+photo=$(grep -m1 -o 'uri=content://[^ ]*' "$OUT/photo.txt" | cut -d= -f2-)
+[ -n "$photo" ] || say "photo setup: $(grep -m1 -E 'Error|Exception' "$OUT/photo.txt")"
+sleep 2
+on am start -a android.intent.action.SEND -t image/png --eu android.intent.extra.STREAM "$photo" \
+  --grant-read-uri-permission -n $PKG/.ui.ShareActivity >/dev/null
+wait_for "$m" "UPLOAD" 1 30 && pass "7 the photo reaches Haus's upload" || fail "7 no upload of the shared photo"
+[ "$(since "$m" "UPLOAD ok")" -eq 1 ] && [ "$(since "$m" "UPLOAD")" -eq 1 ] \
+  && pass "7 exactly one upload, in Haus's shape" || fail "7 uploads: $(since "$m" "UPLOAD ok") ok of $(since "$m" "UPLOAD")"
+seen=no
+for i in $(seq 1 10); do
+  on uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  on cat /sdcard/ui.xml > "$OUT/photo-dialog.xml"
+  grep -q 'text="Abgelegt"' "$OUT/photo-dialog.xml" && { seen=yes; break; }
+  sleep 2
+done
+on screencap -p /sdcard/photo.png && adb pull /sdcard/photo.png "$OUT/photo-dialog.png" >/dev/null 2>&1
+[ $seen = yes ] && pass "7 the app says „Abgelegt“" || fail "7 no „Abgelegt“ on the screen"
 on input keyevent KEYCODE_BACK
 
 adb logcat -d > "$OUT/logcat.txt"
