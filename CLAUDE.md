@@ -39,6 +39,14 @@ These rules apply to every session, human or agent.
   that does not pass `ScreenGate`. Without a granted folder or a switch on it
   makes no request. `ManifestTest`
   holds it to its one file; do not add a second job or reuse this one.
+- Standortverlauf (the owner's call, 2026-11-02; docs/CONTRACT.md (f)):
+  behind its own switch and the background-location permission, the
+  fused provider and activity recognition deliver by PendingIntent to
+  `standort/StandortEmpfaenger`, which stores the points and sends a
+  batch to Haus while that delivery has the phone awake. It is no job,
+  service, alarm or wakelock; keep it that way (`ManifestTest`). The
+  decisions — rate per mode and situation, when a batch goes — live in
+  `standort/Plan.kt`, plain and unit-tested.
 
 ## Commits
 

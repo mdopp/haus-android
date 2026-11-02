@@ -18,6 +18,7 @@ import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.sicherung.SicherungWorker
 import cloud.dopp.haus.ui.HomeActivity
 import cloud.dopp.haus.ui.SicherungActivity
+import cloud.dopp.haus.ui.StandortActivity
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -66,12 +67,16 @@ class SicherungScreenTest {
     fun homeLeadsToIt() {
         val a = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
         val mehr = a.findViewById<ViewGroup>(R.id.mehr_group)
-        assertEquals(1, mehr.childCount)
+        assertEquals("Nachrichten sichern and Standortverlauf", 2, mehr.childCount)
         val row = mehr.getChildAt(0)
         assertEquals("Nachrichten sichern", row.findViewById<TextView>(R.id.type_label).text.toString())
         row.performClick()
         val next = shadowOf(a).nextStartedActivity
         assertEquals(SicherungActivity::class.java.name, next.component?.className)
+        val standort = mehr.getChildAt(1)
+        assertEquals("Standortverlauf", standort.findViewById<TextView>(R.id.type_label).text.toString())
+        standort.performClick()
+        assertEquals(StandortActivity::class.java.name, shadowOf(a).nextStartedActivity.component?.className)
     }
 
     @Test

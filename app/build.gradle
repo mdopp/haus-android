@@ -102,6 +102,9 @@ dependencies {
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     // Nachrichten sichern (#194): the one background job, daily on WLAN while charging.
     implementation 'androidx.work:work-runtime:2.10.0'
+    // Standortverlauf (owner 2026-11-02): the fused location provider and activity
+    // recognition, both delivering by PendingIntent, so the app holds no service of its own.
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
     // SMS und Anrufe (laib ADR 0029): age-encrypted on the phone. BouncyCastle's
     // lightweight X25519, HKDF, HMAC and ChaCha20-Poly1305 (Android has the last
     // two only from API 28/33); the jdk15to18 build has no multi-release classes.

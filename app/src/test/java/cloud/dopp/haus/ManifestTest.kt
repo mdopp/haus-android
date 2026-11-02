@@ -22,6 +22,12 @@ import java.io.File
  * its own switch and permission (laib ADR 0029): the contacts (READ_CONTACTS),
  * the SMS and the call log (READ_SMS, READ_CALL_LOG). Read only: never a
  * permission to write or send them.
+ *
+ * Standortverlauf (owner 2026-11-02), optional behind its own switch: the
+ * location in the background and activity recognition, delivered by the
+ * fused provider's PendingIntents to one receiver that is not exported. It
+ * adds no service, no job, no alarm and no wakelock: the points go to Haus
+ * while a delivery has the phone awake anyway.
  */
 class ManifestTest {
 
@@ -64,6 +70,10 @@ class ManifestTest {
         "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
         // Kontakte, SMS und Anrufe (laib ADR 0029): read only, each behind its own switch
         "READ_CONTACTS", "READ_SMS", "READ_CALL_LOG",
+        // Standortverlauf (owner 2026-11-02): behind its own switch
+        "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "ACCESS_BACKGROUND_LOCATION",
+        "ACTIVITY_RECOGNITION", "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
+        "ACCESS_NETWORK_STATE", // whether the phone is on a Wi-Fi
     )
 
     /**
@@ -84,7 +94,7 @@ class ManifestTest {
     @Test
     fun theMergedManifestAddsOnlyWorkManagersOwn() {
         assertEquals(
-            ours + setOf("WAKE_LOCK", "ACCESS_NETWORK_STATE", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"),
+            ours + setOf("WAKE_LOCK", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"),
             permissions(merged),
         )
         listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION", "WRITE_CONTACTS", "SEND_SMS", "WRITE_CALL_LOG", "RECEIVE_SMS").forEach { word ->
@@ -195,6 +205,22 @@ class ManifestTest {
         val worker = sources.getValue(workerFile)
         assertEquals("one worker", 1, Regex(""": Worker\(""").findAll(sources.values.joinToString("\n")).count())
         assertTrue(worker.contains("class SicherungWorker(") && worker.contains(": Worker("))
+    }
+
+    /**
+     * Standortverlauf's receiver is reached by the app's own PendingIntents
+     * only, and only Aufzeichnung asks Android for locations — through the
+     * fused provider, never by polling LocationManager.
+     */
+    @Test
+    fun theLocationComesByPendingIntentToOneHiddenReceiver() {
+        val receiver = manifest.substringAfter("""android:name=".standort.StandortEmpfaenger"""").substringBefore("/>")
+        assertTrue(receiver, receiver.contains("""android:exported="false""""))
+        assertFalse(receiver, receiver.contains("intent-filter"))
+        val aufzeichnung = "app/src/main/java/cloud/dopp/haus/standort/Aufzeichnung.kt"
+        val hits = noneSay("requestLocationUpdates", "requestActivityTransitionUpdates", "LocationManager", "getCurrentLocation", except = setOf(aufzeichnung))
+        assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
+        assertFalse(sources.getValue(aufzeichnung).contains("LocationManager"))
     }
 
     @Test

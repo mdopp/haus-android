@@ -214,13 +214,18 @@ class HomeActivity : AppCompatActivity() {
         renderMehr()
     }
 
-    /** Mehr: Nachrichten sichern (#194). */
+    /** Mehr: Nachrichten sichern (#194), Standortverlauf (owner 2026-11-02). */
     private fun renderMehr() {
         val group = findViewById<ViewGroup>(R.id.mehr_group)
         group.removeAllViews()
         group.addView(
             row(group, R.drawable.ic_backup, getString(R.string.sicherung_title)) {
                 startActivity(Intent(this, SicherungActivity::class.java))
+            },
+        )
+        group.addView(
+            row(group, R.drawable.ic_standort, getString(R.string.standort_title)) {
+                startActivity(Intent(this, StandortActivity::class.java))
             },
         )
     }

@@ -24,6 +24,9 @@ object HausPages {
     /** The Box, for admins. */
     const val BOX = "/box"
 
+    /** Standortverlauf: where the person connects their Reitti once. */
+    const val STANDORT = "/standort"
+
     /** [page] of [base]; from a widget it carries `von=widget.<kind>` exactly once (#180), so Haus counts the tap. */
     fun url(base: String, page: String, from: WidgetKind? = null): String {
         val full = base.trimEnd('/') + page

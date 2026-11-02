@@ -343,6 +343,51 @@ object Napi {
         const val FEHLER = "fehler"
     }
 
+    /**
+     * `GET /napi/standort` (Standortverlauf, owner 2026-11-02): whether the
+     * person connected Reitti on Haus, `{verbunden, seit}` (RFC 3339, absent
+     * when not); `{fehler, grund}` when the box has no Reitti (503).
+     */
+    object StandortStandJson {
+        const val VERBUNDEN = "verbunden"
+        const val SEIT = "seit"
+        const val FEHLER = "fehler"
+        const val GRUND = "grund"
+    }
+
+    /**
+     * `POST /napi/standort`: `{angenommen, verworfen}` once Reitti has the
+     * points; else `{fehler, grund}` and the batch stays on the phone.
+     */
+    object StandortJson {
+        const val ANGENOMMEN = "angenommen"
+        const val VERWORFEN = "verworfen"
+        const val FEHLER = "fehler"
+        const val GRUND = "grund"
+    }
+
+    /** One entry of `punkte` in the body of `POST /napi/standort`. */
+    object PunktJson {
+        const val ZEIT = "zeit"
+        const val BREITE = "breite"
+        const val LAENGE = "laenge"
+        const val GENAUIGKEIT = "genauigkeit"
+        const val HOEHE = "hoehe"
+        const val TEMPO = "tempo"
+    }
+
+    /** Why Haus kept nothing (`grund` of `/napi/standort`): no Reitti token on Haus yet. */
+    const val GRUND_KEIN_SCHLUESSEL = "kein_schluessel"
+
+    /** Reitti refused the person's token: a new one on Haus. */
+    const val GRUND_SCHLUESSEL_ABGELEHNT = "schluessel_abgelehnt"
+
+    /** Reitti did not take the points now. */
+    const val GRUND_REITTI_WEG = "reitti_weg"
+
+    /** The box has no Reitti. */
+    const val GRUND_NICHT_EINGERICHTET = "nicht_eingerichtet"
+
     // --- the calls -------------------------------------------------------------
 
     /** The house persona: name, colours, whether it has an icon (its greeting is not the app's, #184). */
@@ -450,4 +495,13 @@ object Napi {
      * on the box: every card, each with a UID, as [VCARD]; Haus mirrors the set.
      */
     val KONTAKTE = Endpoint(Method.POST, "/napi/kontakte", reply = listOf(KontakteJson))
+
+    /** Standortverlauf: whether the person connected Reitti on Haus. */
+    val STANDORT_STAND = Endpoint(Method.GET, "/napi/standort", reply = listOf(StandortStandJson))
+
+    /**
+     * Standortverlauf: a batch of points, `{punkte: [PunktJson]}`, which Haus
+     * passes on to the person's Reitti.
+     */
+    val STANDORT = Endpoint(Method.POST, "/napi/standort", body = listOf("punkte"), reply = listOf(StandortJson))
 }
