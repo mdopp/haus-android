@@ -20,8 +20,8 @@ import java.lang.reflect.Modifier
  * The rows of Nachrichten sichern (`/napi/sicherung/…`, #194) are copied from
  * Haus's PR for haus#207 (mdopp/haus#208 at ad8c269, not merged yet): when it
  * merges, the commit above moves on and the lines are checked again. The
- * archive key and the contacts (laib ADR 0029) are copied from mdopp/haus#210
- * at 267c5db, not merged yet either.
+ * archive key and the contacts (laib ADR 0029) are copied from mdopp/haus
+ * main at 7c88b6c (the merge of haus#210).
  *
  * The declarations are read by reflection: every static field of `Napi` is
  * looked at, so a path declared outside an endpoint is caught too. The
@@ -197,7 +197,7 @@ class NapiContractTest {
                 "PATCH", "/napi/sicherung/uploads/{id}", "internal/napi/sicherung.go:588-676",
                 sends = setOf("offset", "fertig", "fehler"), headers = setOf("Upload-Offset"),
             ),
-            // The archive key and the contacts (haus#210 at 267c5db).
+            // The archive key and the contacts (mdopp/haus main at 7c88b6c, the merge of haus#210).
             Route(
                 "GET", "/napi/sicherung/schluessel", "internal/napi/sicherung.go:304-318, registered :129",
                 sends = setOf("empfaenger", "fehler"),

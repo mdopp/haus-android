@@ -111,21 +111,21 @@ class HandyLaufTest {
 
     // --- SMS and calls ----------------------------------------------------------
 
-    /** A phone with [sms] (date → text) and [anrufe] (dates); writes what is newer than the marks. */
-    private class FakeTelefon(val sms: Map<Long, String>, val anrufe: List<Long>) : Telefon {
+    /** A phone with [sms] (date → text) and [anrufe] (dates); writes from the marks on, the marks included, as the phone does. */
+    private class FakeTelefon(val sms: List<Pair<Long, String>>, val anrufe: List<Long>) : Telefon {
         val gefragt = ArrayList<Long>()
         override fun nachrichten(datei: File, seitSms: Long, seitMms: Long): Auszug? {
             gefragt += seitSms
-            val neu = sms.filterKeys { it > seitSms }
-            if (neu.isEmpty()) return null
-            datei.writeText("<smses count=\"${neu.size}\">" + neu.entries.joinToString("") { "<sms date=\"${it.key}\" body=\"${it.value}\" />" } + "</smses>")
-            return Auszug(neu.size, mapOf(Art.SMS to neu.keys.max(), Art.MMS to seitMms))
+            val ab = sms.filter { it.first >= seitSms }
+            if (ab.isEmpty()) return null
+            datei.writeText("<smses count=\"${ab.size}\">" + ab.joinToString("") { "<sms date=\"${it.first}\" body=\"${it.second}\" />" } + "</smses>")
+            return Auszug(ab.size, mapOf(Art.SMS to ab.maxOf { it.first }, Art.MMS to seitMms), ab.count { it.first > seitSms })
         }
         override fun anrufe(datei: File, seit: Long): Auszug? {
-            val neu = anrufe.filter { it > seit }
-            if (neu.isEmpty()) return null
-            datei.writeText("<calls count=\"${neu.size}\">" + neu.joinToString("") { "<call date=\"$it\" />" } + "</calls>")
-            return Auszug(neu.size, mapOf(Art.ANRUFE to neu.max()))
+            val ab = anrufe.filter { it >= seit }
+            if (ab.isEmpty()) return null
+            datei.writeText("<calls count=\"${ab.size}\">" + ab.joinToString("") { "<call date=\"$it\" />" } + "</calls>")
+            return Auszug(ab.size, mapOf(Art.ANRUFE to ab.max()), ab.count { it > seit })
         }
     }
 
@@ -137,7 +137,7 @@ class HandyLaufTest {
     @Test
     fun smsAndCallsGoEncryptedAndTheMarksMoveAfterwards() {
         val ordner = tmp.newFolder("sms")
-        val t = FakeTelefon(mapOf(100L to "eins", 200L to "zwei"), listOf(150L))
+        val t = FakeTelefon(listOf(100L to "eins", 200L to "zwei"), listOf(150L))
         assertEquals(Lauf.Ergebnis.FERTIG, lauf(t, ordner).laufen())
         assertEquals(setOf("sms|sms-20251102T022000Z.xml.age", "sms|anrufe-20251102T022000Z.xml.age"), haus.fertig.keys)
         val sms = klar(haus.fertig.getValue("sms|sms-20251102T022000Z.xml.age"))
@@ -150,16 +150,31 @@ class HandyLaufTest {
         assertEquals(Meldung.Art.OK, g.meldungen[Quelle.SMS]?.art)
         assertEquals(2, g.uebertragen[Quelle.SMS]?.second)
 
-        // the next run: nothing new, nothing asked, not even the key
+        // the next run: only the boundary entries again, nothing asked, not even the key
         val vorher = haus.anfragen.size
         assertEquals(Lauf.Ergebnis.FERTIG, lauf(t, ordner).laufen())
         assertEquals(vorher, haus.anfragen.size)
+        assertTrue(ordner.listFiles()!!.isEmpty())
+    }
+
+    /** A message of the same millisecond as the last one sent is not missed; the boundary one goes again. */
+    @Test
+    fun aMessageAtTheMarkIsNotMissed() {
+        val ordner = tmp.newFolder("sms")
+        assertEquals(Lauf.Ergebnis.FERTIG, lauf(FakeTelefon(listOf(200L to "zuerst"), emptyList()), ordner).laufen())
+        assertEquals(200L, m.marke(Art.SMS))
+        // later another one arrives with the same date, and a newer one
+        val t = FakeTelefon(listOf(200L to "zuerst", 200L to "gleich danach", 300L to "danach"), emptyList())
+        assertEquals(Lauf.Ergebnis.FERTIG, lauf(t, ordner, uhr = 1_762_060_000_000).laufen())
+        val zweite = klar(haus.fertig.getValue("sms|sms-20251102T050640Z.xml.age"))
+        assertTrue(zweite, zweite.contains("gleich danach") && zweite.contains("date=\"300\""))
+        assertEquals(300L, m.marke(Art.SMS))
     }
 
     @Test
     fun aCutUploadKeepsTheMarksAndTheNextRunGoesOnWithTheSameFile() {
         val ordner = tmp.newFolder("sms")
-        val t = FakeTelefon((1L..400L).associateWith { "Nachricht Nummer $it, etwas länger" }, emptyList())
+        val t = FakeTelefon((1L..400L).map { it to "Nachricht Nummer $it, etwas länger" }, emptyList())
         haus.schneideNach = 100
         assertEquals(Lauf.Ergebnis.UNERREICHBAR, lauf(t, ordner).laufen())
         assertEquals("the mark waits for the file", 0L, m.marke(Art.SMS))
@@ -179,7 +194,7 @@ class HandyLaufTest {
     fun withoutAKeyNothingGoesAndHaussSentenceIsShown() {
         val ordner = tmp.newFolder("sms")
         haus.empfaenger = null
-        assertEquals(Lauf.Ergebnis.HALT, lauf(FakeTelefon(mapOf(1L to "x"), emptyList()), ordner).laufen())
+        assertEquals(Lauf.Ergebnis.HALT, lauf(FakeTelefon(listOf(1L to "x"), emptyList()), ordner).laufen())
         assertEquals(FakeHaus.KEIN_SCHLUESSEL, g.meldungen[Quelle.SMS]?.satz)
         assertTrue(haus.patches().isEmpty())
         assertTrue("no plaintext stays", ordner.listFiles()!!.isEmpty())
@@ -191,7 +206,7 @@ class HandyLaufTest {
         val ordner = tmp.newFolder("sms")
         File(ordner, "sms-20250101T000000Z.xml.age").writeText("alt")
         File(ordner, "20250101T000000Z.xml").writeText("<smses/>")
-        assertEquals(Lauf.Ergebnis.FERTIG, lauf(FakeTelefon(emptyMap(), emptyList()), ordner).laufen())
+        assertEquals(Lauf.Ergebnis.FERTIG, lauf(FakeTelefon(emptyList(), emptyList()), ordner).laufen())
         assertTrue(ordner.listFiles()!!.isEmpty())
         assertTrue(haus.anfragen.isEmpty())
     }

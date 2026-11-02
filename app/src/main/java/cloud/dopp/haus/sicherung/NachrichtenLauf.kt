@@ -18,15 +18,26 @@ enum class Art(val wire: String) { SMS("sms"), MMS("mms"), ANRUFE("anrufe") }
 
 /** The phone's messages and calls as SyncTech XML ([SmsXml]). On the phone it is [HandyTelefon]; in the tests a list. */
 interface Telefon {
-    /** The SMS and MMS newer than the marks into [datei]; null (and no file) when there is none. */
+    /**
+     * The SMS and MMS from the marks on, the marks included, into [datei];
+     * null (and no file) when there is none. Included, so a message of the
+     * same millisecond (an MMS: second) as the last one sent is not missed;
+     * the boundary message goes again, and the archive's msgvault import keeps
+     * one of each message (stable IDs), so it adds nothing there.
+     */
     fun nachrichten(datei: File, seitSms: Long, seitMms: Long): Auszug?
 
-    /** The calls newer than [seit] into [datei]; null (and no file) when there is none. */
+    /** The calls from [seit] on, [seit] included, into [datei]; as [nachrichten]. */
     fun anrufe(datei: File, seit: Long): Auszug?
 }
 
-/** A written file: how many entries, and the largest date per [Art] in it. */
-data class Auszug(val anzahl: Int, val marken: Map<Art, Long>)
+/**
+ * A written file: how many entries, the largest date per [Art] in it, and how
+ * many of them are newer than the marks ([neu]). Only the boundary entries
+ * again, [neu] 0: nothing is sent (an entry that came at the very mark goes
+ * with the next newer one, since the marks stay included).
+ */
+data class Auszug(val anzahl: Int, val marken: Map<Art, Long>, val neu: Int = anzahl)
 
 /**
  * The high-water marks, and which file under way will move them: a mark moves
@@ -48,7 +59,7 @@ interface Marken {
 
 /**
  * „SMS und Anrufliste übertragen“ (laib ADR 0029), in the daily run: the SMS,
- * MMS and calls newer than the marks, as SyncTech XML, age-encrypted on the
+ * MMS and calls from the marks on (see [Telefon]), as SyncTech XML, age-encrypted on the
  * phone to the person's archive key (`GET /napi/sicherung/schluessel`), then
  * uploaded as `quelle` `sms` through the same resumable upload as the
  * messengers' backups. The plaintext lives in the app's cache only while it
@@ -104,7 +115,8 @@ class NachrichtenLauf(
                     ohneErlaubnis = true
                     break
                 } ?: continue
-                if (auszug.anzahl == 0) {
+                // only what was sent already (the entries at the marks): nothing to send
+                if (auszug.anzahl == 0 || auszug.neu == 0) {
                     xml.delete()
                     continue
                 }

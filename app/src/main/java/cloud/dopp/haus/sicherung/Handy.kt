@@ -135,7 +135,7 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
 
 /**
  * The phone's SMS, MMS (Telephony, READ_SMS) and call log (CallLog,
- * READ_CALL_LOG), newer than the marks, oldest first, as SyncTech XML
+ * READ_CALL_LOG), from the marks on (the marks included), oldest first, as SyncTech XML
  * ([SmsXml]). Read only. The contact's name comes from the address book when
  * „Kontakte übertragen“ may read it, else it is SyncTech's `(Unknown)`.
  */
@@ -146,14 +146,19 @@ class HandyTelefon(private val ctx: Context) : Telefon {
 
     override fun nachrichten(datei: File, seitSms: Long, seitMms: Long): Auszug? {
         if (!Erlaubnis.hat(ctx, arrayOf(Manifest.permission.READ_SMS))) throw SecurityException("READ_SMS")
-        // MMS keep their date in seconds
-        val smsC = cr.query(Telephony.Sms.CONTENT_URI, null, "${Telephony.Sms.DATE} > ?", arrayOf(seitSms.toString()), "${Telephony.Sms.DATE} ASC")
-        val mmsC = cr.query(Telephony.Mms.CONTENT_URI, null, "${Telephony.Mms.DATE} > ?", arrayOf((seitMms / 1000).toString()), "${Telephony.Mms.DATE} ASC")
+        // From the mark on, the mark included (>=): a message that came in the same
+        // millisecond (an MMS: the same second) as the last one sent is not missed.
+        // The boundary message goes again; the archive's msgvault import keeps one
+        // of each message (stable IDs), so it adds nothing there.
+        // MMS keep their date in seconds.
+        val smsC = cr.query(Telephony.Sms.CONTENT_URI, null, "${Telephony.Sms.DATE} >= ?", arrayOf(seitSms.toString()), "${Telephony.Sms.DATE} ASC")
+        val mmsC = cr.query(Telephony.Mms.CONTENT_URI, null, "${Telephony.Mms.DATE} >= ?", arrayOf((seitMms / 1000).toString()), "${Telephony.Mms.DATE} ASC")
         try {
             val anzahl = (smsC?.count ?: 0) + (mmsC?.count ?: 0)
             if (anzahl == 0) return null
             var hochSms = seitSms
             var hochMms = seitMms
+            var neu = 0
             schreibe(datei) { x ->
                 x.nachrichtenAnfang(anzahl, System.currentTimeMillis())
                 smsC?.let { c ->
@@ -161,6 +166,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                     while (c.moveToNext()) {
                         val datum = lang(c, Telephony.Sms.DATE)
                         hochSms = maxOf(hochSms, datum)
+                        if (datum > seitSms) neu++
                         x.sms(spalten.map { it to wert(c, it) }, datum, name(wert(c, Telephony.Sms.ADDRESS)))
                     }
                 }
@@ -170,6 +176,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                         val id = lang(c, "_id")
                         val datum = lang(c, Telephony.Mms.DATE) * 1000
                         hochMms = maxOf(hochMms, datum)
+                        if (datum > seitMms) neu++
                         val werte = spalten.map { s ->
                             s to when (s) {
                                 Telephony.Mms.DATE -> datum.toString()
@@ -189,7 +196,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                 }
                 x.nachrichtenEnde()
             }
-            return Auszug(anzahl, mapOf(Art.SMS to hochSms, Art.MMS to hochMms))
+            return Auszug(anzahl, mapOf(Art.SMS to hochSms, Art.MMS to hochMms), neu)
         } finally {
             smsC?.close()
             mmsC?.close()
@@ -198,22 +205,25 @@ class HandyTelefon(private val ctx: Context) : Telefon {
 
     override fun anrufe(datei: File, seit: Long): Auszug? {
         if (!Erlaubnis.hat(ctx, arrayOf(Manifest.permission.READ_CALL_LOG))) throw SecurityException("READ_CALL_LOG")
-        cr.query(CallLog.Calls.CONTENT_URI, null, "${CallLog.Calls.DATE} > ?", arrayOf(seit.toString()), "${CallLog.Calls.DATE} ASC")?.use { c ->
+        // >= the mark, as for the messages: msgvault keeps one of each call, so the boundary call adds nothing
+        cr.query(CallLog.Calls.CONTENT_URI, null, "${CallLog.Calls.DATE} >= ?", arrayOf(seit.toString()), "${CallLog.Calls.DATE} ASC")?.use { c ->
             if (c.count == 0) return null
             var hoch = seit
+            var neu = 0
             val spalten = ANRUF_SPALTEN.filter { c.getColumnIndex(it) >= 0 }
             schreibe(datei) { x ->
                 x.anrufeAnfang(c.count, System.currentTimeMillis())
                 while (c.moveToNext()) {
                     val datum = lang(c, CallLog.Calls.DATE)
                     hoch = maxOf(hoch, datum)
+                    if (datum > seit) neu++
                     val nummer = wert(c, CallLog.Calls.NUMBER)
                     val kontakt = wert(c, CallLog.Calls.CACHED_NAME)?.ifBlank { null } ?: name(nummer)
                     x.anruf(spalten.map { it to wert(c, it) }, datum, kontakt)
                 }
                 x.anrufeEnde()
             }
-            return Auszug(c.count, mapOf(Art.ANRUFE to hoch))
+            return Auszug(c.count, mapOf(Art.ANRUFE to hoch), neu)
         }
         return null
     }
