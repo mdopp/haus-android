@@ -232,19 +232,27 @@ the call log ("restricted settings"): the screen then says to open App-Info →
 
 The owner's call, 2026-11-02. Off until the person turns its switch on
 (Mehr → Standortverlauf), behind its own permissions: the location with
-„Immer zulassen“ (`ACCESS_FINE/COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`)
-and, optional, „Körperliche Aktivitäten“ (`ACTIVITY_RECOGNITION`).
+„Immer zulassen“ (`ACCESS_FINE/COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`).
+No Google Play services (the owner, 2026-11-02): the platform alone.
 
-- The phone: the fused location provider and activity recognition's
-  still/moving transitions (Play services), both delivered by
-  PendingIntent to `standort/StandortEmpfaenger` — no service, job, alarm or
-  wakelock of the app's. The rate (`standort/Plan.kt`, chosen, not
-  measured): „Detailliert“ on the move every 15 s (high accuracy), resting
-  5 min, resting on a Wi-Fi hourly; „Sparsam“ on the move every 2 min
-  (balanced), resting 15 min, resting on a Wi-Fi every 2 h. Resting is
-  activity recognition's word, never a GPS poll; any Wi-Fi counts (owner:
-  „Wenn WLAN, bewegt sich selten“); without the activity permission the
-  phone counts as moving.
+- The phone: Android's LocationManager, delivered by PendingIntent to
+  `standort/StandortEmpfaenger` — no service, job, alarm or wakelock of the
+  app's. The provider (`Anbieter`): high accuracy is GPS; balanced is the
+  network provider, else the platform's fused one (Android 12+), else GPS.
+  On Android 12+ the request carries quality and batching
+  (`LocationRequest`), before that the plain interval. While the phone rests,
+  a second request on the passive provider takes the fixes other apps cause.
+- The rate (`standort/Plan.kt`, chosen, not measured): „Detailliert“ on the
+  move every 15 s (GPS), resting 5 min, resting on a Wi-Fi hourly;
+  „Sparsam“ on the move every 2 min (network), resting 15 min, resting on a
+  Wi-Fi every 2 h. Any Wi-Fi counts (owner: „Wenn WLAN, bewegt sich
+  selten“).
+- Resting (`standort/Ruhe.kt`): the fixes stay within their accuracy (at
+  least 30 m) of one place for 3 min (Detailliert) or 10 min (Sparsam); a
+  fix less exact than 500 m counts for nothing. It ends with a fix farther
+  away, or when the platform's significant-motion sensor fires — armed while
+  the phone rests, one-shot, alive only as long as the app's process. A
+  phone without that sensor keeps the plain interval and the screen says so.
 - The points wait in a file of the app's (`standort/Puffer.kt`, at most
   50 000, the oldest dropped beyond and said on the screen) and go in
   batches of ≤ 500 when 200 wait or the oldest waited 15 min

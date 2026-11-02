@@ -7,6 +7,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import android.hardware.TriggerEvent
+import android.hardware.TriggerEventListener
+import android.location.Location
+import android.location.LocationManager
+import android.location.LocationRequest
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -14,50 +21,42 @@ import androidx.core.content.ContextCompat
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.StandortClient
 import cloud.dopp.haus.data.TokenStore
-import com.google.android.gms.location.ActivityRecognition
-import com.google.android.gms.location.ActivityTransition
-import com.google.android.gms.location.ActivityTransitionRequest
-import com.google.android.gms.location.ActivityTransitionResult
-import com.google.android.gms.location.DetectedActivity
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import java.io.File
 import kotlin.concurrent.thread
 
-/** The permissions behind the switch: where (and in the background), and the optional „Körperliche Aktivität“. */
+/** The permissions behind the switch: where, and in the background too. */
 object StandortErlaubnis {
     val VORNE = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
 
     /** Android 10+: a separate permission, asked after [VORNE]; on 11+ Android's own page („Immer zulassen“). */
     const val HINTEN = Manifest.permission.ACCESS_BACKGROUND_LOCATION
 
-    /** Android 10+: activity recognition, to know when the phone rests; before that a normal permission. */
-    const val AKTIVITAET = Manifest.permission.ACTIVITY_RECOGNITION
-
     private fun hat(ctx: Context, recht: String) =
         ContextCompat.checkSelfPermission(ctx, recht) == PackageManager.PERMISSION_GRANTED
 
     fun vorne(ctx: Context): Boolean = VORNE.all { hat(ctx, it) }
     fun hinten(ctx: Context): Boolean = Build.VERSION.SDK_INT < 29 || hat(ctx, HINTEN)
-    fun aktivitaet(ctx: Context): Boolean = Build.VERSION.SDK_INT < 29 || hat(ctx, AKTIVITAET)
 
     /** All the recording needs: the location, in the background too. */
     fun genug(ctx: Context): Boolean = vorne(ctx) && hinten(ctx)
 }
 
 /**
- * The Android side of Standortverlauf: the fused provider's location updates
- * and activity recognition's still/moving transitions, both delivered by
- * PendingIntent to [StandortEmpfaenger] — Android wakes the app for them, the
- * app holds no service, alarm, job or wakelock of its own. Each delivery
- * stores the points, looks whether the request still fits ([Plan]) and, when
- * [Senden] says so, sends a batch while the phone is awake anyway.
+ * The Android side of Standortverlauf, on the platform alone — no Google
+ * Play services (the owner, 2026-11-02). Android's LocationManager delivers
+ * the fixes by PendingIntent to [StandortEmpfaenger]: GPS, the network
+ * provider or, on Android 12+, the platform's fused one, as [Anbieter]
+ * picks for the plan's accuracy. While the phone rests, a second request on
+ * the passive provider takes the fixes other apps cause, at no cost of its
+ * own. The app holds no service, alarm, job or wakelock.
+ *
+ * Resting is [Ruhe]'s word from the fixes; it ends when a fix lies farther
+ * away, or when the significant-motion sensor fires. That sensor is armed
+ * while the phone rests, but only as long as the app's process lives: a
+ * killed process loses it, and then the next fix ends the rest instead.
  */
 object Aufzeichnung {
     private const val ORT = "cloud.dopp.haus.standort.ORT"
-    private const val BEWEGUNG = "cloud.dopp.haus.standort.BEWEGUNG"
 
     fun puffer(ctx: Context) = Puffer(File(ctx.applicationContext.filesDir, "standort/punkte.txt"))
 
@@ -74,12 +73,18 @@ object Aufzeichnung {
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    private fun absicht(ctx: Context, aktion: String, code: Int): PendingIntent {
-        val i = Intent(ctx.applicationContext, StandortEmpfaenger::class.java).setAction(aktion)
-        // mutable: Play services puts the result into the intent
+    /** The phone has a significant-motion sensor; without it the plan keeps the plain interval. */
+    fun bewegungssensor(ctx: Context): Boolean =
+        ctx.applicationContext.getSystemService(SensorManager::class.java)?.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION) != null
+
+    private fun absicht(ctx: Context, code: Int): PendingIntent {
+        val i = Intent(ctx.applicationContext, StandortEmpfaenger::class.java).setAction(ORT)
+        // mutable: LocationManager puts the fixes into the intent
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
         return PendingIntent.getBroadcast(ctx.applicationContext, code, i, flags)
     }
+
+    private fun lm(ctx: Context): LocationManager? = ctx.applicationContext.getSystemService(LocationManager::class.java)
 
     /**
      * Brings Android's requests in line with the switch, the mode and the
@@ -95,64 +100,84 @@ object Aufzeichnung {
             aus(app)
             return
         }
-        val lage = Plan.lage(if (StandortErlaubnis.aktivitaet(app)) store.ruht() else null, imWlan(app))
+        val sensor = bewegungssensor(app)
+        val ruhe = store.ruhe()
+        val lage = Plan.lage(if (sensor) ruhe.ruht else null, imWlan(app))
+        if (lage != Lage.UNTERWEGS) Bewegung.scharf(app) else Bewegung.ab(app)
         val modus = store.modus()
-        val key = modus.wire + "/" + lage.name
-        if (!neu && store.inKraft() == key) return
         val a = Plan.anfrage(modus, lage)
-        val prio = if (a.genauigkeit == Genauigkeit.HOCH) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY
-        val req = LocationRequest.Builder(prio, a.intervallMs)
-            .setMinUpdateIntervalMillis(a.schnellstensMs)
-            .setMinUpdateDistanceMeters(a.abstandM)
-            .setMaxUpdateDelayMillis(a.sammelnMs)
-            .build()
+        val lm = lm(app) ?: return
+        val anbieter = Anbieter.waehle(a.genauigkeit, lm.getProviders(true).toSet(), Build.VERSION.SDK_INT)
+        val key = modus.wire + "/" + lage.name + "/" + anbieter
+        if (!neu && store.inKraft() == key) return
+        val haupt = absicht(app, 1)
+        val passiv = absicht(app, 3)
         try {
-            LocationServices.getFusedLocationProviderClient(app).requestLocationUpdates(req, absicht(app, ORT, 1))
+            lm.removeUpdates(haupt)
+            lm.removeUpdates(passiv)
+            if (anbieter == null) { // location off in Android's settings: nothing to ask
+                store.setzeInKraft(null)
+                return
+            }
+            if (Build.VERSION.SDK_INT >= 31) {
+                val q = if (a.genauigkeit == Genauigkeit.HOCH) LocationRequest.QUALITY_HIGH_ACCURACY else LocationRequest.QUALITY_BALANCED_POWER_ACCURACY
+                val req = LocationRequest.Builder(a.intervallMs)
+                    .setQuality(q)
+                    .setMinUpdateIntervalMillis(a.schnellstensMs)
+                    .setMinUpdateDistanceMeters(a.abstandM)
+                    .setMaxUpdateDelayMillis(a.sammelnMs)
+                    .build()
+                lm.requestLocationUpdates(anbieter, req, haupt)
+            } else {
+                lm.requestLocationUpdates(anbieter, a.intervallMs, a.abstandM, haupt)
+            }
+            // resting: the fixes other apps cause come along, free, and can end the rest early
+            if (lage != Lage.UNTERWEGS) {
+                lm.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, Plan.MINUTE, 0f, passiv)
+            }
             store.setzeInKraft(key)
-        } catch (e: Exception) { // no Play services, or the permission went meanwhile
+        } catch (e: Exception) { // the permission went meanwhile, or the provider vanished
             store.setzeInKraft(null)
         }
-        if (neu && StandortErlaubnis.aktivitaet(app)) {
-            val uebergaenge = listOf(ActivityTransition.ACTIVITY_TRANSITION_ENTER, ActivityTransition.ACTIVITY_TRANSITION_EXIT).map {
-                ActivityTransition.Builder().setActivityType(DetectedActivity.STILL).setActivityTransition(it).build()
-            }
-            try {
-                ActivityRecognition.getClient(app).requestActivityTransitionUpdates(ActivityTransitionRequest(uebergaenge), absicht(app, BEWEGUNG, 2))
-            } catch (e: Exception) {
-                store.setzeRuht(null)
-            }
-        }
     }
 
-    /** Stops both requests; the points collected stay until they are sent. */
-    @SuppressLint("MissingPermission")
+    /** Stops the requests and the sensor; the points collected stay until they are sent. */
     fun aus(ctx: Context) {
         val app = ctx.applicationContext
-        runCatching { LocationServices.getFusedLocationProviderClient(app).removeLocationUpdates(absicht(app, ORT, 1)) }
-        runCatching { ActivityRecognition.getClient(app).removeActivityTransitionUpdates(absicht(app, BEWEGUNG, 2)) }
+        lm(app)?.let { lm ->
+            runCatching { lm.removeUpdates(absicht(app, 1)) }
+            runCatching { lm.removeUpdates(absicht(app, 3)) }
+        }
+        Bewegung.ab(app)
         StandortStore(app).apply {
             setzeInKraft(null)
-            setzeRuht(null)
+            setzeRuhe(Ruhe.Stand.NEU)
         }
     }
 
-    /** A delivery from Android: points or a transition. Runs off the main thread. */
+    /** The fixes in a LocationManager delivery: a batch on Android 12+, else one. */
+    @Suppress("DEPRECATION")
+    private fun fixe(intent: Intent): List<Location> {
+        if (Build.VERSION.SDK_INT >= 31) {
+            intent.getParcelableArrayExtra(LocationManager.KEY_LOCATIONS)?.mapNotNull { it as? Location }
+                ?.takeIf { it.isNotEmpty() }?.let { return it }
+        }
+        return listOfNotNull(intent.getParcelableExtra(LocationManager.KEY_LOCATION_CHANGED) as? Location)
+    }
+
+    /** A delivery from Android. Runs off the main thread. */
     fun empfangen(ctx: Context, intent: Intent) {
         val app = ctx.applicationContext
         val store = StandortStore(app)
-        if (LocationResult.hasResult(intent)) {
-            val punkte = LocationResult.extractResult(intent)?.locations.orEmpty().filter { it.hasAccuracy() }.map { l ->
-                Punkt(
-                    zeit = l.time, breite = l.latitude, laenge = l.longitude, genauigkeit = l.accuracy,
-                    hoehe = if (l.hasAltitude()) l.altitude else null, tempo = if (l.hasSpeed()) l.speed else null,
-                )
-            }
-            if (store.an()) store.mehrVerloren(puffer(app).dazu(punkte))
+        val punkte = fixe(intent).filter { it.hasAccuracy() }.map { l ->
+            Punkt(
+                zeit = l.time, breite = l.latitude, laenge = l.longitude, genauigkeit = l.accuracy,
+                hoehe = if (l.hasAltitude()) l.altitude else null, tempo = if (l.hasSpeed()) l.speed else null,
+            )
         }
-        if (ActivityTransitionResult.hasResult(intent)) {
-            ActivityTransitionResult.extractResult(intent)?.transitionEvents?.lastOrNull { it.activityType == DetectedActivity.STILL }?.let {
-                store.setzeRuht(it.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-            }
+        if (store.an() && punkte.isNotEmpty()) {
+            store.mehrVerloren(puffer(app).dazu(punkte))
+            store.setzeRuhe(Ruhe.weiter(store.ruhe(), punkte, store.modus()))
         }
         anpassen(app)
         if (online(app)) senden(app, gedraengt = false)
@@ -172,9 +197,50 @@ object Aufzeichnung {
     fun nachStart(ctx: Context) {
         if (StandortStore(ctx).an()) anpassen(ctx, neu = true)
     }
+
+    /**
+     * The significant-motion sensor: armed while the phone rests, it fires
+     * once when the phone is carried off; the rest ends and the plan's own
+     * rate comes back. One-shot: armed again at the next rest. It lives
+     * with the process only.
+     */
+    private object Bewegung : TriggerEventListener() {
+        @Volatile
+        private var app: Context? = null
+
+        @Volatile
+        private var scharf = false
+
+        fun scharf(ctx: Context) {
+            if (scharf) return
+            val sm = ctx.applicationContext.getSystemService(SensorManager::class.java) ?: return
+            val s = sm.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION) ?: return
+            app = ctx.applicationContext
+            scharf = runCatching { sm.requestTriggerSensor(this, s) }.getOrDefault(false)
+        }
+
+        fun ab(ctx: Context) {
+            if (!scharf) return
+            val sm = ctx.applicationContext.getSystemService(SensorManager::class.java) ?: return
+            val s = sm.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION) ?: return
+            runCatching { sm.cancelTriggerSensor(this, s) }
+            scharf = false
+        }
+
+        override fun onTrigger(event: TriggerEvent?) {
+            scharf = false
+            val a = app ?: return
+            thread {
+                runCatching {
+                    StandortStore(a).setzeRuhe(Ruhe.Stand.NEU)
+                    anpassen(a)
+                }
+            }
+        }
+    }
 }
 
-/** Receives Android's location and activity deliveries ([Aufzeichnung]); not exported, reached by its PendingIntents only. */
+/** Receives Android's location deliveries ([Aufzeichnung]); not exported, reached by its PendingIntents only. */
 class StandortEmpfaenger : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val app = context.applicationContext

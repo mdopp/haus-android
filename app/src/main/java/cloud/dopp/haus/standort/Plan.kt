@@ -9,8 +9,10 @@ package cloud.dopp.haus.standort
  * situation ([Lage]): on the move it is the mode's own; resting it drops;
  * resting on any Wi-Fi it drops to very rarely (the owner, 2026-11-02:
  * „Wenn WLAN, bewegt sich selten“ — any Wi-Fi, not only the home one).
- * Whether the phone rests is Android's activity recognition, never a GPS
- * poll; without its permission the phone counts as on the move.
+ * Whether the phone rests comes from the fixes themselves ([Ruhe]) and
+ * the platform's significant-motion sensor, never a GPS poll and never
+ * Google Play services (the owner, 2026-11-02); a phone without the sensor
+ * keeps the plain interval.
  *
  * The intervals are chosen, not measured for battery: see [anfrage].
  */
@@ -62,8 +64,9 @@ object Plan {
     const val STUNDE = 60 * MINUTE
 
     /**
-     * [ruht]: activity recognition's last word (true still, false moving,
-     * null unknown or not allowed); [wlan]: connected to a Wi-Fi now.
+     * [ruht]: [Ruhe]'s word (true still, false moving, null when the phone
+     * has no significant-motion sensor to wake it again); [wlan]: connected
+     * to a Wi-Fi now.
      * Wi-Fi without rest is on the move: leaving a place starts with moving.
      */
     fun lage(ruht: Boolean?, wlan: Boolean): Lage = when {
@@ -74,23 +77,45 @@ object Plan {
 
     /**
      * The request for [modus] in [lage]. Chosen, not measured:
-     * - Detailliert: on the move every 15 s, high accuracy, from 10 m on,
-     *   delivered within 2 min; resting every 5 min; resting on Wi-Fi hourly.
-     * - Sparsam: on the move every 2 min, balanced (Wi-Fi and cell, ~100 m),
-     *   from 50 m on, delivered within 10 min; resting every 15 min;
+     * - Detailliert: on the move every 15 s, high accuracy (GPS),
+     *   delivered within 2 min (Android 12+ batches); resting every 5 min; resting on Wi-Fi hourly.
+     * - Sparsam: on the move every 2 min, balanced (the network provider,
+     *   Wi-Fi and cell, ~100 m), delivered within 10 min; resting every 15 min;
      *   resting on Wi-Fi every 2 h.
+     * No distance filter: resting is told from fixes that stay put.
      */
     fun anfrage(modus: Modus, lage: Lage): Anfrage = when (modus) {
         Modus.DETAILLIERT -> when (lage) {
-            Lage.UNTERWEGS -> Anfrage(15 * SEKUNDE, 5 * SEKUNDE, Genauigkeit.HOCH, 10f, 2 * MINUTE)
+            Lage.UNTERWEGS -> Anfrage(15 * SEKUNDE, 5 * SEKUNDE, Genauigkeit.HOCH, 0f, 2 * MINUTE)
             Lage.RUHT -> Anfrage(5 * MINUTE, MINUTE, Genauigkeit.AUSGEWOGEN, 0f, 15 * MINUTE)
             Lage.WLAN -> Anfrage(STUNDE, 15 * MINUTE, Genauigkeit.AUSGEWOGEN, 0f, 0)
         }
         Modus.SPARSAM -> when (lage) {
-            Lage.UNTERWEGS -> Anfrage(2 * MINUTE, MINUTE, Genauigkeit.AUSGEWOGEN, 50f, 10 * MINUTE)
+            Lage.UNTERWEGS -> Anfrage(2 * MINUTE, MINUTE, Genauigkeit.AUSGEWOGEN, 0f, 10 * MINUTE)
             Lage.RUHT -> Anfrage(15 * MINUTE, 5 * MINUTE, Genauigkeit.AUSGEWOGEN, 0f, 30 * MINUTE)
             Lage.WLAN -> Anfrage(2 * STUNDE, 30 * MINUTE, Genauigkeit.AUSGEWOGEN, 0f, 0)
         }
+    }
+}
+
+/** The platform's location providers, by their Android names (never Google Play services). */
+object Anbieter {
+    const val GPS = "gps"
+    const val NETZ = "network"
+    const val FUSED = "fused" // the platform's own, API 31+
+
+    /**
+     * The provider for [genauigkeit] among the enabled [da] on API [sdk]:
+     * high accuracy is GPS first; balanced is the network provider first,
+     * then the platform's fused one (31+), GPS last. Null when none is on.
+     */
+    fun waehle(genauigkeit: Genauigkeit, da: Set<String>, sdk: Int): String? {
+        val fused = if (sdk >= 31) listOf(FUSED) else emptyList()
+        val reihe = when (genauigkeit) {
+            Genauigkeit.HOCH -> listOf(GPS) + fused + NETZ
+            Genauigkeit.AUSGEWOGEN -> listOf(NETZ) + fused + GPS
+        }
+        return reihe.firstOrNull { it in da }
     }
 }
 

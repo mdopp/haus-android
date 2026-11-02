@@ -2,7 +2,6 @@ package cloud.dopp.haus.ui
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
@@ -32,8 +31,8 @@ import kotlin.concurrent.thread
 /**
  * Mehr → Standortverlauf (owner 2026-11-02). One switch, off until the
  * person turns it on: it asks for the location, then for „Immer zulassen“
- * (Android 10+; on 11+ Android's own page), and, optionally, for
- * „Körperliche Aktivitäten“, which tells the app when the phone rests.
+ * (Android 10+; on 11+ Android's own page). A phone without a
+ * significant-motion sensor gets a sentence: it keeps the plain interval.
  * Refused, the switch stays off with a sentence; a tap on it leads on.
  * Two modes, „Detailliert (mehr Akku)“ and „Sparsam“. Below: whether the
  * person connected Reitti on Haus (if not, one sentence, a tap opens Haus's
@@ -46,7 +45,7 @@ class StandortActivity : AppCompatActivity() {
     /** Why the switch is off or what is missing, until the next try; [ziel]: what a tap opens. */
     private class Hinweis(val satz: String, val ziel: Ziel)
 
-    private enum class Ziel { APP_INFO, HINTEN, AKTIVITAET, NICHTS }
+    private enum class Ziel { APP_INFO, HINTEN, NICHTS }
 
     private var hinweis: Hinweis? = null
 
@@ -58,10 +57,6 @@ class StandortActivity : AppCompatActivity() {
 
     private val erlaubeVorne = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vorneBeantwortet() }
     private val erlaubeHinten = registerForActivityResult(ActivityResultContracts.RequestPermission()) { hintenBeantwortet() }
-    private val erlaubeAktivitaet = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        Aufzeichnung.anpassen(applicationContext, neu = true)
-        render()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,13 +114,8 @@ class StandortActivity : AppCompatActivity() {
         }
         if (!StandortErlaubnis.vorne(this)) {
             gefragt = SystemClock.elapsedRealtime()
-            val rechte = if (Build.VERSION.SDK_INT >= 29 && !StandortErlaubnis.aktivitaet(this)) {
-                StandortErlaubnis.VORNE + StandortErlaubnis.AKTIVITAET
-            } else {
-                StandortErlaubnis.VORNE
-            }
             try {
-                erlaubeVorne.launch(rechte)
+                erlaubeVorne.launch(StandortErlaubnis.VORNE)
             } catch (e: Exception) {
                 vorneBeantwortet()
             }
@@ -189,14 +179,10 @@ class StandortActivity : AppCompatActivity() {
 
     private fun tippeHinweis() {
         val h = hinweis
-        when {
-            h?.ziel == Ziel.APP_INFO -> appInfo()
-            h?.ziel == Ziel.HINTEN -> fragHinten()
-            an() && !StandortErlaubnis.aktivitaet(this) && Build.VERSION.SDK_INT >= 29 -> try {
-                erlaubeAktivitaet.launch(StandortErlaubnis.AKTIVITAET)
-            } catch (e: Exception) {
-                appInfo()
-            }
+        when (h?.ziel) {
+            Ziel.APP_INFO -> appInfo()
+            Ziel.HINTEN -> fragHinten()
+            else -> {}
         }
     }
 
@@ -220,7 +206,7 @@ class StandortActivity : AppCompatActivity() {
 
         val satz = hinweis?.satz ?: when {
             store.an() && !StandortErlaubnis.genug(this) -> getString(R.string.standort_weg)
-            an() && !StandortErlaubnis.aktivitaet(this) -> getString(R.string.standort_ohne_aktivitaet)
+            an() && !Aufzeichnung.bewegungssensor(this) -> getString(R.string.standort_ohne_sensor)
             an() -> store.meldung()
             else -> null
         }
