@@ -63,7 +63,7 @@ These rules apply to every session, human or agent.
 ## The icon
 
 - `art/icon.svg` is the one master (owner, 2026-11-02: the terminal prompt
-  inside a green house, `#3ddc84` on `#0c120e`). Every PNG — launcher,
+  inside a house drawn as a green line, `#3ddc84` on `#0c120e`). Every PNG — launcher,
   adaptive foreground and monochrome, notification, store — is rendered from
   it by `scripts/icons` (`npm ci && node icons.mjs`), never drawn or resized
   by hand. mdopp/haus carries the same master for the web app's icons.

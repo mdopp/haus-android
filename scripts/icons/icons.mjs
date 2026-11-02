@@ -8,7 +8,7 @@
 //   mipmap-*/ic_launcher_round.png       48 dp, the same in a circle
 //   mipmap-*/ic_launcher_foreground.png  108 dp, the adaptive icon's house (the ground is a colour)
 //   mipmap-*/ic_launcher_monochrome.png  108 dp, the themed icon (API 33): the house in white
-//   drawable-*/ic_stat_haus.png          24 dp, the notification icon: white, the prompt cut out
+//   drawable-*/ic_stat_haus.png          24 dp, the notification icon: white, the lines bolder
 // and store_icon.png (512 px, the store listing). With a preview dir it also
 // writes the launcher as a launcher masks it at 192 px, at 24 px, and the
 // 24 px one blown up pixel for pixel.
@@ -25,8 +25,17 @@ const DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
 
 /** The master without its ground: the house alone, on transparent. */
 const motif = master.replace(/<rect id="ground"[^>]*\/>/, '')
-/** The house in white: Android tints it (themed icon, notification). */
-const white = motif.replace('fill="#3ddc84"', 'fill="#ffffff"')
+/** The house in white, strokes and fills alike: Android tints it (themed icon, notification). */
+const white = motif.replaceAll('#3ddc84', '#ffffff')
+/**
+ * The notification icon is drawn at 24 dp, where the master's 5-unit line is
+ * about 1.7 px: there the lines go to 8 units (house and prompt) and the
+ * cursor to 8 units high, so the mark stays legible.
+ */
+const bold = white
+  .replace('stroke-width="5"', 'stroke-width="8"')
+  .replace('stroke-width="6"', 'stroke-width="8"')
+  .replace('y="65" width="15" height="5.5"', 'y="63" width="15" height="8"')
 
 /** [svg] seen through [box] (x y w h), clipped to [clip] (an SVG shape in the box's units) when given. */
 function view(svg, box, clip) {
@@ -61,7 +70,7 @@ for (const [name, scale] of Object.entries(DENSITIES)) {
   write(path.join(res, `mipmap-${name}/ic_launcher_round.png`), png(view(master, VISIBLE, CIRCLE), 48 * scale))
   write(path.join(res, `mipmap-${name}/ic_launcher_foreground.png`), png(motif, 108 * scale))
   write(path.join(res, `mipmap-${name}/ic_launcher_monochrome.png`), png(white, 108 * scale))
-  write(path.join(res, `drawable-${name}/ic_stat_haus.png`), png(view(white, HOUSE), 24 * scale))
+  write(path.join(res, `drawable-${name}/ic_stat_haus.png`), png(view(bold, HOUSE), 24 * scale))
 }
 write(path.join(root, 'store_icon.png'), png(view(master, VISIBLE), 512))
 
@@ -74,6 +83,9 @@ if (preview) {
   const zoomed = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="240" height="240">` +
     `<image width="240" height="240" image-rendering="optimizeSpeed" xlink:href="data:image/png;base64,${small.toString('base64')}"/></svg>`
   write(path.join(preview, 'launcher-24-zoomed.png'), png(zoomed, 240))
-  const stat = png(view(white, HOUSE), 24)
+  const stat = png(view(bold, HOUSE), 24)
   write(path.join(preview, 'notification-24.png'), stat)
+  const statZoomed = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="240" height="240">` +
+    `<rect width="240" height="240" fill="#0c120e"/><image width="240" height="240" image-rendering="optimizeSpeed" xlink:href="data:image/png;base64,${stat.toString('base64')}"/></svg>`
+  write(path.join(preview, 'notification-24-zoomed.png'), png(statZoomed, 240))
 }
