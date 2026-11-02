@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 /**
  * Opens Android's share sheet for a piece of text, the way Chrome's „Mehr“
  * does (e2e/live_e2e.sh step 6). The script then reads the screen for the
- * persona's Direct Share target (#188).
+ * assistant's Direct Share target (#188).
  */
 @RunWith(AndroidJUnit4::class)
 class LiveE2EShare {

@@ -3,8 +3,7 @@ package cloud.dopp.haus
 import android.content.Context
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.test.core.app.ApplicationProvider
-import cloud.dopp.haus.data.Persona
-import cloud.dopp.haus.data.PersonaStore
+import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.widget.ShareTarget
@@ -20,8 +19,8 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * The persona in the share sheet (#188): one sharing shortcut with the
- * persona's name, only while paired and Haus named one, and a share target
+ * The assistant in the share sheet (#188): one sharing shortcut with its
+ * name („Homes“ until Haus names one), only while paired, and a share target
  * that hands it to the share activity. The app's name and the sheet's own
  * entry stay as they are.
  */
@@ -35,7 +34,7 @@ class ShareTargetTest {
     fun clean() {
         ServerStore.clear(ctx())
         TokenStore.clear(ctx())
-        PersonaStore.clear(ctx())
+        Assistent.clear(ctx())
     }
 
     private fun paired() {
@@ -47,33 +46,26 @@ class ShareTargetTest {
 
     @Test
     fun noPairingNoTarget() {
-        PersonaStore.save(ctx(), Persona("Joshua", ""))
+        Assistent.save(ctx(), "Mira")
         assertNull(ShareTarget.info(ctx()))
     }
 
     @Test
-    fun noPersonaNoTarget() {
+    fun pairedTheTargetIsHomesUntilHausNamesOne() {
         paired()
-        assertNull(ShareTarget.info(ctx()))
-    }
-
-    @Test
-    fun theTargetIsThePersona() {
-        paired()
-        PersonaStore.save(ctx(), Persona("Joshua", ""))
         val info = requireNotNull(ShareTarget.info(ctx()))
         assertEquals(ShareTarget.ID, info.id)
-        assertEquals("Joshua", info.shortLabel.toString())
+        assertEquals("share_assistent", info.id)
+        assertEquals("Homes", info.shortLabel.toString())
         assertEquals(setOf(ShareTarget.CATEGORY), info.categories)
         // Android 13+ keeps no shortcut excluded from the launcher, so the share sheet never saw it
         assertFalse("kept out of the launcher", info.isExcludedFromSurfaces(ShortcutInfoCompat.SURFACE_LAUNCHER))
     }
 
     @Test
-    fun theNameFollowsThePersona() {
+    fun theNameFollowsHaus() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", ""))
-        PersonaStore.save(ctx(), Persona("Mira", ""))
+        Assistent.save(ctx(), "Mira")
         assertEquals("Mira", ShareTarget.info(ctx())?.shortLabel.toString())
     }
 

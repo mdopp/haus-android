@@ -28,7 +28,7 @@ class NapiRequestTest {
     private val token = "haus_device_T1"
 
     private val all = listOf(
-        Napi.PERSONA, Napi.PERSONA_ICON, Napi.WHOAMI, Napi.BOX_HOME, Napi.BOX_SERVICES, Napi.HA_CALL,
+        Napi.ASSISTENT, Napi.WHOAMI, Napi.BOX_HOME, Napi.BOX_SERVICES, Napi.HA_CALL,
         Napi.STATE, Napi.ENERGY, Napi.FAVORITES, Napi.ADDABLE, Napi.WATCH, Napi.EVENTS,
         Napi.TOOL_DEFS, Napi.ACTION_CALLBACK,
     )

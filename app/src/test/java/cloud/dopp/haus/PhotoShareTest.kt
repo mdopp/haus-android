@@ -42,7 +42,7 @@ class PhotoShareTest {
         assertTrue(images, images.contains("android.intent.action.SEND_MULTIPLE"))
         assertTrue("text stays", activity.contains("""android:mimeType="text/plain""""))
         val target = File(RepoFiles.main, "res/xml/shortcuts.xml").readText()
-        assertTrue("the persona's Direct Share takes images too", target.contains("""android:mimeType="image/*""""))
+        assertTrue("the assistant's Direct Share takes images too", target.contains("""android:mimeType="image/*""""))
     }
 
     @Test

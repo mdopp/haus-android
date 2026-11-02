@@ -63,13 +63,13 @@ object Pairing {
     /**
      * Store [token] as the device token for [server], which [check] accepted.
      * The token first: if it cannot be saved, nothing changes ([Outcome.NOT_SAVED]).
-     * Another server than the stored one replaces it, and its persona with it.
+     * Another server than the stored one replaces it, and the assistant's name kept from it.
      */
     fun store(ctx: Context, server: String, token: String): Outcome {
         if (!PairLinks.isDeviceToken(token)) return Outcome.REFUSED
         if (!TokenStore.save(ctx, token)) return Outcome.NOT_SAVED
         if (ServerStore.baseUrl(ctx) != server) {
-            PersonaStore.clear(ctx)
+            Assistent.clear(ctx)
             ServerStore.setBaseUrl(ctx, server)
         }
         cancel(ctx)

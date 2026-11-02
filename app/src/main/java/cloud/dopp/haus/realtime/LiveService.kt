@@ -24,8 +24,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import cloud.dopp.haus.R
+import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.Napi
-import cloud.dopp.haus.data.PersonaStore
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.request
@@ -374,7 +374,7 @@ class LiveService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_haus)
-            .setContentTitle(PersonaStore.name(this, getString(R.string.appName)))
+            .setContentTitle(Assistent.name(this))
             .setContentText(getString(status))
             .setContentIntent(tap)
             .setOngoing(true)

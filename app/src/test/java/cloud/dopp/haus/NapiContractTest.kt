@@ -63,12 +63,7 @@ class NapiContractTest {
 
         /** Every /napi route Haus serves, as its handler reads and answers it. */
         val HAUS = listOf(
-            Route(
-                "GET", "/napi/persona", "internal/napi/napi.go:63-74",
-                query = mapOf("lang" to null),
-                sends = setOf("name", "display", "greeting", "accent", "ground", "icon"),
-            ),
-            Route("GET", "/napi/persona/icon.png", "internal/napi/napi.go:75-82"),
+            Route("GET", "/napi/assistent", "internal/napi/napi.go:104-106", sends = setOf("name")),
             Route("GET", "/napi/whoami", "internal/napi/napi.go:181-190", sends = setOf("uid", "via")),
             Route(
                 "GET", "/napi/box/home",
@@ -248,7 +243,7 @@ class NapiContractTest {
 
         /** What the widgets and the pairing need: each must be declared. */
         val NEEDED = setOf(
-            "GET /napi/persona", "GET /napi/persona/icon.png", "GET /napi/whoami",
+            "GET /napi/assistent", "GET /napi/whoami",
             "GET /napi/box/home", "GET /napi/box/services",
             "POST /napi/ha/call", "GET /napi/portal/state", "GET /napi/portal/energy",
             "GET /napi/portal/favorites", "GET /napi/portal/start/addable",
@@ -271,7 +266,7 @@ class NapiContractTest {
         val PARSERS = listOf(
             "app/src/main/java/cloud/dopp/haus/data/ApiClient.kt",
             "app/src/main/java/cloud/dopp/haus/data/BoxApiClient.kt",
-            "app/src/main/java/cloud/dopp/haus/data/Persona.kt",
+            "app/src/main/java/cloud/dopp/haus/data/Assistent.kt",
             "app/src/main/java/cloud/dopp/haus/data/ToolDefs.kt",
             "app/src/main/java/cloud/dopp/haus/realtime/RealtimeProtocol.kt",
             "app/src/main/java/cloud/dopp/haus/data/SicherungClient.kt",
@@ -546,8 +541,8 @@ class NapiContractTest {
      */
     @Test
     fun noPathIsGluedFromAPrefixAndATail() {
-        val dirs = listOf("portal/", "box/", "defs/", "ha/", "persona/")
-        val leaves = listOf("/upload", "/action-callback", "/persona", "/whoami")
+        val dirs = listOf("portal/", "box/", "defs/", "ha/")
+        val leaves = listOf("/upload", "/action-callback", "/assistent", "/whoami")
         val glued = literals().filter { (_, s) -> dirs.any { s.startsWith(it) || s.startsWith("/$it") } || leaves.any { s.startsWith(it) } }
             .map { (at, s) -> "$at: \"$s\"" }
         assertTrue("relative /napi tails:\n" + glued.joinToString("\n"), glued.isEmpty())

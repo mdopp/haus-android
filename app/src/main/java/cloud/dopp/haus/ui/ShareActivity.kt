@@ -16,7 +16,7 @@ import kotlin.concurrent.thread
  * Share → Haus (haus#120): the phone's share sheet sends a link or a text
  * here — a recipe, an album review, a holiday flat from the browser — and
  * Haus keeps the page as a note, as "Aus Link merken" does on its Notizen
- * page and Joshua does on Signal.
+ * page and the assistant does in the chat.
  *
  * A photo — one or several, as the camera app shares them — goes to Haus's
  * document inbox instead ([PhotoShare], owner 2026-11-02: „Foto machen und

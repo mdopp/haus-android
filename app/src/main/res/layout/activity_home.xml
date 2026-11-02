@@ -6,7 +6,7 @@
     android:id="@+id/home_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/haus_bg"
+    android:background="@color/terminal_ground"
     android:fillViewport="true"
     android:scrollbars="none">
 
@@ -19,9 +19,9 @@
         android:paddingTop="@dimen/space_lg"
         android:paddingBottom="@dimen/space_xl">
 
-        <!-- The persona: icon, name, a rule in its accent (from /napi/persona). -->
+        <!-- The app's icon, the assistant's name (/napi/assistent), a rule in the fixed accent. -->
         <LinearLayout
-            android:id="@+id/persona_block"
+            android:id="@+id/assistent_block"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xl"
@@ -30,26 +30,26 @@
             android:orientation="vertical">
 
             <ImageView
-                android:id="@+id/persona_icon"
+                android:id="@+id/assistent_icon"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:layout_marginBottom="@dimen/space_sm"
                 android:contentDescription="@null"
-                android:visibility="gone" />
+                android:src="@mipmap/ic_launcher" />
 
             <TextView
-                android:id="@+id/persona_name"
+                android:id="@+id/assistent_name"
                 style="@style/Text.Haus.Hero"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/appName" />
+                android:text="@string/assistent_name" />
 
             <View
-                android:id="@+id/persona_rule"
+                android:id="@+id/assistent_rule"
                 android:layout_width="52dp"
                 android:layout_height="3dp"
                 android:layout_marginTop="10dp"
-                android:background="@color/haus_accent" />
+                android:background="@color/terminal_green" />
 
             <TextView
                 android:id="@+id/home_claim"

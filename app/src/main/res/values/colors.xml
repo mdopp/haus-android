@@ -3,8 +3,13 @@
     <!-- Legacy Google-template shortcut background (kept for shortcut drawables). -->
     <color name="shortcut_background">#F5F5F5</color>
 
-    <!-- Adaptive launcher-icon background: the icon's ground (art/icon.svg). -->
-    <color name="ic_launcher_background">#0C120E</color>
+    <!-- The fixed look (owner, 2026-11-02): green phosphor on a dark ground,
+         the icon's two colours (art/icon.svg). The start screen wears them. -->
+    <color name="terminal_green">#3DDC84</color>
+    <color name="terminal_ground">#0C120E</color>
+
+    <!-- Adaptive launcher-icon background: the icon's ground. -->
+    <color name="ic_launcher_background">@color/terminal_ground</color>
 
     <!-- ── Haus palette ───────────────────────────────────────────────── -->
     <color name="haus_bg">#070709</color>            <!-- window background -->
@@ -16,7 +21,7 @@
     <color name="haus_surface_bg">#070709</color>    <!-- web background_color -->
     <color name="haus_surface_theme">#0C0C0E</color> <!-- web theme_color -->
 
-    <!-- The in-app accent; the persona's own accent replaces it on the home screen. -->
+    <!-- The in-app accent of buttons, fields and hints. -->
     <color name="haus_accent">#F97316</color>        <!-- orange-500 -->
     <color name="haus_accent_dark">#EA580C</color>   <!-- orange-600 (pressed) -->
     <color name="haus_accent_faint">#1FF97316</color><!-- 12% orange tint -->
