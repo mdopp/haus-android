@@ -232,45 +232,6 @@
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/sicherung_anleitung_ordner_title" />
-
-            <TextView
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:text="@string/sicherung_anleitung_ordner" />
-
-            <TextView
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/sicherung_anleitung_kontakte_title" />
-
-            <TextView
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:text="@string/sicherung_anleitung_kontakte" />
-
-            <TextView
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/sicherung_anleitung_sms_title" />
-
-            <TextView
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:text="@string/sicherung_anleitung_sms" />
-
-            <TextView
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_discord_title" />
 
             <TextView

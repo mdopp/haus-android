@@ -89,7 +89,7 @@ class SicherungScreenTest {
         val anleitung = texte(a.findViewById(R.id.sicherung_anleitung))
         listOf(
             "Ende-zu-Ende-verschlüsseltes Backup", "64-stelligen Schlüssel verwenden", "Vaultwarden",
-            "Chat-Backups", "Auf dem Gerät", "30-stellige Passphrase", "com.whatsapp → WhatsApp",
+            "Chat-Backups", "Auf dem Gerät", "30-stellige Passphrase", "Discord",
             "je nach App-Version", "die sich selbst löschen", "einmaligen Ansicht",
         ).forEach { assertTrue("the guide lacks „$it“", anleitung.contains(it)) }
         assertFalse("no key field: keys go into the vault on the box", hat(a.window.decorView, EditText::class.java))
@@ -159,7 +159,11 @@ class SicherungScreenTest {
         WorkManager.getInstance(ctx()).cancelAllWork()
     }
 
-    /** The intro covers all of it; the guide has the passkey warning and the two switches. */
+    /**
+     * The intro covers all of it. The guide is only what happens outside the
+     * app (WhatsApp with the passkey warning, Signal, Discord): the cards on
+     * this screen explain themselves.
+     */
     @Test
     fun theIntroAndTheGuideCoverContactsSmsAndCalls() {
         val a = Robolectric.buildActivity(SicherungActivity::class.java).setup().get()
@@ -170,9 +174,10 @@ class SicherungScreenTest {
         val anleitung = texte(a.findViewById(R.id.sicherung_anleitung))
         listOf(
             "nicht Passwort und nicht Passkey", "aus einem Passkey lässt sich der Schlüssel nicht auslesen",
-            "deaktivieren und sofort wieder aktivieren", "Kontakte, in der Haus-App", "SMS und Anrufe, in der Haus-App",
-            "„Eingeschränkte Einstellungen zulassen“",
+            "deaktivieren und sofort wieder aktivieren",
         ).forEach { assertTrue("the guide lacks „$it“", anleitung.contains(it)) }
+        listOf("In der Haus-App", "in der Haus-App", "Mehr → Nachrichten sichern", "Eingeschränkte Einstellungen")
+            .forEach { assertFalse("the guide still says „$it“", anleitung.contains(it)) }
     }
 
     /** Refused: the switch stays off and says why. */
