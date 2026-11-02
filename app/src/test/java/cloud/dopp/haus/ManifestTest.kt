@@ -24,10 +24,13 @@ import java.io.File
  * permission to write or send them.
  *
  * Standortverlauf (owner 2026-11-02), optional behind its own switch: the
- * location in the background and activity recognition, delivered by the
- * fused provider's PendingIntents to one receiver that is not exported. It
- * adds no service, no job, no alarm and no wakelock: the points go to Haus
- * while a delivery has the phone awake anyway.
+ * location in the background, delivered by Android's own LocationManager by
+ * PendingIntent to one receiver that is not exported. It adds no service,
+ * no job, no alarm and no wakelock: the points go to Haus while a delivery
+ * has the phone awake anyway.
+ *
+ * No Google Play services, anywhere (the owner's decision, 2026-11-02): no
+ * `com.google.android.gms` library, class or permission.
  */
 class ManifestTest {
 
@@ -72,7 +75,6 @@ class ManifestTest {
         "READ_CONTACTS", "READ_SMS", "READ_CALL_LOG",
         // Standortverlauf (owner 2026-11-02): behind its own switch
         "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "ACCESS_BACKGROUND_LOCATION",
-        "ACTIVITY_RECOGNITION", "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
         "ACCESS_NETWORK_STATE", // whether the phone is on a Wi-Fi
     )
 
@@ -209,8 +211,9 @@ class ManifestTest {
 
     /**
      * Standortverlauf's receiver is reached by the app's own PendingIntents
-     * only, and only Aufzeichnung asks Android for locations — through the
-     * fused provider, never by polling LocationManager.
+     * only, and only Aufzeichnung asks Android for locations — by
+     * PendingIntent, never a one-off poll (no single update, no current
+     * location, no listener that needs the process).
      */
     @Test
     fun theLocationComesByPendingIntentToOneHiddenReceiver() {
@@ -218,9 +221,29 @@ class ManifestTest {
         assertTrue(receiver, receiver.contains("""android:exported="false""""))
         assertFalse(receiver, receiver.contains("intent-filter"))
         val aufzeichnung = "app/src/main/java/cloud/dopp/haus/standort/Aufzeichnung.kt"
-        val hits = noneSay("requestLocationUpdates", "requestActivityTransitionUpdates", "LocationManager", "getCurrentLocation", except = setOf(aufzeichnung))
+        val hits = noneSay("requestLocationUpdates", "LocationManager", "requestTriggerSensor", except = setOf(aufzeichnung)) +
+            noneSay("requestSingleUpdate", "getCurrentLocation", "LocationListener")
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
-        assertFalse(sources.getValue(aufzeichnung).contains("LocationManager"))
+        val calls = Regex("""requestLocationUpdates\(([^)]*)\)""").findAll(sources.getValue(aufzeichnung)).map { it.groupValues[1] }.toList()
+        assertTrue("no request at all", calls.isNotEmpty())
+        calls.forEach { assertTrue("a request not by PendingIntent: $it", it.trim().endsWith("haupt") || it.trim().endsWith("passiv")) }
+    }
+
+    /**
+     * No Google Play services (the owner, 2026-11-02): not in the build, not
+     * in the merged manifest, not in the sources. The app never needed them;
+     * a phone without them works the same.
+     */
+    @Test
+    fun noGooglePlayServices() {
+        val gradles = RepoFiles.walk().filter { it.name.endsWith(".gradle") || it.name.endsWith(".gradle.kts") || it.name.endsWith(".toml") }
+        assertTrue("no build files found", gradles.any { it.name == "build.gradle" })
+        val inBuild = gradles.filter { f -> f.readText().let { it.contains("com.google.android.gms") || it.contains("play-services") || it.contains("com.google.firebase") } }
+            .map { RepoFiles.relative(it) }
+        assertTrue("Google Play services in the build: $inBuild", inBuild.isEmpty())
+        assertFalse("Google Play services in the merged manifest", merged.contains("com.google.android.gms"))
+        val inSources = noneSay("com.google.android.gms", "com.google.firebase")
+        assertTrue("left in the sources:\n" + inSources.joinToString("\n"), inSources.isEmpty())
     }
 
     @Test

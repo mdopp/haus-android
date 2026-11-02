@@ -40,13 +40,22 @@ These rules apply to every session, human or agent.
   makes no request. `ManifestTest`
   holds it to its one file; do not add a second job or reuse this one.
 - Standortverlauf (the owner's call, 2026-11-02; docs/CONTRACT.md (f)):
-  behind its own switch and the background-location permission, the
-  fused provider and activity recognition deliver by PendingIntent to
+  behind its own switch and the background-location permission,
+  Android's own LocationManager delivers by PendingIntent to
   `standort/StandortEmpfaenger`, which stores the points and sends a
   batch to Haus while that delivery has the phone awake. It is no job,
   service, alarm or wakelock; keep it that way (`ManifestTest`). The
-  decisions — rate per mode and situation, when a batch goes — live in
-  `standort/Plan.kt`, plain and unit-tested.
+  decisions — rate per mode and situation, resting told from the fixes,
+  when a batch goes — live in `standort/Plan.kt` and `standort/Ruhe.kt`,
+  plain and unit-tested.
+
+## No Google Play services
+
+- The owner's decision, 2026-11-02 („ohne Google“): no
+  `com.google.android.gms` or Firebase library, class or permission — not
+  for location, not for anything. Use the platform (LocationManager,
+  SensorManager). `ManifestTest.noGooglePlayServices` fails if one
+  comes back.
 
 ## Commits
 

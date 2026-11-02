@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
- * Standortverlauf's own prefs: the switch and the mode, activity
- * recognition's last word, the request in force, and how the sending goes.
+ * Standortverlauf's own prefs: the switch and the mode, [Ruhe]'s state,
+ * the request in force, and how the sending goes.
  * Plain prefs: no secret here; the Reitti token lives on Haus, never on the
  * phone. The points themselves are in [Puffer].
  */
@@ -19,10 +19,29 @@ class StandortStore(ctx: Context) : Sendegedaechtnis {
     fun modus(): Modus = Modus.aus(p.getString(MODUS, null))
     fun setzeModus(m: Modus) = p.edit().putString(MODUS, m.wire).apply()
 
-    /** Activity recognition's last word: true still, false moving, null not known. */
-    fun ruht(): Boolean? = if (p.contains(RUHT)) p.getBoolean(RUHT, false) else null
-    fun setzeRuht(ruht: Boolean?) {
-        if (ruht == null) p.edit().remove(RUHT).apply() else p.edit().putBoolean(RUHT, ruht).apply()
+    /** [Ruhe]'s decision so far. */
+    fun ruhe(): Ruhe.Stand {
+        val ruht = p.getBoolean(RUHT, false)
+        if (!p.contains(ANKER_ZEIT)) return Ruhe.Stand(null, false)
+        val a = Anker(
+            p.getLong(ANKER_ZEIT, 0L),
+            java.lang.Double.longBitsToDouble(p.getLong(ANKER_BREITE, 0L)),
+            java.lang.Double.longBitsToDouble(p.getLong(ANKER_LAENGE, 0L)),
+            p.getFloat(ANKER_GENAU, 0f),
+        )
+        return Ruhe.Stand(a, ruht)
+    }
+
+    fun setzeRuhe(s: Ruhe.Stand) {
+        val e = p.edit().putBoolean(RUHT, s.ruht)
+        val a = s.anker
+        if (a == null) {
+            e.remove(ANKER_ZEIT).remove(ANKER_BREITE).remove(ANKER_LAENGE).remove(ANKER_GENAU)
+        } else {
+            e.putLong(ANKER_ZEIT, a.zeit).putLong(ANKER_BREITE, java.lang.Double.doubleToRawLongBits(a.breite))
+                .putLong(ANKER_LAENGE, java.lang.Double.doubleToRawLongBits(a.laenge)).putFloat(ANKER_GENAU, a.genauigkeit)
+        }
+        e.commit() // the receiver's thread ends right after; the next delivery reads it
     }
 
     /** The request asked of Android last, as `<modus>/<lage>`; null when none is in force. */
@@ -61,6 +80,10 @@ class StandortStore(ctx: Context) : Sendegedaechtnis {
         const val AN = "an"
         const val MODUS = "modus"
         const val RUHT = "ruht"
+        const val ANKER_ZEIT = "anker_zeit"
+        const val ANKER_BREITE = "anker_breite"
+        const val ANKER_LAENGE = "anker_laenge"
+        const val ANKER_GENAU = "anker_genau"
         const val IN_KRAFT = "in_kraft"
         const val VERLOREN = "verloren"
         const val VERWORFEN = "verworfen"

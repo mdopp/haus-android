@@ -16,7 +16,8 @@ import org.junit.Test
  * Standortverlauf's decisions (owner 2026-11-02): how often the app asks
  * where the phone is, and when a batch goes. The owner: „Wenn WLAN, bewegt
  * sich selten“ — resting on any Wi-Fi, the rate drops to very rarely; it
- * comes back as soon as the phone moves or the Wi-Fi is gone.
+ * comes back as soon as the phone moves or the Wi-Fi is gone. Resting is
+ * told from the fixes (StandortRuheTest); unknown is never resting.
  */
 class StandortPlanTest {
 
@@ -27,7 +28,7 @@ class StandortPlanTest {
         // moving, on Wi-Fi or not: the mode's own rate
         assertEquals(Lage.UNTERWEGS, Plan.lage(ruht = false, wlan = true))
         assertEquals(Lage.UNTERWEGS, Plan.lage(ruht = false, wlan = false))
-        // not known (no activity permission, no word yet): never assumed resting
+        // not known (no significant-motion sensor): never assumed resting
         assertEquals(Lage.UNTERWEGS, Plan.lage(ruht = null, wlan = true))
     }
 
@@ -61,6 +62,8 @@ class StandortPlanTest {
             Modus.entries.forEach { m -> assertEquals("$m $l", Genauigkeit.AUSGEWOGEN, Plan.anfrage(m, l).genauigkeit) }
         }
         Lage.entries.forEach { l -> assertEquals(Genauigkeit.AUSGEWOGEN, Plan.anfrage(Modus.SPARSAM, l).genauigkeit) }
+        // no distance filter: resting is told from fixes that stay put
+        Lage.entries.forEach { l -> Modus.entries.forEach { m -> assertEquals(0f, Plan.anfrage(m, l).abstandM) } }
     }
 
     @Test

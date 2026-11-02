@@ -7,7 +7,7 @@
     <string name="standort_schalter_titel">Aufzeichnen</string>
     <!-- what a screen reader says for the switch -->
     <string name="standort_schalter">Standort aufzeichnen</string>
-    <string name="standort_was">Braucht den Standort „Immer zulassen“. Ruht das Handy in einem WLAN, fragt die App nur sehr selten nach dem Ort; sobald es sich bewegt oder das WLAN weg ist, wieder normal.</string>
+    <string name="standort_was">Braucht den Standort „Immer zulassen“. Ruht das Handy in einem WLAN, fragt die App nur sehr selten nach dem Ort; sobald es sich bewegt oder das WLAN weg ist, wieder normal. Ohne Google-Dienste: die App fragt Android selbst.</string>
 
     <string name="standort_modus_titel">Wie genau</string>
     <string name="standort_detailliert">Detailliert (mehr Akku)</string>
@@ -33,6 +33,6 @@
     <string name="standort_abgelehnt">Ohne die Erlaubnis für den Standort bleibt das aus.</string>
     <string name="standort_immer">Fast fertig: wähle beim Standort „Immer zulassen“, sonst zeichnet die App nur auf, während sie offen ist. Tippe hier, wenn Android nicht fragt.</string>
     <string name="standort_einstellungen">Android fragt nicht mehr nach. Tippe hier, erlaube unter „Berechtigungen“ den Standort mit „Immer zulassen“ und schalte es dann hier wieder ein.</string>
-    <string name="standort_ohne_aktivitaet">Ohne „Körperliche Aktivitäten“ weiß die App nicht, wann das Handy ruht, und fragt öfter nach dem Ort (mehr Akku). Tippe hier, um es zu erlauben.</string>
+    <string name="standort_ohne_sensor">Dieses Handy hat keinen Bewegungssensor: die App merkt nicht, wann es ruht, und fragt immer im normalen Abstand nach dem Ort (mehr Akku).</string>
     <string name="standort_weg">Die App darf den Standort nicht mehr immer abfragen: schalte den Schalter noch einmal ein.</string>
 </resources>
