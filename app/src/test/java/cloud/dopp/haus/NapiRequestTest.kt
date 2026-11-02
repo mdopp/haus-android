@@ -29,8 +29,8 @@ class NapiRequestTest {
 
     private val all = listOf(
         Napi.PERSONA, Napi.PERSONA_ICON, Napi.WHOAMI, Napi.BOX_HOME, Napi.BOX_SERVICES, Napi.HA_CALL,
-        Napi.STATE, Napi.ENERGY, Napi.HISTORY, Napi.ACTIVE, Napi.ADDABLE, Napi.WATCH, Napi.EVENTS,
-        Napi.TOOL_DEFS, Napi.ACTION_CALLBACK, Napi.UPLOAD,
+        Napi.STATE, Napi.ENERGY, Napi.FAVORITES, Napi.ADDABLE, Napi.WATCH, Napi.EVENTS,
+        Napi.TOOL_DEFS, Napi.ACTION_CALLBACK,
     )
 
     @Test
@@ -62,13 +62,14 @@ class NapiRequestTest {
     @Test
     fun theTargetCarriesOnlyTheDeclaredParametersAndValues() {
         assertEquals("/napi/portal/state?entity_id=light.kueche", Napi.STATE.target("light.kueche"))
-        assertEquals(
-            "/napi/portal/entity-history?entity_id=sensor.pv&range=7d",
-            Napi.HISTORY.target("sensor.pv", Napi.HistoryRange.WEEK.wire),
+        val ranged = Napi.Endpoint(
+            Napi.Method.GET, "/napi/portal/entity-history",
+            query = listOf("entity_id", "range"), allowed = mapOf("range" to listOf("24h", "7d")),
         )
+        assertEquals("/napi/portal/entity-history?entity_id=sensor.pv&range=7d", ranged.target("sensor.pv", "7d"))
         try {
-            Napi.HISTORY.target("sensor.pv", "30d")
-            fail("a range Haus refuses")
+            ranged.target("sensor.pv", "30d")
+            fail("a value the parameter is closed to")
         } catch (e: IllegalArgumentException) {
         }
         try {

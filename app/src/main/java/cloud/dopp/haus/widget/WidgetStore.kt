@@ -3,9 +3,8 @@ package cloud.dopp.haus.widget
 import android.content.Context
 
 /**
- * Per-instance binding for the device widget: maps an `appWidgetId` to the
- * chosen entity plus cached meta (name/domain/device_class) so the provider can
- * render and route taps without a network round-trip for the identity.
+ * What the widgets keep per instance (the tool widget's binding, its rows) and
+ * across them (the tool catalog, the app-icon menu's household and usage).
  */
 object WidgetStore {
     private const val PREFS = "haus_widgets"
@@ -13,57 +12,13 @@ object WidgetStore {
     private fun p(ctx: Context) =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun bind(ctx: Context, id: Int, entityId: String, name: String, domain: String, deviceClass: String?) {
-        p(ctx).edit()
-            .putString("e_$id", entityId)
-            .putString("n_$id", name)
-            .putString("d_$id", domain)
-            .putString("c_$id", deviceClass ?: "")
-            .apply()
-    }
-
-    fun entityId(ctx: Context, id: Int): String? = p(ctx).getString("e_$id", null)
-    fun name(ctx: Context, id: Int): String = p(ctx).getString("n_$id", "") ?: ""
-    fun domain(ctx: Context, id: Int): String = p(ctx).getString("d_$id", "") ?: ""
-    fun deviceClass(ctx: Context, id: Int): String? =
-        p(ctx).getString("c_$id", "")?.ifBlank { null }
-
     /**
-     * Does [id] already carry a binding of **any** kind — device or tool? The exactly-once guard of the pin path (#105): the
-     * `successCallback` and the config activity can both reach a freshly placed
-     * instance, so whoever arrives first binds and the other steps aside.
+     * Does [id] already carry a binding? The exactly-once guard of the pin path
+     * (#105): the `successCallback` and the config activity can both reach a
+     * freshly placed tool widget, so whoever arrives first binds and the other
+     * steps aside.
      */
-    fun isBound(ctx: Context, id: Int): Boolean =
-        entityId(ctx, id) != null || toolId(ctx, id) != null
-
-    fun unbind(ctx: Context, id: Int) {
-        p(ctx).edit()
-            .remove("e_$id").remove("n_$id").remove("d_$id").remove("c_$id")
-            .remove("range_$id")
-            .apply()
-    }
-
-    /** Per-instance Verlauf history window (24h/7d), persisted across refreshes. */
-    fun range(ctx: Context, id: Int): EnergyRange =
-        EnergyRange.fromKey(p(ctx).getString("range_$id", null))
-
-    fun setRange(ctx: Context, id: Int, range: EnergyRange) {
-        p(ctx).edit().putString("range_$id", range.key).apply()
-    }
-
-    /**
-     * Last-known active-devices list, persisted as JSON so the collection widget's
-     * factory renders **instantly** from cache while the provider re-fetches in the
-     * background (#28 stale-then-fresh). Shared across all active widgets (the list
-     * is the whole household roster, not per-instance).
-     */
-    fun activeCacheJson(ctx: Context): String? = p(ctx).getString(KEY_ACTIVE_CACHE, null)
-
-    fun setActiveCacheJson(ctx: Context, json: String) {
-        p(ctx).edit().putString(KEY_ACTIVE_CACHE, json).apply()
-    }
-
-    private const val KEY_ACTIVE_CACHE = "active_cache_json"
+    fun isBound(ctx: Context, id: Int): Boolean = toolId(ctx, id) != null
 
     // --- app-icon shortcut menu (#97/#100) -----------------------------------
 
@@ -98,7 +53,7 @@ object WidgetStore {
      * Remember that [entityId] was just switched, so the app-icon menu can order
      * by last use (#100). Called from every path that actually runs a service —
      * [WidgetActionReceiver] and [WidgetActionActivity] — whether the tap came
-     * from a widget, a tile or a shortcut: "zuletzt benutzt" means the device,
+     * from the start screen or a shortcut: "zuletzt benutzt" means the device,
      * not the surface.
      */
     fun noteEntityUsed(ctx: Context, entityId: String) {
@@ -143,7 +98,7 @@ object WidgetStore {
 
     /**
      * Last-good mapped rows for one tool widget, as [ToolCells] JSON. Same
-     * stale-then-fresh contract as [activeCacheJson]: the collection factory draws
+     * stale-then-fresh contract as [toolCatalogJson]: the collection factory draws
      * from here instantly, and a failed refresh leaves the previous rows standing
      * instead of blanking the widget (#46).
      */

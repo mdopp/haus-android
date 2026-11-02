@@ -6,9 +6,9 @@ import java.util.Locale
 import kotlin.math.abs
 
 /**
- * Pure (context-free) energy presentation helpers shared by all three energy
- * widgets — colors, flow direction, and W/kW formatting — mirroring the Haus
- * web Energy screen. JVM-testable (no Android APIs).
+ * Pure (context-free) presentation helpers of the energy widget — colors, flow
+ * direction, W/kW and kWh formatting — mirroring Haus's Energie page.
+ * JVM-testable (no Android APIs).
  */
 object EnergyStyle {
     const val SUPPLY = 0xFF66BB6A.toInt()   // green: PV / feed-in / discharge
@@ -39,26 +39,6 @@ object EnergyStyle {
         }
     }
 
-    /**
-     * The compact grid-balance label for the tiny "Jetzt" tier (#25): an arrow +
-     * a short in/out word describing whether the house **draws from** the grid
-     * (import, `w >= 0` → `→ in`) or **feeds into** it (export, `w < 0` →
-     * `← out`). Pure so it's JVM-testable; color comes from [colorFor]("grid", w).
-     */
-    fun gridBalanceLabel(watts: Double?): String {
-        val w = watts ?: return "—"
-        return if (w >= 0) "→ in" else "← out"
-    }
-
-    /** Line/legend color for a leg in the Verlauf chart. */
-    fun seriesColor(sense: String?): Int = when (sense) {
-        "supply" -> SUPPLY
-        "draw" -> DRAW
-        "grid" -> 0xFFFFC107.toInt() // amber, distinct from the +/- grid flow tint
-        "battery" -> BATTERY
-        else -> NEUTRAL
-    }
-
     fun formatWatts(w: Double?): String {
         if (w == null) return "—"
         val a = abs(w)
@@ -76,11 +56,11 @@ object EnergyStyle {
         pv: EnergyFlow?, house: EnergyFlow?, grid: EnergyFlow?, battery: EnergyFlow?,
     ): List<EnergyFlow?> = listOf(pv, house, grid, battery)
 
-    /** The four canonical "Gesamt" slots, keyed to server totals. */
+    /** The four canonical "heute" slots, keyed to server totals. */
     val TOTAL_SLOTS = listOf("pv", "export", "import", "battery")
 
-    /** Fallback labels + colors for the totals grid, in [TOTAL_SLOTS] order. */
-    val TOTAL_LABELS = listOf("PV", "Einspeisung", "Netzbezug", "Batterie")
+    /** The heute cells' labels and colors, in [TOTAL_SLOTS] order: short, the cells are narrow. */
+    val TOTAL_LABELS = listOf("Erzeugt", "Eingespeist", "Bezogen", "Akku geladen")
     val TOTAL_COLORS = intArrayOf(SUPPLY, SUPPLY, DRAW, BATTERY)
 
     /**

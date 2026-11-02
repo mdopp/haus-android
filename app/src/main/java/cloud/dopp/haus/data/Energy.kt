@@ -16,8 +16,9 @@ data class EnergyFlow(
 
 /**
  * One cumulative total from `/napi/portal/energy` (`totals`) — e.g. PV-Erzeugung,
- * Einspeisung, Netzbezug, Batterie geladen. `value` is the energy amount in [unit]
- * (typically kWh); `key` groups it (`pv`/`export`/`import`/`battery`).
+ * Einspeisung, Netzbezug, Batterie geladen. `value` is the counter in [unit]
+ * (typically kWh); `key` groups it (`pv`/`export`/`import`/`battery`); [today]
+ * is the kWh it added since the house's midnight, null when Haus could not say.
  */
 data class EnergyTotal(
     val label: String,
@@ -25,6 +26,7 @@ data class EnergyTotal(
     val unit: String,
     val key: String,
     val entityId: String? = null,
+    val today: Double? = null,
 )
 
 /** The house energy picture: the live `flow` legs plus cumulative `totals`. */

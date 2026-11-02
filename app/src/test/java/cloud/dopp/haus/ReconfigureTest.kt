@@ -63,41 +63,11 @@ class ReconfigureTest {
 
     @Test fun theStoreIsWhatTellsThePathsApart() {
         // The host sends the same extras either way, so the binding decides.
-        assertEquals(
-            ConfigEntry.FIRST_PLACEMENT,
-            ConfigEntry.of(WidgetStore.entityId(ctx, 11) != null),
-        )
-        WidgetStore.bind(ctx, 11, "light.flur", "Flur", "light", null)
-        assertEquals(
-            ConfigEntry.RECONFIGURE,
-            ConfigEntry.of(WidgetStore.entityId(ctx, 11) != null),
-        )
+        assertEquals(ConfigEntry.FIRST_PLACEMENT, ConfigEntry.of(WidgetStore.toolId(ctx, 11) != null))
+        WidgetStore.bindTool(ctx, 11, "task", "Erinnerungen")
+        assertEquals(ConfigEntry.RECONFIGURE, ConfigEntry.of(WidgetStore.toolId(ctx, 11) != null))
         // …per instance: a second, fresh widget is still a first placement.
-        assertEquals(
-            ConfigEntry.FIRST_PLACEMENT,
-            ConfigEntry.of(WidgetStore.entityId(ctx, 12) != null),
-        )
-    }
-
-    @Test fun cancellingAReconfigureLeavesTheBindingExactlyAsItWas() {
-        WidgetStore.bind(ctx, 21, "cover.buero", "Büro", "cover", "shutter")
-        // A cancelled edit writes nothing — the widget keeps rendering its device.
-        assertEquals("cover.buero", WidgetStore.entityId(ctx, 21))
-        assertEquals("Büro", WidgetStore.name(ctx, 21))
-        assertEquals("cover", WidgetStore.domain(ctx, 21))
-        assertEquals("shutter", WidgetStore.deviceClass(ctx, 21))
-    }
-
-    @Test fun reBindingReplacesTheEntryInsteadOfAddingASecond() {
-        WidgetStore.bind(ctx, 31, "light.kueche", "Küche", "light", null)
-        WidgetStore.bind(ctx, 31, "switch.terrasse", "Terrasse", "switch", "outlet")
-        assertEquals("switch.terrasse", WidgetStore.entityId(ctx, 31))
-        assertEquals("Terrasse", WidgetStore.name(ctx, 31))
-        assertEquals("switch", WidgetStore.domain(ctx, 31))
-        assertEquals("outlet", WidgetStore.deviceClass(ctx, 31))
-        // One binding for one id — the old device must be gone, not shadowed.
-        WidgetStore.unbind(ctx, 31)
-        assertNull(WidgetStore.entityId(ctx, 31))
+        assertEquals(ConfigEntry.FIRST_PLACEMENT, ConfigEntry.of(WidgetStore.toolId(ctx, 12) != null))
     }
 
     @Test fun reBindingAToolWidgetReplacesTheEntryAndDropsItsRows() {

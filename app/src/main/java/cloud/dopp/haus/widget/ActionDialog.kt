@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -120,18 +119,6 @@ object ActionDialog {
                 label.setTextColor(ctx.getColor(R.color.haus_warn))
             }
         }
-        val swatch = v.findViewById<View>(R.id.ar_swatch)
-        val rgb = item.swatchRgb
-        if (rgb == null) {
-            swatch.visibility = View.GONE
-        } else {
-            swatch.visibility = View.VISIBLE
-            swatch.background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(0xFF000000.toInt() or rgb)
-                setStroke(1, ctx.getColor(R.color.haus_card_edge))
-            }
-        }
         v.setOnClickListener { onClick() }
         return v
     }
@@ -143,8 +130,8 @@ object ActionDialog {
             .apply { setText(textRes) }
 
     /**
-     * Keep the stack from pushing Abbrechen off the screen: the palette offers ten
-     * colours, and a footer that has scrolled away is a footer that has moved.
+     * Keep the stack from pushing Abbrechen off the screen: a tool row may offer
+     * many actions, and a footer that has scrolled away is a footer that has moved.
      */
     private fun capStack(activity: Activity, scroll: View) {
         val max = (activity.resources.displayMetrics.heightPixels * MAX_STACK_FRACTION).toInt()

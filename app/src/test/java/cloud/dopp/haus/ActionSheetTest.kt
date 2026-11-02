@@ -14,14 +14,12 @@ import cloud.dopp.haus.widget.ActionSheet
 import cloud.dopp.haus.widget.ActionSheets
 import cloud.dopp.haus.widget.ActionTone
 import cloud.dopp.haus.widget.ConfirmVerb
-import cloud.dopp.haus.widget.LightColors
 import cloud.dopp.haus.widget.LockChoice
 import cloud.dopp.haus.widget.WidgetActionActivity
 import cloud.dopp.haus.widget.WidgetActionReceiver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,7 +58,6 @@ class ActionSheetTest {
         add("lock/no-latch" to ActionSheets.lock(null))
         add("lock/no-latch-0" to ActionSheets.lock(0))
         add("lock/latch" to ActionSheets.lock(1))
-        add("colors" to ActionSheets.colors())
         // The tool row's sheet (#90) is the fourth dialog and must obey the same
         // rules as the other three — that is what keeps it from becoming a fourth
         // *form*.
@@ -182,19 +179,6 @@ class ActionSheetTest {
         assertEquals("Abbrechen", ctx.getString(R.string.widget_confirm_no))
     }
 
-    /** The colour sheet keeps the palette's own order, so a pick means what it says. */
-    @Test fun theColourSheetIsThePaletteInOrder() {
-        val sheet = ActionSheets.colors()
-        assertEquals(LightColors.PALETTE.size, sheet.items.size)
-        assertFalse(sheet.hasDangerous)
-        sheet.items.forEachIndexed { i, item ->
-            val swatch = LightColors.PALETTE[i]
-            assertEquals(swatch.labelRes, item.labelRes)
-            assertEquals(swatch.rgb, item.swatchRgb)
-            assertNull("a colour names no service", item.service)
-        }
-    }
-
     // --- the task the dialog runs in (#114) -----------------------------------
 
     /**
@@ -292,21 +276,6 @@ class ActionSheetTest {
         assertTrue("…but it is still a scrim, not a see-through window: $alpha", alpha >= 0x99)
         // Same near-black ground as before — only the opacity moved.
         assertEquals(0x070709, scrim and 0xFFFFFF)
-    }
-
-    /** The colour palette uses the same card, footer and all — ten rows, one shape. */
-    @Test fun theColourPaletteUsesTheSameCard() {
-        val intent = Intent(RuntimeEnvironment.getApplication(), WidgetActionActivity::class.java)
-            .putExtra(WidgetActionReceiver.EXTRA_ENTITY, "light.wohnzimmer")
-            .putExtra(WidgetActionActivity.EXTRA_PICK_COLOR, true)
-        Robolectric.buildActivity(WidgetActionActivity::class.java, intent).setup().get()
-
-        val dialog = ShadowDialog.getLatestDialog() as AlertDialog
-        val stack = dialog.findViewById<LinearLayout>(R.id.ad_items)!!
-        assertEquals(LightColors.PALETTE.size, stack.childCount)
-        assertEquals("Abbrechen", dialog.findViewById<Button>(R.id.ad_cancel)!!.text.toString())
-        // Ten rows and not one of them warned: colour is not a sensitive action.
-        assertFalse(ActionSheets.colors().hasDangerous)
     }
 
     /** Unit tests run from the module dir, but don't depend on it. */

@@ -153,7 +153,7 @@ class ToolWidgetProvider : AppWidgetProvider() {
 
         // Where a body tap goes (#105): bound → Haus's start page, unbound → this
         // instance's picker. A widget that says "Tool wählen" must let the
-        // tap *do* that, exactly like the empty 1×1 device tile (#104) — it used to
+        // tap *do* that (#104) — it used to
         // open the chat instead, which is the one thing the user did not ask for.
         // Armed on the header/empty children too, since a launcher does not reliably
         // deliver a click on the RemoteViews root (#104 again).

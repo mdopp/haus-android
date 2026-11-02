@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_device_label">Haus-Gerät</string>
-    <string name="widget_device_description">Ein Gerät steuern (Licht, Schalter, Garage …)</string>
-
     <string name="widget_confirm_title">Bestätigen</string>
     <!-- %1$s = Gerätename, %2$s = Verb aus widget_verb_* (#85). -->
     <string name="widget_confirm_msg">%1$s wirklich %2$s?</string>
@@ -40,55 +37,18 @@
          %1$s = Geraetename. -->
     <string name="widget_action_failed">%1$s nicht geschaltet – Haus antwortet nicht</string>
 
-    <!-- Schloss-Kachel (#84): der Riegel, nicht die Tür. -->
-    <string name="widget_lock_lock">Abschließen</string>
-    <string name="widget_lock_unlock">Aufschließen</string>
-    <!-- Auswahl der 1x1-Kachel (#92). %1$s = Gerätename. Die Wörter der
+    <!-- Die Auswahl eines Schlosses (#92). %1$s = Gerätename. Die Wörter der
          Einträge kommen aus widget_confirm_* (#85), nicht von hier. -->
     <string name="widget_lock_title">%1$s · Schloss</string>
 
-    <!-- Farbwahl einer farbfähigen Lampe (#87). %1$s = Gerätename. -->
-    <string name="widget_color_title">%1$s · Farbe</string>
-    <string name="color_warm_white">Warmweiß</string>
-    <string name="color_neutral_white">Neutralweiß</string>
-    <string name="color_cool_white">Kaltweiß</string>
-    <string name="color_red">Rot</string>
-    <string name="color_orange">Orange</string>
-    <string name="color_yellow">Gelb</string>
-    <string name="color_green">Grün</string>
-    <string name="color_turquoise">Türkis</string>
-    <string name="color_blue">Blau</string>
-    <string name="color_violet">Violett</string>
-
-    <string name="widget_config_loading">Geräte werden geladen …</string>
-    <string name="widget_config_pick">Gerät wählen:</string>
-    <string name="widget_config_search_hint">Gerät oder Raum suchen …</string>
-    <string name="widget_config_no_match">Keine Treffer.</string>
-    <string name="widget_config_empty">Keine steuerbaren Geräte gefunden.</string>
     <string name="widget_config_pair_first">Bitte zuerst das Gerät koppeln.</string>
     <!-- Neu-Einrichten aus dem Langdruck-Menü (#96): das Widget ist schon
          gebunden, es wird nur umgehängt. %1$s = Raum bzw. Bezeichnung der Zeile. -->
-    <string name="widget_config_change">Gerät ändern:</string>
     <string name="widget_config_current">%1$s · aktuell</string>
-
-    <!-- Active-devices overview widget (#28). -->
-    <string name="active_widget_label">Haus · Aktive Geräte</string>
-    <string name="active_widget_description">Übersicht: welche Geräte gerade an/offen sind</string>
-    <string name="active_none">Alles aus</string>
-    <!-- %1$d = Anzahl aktiver Geräte -->
-    <string name="active_count">%1$d an</string>
-    <!-- Compact overflow for the grouped-by-type chips: %1$d = weitere Typen. -->
-    <string name="active_types_more">+%1$d</string>
-
-    <!-- Large device widget 48h history (#29). -->
-
-    <!-- Camera trigger widget (#36): a tile that opens Haus's page camera view. -->
-    <string name="camera_widget_label">Kamera</string>
-    <string name="camera_widget_description">Kachel öffnet die Kamera-Live-Ansicht in der App</string>
 
     <!-- Generic schema-driven .tool widget (#70/#72): one provider for every tool. -->
     <string name="tool_widget_label">Haus · Tool</string>
-    <string name="tool_widget_description">Liste eines Haus-Tools (Aufgaben, Kontakte, Dokumente …)</string>
+    <string name="tool_widget_description">Liste eines Haus-Tools (Erinnerungen, Dokumente, Notizen)</string>
     <!-- %1$s = Tool-Name, %2$d = Anzahl Einträge. -->
     <string name="tool_title_count">%1$s · %2$d</string>
     <string name="tool_empty">Keine Einträge</string>

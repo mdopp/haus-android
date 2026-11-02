@@ -12,12 +12,8 @@ import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
-import cloud.dopp.haus.widget.ActiveDevicesWidgetProvider
 import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
 import cloud.dopp.haus.widget.BoxServicesWidgetProvider
-import cloud.dopp.haus.widget.DeviceWidgetProvider
-import cloud.dopp.haus.widget.EnergyStatsWidgetProvider
-import cloud.dopp.haus.widget.EnergyTotalsWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
 import okhttp3.Protocol
@@ -70,15 +66,11 @@ class LiveServiceTest {
     private val listeners = mutableListOf<EventSourceListener>()
     private var watchPosts = 0
 
-    /** Every widget the stream keeps current; a static tile is not one of them. */
+    /** Every widget the stream keeps current. */
     private val fed: List<Pair<Class<out android.appwidget.AppWidgetProvider>, Int>> = listOf(
-        DeviceWidgetProvider::class.java to R.layout.widget_device_small,
-        ActiveDevicesWidgetProvider::class.java to R.layout.widget_active_small,
+        EnergyWidgetProvider::class.java to R.layout.widget_energy,
         BoxOverviewWidgetProvider::class.java to R.layout.widget_box_overview,
         BoxServicesWidgetProvider::class.java to R.layout.widget_box_services,
-        EnergyWidgetProvider::class.java to R.layout.widget_energy_small,
-        EnergyStatsWidgetProvider::class.java to R.layout.widget_energy_stats,
-        EnergyTotalsWidgetProvider::class.java to R.layout.widget_energy_totals,
         ToolWidgetProvider::class.java to R.layout.widget_tool,
     )
 
@@ -164,8 +156,8 @@ class LiveServiceTest {
     /**
      * The catch-up (#137, #138): Haus sends a card only when it changes, so what
      * changed while the screen was off reaches a widget only through this. Every
-     * placed instance of every fed widget is asked, each once — a garage door
-     * closed by hand must not keep saying "offen", a Box tile must not freeze.
+     * placed instance of every fed widget is asked, each once — the energy
+     * widget must not keep the morning's sun, a Box tile must not freeze.
      */
     @Test
     fun onceConnectedItPostsTheWatchSetAndReadsEveryFedWidgetAgain() {
@@ -211,7 +203,6 @@ class LiveServiceTest {
 
     @Test
     fun withoutAWidgetToFeedItDoesNotRun() {
-        place(cloud.dopp.haus.widget.CameraWidgetProvider::class.java to R.layout.widget_camera)
         val c = start()
         assertEquals(0, opened.size)
         assertTrue(shadowOf(c.get()).isStoppedBySelf)
@@ -260,8 +251,8 @@ class LiveServiceTest {
     }
 
     @Test
-    fun theEnergyFlowIsWatchedAndItsFramesReadTheEnergyWidgetsAgain() {
-        place(fed.first(), fed[4], fed[6])
+    fun theEnergyFlowIsWatchedAndItsFramesReadTheEnergyWidgetAgain() {
+        place(fed.first())
         Reach.call("cloud.dopp.haus.realtime.WatchSet", "rememberEnergy", ctx(), listOf("sensor.pv_power"))
         @Suppress("UNCHECKED_CAST")
         val watched = Reach.call("cloud.dopp.haus.realtime.WatchSet", "currentEntities", ctx()) as List<String>
@@ -279,91 +270,25 @@ class LiveServiceTest {
         shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(15))
         val asked = app.broadcastIntents.mapNotNull { it.component?.className }.toSet()
         assertTrue("energy widget not read: $asked", EnergyWidgetProvider::class.java.name in asked)
-        assertTrue("energy totals not read: $asked", EnergyTotalsWidgetProvider::class.java.name in asked)
     }
 
-    /** Haus's active set for this phone (#178): the ids that are on or open now. */
-    private fun activeSet(vararg ids: String) =
-        org.json.JSONObject().put("entity_ids", org.json.JSONArray(ids.toList())).toString()
-
-    /** The active list as the active widget last read it. */
-    private fun lastRead(vararg ids: String) = cloud.dopp.haus.widget.WidgetStore.setActiveCacheJson(
-        ctx(),
-        cloud.dopp.haus.widget.ActiveCache.encode(
-            ids.map { cloud.dopp.haus.data.Card(it, it, it.substringBefore('.'), null, "on", null) },
-        ),
-    )
-
-    /** How often the active widget was asked to read again while [frames] came in. */
-    private fun activeReadsAfter(vararg frames: Pair<String, String>): Int {
-        place(fed[0], fed[1])
+    /** A frame for anything but an energy sensor reads nothing: no device widgets any more. */
+    @Test
+    fun anotherFrameReadsNothing() {
+        place(*fed.toTypedArray())
+        Reach.call("cloud.dopp.haus.realtime.WatchSet", "rememberEnergy", ctx(), listOf("sensor.pv_power"))
         start()
         listeners.last().onOpen(opened.last(), response(200))
         idle()
         val app = shadowOf(ctx() as android.app.Application)
         app.clearBroadcastIntents()
-        frames.forEach { (type, data) -> listeners.last().onEvent(opened.last(), null, type, data) }
+        listeners.last().onEvent(
+            opened.last(), null, "card_state",
+            """{"entity_id":"light.flur","card":{"entity_id":"light.flur","domain":"light","state":"on"}}""",
+        )
+        listeners.last().onEvent(opened.last(), null, "active_set", """{"entity_ids":["light.flur"]}""")
         shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(15))
-        return app.broadcastIntents.count { it.component?.className == ActiveDevicesWidgetProvider::class.java.name }
-    }
-
-    /** A set other than the one last read: the active list is read again, once. */
-    @Test
-    fun anActiveSetThatDiffersReadsTheActiveListOnce() {
-        lastRead("light.a")
-        assertEquals(1, activeReadsAfter("active_set" to activeSet("light.a", "cover.b")))
-    }
-
-    /** The set last read, in any order: nothing is read. */
-    @Test
-    fun anActiveSetEqualToTheLastReadReadsNothing() {
-        lastRead("light.a", "cover.b")
-        assertEquals(0, activeReadsAfter("active_set" to activeSet("cover.b", "light.a")))
-    }
-
-    /** Everything off, as last read: nothing is read; something off that was on: read. */
-    @Test
-    fun anEmptyActiveSetIsASetToo() {
-        lastRead()
-        assertEquals(0, activeReadsAfter("active_set" to activeSet()))
-    }
-
-    @Test
-    fun anActiveSetThatEmptiesTheListReadsIt() {
-        lastRead("light.a")
-        assertEquals(1, activeReadsAfter("active_set" to activeSet()))
-    }
-
-    /** A card alone still reads the active list: a change inside the set (a brightness) shows in its row. */
-    @Test
-    fun aCardReadsTheActiveListOnce() {
-        lastRead("light.a")
-        val card = """{"entity_id":"light.a","card":{"entity_id":"light.a","domain":"light","state":"on","brightness":80}}"""
-        assertEquals(1, activeReadsAfter("card_state" to card))
-    }
-
-    /** A burst — a card and the set it changed — costs one read, not two. */
-    @Test
-    fun aCardAndItsActiveSetShareOneRead() {
-        lastRead()
-        val card = """{"entity_id":"light.a","card":{"entity_id":"light.a","domain":"light","state":"on"}}"""
-        assertEquals(1, activeReadsAfter("card_state" to card, "active_set" to activeSet("light.a")))
-    }
-
-    /** A set wakes no device widget and no energy widget: it names no card. */
-    @Test
-    fun anActiveSetReadsOnlyTheActiveList() {
-        lastRead()
-        place(fed[0], fed[1], fed[4])
-        start()
-        listeners.last().onOpen(opened.last(), response(200))
-        idle()
-        val app = shadowOf(ctx() as android.app.Application)
-        app.clearBroadcastIntents()
-        listeners.last().onEvent(opened.last(), null, "active_set", activeSet("light.a"))
-        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(15))
-        val asked = app.broadcastIntents.mapNotNull { it.component?.className }
-        assertEquals(listOf(ActiveDevicesWidgetProvider::class.java.name), asked)
+        assertEquals(emptyList<String>(), app.broadcastIntents.mapNotNull { it.component?.className })
     }
 
     /** An app update kills the process; MY_PACKAGE_REPLACED, an allowed start, brings it back. */

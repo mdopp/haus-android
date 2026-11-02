@@ -1,8 +1,11 @@
 # haus-android — house rules
 
-This repo is the **Haus app**: native Kotlin home-screen widgets and the
+This repo is the **Haus app**: native Kotlin home-screen widgets, the
 pairing with **Haus** (`https://haus.<domain>`, repo `mdopp/haus`), the
-family's surface of the box Laib runs. It is a widget client (laib ADR 0022):
+family's surface of the box Laib runs, and on the app's start screen the
+person's favorite devices (the owner's call, 2026-11-02: devices live in the
+app, not in widgets; the widgets are one energy widget, the tools and the
+Box's two). It is a widget client (laib ADR 0022):
 no web shell, no messages, no approvals, no diagnostics, and for the widgets
 no network while the screen is off. The widgets stay live through one
 `specialUse` foreground service (`realtime/LiveService.kt`) that holds the
@@ -56,6 +59,14 @@ These rules apply to every session, human or agent.
   for location, not for anything. Use the platform (LocationManager,
   SensorManager). `ManifestTest.noGooglePlayServices` fails if one
   comes back.
+
+## The icon
+
+- `art/icon.svg` is the one master (owner, 2026-11-02: the terminal prompt
+  inside a green house, `#3ddc84` on `#0c120e`). Every PNG — launcher,
+  adaptive foreground and monochrome, notification, store — is rendered from
+  it by `scripts/icons` (`npm ci && node icons.mjs`), never drawn or resized
+  by hand. mdopp/haus carries the same master for the web app's icons.
 
 ## Commits
 

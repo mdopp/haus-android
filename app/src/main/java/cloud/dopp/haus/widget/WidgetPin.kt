@@ -35,8 +35,7 @@ import android.os.Build
  * a host that *does* run the config activity would then be showing one in its own
  * task while we open a second in ours, and backing out of a first placement
  * answers `RESULT_CANCELED`, which costs the user the widget. The way out of an
- * unbound tile is its own tap instead (#104 for the 1×1 device tile,
- * [ToolWidgetProvider] here).
+ * unbound tile is its own tap instead ([ToolWidgetProvider]).
  */
 object WidgetPin {
 

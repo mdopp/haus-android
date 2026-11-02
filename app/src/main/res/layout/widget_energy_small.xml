@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The energy widget at its smallest (2x1): jetzt, the grid's balance (or the
+     house's draw), and with a little room a line of heute. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/e_root"
     android:layout_width="match_parent"
@@ -89,17 +91,16 @@
             android:textColor="#FF8A939B"
             android:textSize="12sp" />
 
-        <!-- Optional PV line (#25): shown only when there's a little more space
-             than the bare 1×1 grid-balance tier. Hidden by default. -->
+        <!-- Heute, one line: shown only with a little more room than the bare tier. -->
         <TextView
-            android:id="@+id/e_pv"
+            android:id="@+id/e_today"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="PV 1,2 kW"
-            android:textColor="#FF66BB6A"
+            android:text="heute PV 12,4 kWh"
+            android:textColor="#FF3DDC84"
             android:textStyle="bold"
             android:textSize="12sp"
             android:visibility="gone" />

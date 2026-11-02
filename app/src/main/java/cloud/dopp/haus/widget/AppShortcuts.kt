@@ -1,7 +1,5 @@
 package cloud.dopp.haus.widget
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -13,7 +11,7 @@ import kotlin.concurrent.thread
 
 /**
  * Publishes the app-icon long-press menu (#97): one **dynamic** shortcut per
- * device the user has on the home screen.
+ * device of the household.
  *
  * The list has to be dynamic — a static shortcut is written at build time and
  * can never know the user's devices. `res/xml/shortcuts.xml` holds only the
@@ -21,27 +19,22 @@ import kotlin.concurrent.thread
  * published here with the devices and takes one of the launcher's slots.
  *
  * The device set is the **household catalogue** (#100), cached in [WidgetStore]
- * so the menu survives an offline republish, with the live
- * [DeviceWidgetProvider] instances merged in — a device that *is* on the home
- * screen keeps its `appWidgetId` so its tile can be refreshed after a tap, and a
- * device that is not still gets an entry. Requiring a widget first was the
- * reported defect.
+ * so the menu survives an offline republish.
  *
  * Which entries exist, in which order, and how many — [DeviceShortcuts], pure
  * and JVM-tested. This object only does the parts that need a `Context`: ask the
  * launcher for the cap, read the store, build the icons and intents.
  *
  * Everything is best-effort: a launcher that rejects the publish (or one of the
- * OEM launchers that supports no shortcuts at all) must never take a widget or a
- * config screen down with it.
+ * OEM launchers that supports no shortcuts at all) must never take the app down
+ * with it.
  */
 object AppShortcuts {
 
     /**
-     * Republish the menu. Call after every change to the widget set — bind,
-     * delete, and once when the hub becomes visible so a restore/reinstall is
-     * picked up too. Off the caller's thread: it touches SharedPreferences and
-     * the launcher.
+     * Republish the menu: when the app's screen becomes visible, so a
+     * restore/reinstall is picked up too, and when the persona changes. Off the
+     * caller's thread: it touches SharedPreferences and the launcher.
      */
     fun refreshAsync(ctx: Context) {
         val app = ctx.applicationContext
@@ -60,7 +53,7 @@ object AppShortcuts {
             runCatching { ShortcutManagerCompat.removeLongLivedShortcuts(app, listOf(ShareTarget.ID)) }
         }
         val entries = DeviceShortcuts.entries(
-            candidates(app), if (share == null) cap else cap - 1, WidgetStore.recentEntities(app),
+            catalogDevices(app), if (share == null) cap else cap - 1, WidgetStore.recentEntities(app),
         )
         val infos = entries.mapIndexed { i, e -> info(app, e, i) } + listOfNotNull(share)
         if (infos.isEmpty()) {
@@ -71,34 +64,8 @@ object AppShortcuts {
     }
 
     /**
-     * Everything the menu may offer: the household catalogue with the placed
-     * widgets merged in.
-     *
-     * The catalogue is refetched here — [refresh] already runs off the caller's
-     * thread — and remembered, so the next republish works from the cache when
-     * the server is unreachable. A device on a widget carries that instance's
-     * `appWidgetId`; a device that is only in the catalogue carries none, which
-     * is the case #100 is about. Placed widgets are appended rather than dropped
-     * when the catalogue is empty (never paired, or a fetch that failed before
-     * anything was ever cached), so the menu falls back to what #97 published.
-     */
-    fun candidates(ctx: Context): List<ShortcutDevice> {
-        val app = ctx.applicationContext
-        val widgets = boundDevices(app)
-        val byEntity = widgets.associateBy { it.entityId }
-        val catalog = catalogDevices(app).map { d ->
-            val widget = byEntity[d.entityId] ?: return@map d
-            d.copy(appWidgetId = widget.appWidgetId)
-        }
-        val known = catalog.mapTo(HashSet()) { it.entityId }
-        return catalog + widgets.filter { it.entityId !in known }
-    }
-
-    /**
      * The household catalogue: the cache while it is fresh, otherwise refetched
-     * and remembered, and the (stale) cache again when the fetch fails. The
-     * picker fills the same cache for free whenever it lists the household, so in
-     * practice this rarely has to ask.
+     * and remembered, and the (stale) cache again when the fetch fails.
      */
     private fun catalogDevices(ctx: Context): List<ShortcutDevice> {
         val cached = WidgetStore.shortcutCatalog(ctx)
@@ -109,33 +76,9 @@ object AppShortcuts {
         return fresh
     }
 
-    /** The picker's device list as shortcut candidates — no widget ids yet. */
+    /** The household's devices as shortcut candidates. */
     fun catalogOf(devices: List<Device>): List<ShortcutDevice> =
-        devices.map { ShortcutDevice(null, it.entityId, it.name, it.domain, it.deviceClass) }
-
-    /** Remember a household the picker just listed, so the menu need not refetch it. */
-    fun rememberCatalog(ctx: Context, devices: List<Device>) {
-        if (devices.isEmpty()) return
-        WidgetStore.setShortcutCatalog(ctx.applicationContext, catalogOf(devices))
-    }
-
-    /** Every configured device widget, newest instance last — order is [DeviceShortcuts]'. */
-    fun boundDevices(ctx: Context): List<ShortcutDevice> {
-        val app = ctx.applicationContext
-        val mgr = AppWidgetManager.getInstance(app)
-        val ids = mgr.getAppWidgetIds(ComponentName(app, DeviceWidgetProvider::class.java))
-        return ids.toList().mapNotNull { id ->
-            val entityId = WidgetStore.entityId(app, id) ?: return@mapNotNull null
-            if (entityId.isBlank()) return@mapNotNull null
-            ShortcutDevice(
-                appWidgetId = id,
-                entityId = entityId,
-                name = WidgetStore.name(app, id),
-                domain = WidgetStore.domain(app, id),
-                deviceClass = WidgetStore.deviceClass(app, id),
-            )
-        }
-    }
+        devices.map { ShortcutDevice(it.entityId, it.name, it.domain, it.deviceClass) }
 
     private fun info(ctx: Context, entry: ShortcutEntry, rank: Int): ShortcutInfoCompat =
         ShortcutInfoCompat.Builder(ctx, entry.id)
@@ -155,14 +98,9 @@ object AppShortcuts {
      * lock lands on the #92 chooser and nothing else, so the entry sits behind
      * the device lock and the latch stays unreachable from here.
      *
-     * The **entity id is what identifies the device** (#100). An `appWidgetId`
-     * rides along only when the device actually has a widget, and then only so
-     * that its tile can be re-rendered after the tap; a catalogue device carries
-     * none, and no placeholder is invented for it — an arbitrary id would name
-     * some other device's binding.
+     * The **entity id is what identifies the device** (#100).
      */
     fun intentFor(ctx: Context, entry: ShortcutEntry): Intent {
-        val id = entry.device.appWidgetId
         return when (entry.action) {
             ShortcutAction.CHOOSE -> Intent(ctx, WidgetActionActivity::class.java)
                 .setAction(Intent.ACTION_VIEW)
@@ -174,14 +112,11 @@ object AppShortcuts {
                 .putExtra(WidgetActionReceiver.EXTRA_ENTITY, entry.device.entityId)
                 .putExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, true)
 
-            // A device the shortcut cannot act on opens the house page in the browser.
-            ShortcutAction.OPEN -> HausPages.intent(ctx, HausPages.START)
+            // A device the shortcut cannot act on opens the devices page in the browser.
+            ShortcutAction.OPEN -> HausPages.intent(ctx, HausPages.RAEUME)
         }
             .apply {
-                if (id != null && id != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-                }
-                // Only used where the store has no name to show (no widget).
+                // For wording only.
                 if (entry.action != ShortcutAction.OPEN) {
                     putExtra(WidgetActionActivity.EXTRA_NAME, entry.label)
                 }
