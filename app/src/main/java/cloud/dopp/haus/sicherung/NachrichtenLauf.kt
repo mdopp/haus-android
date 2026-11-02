@@ -33,11 +33,14 @@ interface Telefon {
 
 /**
  * A written file: how many entries, the largest date per [Art] in it, and how
- * many of them are newer than the marks ([neu]). Only the boundary entries
- * again, [neu] 0: nothing is sent (an entry that came at the very mark goes
- * with the next newer one, since the marks stay included).
+ * many per [Art] are newer than the marks ([zahlen], what the screen counts).
+ * Only the boundary entries again, [neu] 0: nothing is sent (an entry that
+ * came at the very mark goes with the next newer one, since the marks stay
+ * included).
  */
-data class Auszug(val anzahl: Int, val marken: Map<Art, Long>, val neu: Int = anzahl)
+data class Auszug(val anzahl: Int, val marken: Map<Art, Long>, val zahlen: Map<Art, Int>) {
+    val neu: Int get() = zahlen.values.sum()
+}
 
 /**
  * The high-water marks, and which file under way will move them: a mark moves
@@ -55,6 +58,15 @@ interface Marken {
 
     /** [art]'s mark is now [wert]: only once its file is whole on the box. */
     fun setzeMarke(art: Art, wert: Long)
+
+    /** How many new entries per [Art] the file [name] carries; empty when not known. */
+    fun zahlen(name: String): Map<Art, Int>
+
+    /** [name] carries [zahlen]; null forgets it. */
+    fun merkeZahlen(name: String, zahlen: Map<Art, Int>?)
+
+    /** The last transfer: when, and how many entries of each [Art] reached the box. */
+    fun merkeLetzte(zeit: Long, zahlen: Map<Art, Int>)
 }
 
 /**
@@ -83,9 +95,13 @@ class NachrichtenLauf(
     private val uploader = Uploader(client, gedaechtnis, teil)
     private var gesendet = 0
 
+    /** What reached the box in this run, per [Art]. */
+    private val uebertragen = HashMap<Art, Int>()
+
     fun laufen(): Lauf.Ergebnis {
         ordner.mkdirs()
         gesendet = 0
+        uebertragen.clear()
         // a plaintext left by a killed run never goes anywhere
         ordner.listFiles()?.filter { !it.name.endsWith(ENDUNG) }?.forEach { it.delete() }
         // first the files under way: their marks must move before anything new is read
@@ -130,6 +146,7 @@ class NachrichtenLauf(
                 FileInputStream(xml).use { ein -> FileOutputStream(tmp).use { aus -> Age.verschluesseln(an, ein, aus) } }
                 xml.delete()
                 if (!tmp.renameTo(ziel)) throw IOException("rename")
+                marken.merkeZahlen(ziel.name, auszug.zahlen)
                 marken.merkeAusstehend(ziel.name, auszug.marken)
                 neu += ziel
             }
@@ -142,7 +159,7 @@ class NachrichtenLauf(
             return Lauf.Ergebnis.WEITER
         }
         for (f in neu) senden(f)?.let { return it }
-        if (gesendet > 0) gedaechtnis.merkeUebertragen(q, uhr(), gesendet)
+        merkeGesendet()
         gedaechtnis.melde(q, if (ohneErlaubnis) Meldung(uhr(), Meldung.Art.KEINE, KEINE_ERLAUBNIS) else Meldung(uhr(), Meldung.Art.OK))
         return Lauf.Ergebnis.FERTIG
     }
@@ -176,7 +193,9 @@ class NachrichtenLauf(
         return when (a) {
             Uploader.Ausgang.Fertig -> {
                 marken.ausstehend(f.name)?.let { m -> m.forEach { (art, wert) -> setze(art, wert) } }
+                marken.zahlen(f.name).forEach { (art, n) -> uebertragen[art] = (uebertragen[art] ?: 0) + n }
                 marken.merkeAusstehend(f.name, null)
+                marken.merkeZahlen(f.name, null)
                 f.delete()
                 gesendet++
                 null
@@ -193,19 +212,27 @@ class NachrichtenLauf(
         }
     }
 
+    /** What this run brought to the box, for the screen: the files, and the entries per [Art]. */
+    private fun merkeGesendet() {
+        if (gesendet == 0) return
+        val jetzt = uhr()
+        gedaechtnis.merkeUebertragen(q, jetzt, gesendet)
+        marken.merkeLetzte(jetzt, HashMap(uebertragen))
+    }
+
     /** A mark only grows: a file of an older run never moves it back. */
     private fun setze(art: Art, wert: Long) {
         if (wert > marken.marke(art)) marken.setzeMarke(art, wert)
     }
 
     private fun haus(satz: String): Lauf.Ergebnis {
-        if (gesendet > 0) gedaechtnis.merkeUebertragen(q, uhr(), gesendet)
+        merkeGesendet()
         gedaechtnis.melde(q, Meldung(uhr(), Meldung.Art.HAUS, satz))
         return Lauf.Ergebnis.HALT
     }
 
     private fun spaeter(satz: String, e: Lauf.Ergebnis): Lauf.Ergebnis {
-        if (gesendet > 0) gedaechtnis.merkeUebertragen(q, uhr(), gesendet)
+        merkeGesendet()
         gedaechtnis.melde(q, Meldung(uhr(), Meldung.Art.SPAETER, satz))
         return e
     }
@@ -230,7 +257,7 @@ class NachrichtenLauf(
         const val KEIN_SCHLUESSEL =
             "Auf der Box gibt es noch keinen Schlüssel für dein Archiv: frag die Person, die sich um die Box kümmert."
         const val KEINE_ERLAUBNIS =
-            "Die App darf SMS oder Anrufliste nicht mehr lesen: schalte „SMS und Anrufliste übertragen“ hier noch einmal ein."
+            "Die App darf SMS oder Anrufliste nicht mehr lesen: schalte bei „SMS und Anrufe“ den Schalter noch einmal ein."
 
         /** `20261102T031245Z`: when the file was written, in UTC. */
         fun stempel(ms: Long): String =

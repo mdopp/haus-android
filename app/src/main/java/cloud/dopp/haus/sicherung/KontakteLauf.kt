@@ -81,6 +81,6 @@ class KontakteLauf(
     companion object {
         const val DATEI = "kontakte.vcf"
         const val KEINE = "Auf dem Handy sind keine Kontakte: nichts übertragen."
-        const val KEINE_ERLAUBNIS = "Die App darf die Kontakte nicht mehr lesen: schalte „Kontakte übertragen“ hier noch einmal ein."
+        const val KEINE_ERLAUBNIS = "Die App darf die Kontakte nicht mehr lesen: schalte bei „Kontakte“ den Schalter noch einmal ein."
     }
 }

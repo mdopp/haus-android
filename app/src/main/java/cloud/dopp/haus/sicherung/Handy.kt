@@ -158,7 +158,8 @@ class HandyTelefon(private val ctx: Context) : Telefon {
             if (anzahl == 0) return null
             var hochSms = seitSms
             var hochMms = seitMms
-            var neu = 0
+            var neuSms = 0
+            var neuMms = 0
             schreibe(datei) { x ->
                 x.nachrichtenAnfang(anzahl, System.currentTimeMillis())
                 smsC?.let { c ->
@@ -166,7 +167,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                     while (c.moveToNext()) {
                         val datum = lang(c, Telephony.Sms.DATE)
                         hochSms = maxOf(hochSms, datum)
-                        if (datum > seitSms) neu++
+                        if (datum > seitSms) neuSms++
                         x.sms(spalten.map { it to wert(c, it) }, datum, name(wert(c, Telephony.Sms.ADDRESS)))
                     }
                 }
@@ -176,7 +177,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                         val id = lang(c, "_id")
                         val datum = lang(c, Telephony.Mms.DATE) * 1000
                         hochMms = maxOf(hochMms, datum)
-                        if (datum > seitMms) neu++
+                        if (datum > seitMms) neuMms++
                         val werte = spalten.map { s ->
                             s to when (s) {
                                 Telephony.Mms.DATE -> datum.toString()
@@ -196,7 +197,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                 }
                 x.nachrichtenEnde()
             }
-            return Auszug(anzahl, mapOf(Art.SMS to hochSms, Art.MMS to hochMms), neu)
+            return Auszug(anzahl, mapOf(Art.SMS to hochSms, Art.MMS to hochMms), mapOf(Art.SMS to neuSms, Art.MMS to neuMms))
         } finally {
             smsC?.close()
             mmsC?.close()
@@ -223,7 +224,7 @@ class HandyTelefon(private val ctx: Context) : Telefon {
                 }
                 x.anrufeEnde()
             }
-            return Auszug(c.count, mapOf(Art.ANRUFE to hoch), neu)
+            return Auszug(c.count, mapOf(Art.ANRUFE to hoch), mapOf(Art.ANRUFE to neu))
         }
         return null
     }

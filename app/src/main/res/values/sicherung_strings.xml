@@ -4,7 +4,7 @@
 <resources>
     <string name="home_mehr">Mehr</string>
     <string name="sicherung_title">Nachrichten sichern</string>
-    <string name="sicherung_intro">Die App holt die tägliche Sicherung von WhatsApp und Signal von diesem Handy ab und legt sie auf deine Box: einmal am Tag, nur im WLAN und während das Handy lädt. Sie liest dabei nur; in WhatsApp und Signal ändert und löscht sie nichts. Nach einem Schlüssel fragt sie nie.</string>
+    <string name="sicherung_intro">Die App bringt einmal am Tag die Sicherungen von WhatsApp und Signal auf deine Box, und wenn du es unten einschaltest, auch deine Kontakte, SMS und Anrufe. Nur im WLAN und während das Handy lädt. Sie liest dabei nur; auf dem Handy ändert und löscht sie nichts. Nach einem Schlüssel fragt sie nie.</string>
 
     <string name="sicherung_whatsapp">WhatsApp</string>
     <string name="sicherung_signal">Signal</string>
@@ -52,11 +52,9 @@
     <!-- The guide: word for word the steps of Haus's page (internal/pages/nachrichten.go, haus#208). -->
     <string name="sicherung_anleitung_title">So richtest du es ein</string>
     <string name="sicherung_anleitung_whatsapp_title">WhatsApp, auf dem Handy</string>
-    <string name="sicherung_anleitung_whatsapp">1. WhatsApp öffnen: Einstellungen → Chats → Chat-Backup.\n2. „Ende-zu-Ende-verschlüsseltes Backup“ antippen und einschalten.\n3. „64-stelligen Schlüssel verwenden“ wählen, nicht ein Passwort.\n4. Den Schlüssel in Vaultwarden ablegen, als eigenen Eintrag „WhatsApp-Schlüssel“. Wer ihn verliert, kann keine dieser Sicherungen mehr lesen.\n\nWhatsApp legt dann jede Nacht eine Sicherung auf dem Handy an.</string>
+    <string name="sicherung_anleitung_whatsapp">1. WhatsApp öffnen: Einstellungen → Chats → Chat-Backup.\n2. „Ende-zu-Ende-verschlüsseltes Backup“ antippen und einschalten.\n3. „64-stelligen Schlüssel verwenden“ wählen, nicht Passwort und nicht Passkey: aus einem Passkey lässt sich der Schlüssel nicht auslesen. Nutzt WhatsApp schon einen Passkey: das Backup deaktivieren und sofort wieder aktivieren, diesmal mit dem 64-stelligen Schlüssel.\n4. Den Schlüssel in Vaultwarden ablegen, als eigenen Eintrag „WhatsApp-Schlüssel“. Wer ihn verliert, kann keine dieser Sicherungen mehr lesen.\n\nWhatsApp legt dann jede Nacht eine Sicherung auf dem Handy an.</string>
     <string name="sicherung_anleitung_signal_title">Signal, auf dem Handy</string>
     <string name="sicherung_anleitung_signal">1. Signal öffnen: Einstellungen → Chats → Chat-Backups (je nach Version: Backups → Auf dem Gerät).\n2. Einschalten und einen Ordner auf dem Handy wählen, zum Beispiel „Signal-Backups“.\n3. Die 30-stellige Passphrase in Vaultwarden ablegen, als eigenen Eintrag „Signal-Passphrase“. Signal zeigt sie nur dieses eine Mal.</string>
-    <string name="sicherung_anleitung_ordner_title">In der Haus-App</string>
-    <string name="sicherung_anleitung_ordner">1. Mehr → Nachrichten sichern.\n2. Den WhatsApp-Ordner freigeben (Android → media → com.whatsapp → WhatsApp).\n3. Den Signal-Ordner freigeben, den du oben gewählt hast.\n\nDanach bringt die App neue Sicherungen auf die Box. Bricht die Verbindung ab, macht sie später dort weiter, wo sie war.</string>
     <string name="sicherung_anleitung_discord_title">Discord</string>
     <string name="sicherung_anleitung_discord">1. Server-Kanäle kommen später: über einen Bot, den du in deine Server einlädst.\n2. Direktnachrichten gibt es nur über dein Datenpaket: Discord → Einstellungen → Daten &amp; Datenschutz → Daten anfordern. Discord schickt dir nach einigen Tagen eine Mail mit einem Zip.\n3. Das Zip teilst du später per „Teilen“ an Haus. Bis dahin heb es auf.</string>
     <string name="sicherung_anleitung_versionen">Die Menüs heißen je nach App-Version etwas anders. Findest du einen Punkt nicht, such in den Einstellungen der App nach „Backup“.</string>

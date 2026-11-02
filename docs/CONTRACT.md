@@ -202,7 +202,7 @@ off until the person turns one on, each asking for its own permission when
 turned on; refused, it stays off with a sentence. The same job runs them,
 after the folders, only while the switch is on and the permission granted.
 
-- **„Kontakte übertragen“** (READ_CONTACTS): every contact, read from
+- **„Kontakte“** (READ_CONTACTS): every contact, read from
   `ContactsContract.Data` and written by the app as vCard 3.0 (not Android's
   2.1 export, which Radicale may refuse) with `UID:<lookup key>`, escaped
   text, lines folded at 75 octets and CRLF, all concatenated into one
@@ -210,7 +210,7 @@ after the folders, only while the switch is on and the permission granted.
   geaendert, entfernt}`. Haus mirrors the set into the person's own address
   book „Handy-Kontakte“, which the box's admin can read like the calendar.
   No contact on the phone: no request. No photos.
-- **„SMS und Anrufliste übertragen“** (READ_SMS, READ_CALL_LOG): the SMS and
+- **„SMS und Anrufe“** (READ_SMS, READ_CALL_LOG): the SMS and
   MMS, and the calls, newer than a high-water mark per kind (the largest
   date that reached the box; the first run takes everything), as XML in the
   format of „SMS Backup & Restore“ by SyncTech (`<smses>` and `<calls>`, what

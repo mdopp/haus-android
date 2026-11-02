@@ -454,15 +454,9 @@ class SicherungActivity : AppCompatActivity() {
         schalterView(art).isChecked = an(art)
         setzt = false
 
+        // Off: the card says what goes where, and nothing else.
         val stand = standView(art)
-        val standText = when {
-            art == Schalter.KONTAKTE -> store.kontakte()?.let { (zeit, e) ->
-                getString(R.string.handy_kontakte_stand, Anzeige.zeit(zeit), Anzeige.kontakte(e.kontakte, e.neu, e.geaendert, e.entfernt))
-            } ?: if (an(art)) getString(R.string.handy_kontakte_nie) else null
-            else -> store.uebertragen(Quelle.SMS)?.let { (zeit, n) ->
-                resources.getQuantityString(R.plurals.sicherung_zuletzt, n, Anzeige.zeit(zeit), n)
-            } ?: if (an(art)) getString(R.string.sicherung_zuletzt_nie) else null
-        }
+        val standText = if (!an(art)) null else standZeile(art)
         stand.text = standText.orEmpty()
         stand.visibility = if (standText == null) View.GONE else View.VISIBLE
 
@@ -478,6 +472,21 @@ class SicherungActivity : AppCompatActivity() {
         val meldung = meldungView(art)
         meldung.text = satz.orEmpty()
         meldung.visibility = if (satz == null) View.GONE else View.VISIBLE
+    }
+
+    /** „Letzte Übertragung: <date> – <what>“, the same scheme on both cards; the same words before the first. */
+    private fun standZeile(art: Schalter): String {
+        val letzte: Pair<Long, String>? = if (art == Schalter.KONTAKTE) {
+            store.kontakte()?.let { (zeit, e) -> zeit to Anzeige.kontakte(e.kontakte, e.neu, e.geaendert, e.entfernt) }
+        } else {
+            store.letzte()?.let { (zeit, zahlen) -> zeit to Anzeige.nachrichten(zahlen) }
+                ?: store.uebertragen(Quelle.SMS)?.let { (zeit, _) -> zeit to "" }
+        }
+        return when {
+            letzte == null -> getString(R.string.handy_stand_nie)
+            letzte.second.isEmpty() -> getString(R.string.handy_stand, Anzeige.zeit(letzte.first), "").removeSuffix(" – ")
+            else -> getString(R.string.handy_stand, Anzeige.zeit(letzte.first), letzte.second)
+        }
     }
 
     private companion object {

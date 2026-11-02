@@ -20,9 +20,9 @@ no web shell, no messages, no approvals, no diagnostics.
 
 - **Nachrichten sichern:** daily, on WLAN while charging, the phone's
   WhatsApp and Signal backups go to the box. Two optional switches, off by
-  default, each asking for its own permission: „Kontakte übertragen“
+  default, each on its own card and asking for its own permission: „Kontakte“
   (READ_CONTACTS; into the person's address book „Handy-Kontakte“ on the box)
-  and „SMS und Anrufliste übertragen“ (READ_SMS, READ_CALL_LOG; age-encrypted
+  and „SMS und Anrufe“ (READ_SMS, READ_CALL_LOG; age-encrypted
   on the phone for the person's archive). On Android 13+ a sideloaded app
   must first get App-Info → ⋮ → „Eingeschränkte Einstellungen zulassen“ for
   SMS and calls; the screen says so.
