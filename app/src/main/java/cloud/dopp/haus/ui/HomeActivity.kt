@@ -13,7 +13,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.view.ContextThemeWrapper
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -74,11 +77,13 @@ import kotlin.concurrent.thread
  *
  * **Paired.** The app's icon and the assistant's name (`/napi/assistent`,
  * „Homes“ until Haus names one) head the screen; first below them the person's
- * favorite devices, a tap switches one, and „Alle Geräte“, Haus's devices
- * page ([StartDevices], owner 2026-11-02); then one list of widgets to add
+ * favorite devices, a tap switches one, each with the fine controls Haus's
+ * devices page has ([DeviceControls], owner 2026-11-03), and „Alle Geräte“,
+ * Haus's devices page ([StartDevices], owner 2026-11-02); then one list of
+ * widgets to add, the live switch under its hint
  * (owner, 2026-11-03: no groups) — one device, the energy, the tools from
  * Haus's catalog —, each one tap from the home screen; under Mehr, Daten
- * sichern (#194); and the way to unpair.
+ * sichern (#194); and where the app is paired, beside the way to unpair.
  *
  * **Haus heißt jetzt Homes** (laib#1021): while the server names another
  * app (`/napi/app`, [Wechsel]), a card on top says to install it, and once it
@@ -121,7 +126,12 @@ class HomeActivity : AppCompatActivity() {
         findViewById<SwitchCompat>(R.id.live_switch).setOnCheckedChangeListener { _, on ->
             if (on != Live.isEnabled(this)) Live.setEnabled(applicationContext, on)
         }
-        findViewById<TextView>(R.id.live_battery).setOnClickListener { if (!Live.exempt(this)) requestExemption() }
+        // The live row (owner, 2026-11-03): while the exemption is missing a tap asks for it, else it switches.
+        val onLiveRow = View.OnClickListener {
+            if (!Live.exempt(this)) requestExemption() else findViewById<SwitchCompat>(R.id.live_switch).toggle()
+        }
+        findViewById<View>(R.id.live_row).setOnClickListener(onLiveRow)
+        findViewById<TextView>(R.id.live_battery).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
         applySystemBarInsets()
         handleDeepLink(intent)
@@ -313,7 +323,64 @@ class HomeActivity : AppCompatActivity() {
             openHaus(HausPages.item(card.page))
             true
         }
+        controls(v.findViewById(R.id.row_controls), card, state)
         return v
+    }
+
+    /**
+     * The favorite's fine controls ([DeviceControls], owner 2026-11-03): a row
+     * of buttons, a slider. Each goes through the device receiver, so a
+     * sensitive call asks in the one dialog and the list reads again after.
+     */
+    private fun controls(holder: LinearLayout, card: Card, state: TextView) {
+        val c = DeviceControls.of(card)
+        if (c.none) return
+        holder.visibility = View.VISIBLE
+        fun send(service: String, data: Map<String, Any>?) {
+            state.text = getString(R.string.home_device_switching)
+            sendBroadcast(WidgetActionReceiver.call(this, card.entityId, card.name, service, data))
+        }
+        if (c.buttons.isNotEmpty()) {
+            val bar = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                isBaselineAligned = false // a label that wraps must not push its button down
+            }
+            c.buttons.forEachIndexed { i, b ->
+                val btn = Button(ContextThemeWrapper(this, R.style.Widget_Haus_Button_Control), null, 0)
+                btn.text = b.label
+                btn.contentDescription = card.name + ": " + b.label
+                btn.setOnClickListener { send(b.service, b.data) }
+                bar.addView(
+                    btn,
+                    LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                        if (i > 0) marginStart = resources.getDimensionPixelSize(R.dimen.space_xs)
+                    },
+                )
+            }
+            holder.addView(bar)
+        }
+        c.slider?.let { sl ->
+            val bar = SeekBar(this)
+            bar.max = 100
+            bar.progress = sl.value
+            bar.contentDescription = card.name + ": " + sl.label
+            bar.setPadding(0, bar.paddingTop, 0, bar.paddingBottom)
+            bar.setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(s: SeekBar, v: Int, fromUser: Boolean) {
+                        if (fromUser) state.text = getString(R.string.home_device_level, sl.label, v)
+                    }
+
+                    override fun onStartTrackingTouch(s: SeekBar) {}
+
+                    override fun onStopTrackingTouch(s: SeekBar) {
+                        val (service, data) = sl.call(s.progress)
+                        send(service, data)
+                    }
+                },
+            )
+            holder.addView(bar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
     }
 
     private fun note(group: ViewGroup, text: String): View =

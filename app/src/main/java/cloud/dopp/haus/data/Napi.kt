@@ -180,6 +180,11 @@ object Napi {
         const val CURRENT_POSITION = "current_position"
         const val CURRENT_TEMPERATURE = "current_temperature"
         const val SUPPORTED_FEATURES = "supported_features"
+        const val TEMPERATURE = "temperature"
+        const val MIN_TEMP = "min_temp"
+        const val MAX_TEMP = "max_temp"
+        const val TARGET_TEMP_STEP = "target_temp_step"
+        const val SUPPORTED_COLOR_MODES = "supported_color_modes"
 
         /** The thing's own page on Haus, a path (`/raeume/<entity_id>`): what a tap opens. */
         const val PAGE = "page"

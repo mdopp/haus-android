@@ -24,6 +24,13 @@ data class Card(
     // The thing's own page on Haus (`/raeume/<entity_id>`), as Haus names it: a
     // tap opens it ([cloud.dopp.haus.widget.HausPages.item]). Null when Haus names none.
     val page: String? = null,
+    // The start screen's fine controls (owner, 2026-11-03): a heating's setpoint
+    // and its bounds and step, a lamp's colour modes (can it dim?), a player's volume.
+    val setpoint: Double? = null,
+    val minTemp: Double? = null,
+    val maxTemp: Double? = null,
+    val tempStep: Double? = null,
+    val colorModes: List<String> = emptyList(),
 ) {
     /**
      * Best-effort "active" reading across the supported domains. For a lock

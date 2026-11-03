@@ -48,17 +48,19 @@
     <string name="home_devices_unreadable">Deine Favoriten lassen sich gerade nicht laden.</string>
     <string name="home_devices_loading">Lädt …</string>
     <string name="home_devices_all">Alle Geräte</string>
+    <!-- A favorite's slider while it moves: „Helligkeit 40 %“. -->
+    <string name="home_device_level">%1$s %2$d %%</string>
     <string name="home_device_switching">schaltet …</string>
 
     <!-- The live widgets (LiveService). -->
-    <string name="live_switch">Live-Widgets: aktuell, solange der Bildschirm an ist</string>
+    <string name="live_switch">Live-Widgets</string>
     <string name="live_channel">Live-Widgets</string>
     <string name="live_channel_desc">Zeigt, ob die Widgets live mit deinem Haus verbunden sind.</string>
     <string name="live_connecting">Verbinde …</string>
     <string name="live_on">Widgets live</string>
     <string name="live_paused">Pausiert, Bildschirm aus</string>
-    <string name="live_battery_on">Die Widgets bleiben von selbst aktuell.</string>
-    <string name="live_battery_off">Damit die Widgets von selbst aktuell bleiben: hier tippen und „Zulassen“ wählen.</string>
+    <string name="live_battery_on">Aktuell, solange der Bildschirm an ist</string>
+    <string name="live_battery_off">Tippen und „Zulassen“ wählen</string>
     <string name="live_battery_title">Widgets aktuell halten</string>
     <string name="live_battery_why">Damit die Widgets von selbst aktuell bleiben, tippe auf „Erlauben“ und dann im nächsten Fenster auf „Zulassen“.</string>
     <string name="live_battery_yes">Erlauben</string>

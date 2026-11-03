@@ -159,32 +159,6 @@
                 android:orientation="vertical" />
 
             <TextView
-                android:id="@+id/status"
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:gravity="center_horizontal" />
-
-            <!-- The live widgets (LiveService): on by default once paired. -->
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/live_switch"
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:text="@string/live_switch" />
-
-            <!-- Whether a restart after a killed process goes live by itself; a tap asks for it. -->
-            <TextView
-                android:id="@+id/live_battery"
-                style="@style/Text.Haus.Label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:background="?android:attr/selectableItemBackground" />
-
-            <TextView
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -197,12 +171,76 @@
                 android:layout_marginBottom="@dimen/space_xs"
                 android:text="@string/home_widgets_hint" />
 
+            <!-- One card (owner, 2026-11-03): the widgets to add, then the live row in
+                 the same row style; its line asks for „Zulassen“ only while the
+                 battery exemption is missing. -->
             <LinearLayout
-                android:id="@+id/widgets_group"
+                android:id="@+id/widgets_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/card_haus"
-                android:orientation="vertical" />
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/widgets_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <!-- The live widgets (LiveService): on by default once paired. -->
+                <LinearLayout
+                    android:id="@+id/live_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="20dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_marginEnd="18dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_refresh"
+                        android:tint="@color/haus_accent" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/live_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/live_switch"
+                            android:textColor="@color/haus_text"
+                            android:textSize="16sp" />
+
+                        <!-- Whether a restart after a killed process goes live by itself; a tap asks for it. -->
+                        <TextView
+                            android:id="@+id/live_battery"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/haus_text_muted"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/live_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:contentDescription="@string/live_switch" />
+                </LinearLayout>
+            </LinearLayout>
 
             <!-- Mehr (#194): what the app does beyond the widgets. -->
             <TextView
@@ -220,12 +258,21 @@
                 android:background="@drawable/card_haus"
                 android:orientation="vertical" />
 
+            <!-- Where the app is paired, beside the way to unpair (owner, 2026-11-03). -->
+            <TextView
+                android:id="@+id/status"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xl"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:gravity="center_horizontal" />
+
             <Button
                 android:id="@+id/logout_btn"
                 style="@style/Widget.Haus.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_xl"
                 android:text="@string/home_logout" />
         </LinearLayout>
 

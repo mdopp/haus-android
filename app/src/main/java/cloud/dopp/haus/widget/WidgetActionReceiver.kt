@@ -9,6 +9,7 @@ import android.widget.Toast
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.ui.HomeActivity
+import org.json.JSONObject
 import kotlin.concurrent.thread
 
 /**
@@ -49,20 +50,30 @@ class WidgetActionReceiver : BroadcastReceiver() {
             }
             return
         }
+        // A start-screen control (owner, 2026-11-03): one named service on this
+        // entity, never another domain's.
+        val service = intent.getStringExtra(EXTRA_SERVICE)
+        if (op == OP_CALL && (service == null || service.substringBefore('.') != domain)) return
+        val data = intent.getStringExtra(EXTRA_DATA)?.let { runCatching { JSONObject(it) }.getOrNull() }
         val app = context.applicationContext
         val pending = goAsync()
         thread {
             try {
                 val api = ApiClient(app)
                 // `api.call` RETURNS false on a non-2xx (#111): every branch carries its outcome.
-                val outcome = when (domain) {
-                    "light", "switch" -> tapOutcome(api.call(entityId, "$domain.toggle"))
-                    "cover" -> {
+                val outcome = when {
+                    // with data (a brightness, a position, a setpoint) only on what Haus lets
+                    // go freely: a refusal there is a failure, not a question
+                    op == OP_CALL && data != null ->
+                        runCatching { tapOutcome(api.call(entityId, service!!, data = data)) }
+                            .getOrElse { if (it is ApiClient.SensitiveException) Tap.FAILED else throw it }
+                    op == OP_CALL -> callOrConfirm(api, app, entityId, name, service!!)
+                    domain == "light" || domain == "switch" -> tapOutcome(api.call(entityId, "$domain.toggle"))
+                    domain == "cover" -> {
                         val card = api.getCard(entityId)
-                        val service = if (card?.isOn == true) "cover.close_cover" else "cover.open_cover"
-                        callOrConfirm(api, app, entityId, name, service)
+                        callOrConfirm(api, app, entityId, name, if (card?.isOn == true) "cover.close_cover" else "cover.open_cover")
                     }
-                    "lock" -> callOrConfirm(api, app, entityId, name, lockToggleService(api.getCard(entityId)?.state))
+                    domain == "lock" -> callOrConfirm(api, app, entityId, name, lockToggleService(api.getCard(entityId)?.state))
                     else -> Tap.DONE
                 }
                 if (outcome != Tap.CONFIRMING) {
@@ -128,6 +139,10 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
         const val OP_TOGGLE = "toggle"
 
+        /** A start-screen control: [EXTRA_SERVICE] on the entity, with [EXTRA_DATA] (a JSON object) or none. */
+        const val OP_CALL = "call"
+        const val EXTRA_DATA = "data"
+
         /** A lock (#92): open the chooser — this op runs no service itself. */
         const val OP_LOCK_CHOOSE = "lock_choose"
 
@@ -139,6 +154,16 @@ class WidgetActionReceiver : BroadcastReceiver() {
                 .putExtra(WidgetActionActivity.EXTRA_NAME, name)
                 .putExtra(WidgetActionActivity.EXTRA_FEATURES, supportedFeatures ?: -1)
                 .putExtra(EXTRA_OP, if (DeviceShortcuts.domainOf(entityId) == "lock") OP_LOCK_CHOOSE else OP_TOGGLE)
+
+        /** A start-screen control's call: [service] on [entityId], with [data] or none. */
+        fun call(ctx: Context, entityId: String, name: String, service: String, data: Map<String, Any>?): Intent =
+            Intent(ctx, WidgetActionReceiver::class.java)
+                .setAction(ACTION_TAP)
+                .putExtra(EXTRA_ENTITY, entityId)
+                .putExtra(WidgetActionActivity.EXTRA_NAME, name)
+                .putExtra(EXTRA_OP, OP_CALL)
+                .putExtra(EXTRA_SERVICE, service)
+                .apply { if (data != null) putExtra(EXTRA_DATA, JSONObject(data).toString()) }
 
         /**
          * Say out loud that a tap did **not** land (#111): a text toast, not a
