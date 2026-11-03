@@ -58,11 +58,8 @@ object Napi {
     /** What `GET /napi/gemeinsam/kalender` answers: iCalendar, one VCALENDAR per shared calendar. */
     const val ICALENDAR = "text/calendar"
 
-    /** The Haus account's request header: the state the phone has (#206). */
+    /** The Haus account's request header: the state the phone has, Haus's last [ETAG] (#206). */
     const val IF_NONE_MATCH = "If-None-Match"
-
-    /** The Haus account's reply header: the state Haus sent, for the next [IF_NONE_MATCH]. */
-    const val ETAG = "ETag"
 
     /**
      * One call. [query] and [body] are the names the client sends, in the order
