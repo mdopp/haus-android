@@ -14,6 +14,9 @@
 #   5 a real reboot: OPEN within 60 s of boot
 #   6 the share sheet: the assistant's Direct Share target "Homes" is in it (#188)
 #   7 a photo shared from the camera's way: one upload in Haus's shape, „Abgelegt“
+#   8 the Haus account (#206): its two switches sync through Android's SyncManager
+#     from the fake Haus; the shared contacts resolve by number, the calendars are
+#     read only, the reminder rings; „Kontakte übertragen“ sends none of it
 set -uo pipefail
 LOG=${HAUS_LOG:-haus.log}
 OUT=${E2E_OUT:-e2e-out}
@@ -219,6 +222,14 @@ done
 on screencap -p /sdcard/photo.png && adb pull /sdcard/photo.png "$OUT/photo-dialog.png" >/dev/null 2>&1
 [ $seen = yes ] && pass "7 the app says „Abgelegt“" || fail "7 no „Abgelegt“ on the screen"
 on input keyevent KEYCODE_BACK
+
+# 8 --------------------------------------------------------------------------
+m=$(mark)
+on am instrument -w -r -e class cloud.dopp.haus.e2e.LiveE2EKonto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/konto.txt"
+grep -q "OK (2 tests)" "$OUT/konto.txt" \
+  && pass "8 the Haus account: contacts and calendars on the phone, none in the archive" \
+  || { grep -m3 -E 'AssertionError|Exception' "$OUT/konto.txt"; fail "8 the Haus account"; }
+[ "$(since "$m" "GEMEINSAM kontakte 304")" -ge 1 ] && pass "8 an unchanged state costs Haus's 304" || fail "8 no 304 for the unchanged contacts"
 
 adb logcat -d > "$OUT/logcat.txt"
 cp "$LOG" "$OUT/" 2>/dev/null

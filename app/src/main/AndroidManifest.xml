@@ -31,6 +31,15 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Das Haus-Konto (#206, owner 2026-11-03): the household's shared contacts and
+         calendars in an account „Haus“, each part asked for only when its switch is
+         turned on. The app writes into its own account only; its sync adapters run
+         when Android's SyncManager says, hourly at most, and never send anything back. -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
     <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
     <queries>
@@ -183,6 +192,53 @@
             android:exported="false"
             android:label="@string/standort_title"
             android:theme="@style/Theme.Haus" />
+
+        <!-- Mehr → Haus auf dem Handy (#206): the two switches of the Haus account.
+             Exported without a filter: Android's settings open it on „Konto hinzufügen → Haus“. -->
+        <activity
+            android:name=".ui.HausKontoActivity"
+            android:exported="true"
+            android:label="@string/konto_title"
+            android:theme="@style/Theme.Haus" />
+
+        <!-- The Haus account (#206): its authenticator and its two sync adapters,
+             bound by Android only (the permissions say so), none foreground. -->
+        <service
+            android:name=".konto.KontoDienst"
+            android:exported="true"
+            android:permission="android.permission.ACCOUNT_MANAGER">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/konto" />
+        </service>
+        <service
+            android:name=".konto.KontakteSyncDienst"
+            android:exported="true"
+            android:permission="android.permission.BIND_SYNC_ADAPTER">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/kontakte_sync" />
+            <meta-data
+                android:name="android.provider.CONTACTS_STRUCTURE"
+                android:resource="@xml/kontakte_konto" />
+        </service>
+        <service
+            android:name=".konto.KalenderSyncDienst"
+            android:exported="true"
+            android:permission="android.permission.BIND_SYNC_ADAPTER">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/kalender_sync" />
+        </service>
 
         <!-- Standortverlauf: Android's location deliveries, by the app's own
              PendingIntents only; it stores the points and sends a batch when due. -->

@@ -65,6 +65,7 @@ each row naming the Haus file and lines it came from.
 | energy | `GET /napi/portal/energy`: the flow now and, per total, `today` (kWh since the house's midnight; haus#213) |
 | Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
+| Haus-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
 | Share → Haus, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Haus's refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120); the share sheet's Direct Share target carries the assistant's name (#188) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{documents,notes}`; Haus also lists `contacts` and `task`, which the app no longer offers as a widget, owner 2026-11-02 and 2026-11-03), `POST /napi/action-callback` |
@@ -314,3 +315,43 @@ No Google Play services (the owner, 2026-11-02): the platform alone.
 - `GET /napi/standort` → `{verbunden, seit?}`: without a connection the
   screen says in one sentence to paste the Reitti token on Haus's page
   `/standort`, and a tap opens it there. The token never reaches the phone.
+
+## (g) Das Haus-Konto
+
+(#206, the owner's call of 2026-11-03; Haus's side is haus#218.) The
+household's shared data on the phone, in its own apps: an Android account
+„Haus“ (type `cloud.dopp.haus`) with two sync adapters, each behind its own
+switch under Mehr → Haus auf dem Handy and its own permission.
+
+- **Kontakte des Hauses** (WRITE_CONTACTS): `GET /napi/gemeinsam/kontakte` →
+  `text/vcard`, every card of Haus's own address books. Each card one raw
+  contact of the account, SOURCE_ID the SHA-1 of its UID, SYNC1 the hash of
+  its text. Visible without a group, so the dialer, WhatsApp and mail find
+  them.
+- **Kalender des Hauses** (READ_ and WRITE_CALENDAR): `GET
+  /napi/gemeinsam/kalender` → `text/calendar`, one VCALENDAR per shared
+  calendar (`X-WR-CALNAME`, `X-HAUS-KALENDER` its id, `X-HAUS-ART` its kind),
+  series expanded by Haus over a month back and a year ahead, each instance
+  with its RECURRENCE-ID; last „Erinnerungen“, each open reminder with a due
+  time as an entry with a display alarm (a recurring one with its RRULE in
+  the house's time zone). Each calendar one calendar of the account,
+  CAL_ACCESS_READ.
+- Read only: everything is written as the sync adapter, nothing is marked
+  dirty, `supportsUploading` is false; the contacts app gets no edit schema.
+  The screen says „ändern geht in Haus“.
+- Both carry an ETag; the app sends it as `If-None-Match` and Haus's 304
+  costs nothing. A 304 while the phone holds fewer entries than it wrote
+  fetches all again.
+- When: Android's SyncManager, at the switch, on „Jetzt abgleichen“, and
+  every hour while the account syncs automatically. No job, alarm or worker
+  of the app's own.
+- Refusals `{fehler}` (403 a device of nobody, 503 no Radicale, 502 Radicale
+  refused, 507 the address book too big to read whole): the sentence under
+  the switch, Android backs off. 401: pair again.
+- Off: the part's entries leave the phone; both off, the account goes.
+  Unpairing removes it.
+- **No loop:** „Kontakte übertragen“ (e) leaves the account's rows out. A
+  contact Android joined from the person's own and a shared one goes with the
+  person's own data and the UID it had before the join (the shared raw
+  contact's part taken out of the lookup key); one with nothing of the
+  person's but a name (a messenger's rows) does not go.
