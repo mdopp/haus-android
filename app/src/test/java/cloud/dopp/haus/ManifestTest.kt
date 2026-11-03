@@ -29,6 +29,11 @@ import java.io.File
  * no job, no alarm and no wakelock: the points go to Haus while a delivery
  * has the phone awake anyway.
  *
+ * Haus heißt jetzt Homes (the owner's call, 2026-11-03, laib#1021): this last
+ * build of `cloud.dopp.haus` may post one notice beside the live service's,
+ * at most once a day, from its one file, and may ask Android to remove the
+ * app (REQUEST_DELETE_PACKAGES) once Homes is installed.
+ *
  * No Google Play services, anywhere (the owner's decision, 2026-11-02): no
  * `com.google.android.gms` library, class or permission.
  *
@@ -50,6 +55,9 @@ class ManifestTest {
 
     /** The one file that may hold a foreground service and post its notification. */
     private val serviceFile = "app/src/main/java/cloud/dopp/haus/realtime/LiveService.kt"
+
+    /** The one other file that may post a notification: Haus heißt jetzt Homes (laib#1021). */
+    private val wechselFile = "app/src/main/java/cloud/dopp/haus/wechsel/WechselNachricht.kt"
 
     /** The one file that may name WorkManager: the backup job (#194). */
     private val workerFile = "app/src/main/java/cloud/dopp/haus/sicherung/SicherungWorker.kt"
@@ -88,6 +96,8 @@ class ManifestTest {
         "ACCESS_NETWORK_STATE", // whether the phone is on a Wi-Fi
         // Das Haus-Konto (owner 2026-11-03, #206): into its own account only, each part behind its own switch
         "WRITE_CONTACTS", "READ_CALENDAR", "WRITE_CALENDAR", "READ_SYNC_SETTINGS", "WRITE_SYNC_SETTINGS",
+        // Haus heißt jetzt Homes (laib#1021): Android's dialog to remove this app once Homes is there
+        "REQUEST_DELETE_PACKAGES",
     )
 
     /**
@@ -246,18 +256,26 @@ class ManifestTest {
         assertFalse("android-browser-helper", gradle.contains("androidbrowserhelper"))
     }
 
-    /** The live service's notification is the only one, and only it goes foreground. */
+    /**
+     * The live service's notification and the notice that Haus is now Homes
+     * (laib#1021) are the only ones, each in its file; only the live service
+     * goes foreground.
+     */
     @Test
     fun noOtherNotificationNoWebShellNoVoiceInTheSources() {
         val hits = noneSay(
-            "NotificationCompat", "NotificationManager", "NotificationChannel", "startForeground",
-            except = setOf(serviceFile),
-        ) + noneSay(
+            "NotificationCompat", "NotificationManager", "NotificationChannel",
+            except = setOf(serviceFile, wechselFile),
+        ) + noneSay("startForeground", except = setOf(serviceFile)) + noneSay(
             "TrustedWebActivity", "androidx.browser.trusted", "RecognizerIntent", "SpeechRecognizer",
             "DATA_SYNC", "dataSync",
         )
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
         assertTrue("the live service has no notification", sources[serviceFile]?.contains("startForeground") == true)
+        val wechsel = sources.getValue(wechselFile)
+        assertEquals("one notice", 1, Regex("""\.notify\(""").findAll(wechsel).count())
+        assertTrue("only when notifications are allowed", wechsel.contains("areNotificationsEnabled()"))
+        assertTrue("once a day at most", wechsel.contains("Wechsel.meldenHeute("))
     }
 
     /**

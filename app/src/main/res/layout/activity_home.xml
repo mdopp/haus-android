@@ -112,6 +112,30 @@
             android:orientation="vertical"
             android:visibility="gone">
 
+            <!-- Haus heißt jetzt Homes (laib#1021): shown while the server names another app. -->
+            <LinearLayout
+                android:id="@+id/wechsel_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_lg"
+                android:background="@drawable/card_haus"
+                android:orientation="vertical"
+                android:padding="@dimen/card_padding"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/wechsel_text"
+                    style="@style/Text.Haus.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/wechsel_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_sm" />
+            </LinearLayout>
+
             <TextView
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"

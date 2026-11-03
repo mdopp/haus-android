@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Haus heißt jetzt Homes (laib#1021): the start screen's notice and the one
+     notification. %1$s is the new app's name as the server says it, %2$s the
+     address phones get it from (for Obtainium). -->
+<resources>
+    <string name="wechsel_installieren">Haus heißt jetzt %1$s. Installiere die App %1$s (in Obtainium: App hinzufügen, Adresse %2$s), melde dich dort an und richte deine Widgets neu ein. Danach kannst du Haus löschen.</string>
+    <string name="wechsel_installieren_knopf">Seite von %1$s öffnen</string>
+    <string name="wechsel_loeschen">%1$s ist installiert. Du kannst Haus jetzt löschen.</string>
+    <string name="wechsel_loeschen_knopf">Haus löschen</string>
+
+    <string name="wechsel_kanal">Wechsel zur neuen App</string>
+    <string name="wechsel_kanal_info">Sagt dir, dass Haus jetzt anders heißt und wie du wechselst.</string>
+    <string name="wechsel_nachricht_titel">Haus heißt jetzt %1$s</string>
+    <string name="wechsel_nachricht">Tippe hier: so wechselst du zur App %1$s.</string>
+    <string name="wechsel_nachricht_loeschen_titel">%1$s ist installiert</string>
+    <string name="wechsel_nachricht_loeschen">Du kannst Haus jetzt löschen.</string>
+</resources>

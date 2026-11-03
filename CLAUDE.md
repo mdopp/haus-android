@@ -29,7 +29,9 @@ These rules apply to every session, human or agent.
 - One set of names: package `cloud.dopp.haus`, scheme `cloud.dopp.haus://`,
   token prefix `haus_device_`. `NamesTest` fails on any older name.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
-  app. The live service's quiet notification is the only one; do not add
+  app. The live service's quiet notification is the only one — beside the
+  notice that Haus is now Homes (laib#1021, `wechsel/`, docs/CONTRACT.md (h)),
+  at most once a day, in this last `cloud.dopp.haus` build; do not add
   another, a second service, a poll (widget update periods stay 0), an
   alarm, a wakelock or a rescue worker. Recovery after a killed process rests
   on the battery-optimization exemption the person grants. `ManifestTest`

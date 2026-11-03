@@ -70,6 +70,7 @@ each row naming the Haus file and lines it came from.
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120); the share sheet's Direct Share target carries the assistant's name (#188) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{documents,notes}`; Haus also lists `contacts` and `task`, which the app no longer offers as a widget, owner 2026-11-02 and 2026-11-03), `POST /napi/action-callback` |
 | live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |
+| Haus heißt jetzt Homes | `GET /napi/app` → `{name, paket, quelle}`: see (h) |
 
 Fields the widgets read beyond a value to show:
 
@@ -362,3 +363,25 @@ switch under Mehr → Haus auf dem Handy and its own permission.
   person's own data and the UID it had before the join (the shared raw
   contact's part taken out of the lookup key); one with nothing of the
   person's but a name (a messenger's rows) does not go.
+
+## (h) Haus heißt jetzt Homes
+
+The owner's call, 2026-11-03 (laib#1021): the server and the app are renamed
+Homes; the app gets a new package, `cloud.dopp.homes`, so it is a new app
+beside this one. This last build of `cloud.dopp.haus` tells the person.
+
+- `GET /napi/app` (device token) → `{"name":"Homes","paket":"cloud.dopp.homes",
+  "quelle":"https://github.com/mdopp/homes-android"}`. A server from before
+  answers 404: nothing is shown. A failed check shows nothing either and keeps
+  the last answer.
+- When `paket` is not this app's own: a card on the start screen says, in
+  German, to install the app from `quelle` (in Obtainium: App hinzufügen,
+  that address), pair it, place the widgets again, and then remove Haus; its
+  button opens `quelle`. Once that package is installed (declared in the
+  manifest's `<queries>`), it says Haus can go, and its button opens Android's
+  own dialog to remove this app (`ACTION_DELETE`, `REQUEST_DELETE_PACKAGES`).
+- Asked when the start screen opens, and from the live service once its
+  stream is open, at most once a day. Many people only use the widgets: that
+  check posts **one** notice, at most once a day, only while it applies and
+  only when notifications are allowed; a tap opens the start screen. It is
+  the one notification beside the live service's.
