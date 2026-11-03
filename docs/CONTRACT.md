@@ -94,6 +94,7 @@ while the energy widget is placed, the energy flow's sensors; re-posted inside H
 Home Assistant is down is retried with backoff, about two minutes) and has
 every fed widget read again.
 
+- `gemeinsam` (`{teil}`) syncs that part of the Haus account, see (g).
 - `card_state` (`{entity_id, card}`) draws the device widgets of that entity
   without a read; for an energy sensor it reads the energy
   widget again, at most every 10 s, Haus's sensor interval. Any other frame
@@ -345,6 +346,12 @@ switch under Mehr → Haus auf dem Handy and its own permission.
 - When: Android's SyncManager, at the switch, on „Jetzt abgleichen“, and
   every hour while the account syncs automatically. No job, alarm or worker
   of the app's own.
+- Push (#209, haus#223): while the live stream is open (c), Haus sends
+  `event: gemeinsam`, `{teil: kontakte|kalender}`, when that part changed
+  (it reads its Radicale home's getctags every 30 s while a phone listens).
+  The app asks Android to sync that part, only with its switch on, at once
+  and then at most once more at the end of a 30 s window. With the stream
+  down nothing new happens; the hourly sync stays.
 - Refusals `{fehler}` (403 a device of nobody, 503 no Radicale, 502 Radicale
   refused, 507 the address book too big to read whole): the sentence under
   the switch, Android backs off. 401: pair again.

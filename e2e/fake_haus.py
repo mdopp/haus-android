@@ -11,6 +11,9 @@ what the e2e asserts on, one timestamped line each:
                     a GET /napi/gemeinsam/kontakte|kalender (the Haus account, #206):
                     200 with the household's cards or calendars, 304 when the
                     phone named the ETag it has
+  GEMEINSAM_FRAME <part> -> n
+                    /ctl/gemeinsam?teil=kalender: the shared calendar gets a second
+                    entry („Elternabend“) and a gemeinsam frame goes to n open streams
   GET <path>        every other authed GET
   FRAME <id> -> n   a card_state pushed through /ctl/frame to n open streams
   ACTIVE_SET <ids> -> n
@@ -219,6 +222,18 @@ class Haus(BaseHTTPRequestHandler):
                 REPLIES["/napi/portal/active"] = {"ok": True, "active": [card(i, "on") for i in ids]}
             n = self.push("active_set", {"entity_ids": ids})
             log("ACTIVE_SET %s -> %d" % (",".join(ids), n))
+            return self.reply(200, {"streams": n})
+        if url.path == "/ctl/gemeinsam":
+            teil = q.get("teil", ["kalender"])[0]
+            with lock:
+                ctype, text = GEMEINSAM[teil]
+                if teil == "kalender" and "Elternabend" not in text:
+                    text = text.replace("SUMMARY:Müll raus\r\nEND:VEVENT\r\n",
+                                        "SUMMARY:Müll raus\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:e2e-eltern\r\n"
+                                        "DTSTART:20300107T170000Z\r\nDTEND:20300107T183000Z\r\nSUMMARY:Elternabend\r\nEND:VEVENT\r\n", 1)
+                    GEMEINSAM[teil] = (ctype, text)
+            n = self.push("gemeinsam", {"teil": teil})
+            log("GEMEINSAM_FRAME %s -> %d" % (teil, n))
             return self.reply(200, {"streams": n})
         if url.path == "/ctl/streams":
             with lock:

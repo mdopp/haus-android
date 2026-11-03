@@ -17,6 +17,8 @@
 #   8 the Haus account (#206): its two switches sync through Android's SyncManager
 #     from the fake Haus; the shared contacts resolve by number, the calendars are
 #     read only, the reminder rings; „Kontakte übertragen“ sends none of it
+#   9 push (#209): a gemeinsam frame on the open stream syncs the calendar part at
+#     once, and the new entry is in the phone's calendar
 set -uo pipefail
 LOG=${HAUS_LOG:-haus.log}
 OUT=${E2E_OUT:-e2e-out}
@@ -230,6 +232,20 @@ grep -q "OK (2 tests)" "$OUT/konto.txt" \
   && pass "8 the Haus account: contacts and calendars on the phone, none in the archive" \
   || { grep -m3 -E 'AssertionError|Exception' "$OUT/konto.txt"; fail "8 the Haus account"; }
 [ "$(since "$m" "GEMEINSAM kontakte 304")" -ge 1 ] && pass "8 an unchanged state costs Haus's 304" || fail "8 no 304 for the unchanged contacts"
+
+# 9 --------------------------------------------------------------------------
+wake
+on am instrument -w -r -e class 'cloud.dopp.haus.e2e.LiveE2EKontoPush#ein' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-ein.txt"
+grep -q "OK (1 test)" "$OUT/push-ein.txt" || { grep -m3 -E 'AssertionError|Exception' "$OUT/push-ein.txt"; fail "9 the calendar part on"; }
+# the instrumentation ended the app's process: the app's screen, an allowed start, brings the stream back
+on am start -W -n $PKG/.ui.HomeActivity >/dev/null
+for i in $(seq 1 30); do curl -sk https://127.0.0.1:8443/ctl/streams | grep -q '"streams": [1-9]' && break; sleep 1; done
+m=$(mark)
+curl -sk "https://127.0.0.1:8443/ctl/gemeinsam?teil=kalender" | grep -q '"streams": [1-9]' && pass "9 the frame reaches the open stream" || fail "9 no open stream for the frame"
+wait_for "$m" "GEMEINSAM kalender 200" 1 45 && pass "9 the frame syncs the calendar at once" || fail "9 no sync after the frame"
+on am instrument -w -r -e class 'cloud.dopp.haus.e2e.LiveE2EKontoPush#danach' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-danach.txt"
+grep -q "OK (1 test)" "$OUT/push-danach.txt" && pass "9 the new entry is in the phone's calendar" \
+  || { grep -m3 -E 'AssertionError|Exception' "$OUT/push-danach.txt"; fail "9 the new entry is not on the phone"; }
 
 adb logcat -d > "$OUT/logcat.txt"
 cp "$LOG" "$OUT/" 2>/dev/null

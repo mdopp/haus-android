@@ -132,9 +132,10 @@ class NapiContractTest {
             ),
             Route(
                 "GET", "/napi/portal/events",
-                "internal/napi/live.go:147-180, card_state live.go:432-434, active_set live.go:376-397",
-                sends = setOf("entity_id", "card", "entity_ids") + CARD, accept = "text/event-stream",
-                events = listOf("card_state", "active_set"),
+                "internal/napi/live.go:147-180, card_state live.go:432-434, active_set live.go:376-397; " +
+                    "gemeinsam {teil: kontakte|kalender} (mdopp/haus main at e5d208c, the merge of haus#224 for haus#223) live.go:471-518",
+                sends = setOf("entity_id", "card", "entity_ids", "teil") + CARD, accept = "text/event-stream",
+                events = listOf("card_state", "active_set", "gemeinsam"),
             ),
             Route(
                 "GET", "/napi/defs/tool", "internal/napi/tools.go:77-102",
@@ -460,7 +461,7 @@ class NapiContractTest {
         val route = HAUS.single { it.path == "/napi/portal/events" }
         assertEquals(route.accept, events!!.accept)
         // Haus also sends active_set, but only to a watch that asks for it; the app no longer does
-        assertEquals("the frames the app reads", listOf("card_state"), events.events)
+        assertEquals("the frames the app reads", listOf("card_state", "gemeinsam"), events.events)
         assertTrue("a frame Haus does not send", route.events.containsAll(events.events))
     }
 

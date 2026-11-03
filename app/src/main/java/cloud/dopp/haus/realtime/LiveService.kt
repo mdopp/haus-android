@@ -15,6 +15,9 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.Handler
+import androidx.core.os.HandlerCompat
+import cloud.dopp.haus.konto.Anstoss
+import cloud.dopp.haus.konto.HausKonto
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
@@ -163,6 +166,9 @@ object Live {
 class LiveService : Service() {
 
     private val main = Handler(Looper.getMainLooper())
+
+    /** When a `gemeinsam` frame syncs the Haus account (#209). */
+    private val anstoss = Anstoss()
     private var source: EventSource? = null
     private var attempt = 0
     private var connectedAtMs = 0L
@@ -236,6 +242,7 @@ class LiveService : Service() {
 
     private fun drop(text: Int) {
         main.removeCallbacksAndMessages(null)
+        anstoss.vergiss()
         runCatching { source?.cancel() }
         source = null
         connectedAtMs = 0L
@@ -298,6 +305,7 @@ class LiveService : Service() {
             main.post {
                 if (eventSource !== source) return@post
                 when (ev) {
+                    is RealtimeProtocol.GemeinsamEvent -> gemeinsam(ev.teil)
                     is RealtimeProtocol.CardStateEvent -> {
                         runCatching { DeviceWidgetProvider.wakeEntity(this@LiveService, ev.entityId, ev.card) }
                         // a sensor comes every 10 s at most: at most one energy refetch in that time
@@ -322,9 +330,26 @@ class LiveService : Service() {
         }
     }
 
+    /** Haus's shared data changed (#209): the Haus account syncs that part, at most once per 30 s burst. */
+    private fun gemeinsam(teil: HausKonto.Teil) {
+        if (!HausKonto.an(this, teil)) return
+        val nach = anstoss.wann(teil, SystemClock.elapsedRealtime()) ?: return
+        if (nach == 0L) {
+            HausKonto.anstossen(this, teil)
+            return
+        }
+        // the part itself is the token: one later sync per part, taken back when the stream ends
+        HandlerCompat.postDelayed(main, {
+            anstoss.erledigt(teil, SystemClock.elapsedRealtime())
+            if (source != null) HausKonto.anstossen(this, teil)
+        }, teil, nach)
+    }
+
     private fun gone(eventSource: EventSource) {
         if (eventSource !== source) return
         source = null
+        HausKonto.Teil.values().forEach { main.removeCallbacksAndMessages(it) }
+        anstoss.vergiss()
         main.removeCallbacks(watchRepost)
         if (RealtimeProtocol.healthySession(connectedAtMs, SystemClock.elapsedRealtime())) attempt = 0
         connectedAtMs = 0L
