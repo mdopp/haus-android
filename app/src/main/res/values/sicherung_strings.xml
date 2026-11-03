@@ -46,7 +46,11 @@
     <string name="sicherung_jetzt_ohne_ordner">Erst einen Ordner freigeben oder einen Schalter einschalten, dann sichern.</string>
     <string name="sicherung_wartet">Wartet auf WLAN …</string>
     <string name="sicherung_laeuft">Sicherung läuft …</string>
-    <string name="sicherung_laeuft_datei">%1$s: %2$s, Datei %3$d von %4$d\n%5$s von %6$s</string>
+    <!-- the totals of the run, not one file's bytes (owner, 2026-11-01) -->
+    <plurals name="sicherung_laeuft_gesamt">
+        <item quantity="one">%1$s: %2$s von %3$s Datei, %4$s</item>
+        <item quantity="other">%1$s: %2$s von %3$s Dateien, %4$s</item>
+    </plurals>
     <string name="sicherung_ruht">Die nächste Sicherung läuft von selbst, wenn das Handy im WLAN lädt.</string>
 
     <!-- The guide: the steps of Haus's page „Daten sichern“ (internal/pages/nachrichten.go),

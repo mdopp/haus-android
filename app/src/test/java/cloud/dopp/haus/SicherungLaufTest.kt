@@ -111,6 +111,25 @@ class SicherungLaufTest {
         assertEquals(listOf("/napi/sicherung/fehlend"), danach.map { it.path })
     }
 
+    /** Owner, 2026-11-01: „3809 von 18 017 Dateien, 1,2 von 9,8 GB“, not the bytes of one file. */
+    @Test
+    fun theProgressIsTheTotalOfTheRun() {
+        legeWhatsapp()
+        val gemeldet = ArrayList<cloud.dopp.haus.sicherung.Fortschritt>()
+        val l = Lauf(
+            SicherungClient(haus.base, FakeHaus.TOKEN, haus.http), g, { q -> if (q == Quelle.WHATSAPP) whatsapp else null },
+            melde = { gemeldet += it }, teil = 1024,
+        )
+        assertEquals(Lauf.Ergebnis.FERTIG, l.laufen())
+        // the database and three media: 5000 + 3000 + 2000 + 2500 bytes
+        assertTrue(gemeldet.isNotEmpty())
+        assertTrue(gemeldet.all { it.von == 4 && it.gesamt == 12_500L })
+        assertEquals(12_500L, gemeldet.last().bytes)
+        assertEquals(3, gemeldet.last().fertig) // the last file under way: three behind it
+        assertTrue("bytes only grow", gemeldet.zipWithNext().all { (a, b) -> b.bytes >= a.bytes && b.fertig >= a.fertig })
+        assertEquals(listOf(0, 1, 2, 3), gemeldet.map { it.fertig }.distinct())
+    }
+
     @Test
     fun signalSendsTheNewestBackupOnceAndThenOnlyANewerOne() {
         val stunde = 60 * 60 * 1000L

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sicherung zurückholen (haus-android#197): the newest Signal and WhatsApp
+     backup from the box onto a new phone. Per source what lies ready, the
+     steps with the folder to grant, and „Zurückholen“; the totals below. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/zurueck_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/haus_bg"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/screen_gutter"
+        android:paddingEnd="@dimen/screen_gutter"
+        android:paddingTop="@dimen/space_lg"
+        android:paddingBottom="@dimen/space_xl">
+
+        <TextView
+            style="@style/Text.Haus.Headline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_sm"
+            android:text="@string/zurueck_title" />
+
+        <TextView
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/zurueck_intro" />
+
+        <!-- Haus's sentence when the list did not come: not paired, no archive, unreachable. -->
+        <TextView
+            android:id="@+id/zurueck_haus"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm"
+            android:textColor="@color/haus_accent"
+            android:visibility="gone" />
+
+        <!-- Signal -->
+        <LinearLayout
+            android:id="@+id/zurueck_signal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="@drawable/card_haus"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/sicherung_signal" />
+
+            <TextView
+                android:id="@+id/signal_bereit"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_signal_schritt1" />
+
+            <TextView
+                android:id="@+id/signal_ordner"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/signal_waehlen"
+                style="@style/Widget.Haus.Button.Ghost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_ordner_waehlen" />
+
+            <Button
+                android:id="@+id/signal_holen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_holen" />
+
+            <TextView
+                android:id="@+id/signal_meldung"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textColor="@color/haus_accent"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_signal_schritt2" />
+        </LinearLayout>
+
+        <!-- WhatsApp -->
+        <LinearLayout
+            android:id="@+id/zurueck_whatsapp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="@drawable/card_haus"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/sicherung_whatsapp" />
+
+            <TextView
+                android:id="@+id/whatsapp_bereit"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_whatsapp_schritt1" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_whatsapp_schritt2" />
+
+            <TextView
+                android:id="@+id/whatsapp_ordner"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/whatsapp_waehlen"
+                style="@style/Widget.Haus.Button.Ghost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_ordner_freigeben" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_whatsapp_schritt3" />
+
+            <Button
+                android:id="@+id/whatsapp_holen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_holen" />
+
+            <TextView
+                android:id="@+id/whatsapp_meldung"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textColor="@color/haus_accent"
+                android:visibility="gone" />
+
+            <!-- the media wait for the open archive: this opens it -->
+            <Button
+                android:id="@+id/whatsapp_archiv"
+                style="@style/Widget.Haus.Button.Ghost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_archiv_oeffnen"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/zurueck_whatsapp_schritt4" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/zurueck_balken"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_lg"
+            android:max="1000"
+            android:progressTint="@color/haus_accent"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/zurueck_zustand"
+            style="@style/Text.Haus.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs" />
+
+        <Button
+            android:id="@+id/zurueck_anhalten"
+            style="@style/Widget.Haus.Button.Ghost"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:text="@string/zurueck_anhalten"
+            android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

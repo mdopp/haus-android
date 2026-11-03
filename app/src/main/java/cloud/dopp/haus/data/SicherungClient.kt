@@ -3,6 +3,7 @@ package cloud.dopp.haus.data
 import cloud.dopp.haus.data.Napi.DateiJson
 import cloud.dopp.haus.data.Napi.FehlendJson
 import cloud.dopp.haus.data.Napi.KontakteJson
+import cloud.dopp.haus.data.Napi.LetzteJson
 import cloud.dopp.haus.data.Napi.SchluesselJson
 import cloud.dopp.haus.data.Napi.StandJson
 import cloud.dopp.haus.data.Napi.TeilJson
@@ -18,6 +19,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
 /**
@@ -78,6 +80,25 @@ class SicherungClient(
 
     /** What Haus's mirror of the contacts came to: all it holds now, and what changed. */
     data class Kontakte(val kontakte: Int, val neu: Int, val geaendert: Int, val entfernt: Int)
+
+    /** One file the box keeps for a new phone (haus#209): its path in the source, size, mtime (epoch ms). */
+    data class LetzteDatei(val pfad: String, val groesse: Long, val geaendert: Long)
+
+    /** What `GET /napi/sicherung/letzte` came to. */
+    sealed class Letzte {
+        data class Da(val quellen: Map<Napi.Quelle, List<LetzteDatei>>) : Letzte()
+
+        /** Haus's sentence why not, e.g. the box has no archive (503). */
+        data class Fehler(val satz: String) : Letzte()
+        object NichtGekoppelt : Letzte()
+        object Unerreichbar : Letzte()
+    }
+
+    /**
+     * A download under way: [ein] are the file's bytes from [start] on (where
+     * the phone asked, or 0 when Haus sent it whole), of the file [etag] names.
+     */
+    class Strom(val start: Long, val etag: String?, val ein: InputStream)
 
     @Volatile
     private var laufend: Call? = null
@@ -171,6 +192,32 @@ class SicherungClient(
             ?: throw Abgelehnt(resp.code, null)
     }
 
+    /** What the box keeps for a new phone, per source. Never throws. */
+    fun letzte(): Letzte = try {
+        rufe(Napi.SICHERUNG_LETZTE.request(base, token)) { resp -> letzteAus(resp.code, resp.body?.string()) }
+    } catch (e: IOException) {
+        Letzte.Unerreichbar
+    }
+
+    /**
+     * [pfad] of [quelle] from byte [ab] on, handed to [lies] as it streams.
+     * A refusal is [Abgelehnt] with Haus's sentence (404: gone from the box;
+     * 423: the archive is closed, for a WhatsApp medium); a cut is an [IOException].
+     */
+    fun <T> holen(quelle: Napi.Quelle, pfad: String, ab: Long, lies: (Strom) -> T): T {
+        val endpoint = Napi.SICHERUNG_LETZTE_DATEI.with(quelle.wire, pfad)
+        val req = endpoint.request(base, token, endpoint.path, headers = mapOf(Napi.RANGE to "bytes=$ab-"))
+        return rufe(req) { resp ->
+            val body = resp.body ?: throw Abgelehnt(resp.code, null)
+            val start = when (resp.code) {
+                200 -> 0L
+                206 -> startAus(resp.replyHeader(endpoint, Napi.CONTENT_RANGE)) ?: throw Abgelehnt(resp.code, null)
+                else -> throw Abgelehnt(resp.code, satzAus(body.string()))
+            }
+            lies(Strom(start, resp.replyHeader(endpoint, Napi.ETAG), body.byteStream()))
+        }
+    }
+
     /** [datei] (the contacts as concatenated vCards) to the person's address book „Handy-Kontakte“ on the box. */
     fun kontakte(datei: File): Kontakte {
         val req = Napi.KONTAKTE.request(base, token, body = datei.asRequestBody(VCARD))
@@ -207,6 +254,31 @@ class SicherungClient(
         /** Haus's sentence in an error body, `{"fehler": …}`, or null. */
         fun satzAus(body: String?): String? =
             runCatching { JSONObject(body.orEmpty()).optString(UploadJson.FEHLER) }.getOrNull()?.trim()?.ifBlank { null }
+
+        /** Where a 206's `Content-Range: bytes <start>-<end>/<total>` starts, or null. */
+        fun startAus(contentRange: String?): Long? =
+            Regex("""bytes (\d+)-\d+/(\d+|\*)""").matchEntire(contentRange?.trim().orEmpty())?.groupValues?.get(1)?.toLongOrNull()
+
+        /** A `letzte` reply: per source the files, a malformed entry left out. */
+        fun letzteAus(code: Int, body: String?): Letzte {
+            if (code == 401) return Letzte.NichtGekoppelt
+            if (code !in 200..299) {
+                return Letzte.Fehler(satzAus(body) ?: "Haus hat nicht gesagt, was zum Zurückholen bereitliegt ($code).")
+            }
+            val quellen = runCatching { JSONObject(body.orEmpty()).optJSONObject(LetzteJson.QUELLEN) }.getOrNull()
+                ?: return Letzte.Fehler("Haus hat nicht lesbar gesagt, was zum Zurückholen bereitliegt.")
+            val out = LinkedHashMap<Napi.Quelle, List<LetzteDatei>>()
+            Napi.Quelle.entries.forEach { q ->
+                val arr = quellen.optJSONArray(q.wire) ?: return@forEach
+                out[q] = (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                    val pfad = o.optString(LetzteJson.PFAD)
+                    val groesse = o.optLong(LetzteJson.GROESSE, -1)
+                    if (pfad.isBlank() || groesse < 0) null else LetzteDatei(pfad, groesse, o.optLong(LetzteJson.GEAENDERT, 0))
+                }
+            }
+            return Letzte.Da(out)
+        }
 
         /** A `stand` reply as the screen shows it. */
         fun standAus(code: Int, body: String?): Stand {

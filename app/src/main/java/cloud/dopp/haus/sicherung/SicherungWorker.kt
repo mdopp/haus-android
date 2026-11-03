@@ -146,10 +146,10 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
 
         private const val QUELLE = "quelle"
         private const val NAME = "name"
-        private const val GESENDET = "gesendet"
-        private const val GESAMT = "gesamt"
-        private const val NR = "nr"
+        private const val FERTIG = "fertig"
         private const val VON = "von"
+        private const val BYTES = "bytes"
+        private const val GESAMT = "gesamt"
 
         /** The daily run: unmetered network, charging, battery not low. */
         fun taeglichBedingungen(): Constraints = Constraints.Builder()
@@ -193,15 +193,15 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
         private fun daten(f: Fortschritt): Data = Data.Builder()
             .putString(QUELLE, f.quelle.wire)
             .putString(NAME, f.name)
-            .putLong(GESENDET, f.gesendet)
-            .putLong(GESAMT, f.gesamt)
-            .putInt(NR, f.nr)
+            .putInt(FERTIG, f.fertig)
             .putInt(VON, f.von)
+            .putLong(BYTES, f.bytes)
+            .putLong(GESAMT, f.gesamt)
             .build()
 
         private fun fortschritt(d: Data): Fortschritt? {
             val q = Quelle.entries.firstOrNull { it.wire == d.getString(QUELLE) } ?: return null
-            return Fortschritt(q, d.getString(NAME).orEmpty(), d.getLong(GESENDET, 0), d.getLong(GESAMT, 0), d.getInt(NR, 0), d.getInt(VON, 0))
+            return Fortschritt(q, d.getString(NAME).orEmpty(), d.getInt(FERTIG, 0), d.getInt(VON, 0), d.getLong(BYTES, 0), d.getLong(GESAMT, 0))
         }
 
         /** Follow both runs for [owner]'s lifetime: [zeige] gets the state as it changes. */

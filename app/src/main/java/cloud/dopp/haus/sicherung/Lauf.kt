@@ -40,14 +40,20 @@ data class Meldung(val zeit: Long, val art: Art, val satz: String? = null) {
     }
 }
 
-/** One file under way, for the screen: [nr] of [von] files of [quelle], [gesendet] of [gesamt] bytes. */
+/**
+ * A run under way, for the screen, as totals over the files of [quelle] it
+ * sends (owner, 2026-11-01: „3809 von 18 017 Dateien, 1,2 von 9,8 GB“, not
+ * the bytes of one file): [fertig] of [von] files are whole, [bytes] of
+ * [gesamt] bytes are on the box, the file under way counted as far as it got.
+ * [name] is that file's.
+ */
 data class Fortschritt(
     val quelle: Quelle,
     val name: String,
-    val gesendet: Long,
-    val gesamt: Long,
-    val nr: Int,
+    val fertig: Int,
     val von: Int,
+    val bytes: Long,
+    val gesamt: Long,
 )
 
 /**
@@ -143,9 +149,12 @@ class Lauf(
         val liste = listOfNotNull(datenbank) + fehlend
         var gesendet = 0
         var spaeter = wahl is Auswahl.Wahl.Wartet
+        val summe = Summe(liste.size, liste.sumOf { it.groesse })
         liste.forEachIndexed { i, d ->
             val pfad = if (d === datenbank) Auswahl.MSGSTORE_PFAD else d.pfad
-            when (sende(q, o, d, pfad, i + 1, liste.size)) {
+            val v = sende(q, o, d, pfad, summe)
+            summe.weiter(i + 1, d.groesse)
+            when (v) {
                 Versand.JA -> {
                     gesendet++
                     if (d === datenbank) gedaechtnis.merkeGesendet(q, Gesendet.von(d))
@@ -175,7 +184,7 @@ class Lauf(
             }
             Auswahl.Wahl.Schon -> schluss(q, 0, Ergebnis.FERTIG)
             is Auswahl.Wahl.Wartet -> schluss(q, 0, Ergebnis.WEITER)
-            is Auswahl.Wahl.Senden -> when (sende(q, o, wahl.datei, wahl.datei.name, 1, 1)) {
+            is Auswahl.Wahl.Senden -> when (sende(q, o, wahl.datei, wahl.datei.name, Summe(1, wahl.datei.groesse))) {
                 Versand.JA -> {
                     gedaechtnis.merkeGesendet(q, Gesendet.von(wahl.datei))
                     schluss(q, 1, Ergebnis.FERTIG)
@@ -192,8 +201,8 @@ class Lauf(
      * ends the run; a "no" for this one file (a 4xx) leaves it to a later run
      * while the others go.
      */
-    private fun sende(q: Quelle, o: Ordner, d: Datei, pfad: String, nr: Int, von: Int): Versand {
-        val a = uploader.hochladen(q, o, d, pfad, halt) { n -> melde(Fortschritt(q, d.name, n, d.groesse, nr, von)) }
+    private fun sende(q: Quelle, o: Ordner, d: Datei, pfad: String, summe: Summe): Versand {
+        val a = uploader.hochladen(q, o, d, pfad, halt) { n -> melde(summe.fortschritt(q, d.name, n)) }
         return when (a) {
             Uploader.Ausgang.Fertig -> Versand.JA
             Uploader.Ausgang.Angehalten -> Versand.ANGEHALTEN
@@ -210,6 +219,23 @@ class Lauf(
                 }
             }
         }
+    }
+
+    /** The totals of one source's files: [fertig] files and [bytes] behind, of [von] and [gesamt]. */
+    private class Summe(val von: Int, val gesamt: Long) {
+        var fertig = 0
+            private set
+        var bytes = 0L
+            private set
+
+        /** [nr] files are behind, the last one [groesse] bytes: sent, or left for a later run. */
+        fun weiter(nr: Int, groesse: Long) {
+            fertig = nr
+            bytes += groesse
+        }
+
+        /** The file under way has [n] bytes on the box. */
+        fun fortschritt(q: Quelle, name: String, n: Long) = Fortschritt(q, name, fertig, von, bytes + n, gesamt)
     }
 
     /** A call outside an upload: Haus's "no" ends the run, no answer waits for the next one. */
