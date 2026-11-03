@@ -122,22 +122,36 @@ object EnergyPicture {
      * for its line and its head. Pure.
      */
     fun lage(w: Float, h: Float): Lage {
-        val pwMax = min((w - 2 * EDGE - ACROSS) / 2f, 100f)
-        val phMax = minOf(36f, h * 0.27f, pwMax / 1.8f)
+        // all four the same width: as wide as Netz and Akku side by side allow,
+        // no wider than the second line wants at its full size
+        val widest = min((w - 2 * EDGE - ACROSS) / 2f, LINE_MAX * LONGEST_EM + 0.5f * 54f)
         val need = arrowSize(6f).first + 5f
-        // the tallest pills first (the type grows with them), then the widest
-        var ph = phMax
-        while (ph >= 20f) {
-            var pw = pwMax
-            while (pw >= ph * 1.6f) {
+        // a racetrack: at most half as high as wide; lower when a way needs the
+        // room, and only in a flat field narrower too
+        var pw = widest
+        while (pw >= 30f) {
+            var ph = minOf(pw / 2f, h * 0.3f, 54f)
+            while (ph >= 18f) {
                 val l = place(w, h, pw, ph)
                 if (WAYS.all { (a, z) -> length(a, z, l) >= need }) return l
-                pw -= 4f
+                ph -= 1f
             }
-            ph -= 1f
+            pw -= 4f
         }
-        return place(w, h, max(20f * 1.6f, min(pwMax, 32f)), 20f)
+        return place(w, h, widest, 18f)
     }
+
+    /** The second line's full size, sp (coordinator, 2026-11-03: about 13–14 bold). */
+    const val LINE_MAX = 13.5f
+
+    /** The widest second line, „Haus verbraucht“, in em at weight 800 (96 dp at 13 sp). */
+    private const val LONGEST_EM = 96f / 13f
+
+    /**
+     * The second lines' one size in [l]: the largest at which „Haus
+     * verbraucht“ fits a pill, at most [LINE_MAX] — the same in all four.
+     */
+    fun lineSize(l: Lage): Float = minOf(LINE_MAX, (l.pw - 0.5f * l.ph) / LONGEST_EM, l.ph * 0.34f)
 
     private fun place(w: Float, h: Float, pw: Float, ph: Float) = Lage(
         pw, ph,
@@ -246,10 +260,10 @@ object EnergyPicture {
             said.isEmpty() -> listOf(name to col)
             else -> listOf("$name " to col, said to SOFT)
         }
-        val inner = l.pw - ph * 0.45f
-        val zahlP = fit(zahl, text(if (known || f == null) INK else FAINT, ph * 0.42f, 800), inner)
-        val lineP = text(SOFT, ph * 0.28f, 800).apply { textAlign = Paint.Align.LEFT }
-        while (lineP.textSize > 5f && parts.sumOf { lineP.measureText(it.first).toDouble() } > inner) lineP.textSize *= 0.93f
+        val inner = l.pw - ph * 0.5f
+        // one size for every second line, set by the longest (no shrinking per pill)
+        val lineP = text(SOFT, lineSize(l), 800).apply { textAlign = Paint.Align.LEFT }
+        val zahlP = fit(zahl, text(if (known || f == null) INK else FAINT, min(ph * 0.42f, lineP.textSize * 1.8f), 800), inner)
         val total = zahlP.textSize * 0.95f + ph * 0.05f + lineP.textSize * 0.95f
         val zahlY = y - total / 2 + zahlP.textSize * 0.8f
         c.drawText(zahl, x, zahlY, zahlP)
