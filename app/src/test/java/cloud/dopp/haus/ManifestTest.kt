@@ -260,22 +260,31 @@ class ManifestTest {
     /**
      * The backup folders come through the system picker and a persisted read
      * grant (#194): no broad storage access, and nothing in the app writes,
-     * moves or deletes a document in WhatsApp's or Signal's folder.
+     * moves or deletes a document in WhatsApp's or Signal's folder — except a
+     * restore on a new phone (#197): [SafZiel] alone makes folders and files
+     * and writes them, in a folder granted for that through the same picker,
+     * and never deletes, renames, moves or copies one.
      */
     @Test
     fun theFoldersAreReadThroughThePickerOnly() {
+        val writer = "app/src/main/java/cloud/dopp/haus/sicherung/SafZiel.kt"
         val hits = noneSay(
             "MANAGE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "getExternalStorageDirectory",
-            "deleteDocument", "renameDocument", "moveDocument", "copyDocument", "createDocument", "removeDocument",
-            "openOutputStream", "FLAG_GRANT_WRITE_URI_PERMISSION",
-        )
+            "deleteDocument", "renameDocument", "moveDocument", "copyDocument", "removeDocument", "openOutputStream",
+        ) + noneSay("createDocument", "FLAG_GRANT_WRITE_URI_PERMISSION", except = setOf(writer))
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
         val saf = sources.getValue("app/src/main/java/cloud/dopp/haus/sicherung/SafOrdner.kt")
         assertTrue(saf.contains("takePersistableUriPermission(baum, Intent.FLAG_GRANT_READ_URI_PERMISSION)"))
-        val modes = Regex("""openFileDescriptor\([^)]*"(\w+)"\)""").findAll(saf).map { it.groupValues[1] }.toSet()
-        assertEquals("read only", setOf("r"), modes)
+        val modes = Regex("""openFileDescriptor\([^)]*"(\w+)"\)""")
+        assertEquals("read only", setOf("r"), modes.findAll(saf).map { it.groupValues[1] }.toSet())
+        // only the writer opens a document for writing, and never truncates it whole on open ("w", "wt")
+        val schreibt = sources.filter { (_, text) -> modes.findAll(text).any { it.groupValues[1] != "r" } }.keys
+        assertEquals(setOf(writer), schreibt)
+        assertEquals(setOf("rw"), modes.findAll(sources.getValue(writer)).map { it.groupValues[1] }.toSet())
         val screen = sources.getValue("app/src/main/java/cloud/dopp/haus/ui/SicherungActivity.kt")
         assertTrue(screen.contains("ActivityResultContracts.OpenDocumentTree()"))
+        val restore = sources.getValue("app/src/main/java/cloud/dopp/haus/ui/ZurueckholenActivity.kt")
+        assertTrue(restore.contains("ActivityResultContracts.OpenDocumentTree()"))
     }
 
     /**

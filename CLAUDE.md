@@ -38,7 +38,8 @@ These rules apply to every session, human or agent.
   `sicherung/SicherungWorker.kt`, a WorkManager worker — daily on an unmetered
   network while charging, and once on „Jetzt sichern“. It never goes
   foreground, posts nothing, reads the granted folders only (storage access
-  framework, no storage permission) and, with their switches on, the
+  framework, no storage permission; the one writer is a restore on a new
+  phone, `sicherung/SafZiel.kt`, run from its screen, not from this job) and, with their switches on, the
   contacts, SMS and call log (read permissions only), and is the one caller
   that does not pass `ScreenGate`. Without a granted folder or a switch on it
   makes no request. `ManifestTest`

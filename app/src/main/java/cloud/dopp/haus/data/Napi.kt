@@ -33,6 +33,16 @@ object Napi {
      */
     const val UPLOAD_OFFSET = "Upload-Offset"
 
+    /**
+     * A restore's download (`/napi/sicherung/letzte/{quelle}/{pfad...}`, haus#209):
+     * the request header that asks for the bytes from where the phone stopped
+     * (`bytes=<n>-`), and the reply headers that say where they start and which
+     * file they are of — a backup replaced on the box has another ETag.
+     */
+    const val RANGE = "Range"
+    const val CONTENT_RANGE = "Content-Range"
+    const val ETAG = "ETag"
+
     /** A PATCH's body: the next bytes of the file, as they stand on the phone. */
     const val OFFSET_STREAM = "application/offset+octet-stream"
 
@@ -87,23 +97,32 @@ object Napi {
             return out
         }
 
-        /** This endpoint at [concrete], one of its paths with every `{…}` filled; null when it is not one. */
+        /**
+         * This endpoint at [concrete], one of its paths with every `{…}` filled; null when it is not one.
+         * A last segment `{name...}` takes the rest of the path, one segment or more (Go's ServeMux).
+         */
         fun at(concrete: String): Endpoint? {
             val want = path.split('/')
             val have = concrete.substringBefore('?').split('/')
-            val fits = want.size == have.size && want.indices.all { i ->
+            val rest = want.last().let { it.startsWith("{") && it.endsWith("...}") }
+            val fits = (want.size == have.size || (rest && have.size > want.size)) && want.indices.all { i ->
                 want[i] == have[i] || (want[i].startsWith("{") && have[i].isNotEmpty())
-            }
+            } && (!rest || have.drop(want.size).all { it.isNotEmpty() })
             return if (fits) Endpoint(method, concrete, query, allowed, body, reply, accept, events, headers, replyHeaders) else null
         }
 
-        /** This endpoint with its `{…}` segments filled by [values], in order, each one URL-encoded. */
+        /**
+         * This endpoint with its `{…}` segments filled by [values], in order, each one URL-encoded;
+         * a `{name...}` value keeps its `/`, each segment between encoded.
+         */
         fun with(vararg values: String): Endpoint {
             val rest = values.iterator()
+            fun enc(v: String) = URLEncoder.encode(v, "UTF-8").replace("+", "%20")
             val filled = path.split('/').joinToString("/") { seg ->
                 if (seg.startsWith("{")) {
                     require(rest.hasNext()) { "$path takes more values" }
-                    URLEncoder.encode(rest.next(), "UTF-8").replace("+", "%20")
+                    val v = rest.next()
+                    if (seg.endsWith("...}")) v.split('/').joinToString("/") { enc(it) } else enc(v)
                 } else {
                     seg
                 }
@@ -313,6 +332,24 @@ object Napi {
         const val FEHLER = "fehler"
     }
 
+    /**
+     * `GET /napi/sicherung/letzte` (haus#209): what a new phone can get back,
+     * `{quellen: {signal: [{pfad, groesse, geaendert}], whatsapp: […]}}`
+     * (`geaendert` epoch ms; a WhatsApp medium as `Media/…`), or `{fehler}`.
+     */
+    object LetzteJson {
+        const val QUELLEN = "quellen"
+        const val PFAD = "pfad"
+        const val GROESSE = "groesse"
+        const val GEAENDERT = "geaendert"
+        const val FEHLER = "fehler"
+    }
+
+    /** A restore's download refused: `{fehler}`, e.g. 423 while the archive is closed (a medium). */
+    object LetzteDateiJson {
+        const val FEHLER = "fehler"
+    }
+
     /** `POST /napi/kontakte`: `{kontakte, neu, geaendert, entfernt}`, or `{fehler}` (409 for no card). */
     object KontakteJson {
         const val KONTAKTE = "kontakte"
@@ -459,6 +496,19 @@ object Napi {
      * `sms` (laib ADR 0029). 404 with Haus's sentence when there is none.
      */
     val SICHERUNG_SCHLUESSEL = Endpoint(Method.GET, "/napi/sicherung/schluessel", reply = listOf(SchluesselJson))
+
+    /** Sicherung zurückholen (haus#209): the newest backup per source the box keeps for a new phone. */
+    val SICHERUNG_LETZTE = Endpoint(Method.GET, "/napi/sicherung/letzte", reply = listOf(LetzteJson))
+
+    /**
+     * One of those files from [RANGE] on: 206 with [CONTENT_RANGE] (200 when Haus
+     * sends it whole), and its [ETAG]. A WhatsApp medium comes only while the
+     * person's archive is open (423 with Haus's sentence).
+     */
+    val SICHERUNG_LETZTE_DATEI = Endpoint(
+        Method.GET, "/napi/sicherung/letzte/{quelle}/{pfad...}",
+        reply = listOf(LetzteDateiJson), headers = listOf(RANGE), replyHeaders = listOf(CONTENT_RANGE, ETAG),
+    )
 
     /**
      * The phone's contacts into the person's own address book „Handy-Kontakte“

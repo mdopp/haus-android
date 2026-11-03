@@ -208,6 +208,16 @@ class NapiContractTest {
                 "internal/napi/kontakte.go:49-122 (text/vcard :65-69), registered napi.go:242, the reply internal/caldav/spiegel.go:277-282",
                 sends = setOf("kontakte", "neu", "geaendert", "entfernt", "fehler"),
             ),
+            // Sicherung zurückholen (mdopp/haus main at 433fb1a, the merge of haus#219 for haus#209; registered sicherung.go:131-132).
+            Route(
+                "GET", "/napi/sicherung/letzte", "internal/napi/sicherung_letzte.go:211-220, an entry :105-109",
+                sends = setOf("quellen", "signal", "whatsapp", "pfad", "groesse", "geaendert", "fehler"),
+            ),
+            Route(
+                "GET", "/napi/sicherung/letzte/{quelle}/{pfad...}",
+                "internal/napi/sicherung_letzte.go:222-256 (http.ServeContent: Range, Content-Range; ETag :254), media :258-307",
+                sends = setOf("fehler"), headers = setOf("Range", "Content-Range", "ETag"),
+            ),
             // Standortverlauf (mdopp/haus main at 145ec05, the merge of haus#212).
             Route(
                 "GET", "/napi/standort",
@@ -252,6 +262,7 @@ class NapiContractTest {
             "GET /napi/sicherung/stand", "POST /napi/sicherung/fehlend", "POST /napi/sicherung/uploads",
             "HEAD /napi/sicherung/uploads/{id}", "PATCH /napi/sicherung/uploads/{id}",
             "GET /napi/sicherung/schluessel", "POST /napi/kontakte",
+            "GET /napi/sicherung/letzte", "GET /napi/sicherung/letzte/{quelle}/{pfad...}",
             "GET /napi/standort", "POST /napi/standort",
         )
 

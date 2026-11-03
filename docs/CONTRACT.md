@@ -63,7 +63,7 @@ each row naming the Haus file and lines it came from.
 | one device (widget, restored 2026-11-03) | `GET /napi/portal/state`, `POST /napi/ha/call`; its picker `GET /napi/portal/start/addable` |
 | app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
 | energy | `GET /napi/portal/energy`: the flow now and, per total, `today` (kWh since the house's midnight; haus#213) |
-| Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
+| Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
 | Share → Haus, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Haus's refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120); the share sheet's Direct Share target carries the assistant's name (#188) |
@@ -204,6 +204,44 @@ and 401 stop the run with a German sentence on the screen. Errors are
 dateien, bytes, wartend}}, frei_bytes}` is shown per source on the screen.
 The app never asks for or stores a messenger's key: keys go into the
 person's vault on the box (laib#986).
+
+The screen's progress is the run's totals per source — files whole of all
+it sends, bytes on the box of all their bytes („3.809 von 18.017 Dateien,
+1,2 von 9,8 GB“), the file under way counted as far as it got — not one
+file's bytes (owner, 2026-11-01).
+
+### Sicherung zurückholen
+
+(haus-android#197; Haus's side is haus#209, laib ADR 0029 amendment
+2026-11-01.) On a new phone where the app is paired: `GET
+/napi/sicherung/letzte` → `{quellen: {signal|whatsapp: [{pfad, groesse,
+geaendert}]}}` (epoch ms; a WhatsApp medium as `Media/…`, its plaintext
+size) is what the box keeps. Each file comes with `GET
+/napi/sicherung/letzte/{quelle}/{pfad...}` (every segment URL-encoded, the
+`/` kept), `Range: bytes=<n>-` → 206 with `Content-Range` (200: whole) and
+an `ETag`. The person grants a folder per source with write access
+(`ACTION_OPEN_DOCUMENT_TREE`, read and write persisted): for Signal any
+folder (e.g. „Dokumente/Signal“), the `.backup` goes into it; for WhatsApp
+`Android/media/com.whatsapp/WhatsApp` (or `Android/media/com.whatsapp`, or
+`Android/media` when nothing is there yet; the rest is made), the files go
+to their `pfad` below it, the media first and the database last.
+
+- **Nothing is written over without asking.** A file already there that
+  the restore did not write itself is left alone when it has the box's size,
+  and otherwise only replaced on „Ersetzen“; the app keeps which files it
+  wrote, with the box's ETag, in its prefs.
+- **Resumable.** A file of its own goes on from its size with a Range; one
+  whose ETag changed on the box (the next night's backup) starts over.
+  „Anhalten“ stops after the piece being written. The run is a thread of the
+  app while its screen stays on (`FLAG_KEEP_SCREEN_ON`), no job.
+- **Media** come only while the person's archive is open: 423 with Haus's
+  sentence, then no further medium is asked for, the database still comes,
+  and the screen offers „Archiv öffnen“ (`archiv.<domain>` beside
+  `haus.<domain>`). 404 is a backup gone from the box: the list is loaded
+  again.
+- `sicherung/SafZiel.kt` is the one file that writes a document: it makes
+  folders and files and writes into them, never deletes, renames, moves or
+  copies one (`ManifestTest`).
 
 ### Kontakte, SMS und Anrufe
 

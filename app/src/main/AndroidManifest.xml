@@ -169,6 +169,14 @@
             android:label="@string/sicherung_title"
             android:theme="@style/Theme.Haus" />
 
+        <!-- Sicherung zurückholen (haus-android#197): the newest Signal and WhatsApp
+             backup from the box onto a new phone, into folders granted with write access. -->
+        <activity
+            android:name=".ui.ZurueckholenActivity"
+            android:exported="false"
+            android:label="@string/zurueck_title"
+            android:theme="@style/Theme.Haus" />
+
         <!-- Mehr → Standortverlauf (owner 2026-11-02): the switch, the mode, Reitti. -->
         <activity
             android:name=".ui.StandortActivity"

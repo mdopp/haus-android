@@ -189,7 +189,7 @@ class NachrichtenLauf(
     /** One encrypted file to the box; on success its marks move and it is deleted. Null: go on. */
     private fun senden(f: File): Lauf.Ergebnis? {
         val d = Datei(f.name, f.length(), f.lastModified())
-        val a = uploader.hochladen(q, Eigener(ordner), d, d.pfad, halt) { n -> melde(Fortschritt(q, d.name, n, d.groesse, 1, 1)) }
+        val a = uploader.hochladen(q, Eigener(ordner), d, d.pfad, halt) { n -> melde(Fortschritt(q, d.name, 0, 1, n, d.groesse)) }
         return when (a) {
             Uploader.Ausgang.Fertig -> {
                 marken.ausstehend(f.name)?.let { m -> m.forEach { (art, wert) -> setze(art, wert) } }

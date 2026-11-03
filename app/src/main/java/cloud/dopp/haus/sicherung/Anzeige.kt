@@ -67,6 +67,26 @@ object Anzeige {
         }
     }
 
+    /**
+     * `1,2 von 9,8 GB`: [bytes] of [gesamt] in [gesamt]'s unit, so the two
+     * read side by side; `0 von 120 MB` before the first byte.
+     */
+    fun anteil(bytes: Long, gesamt: Long): String {
+        val einheiten = listOf("B", "KB", "MB", "GB", "TB")
+        var teiler = 1.0
+        var i = 0
+        while (gesamt / teiler >= 1000 && i < einheiten.lastIndex) {
+            teiler *= 1000
+            i++
+        }
+        fun zahl(v: Double) = if (i == 0 || gesamt / teiler >= 100 || v == 0.0) {
+            String.format(Locale.GERMANY, "%.0f", v)
+        } else {
+            String.format(Locale.GERMANY, "%.1f", v)
+        }
+        return "${zahl(bytes.coerceIn(0, gesamt) / teiler)} von ${zahl(gesamt / teiler)} ${einheiten[i]}"
+    }
+
     /** `1.234`: a count as a person reads it in German. */
     fun zahl(n: Int): String = java.text.NumberFormat.getIntegerInstance(Locale.GERMANY).format(n)
 

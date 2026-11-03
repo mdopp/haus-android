@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sicherung zurückholen (haus-android#197): German, short, for a person on a new phone. -->
+<resources>
+    <string name="zurueck_title">Sicherung zurückholen</string>
+    <string name="zurueck_intro">Für ein neues Handy: Die App holt deine letzte Signal- und WhatsApp-Sicherung von der Box zurück. Bleib dabei im WLAN und lass die App offen.</string>
+    <string name="zurueck_oeffnen">Sicherung zurückholen</string>
+
+    <string name="zurueck_laedt">Frage die Box, was bereitliegt …</string>
+    <string name="zurueck_signal_bereit">Auf der Box: Sicherung vom %1$s, %2$s.</string>
+    <string name="zurueck_signal_keine">Auf der Box liegt noch keine Signal-Sicherung.</string>
+    <string name="zurueck_whatsapp_bereit">Auf der Box: Chats vom %1$s, %2$s.</string>
+    <string name="zurueck_whatsapp_keine">Auf der Box liegen noch keine WhatsApp-Chats.</string>
+    <plurals name="zurueck_whatsapp_medien">
+        <item quantity="one">Dazu %1$s Foto oder Sprachnachricht, %2$s.</item>
+        <item quantity="other">Dazu %1$s Fotos und Sprachnachrichten, %2$s.</item>
+    </plurals>
+
+    <string name="zurueck_signal_schritt1">1. Wähle einen Ordner, in den die Sicherung soll, etwa „Dokumente/Signal“.</string>
+    <string name="zurueck_signal_schritt2">2. Danach: Signal neu installieren, bei der Einrichtung „Aus Sicherung wiederherstellen“ wählen, diese Datei auswählen und die 30-stellige Passphrase aus Vaultwarden eingeben.</string>
+    <string name="zurueck_whatsapp_schritt1">1. WhatsApp installieren, aber noch nicht öffnen.</string>
+    <string name="zurueck_whatsapp_schritt2">2. Gib den Ordner „Android/media/com.whatsapp/WhatsApp“ frei. Gibt es ihn noch nicht, wähle „Android/media“; den Rest legt die App an.</string>
+    <string name="zurueck_whatsapp_schritt3">3. Die App legt die Chats und die Fotos dorthin.</string>
+    <string name="zurueck_whatsapp_schritt4">4. Jetzt WhatsApp öffnen, mit derselben Nummer anmelden und „Wiederherstellen“ wählen.</string>
+
+    <string name="zurueck_ordner_waehlen">Ordner wählen</string>
+    <string name="zurueck_ordner_freigeben">Ordner freigeben</string>
+    <string name="zurueck_ordner_neu">Anderen Ordner wählen</string>
+    <string name="zurueck_ordner_nein">Noch kein Ordner gewählt.</string>
+    <string name="zurueck_ordner_ja">Ordner: %1$s</string>
+    <string name="zurueck_ordner_weg">Der Ordner %1$s ist nicht mehr freigegeben: wähle ihn neu.</string>
+    <string name="zurueck_ordner_verweigert">Android hat die Freigabe nicht behalten. Wähle den Ordner noch einmal.</string>
+    <string name="zurueck_ordner_falsch">Das ist nicht der WhatsApp-Ordner. Wähle „Android/media/com.whatsapp/WhatsApp“ oder „Android/media“.</string>
+    <string name="zurueck_kein_picker">Auf diesem Handy gibt es keine Ordnerauswahl.</string>
+    <string name="zurueck_erst_ordner">Wähle zuerst den Ordner.</string>
+
+    <string name="zurueck_holen">Zurückholen</string>
+    <string name="zurueck_weiter">Weiter</string>
+    <string name="zurueck_anhalten">Anhalten</string>
+    <string name="zurueck_prueft">Schaut nach, was im Ordner schon liegt …</string>
+    <string name="zurueck_laeuft">Holt die Sicherung …</string>
+    <plurals name="zurueck_laeuft_gesamt">
+        <item quantity="one">%1$s: %2$s von %3$s Datei, %4$s</item>
+        <item quantity="other">%1$s: %2$s von %3$s Dateien, %4$s</item>
+    </plurals>
+    <string name="zurueck_angehalten">Angehalten. „Weiter“ macht dort weiter, wo es aufgehört hat.</string>
+    <string name="zurueck_signal_fertig">Fertig: Die Signal-Sicherung liegt im gewählten Ordner. Jetzt Schritt 2.</string>
+    <string name="zurueck_whatsapp_fertig">Fertig: Die Chats und Fotos liegen in WhatsApps Ordner. Jetzt Schritt 4.</string>
+    <string name="zurueck_whatsapp_fertig_ohne_medien">Die Chats liegen in WhatsApps Ordner, die Fotos und Sprachnachrichten noch nicht.</string>
+    <string name="zurueck_nichts">Auf der Box liegt nichts zum Zurückholen.</string>
+    <string name="zurueck_laeuft_schon">Es wird gerade schon etwas zurückgeholt.</string>
+
+    <string name="zurueck_schon_da_titel">Schon da</string>
+    <plurals name="zurueck_schon_da">
+        <item quantity="one">Im Ordner liegt schon „%2$s“, aber anders als auf der Box. Ersetzen oder behalten?</item>
+        <item quantity="other">Im Ordner liegen schon %1$d Dateien, aber anders als auf der Box, etwa „%2$s“. Ersetzen oder behalten?</item>
+    </plurals>
+    <string name="zurueck_ersetzen">Ersetzen</string>
+    <string name="zurueck_behalten">Behalten, den Rest holen</string>
+    <string name="zurueck_archiv_oeffnen">Archiv öffnen</string>
+</resources>

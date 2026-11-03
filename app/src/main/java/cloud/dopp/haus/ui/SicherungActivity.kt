@@ -111,6 +111,9 @@ class SicherungActivity : AppCompatActivity() {
             meldungView(art).setOnClickListener { tippeMeldung(art) }
         }
         findViewById<Button>(R.id.sicherung_jetzt).setOnClickListener { jetzt() }
+        findViewById<Button>(R.id.sicherung_zurueck).setOnClickListener {
+            startActivity(Intent(this, ZurueckholenActivity::class.java))
+        }
         SicherungWorker.beobachten(this, this, ::zeige)
     }
 
@@ -315,7 +318,7 @@ class SicherungActivity : AppCompatActivity() {
                     zustand(getString(R.string.sicherung_laeuft))
                 } else {
                     balken.isIndeterminate = false
-                    balken.progress = (f.gesendet * 1000 / f.gesamt).toInt()
+                    balken.progress = (f.bytes.coerceIn(0, f.gesamt) * 1000 / f.gesamt).toInt()
                     val quelle = getString(
                         when (f.quelle) {
                             Quelle.SIGNAL -> R.string.sicherung_signal
@@ -324,9 +327,9 @@ class SicherungActivity : AppCompatActivity() {
                         },
                     )
                     zustand(
-                        getString(
-                            R.string.sicherung_laeuft_datei, quelle, f.name, f.nr, f.von,
-                            Anzeige.groesse(f.gesendet), Anzeige.groesse(f.gesamt),
+                        resources.getQuantityString(
+                            R.plurals.sicherung_laeuft_gesamt, f.von, quelle,
+                            Anzeige.zahl(f.fertig), Anzeige.zahl(f.von), Anzeige.anteil(f.bytes, f.gesamt),
                         ),
                     )
                 }

@@ -186,6 +186,15 @@
             android:layout_marginTop="@dimen/space_xs"
             android:text="@string/sicherung_ruht" />
 
+        <!-- a new phone: the newest backup back from the box (haus-android#197) -->
+        <Button
+            android:id="@+id/sicherung_zurueck"
+            style="@style/Widget.Haus.Button.Ghost"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:text="@string/zurueck_oeffnen" />
+
         <TextView
             style="@style/Text.Haus.Title"
             android:layout_width="match_parent"
