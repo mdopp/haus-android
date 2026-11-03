@@ -152,6 +152,17 @@ object Napi {
         const val NAME = "name"
     }
 
+    /**
+     * `GET /napi/app` (laib#1021): which app this server speaks to, `{name,
+     * paket, quelle}` — the app's name, its package, where phones get it.
+     * A server from before answers 404.
+     */
+    object AppJson {
+        const val NAME = "name"
+        const val PAKET = "paket"
+        const val QUELLE = "quelle"
+    }
+
     /** `GET /napi/whoami`: who owns the device token. */
     object WhoamiJson {
         const val UID = "uid"
@@ -450,6 +461,9 @@ object Napi {
 
     /** The household assistant's name („Homes“ when the box sets none). */
     val ASSISTENT = Endpoint(Method.GET, "/napi/assistent", reply = listOf(AssistentJson))
+
+    /** Which app the server speaks to: Haus is renamed Homes, a new app (laib#1021). */
+    val APP = Endpoint(Method.GET, "/napi/app", reply = listOf(AppJson))
 
     /** Who owns a device token: the pairing checks a new token here before storing it. */
     val WHOAMI = Endpoint(Method.GET, "/napi/whoami", reply = listOf(WhoamiJson))

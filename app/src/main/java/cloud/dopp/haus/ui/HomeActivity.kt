@@ -50,6 +50,8 @@ import cloud.dopp.haus.widget.WidgetActionReceiver
 import cloud.dopp.haus.widget.WidgetPin
 import cloud.dopp.haus.widget.WidgetStore
 import cloud.dopp.haus.widget.WidgetTypes
+import cloud.dopp.haus.wechsel.Wechsel
+import cloud.dopp.haus.wechsel.WechselNachricht
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlin.concurrent.thread
@@ -77,6 +79,10 @@ import kotlin.concurrent.thread
  * (owner, 2026-11-03: no groups) — one device, the energy, the tools from
  * Haus's catalog —, each one tap from the home screen; under Mehr, Daten
  * sichern (#194); and the way to unpair.
+ *
+ * **Haus heißt jetzt Homes** (laib#1021): while the server names another
+ * app (`/napi/app`, [Wechsel]), a card on top says to install it, and once it
+ * is installed, offers to remove this one.
  */
 class HomeActivity : AppCompatActivity() {
 
@@ -134,6 +140,7 @@ class HomeActivity : AppCompatActivity() {
         ContextCompat.registerReceiver(this, tapDone, IntentFilter(DeviceTaps.ACTION_DONE), ContextCompat.RECEIVER_NOT_EXPORTED)
         render()
         if (paired()) refreshDevices()
+        if (paired()) refreshWechsel()
         // The app-icon long-press menu (#97): picks up a widget removed while away.
         if (paired()) AppShortcuts.refreshAsync(applicationContext)
         // The app's screen may start the live service (Android 12+): placed widgets, the switch, the pairing.
@@ -178,6 +185,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.live_battery).setText(
             if (Live.exempt(this)) R.string.live_battery_on else R.string.live_battery_off,
         )
+        renderWechsel()
         renderDevices()
         renderWidgetTypes()
         renderTools()
@@ -199,6 +207,45 @@ class HomeActivity : AppCompatActivity() {
             runCatching { AppShortcuts.refresh(applicationContext) }
             runOnUiThread { if (!isFinishing) renderAssistent() }
         }
+    }
+
+    // --- Haus heißt jetzt Homes (laib#1021) -------------------------------------
+
+    /** The card: install the new app, or remove this one once it is there; nothing while the server names none. */
+    private fun renderWechsel() {
+        val card = findViewById<View>(R.id.wechsel_card)
+        val (hinweis, ziel) = Wechsel.jetzt(this)
+        if (hinweis == Wechsel.Hinweis.KEINER || ziel == null) {
+            card.visibility = View.GONE
+            return
+        }
+        card.visibility = View.VISIBLE
+        val text = findViewById<TextView>(R.id.wechsel_text)
+        val btn = findViewById<Button>(R.id.wechsel_btn)
+        if (hinweis == Wechsel.Hinweis.LOESCHEN) {
+            text.text = getString(R.string.wechsel_loeschen, ziel.name)
+            btn.text = getString(R.string.wechsel_loeschen_knopf)
+            btn.setOnClickListener { uninstall() }
+        } else {
+            text.text = getString(R.string.wechsel_installieren, ziel.name, ziel.adresse)
+            btn.text = getString(R.string.wechsel_installieren_knopf, ziel.name)
+            btn.setOnClickListener { open(Uri.parse(ziel.quelle)) }
+        }
+    }
+
+    /** Ask the server which app it speaks to; a failed check changes nothing and says nothing. */
+    private fun refreshWechsel() {
+        val app = applicationContext
+        thread {
+            if (!Wechsel.pruefen(app)) return@thread
+            if (Wechsel.jetzt(app).first == Wechsel.Hinweis.KEINER) WechselNachricht.weg(app)
+            runOnUiThread { if (!isFinishing && !isDestroyed && paired()) renderWechsel() }
+        }
+    }
+
+    /** Android's own dialog to remove this app. */
+    private fun uninstall() {
+        runCatching { startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))) }
     }
 
     // --- the devices (owner, 2026-11-02) --------------------------------------
@@ -555,6 +602,8 @@ class HomeActivity : AppCompatActivity() {
         TokenStore.clear(this)
         ServerStore.clear(this)
         Assistent.clear(this)
+        Wechsel.vergiss(this)
+        WechselNachricht.weg(this)
         Pairing.cancel(this)
         HausKonto.entfernen(applicationContext) // the household's contacts and calendars leave with the pairing (#206)
         AppShortcuts.refreshAsync(applicationContext) // takes the share target away (#188)

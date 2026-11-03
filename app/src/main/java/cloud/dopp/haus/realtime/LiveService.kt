@@ -33,6 +33,7 @@ import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.request
 import cloud.dopp.haus.ui.HomeActivity
+import cloud.dopp.haus.wechsel.Wechsel
 import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
@@ -297,6 +298,8 @@ class LiveService : Service() {
                 connectedAtMs = SystemClock.elapsedRealtime()
                 show(R.string.live_on)
                 resync()
+                // Haus heißt jetzt Homes (laib#1021): asked at most once a day, for the widget-only people
+                Wechsel.taeglich(applicationContext)
             }
         }
 

@@ -65,6 +65,11 @@ class NapiContractTest {
         val HAUS = listOf(
             Route("GET", "/napi/assistent", "internal/napi/napi.go:104-106", sends = setOf("name")),
             Route("GET", "/napi/whoami", "internal/napi/napi.go:181-190", sends = setOf("uid", "via")),
+            // Haus heißt jetzt Homes (laib#1021): from the rename of mdopp/haus, not merged yet.
+            Route(
+                "GET", "/napi/app", "internal/napi/napi.go:111-117 (the rename for laib#1021)",
+                sends = setOf("name", "paket", "quelle"),
+            ),
             Route(
                 "GET", "/napi/box/home",
                 "internal/napi/napi.go:85-108 (prefix: internal/app/app.go:17; updates apart: napi.go:105, 224-235)",
@@ -265,7 +270,7 @@ class NapiContractTest {
 
         /** What the widgets and the pairing need: each must be declared. */
         val NEEDED = setOf(
-            "GET /napi/assistent", "GET /napi/whoami",
+            "GET /napi/assistent", "GET /napi/whoami", "GET /napi/app",
             "POST /napi/ha/call", "GET /napi/portal/state", "GET /napi/portal/energy",
             "GET /napi/portal/favorites", "GET /napi/portal/start/addable",
             "POST /napi/portal/watch", "GET /napi/portal/events",
@@ -295,6 +300,7 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/haus/data/SicherungClient.kt",
             "app/src/main/java/cloud/dopp/haus/data/StandortClient.kt",
             "app/src/main/java/cloud/dopp/haus/data/GemeinsamClient.kt",
+            "app/src/main/java/cloud/dopp/haus/wechsel/Wechsel.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")
