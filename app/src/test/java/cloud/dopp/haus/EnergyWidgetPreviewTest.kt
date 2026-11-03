@@ -154,23 +154,18 @@ class EnergyWidgetPreviewTest {
 
     /**
      * Every way of the six, at 4×2, 2×2, a wide and a flat field (coordinator,
-     * 2026-11-03): it runs from the source oval's border to the destination's
-     * and never over an oval or Akku's ring; its head sits at the destination
+     * 2026-11-03): it runs from the source pill's border to the destination's
+     * and never over a pill, Akku's ring or its „%“ label; its head sits at the destination
      * end — nearer the destination than the source — and points into it.
      */
     @Test
     fun everyHeadIsAtItsDestination() {
-        val ways = listOf("solar" to "haus", "solar" to "akku", "solar" to "netz", "netz" to "haus", "akku" to "haus", "netz" to "akku")
+        val ways = EnergyPicture.WAYS
         for ((w, h) in listOf(187f to 147f, 136f to 147f, 323f to 147f, 187f to 120f, 187f to 94f)) {
             val l = EnergyPicture.lage(w, h)
-            // inside an oval (Akku with its ring), by the ellipse's own equation
-            fun on(k: String, x: Float, y: Float): Boolean {
-                val (cx, cy) = l.at.getValue(k)
-                val m = if (k == "akku") 6.5f else 0.5f
-                val a = l.pw / 2 + m
-                val b = l.ph / 2 + m
-                return ((x - cx) / a).let { it * it } + ((y - cy) / b).let { it * it } <= 1f
-            }
+            // on a pill (Akku with its ring), by the stadium's own shape
+            fun on(k: String, x: Float, y: Float) = l.on(k, x, y, if (k == "akku") 6.5f else 0.5f)
+            val chip = l.chip(EnergyPicture.chipWidth("100\u00a0%", l.ph))
             fun border(k: String, x: Float, y: Float): Float {
                 val (cx, cy) = l.at.getValue(k)
                 val d = kotlin.math.hypot(x - cx, y - cy)
@@ -189,6 +184,7 @@ class EnergyWidgetPreviewTest {
                     for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach at $i/20 on $k", !on(k, x, y))
                 }
                 for ((x, y) in head) for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach: head on $k", !on(k, x, y))
+                for ((x, y) in head + listOf(p, q)) assertTrue("${w}x$h $von→$nach: on the „%“ label", !chip.contains(x, y))
                 val tip = head[0]
                 assertTrue("${w}x$h $von→$nach: the head by the destination", border(nach, tip.first, tip.second) < border(von, tip.first, tip.second))
                 // and it points into the destination: on, the tip would reach it

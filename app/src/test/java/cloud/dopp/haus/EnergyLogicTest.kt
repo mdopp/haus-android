@@ -150,19 +150,20 @@ class EnergyLogicTest {
     }
 
     /**
-     * The ovals keep apart and inside the field, spread over its width (owner,
-     * 2026-11-03), the columns apart so a way runs between them.
+     * Wide, low pills with round ends (owner, 2026-11-03), apart and inside
+     * the field, spread over its width, Netz and Akku apart for a way across.
      */
-    @Test fun theOvalsDoNotTouchAndFillTheWidth() {
+    @Test fun thePillsDoNotTouchAndFillTheWidth() {
         for ((w, h) in listOf(187f to 147f, 323f to 147f, 136f to 147f)) {
             val l = cloud.dopp.haus.widget.EnergyPicture.lage(w, h)
-            val boxes = cloud.dopp.haus.widget.EnergyFluss.KEYS.associateWith { l.box(it) }
-            assertTrue("${w}x$h: Netz clear of the column", boxes.getValue("solar").left - boxes.getValue("netz").right >= 6f)
-            assertTrue("${w}x$h: Akku clear of the column", boxes.getValue("akku").left - boxes.getValue("solar").right >= 6f)
-            boxes.values.forEach { assertTrue("${w}x$h: inside", it.left >= 0 && it.right <= w && it.top >= 0 && it.bottom <= h) }
-            assertTrue("${w}x$h: Netz at the left edge", boxes.getValue("netz").left <= 8.5f)
-            assertTrue("${w}x$h: Akku at the right edge", boxes.getValue("akku").right >= w - 8.5f)
-            assertTrue("${w}x$h: ovals, not circles", l.pw >= l.ph * 1.15f)
+            val boxes = cloud.dopp.haus.widget.EnergyFluss.KEYS.map { l.box(it) }
+            for (i in boxes.indices) for (j in i + 1 until boxes.size) {
+                assertTrue("${w}x$h: pills $i and $j overlap", !android.graphics.RectF.intersects(boxes[i], boxes[j]))
+            }
+            boxes.forEach { assertTrue("${w}x$h: inside", it.left >= 0 && it.right <= w && it.top >= 0 && it.bottom <= h) }
+            assertTrue("${w}x$h: Netz at the left edge", l.box("netz").left <= 8.5f)
+            assertTrue("${w}x$h: Akku at the right edge", l.box("akku").right >= w - 8.5f)
+            assertTrue("${w}x$h: wide and low", l.pw >= l.ph * 1.6f)
         }
     }
 }

@@ -5,21 +5,24 @@ import android.graphics.Canvas
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PathMeasure
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Build
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * The energy widget's picture (owner, 2026-11-03: „Grafiken könnten helfen es
  * besser zu verstehen. Und ein aktueller Akkustand. Vielleicht ähnlich dem
  * zweiten Bild“ — the Energie page's flow; second round the same evening:
- * heavier type, ovals instead of small circles, spread across the width).
+ * heavier type, wide low pills with round ends instead of small circles, spread across the width).
  * Solar on top, Netz at the left edge, Akku at the right edge with how full
- * it is as a ring around its oval, Haus below; each oval says its name in its
+ * it is as a ring around its pill, Haus below; each pill says its name in its
  * colour, its number and what it does now. Only the ways the power takes
  * now are drawn, thick in their colour with an arrow. Haus's colours and words (internal/pages/energie_fluss.go,
  * energie_verlauf.go), no animation.
@@ -58,60 +61,103 @@ object EnergyPicture {
         else -> AKKU
     }
 
-    /** Where the ovals sit, in dp: their size and each centre. */
+    /** Where the pills sit, in dp: their size and each centre. */
     data class Lage(val pw: Float, val ph: Float, val at: Map<String, Pair<Float, Float>>) {
-        /** An oval's bounds. */
+        /** A pill's bounds. */
         fun box(key: String): RectF = at.getValue(key).let { (x, y) -> RectF(x - pw / 2, y - ph / 2, x + pw / 2, y + ph / 2) }
 
-        /** From an oval's centre to its border in the direction ([ux], [uy]), a unit vector. */
-        fun reach(ux: Float, uy: Float): Float {
-            val a = pw / 2
-            val b = ph / 2
-            return 1f / kotlin.math.sqrt((ux / a) * (ux / a) + (uy / b) * (uy / b))
+        /**
+         * From a pill's centre to its border in the direction ([ux], [uy]), a
+         * unit vector: a stadium, the flat sides and the half-circle ends.
+         */
+        fun reach(ux: Float, uy: Float, m: Float = 0f): Float {
+            val r = ph / 2 + m
+            val flat = pw / 2 - ph / 2
+            val ax = abs(ux)
+            val ay = abs(uy)
+            if (ay > 1e-4f && ax * (r / ay) <= flat) return r / ay
+            // through the round end: |t·u − (flat, 0)| = r
+            return flat * ax + sqrt(max(0f, flat * flat * ax * ax - flat * flat + r * r))
+        }
+
+        /** Is ([x], [y]) on the pill of [key], grown by [m]? */
+        fun on(key: String, x: Float, y: Float, m: Float = 0f): Boolean {
+            val (cx, cy) = at.getValue(key)
+            val r = ph / 2 + m
+            val dx = max(abs(x - cx) - (pw / 2 - ph / 2), 0f)
+            return hypot(dx, y - cy) <= r
+        }
+
+        /** Where the battery's „83 %“ sits: on the ring's top, right of the middle, clear of the ways. */
+        fun chip(label: Float): RectF {
+            val b = box("akku")
+            val cx = b.centerX() + pw * 0.2f
+            val h = ph * 0.26f * 1.35f
+            val y = b.top - RING
+            return RectF(cx - label / 2, y - h / 2, cx + label / 2, y + h / 2)
         }
     }
 
-    /** The ring's room around Akku's oval, and its stroke. */
+    /** The ring's room around Akku's pill, and its stroke. */
     private const val RING = 5f
     private const val RING_W = 3f
 
-    /** The side ovals keep the ring and its stroke inside the field. */
+    /** The side pills keep the ring and its stroke inside the field. */
     private const val EDGE = RING + RING_W
 
-    /** The air between an oval and the column beside it, so a way runs between. */
-    private const val CLEAR = 8f
+    /** Between Netz and Akku, room for a way across. */
+    private const val ACROSS = 27f
 
-    /** A way's air off an oval's border. */
+    /** A way's air off a pill's border. */
     private const val GAP = 3f
 
+    /** The six ways the power can take. */
+    val WAYS = listOf("solar" to "haus", "solar" to "akku", "solar" to "netz", "netz" to "haus", "akku" to "haus", "netz" to "akku")
+
     /**
-     * The diamond over a [w]×[h] dp field (owner, 2026-11-03: ovals, spread
-     * over the width): Solar on top and Haus below in the middle column, Netz
-     * at the left edge and Akku at the right edge between them, the three
-     * columns [CLEAR] apart so every way is a straight line between two ovals'
-     * nearest borders. Pure.
+     * The diamond over a [w]×[h] dp field (owner, 2026-11-03: wide, low pills
+     * with round ends, spread over the width): Solar on top and Haus below in
+     * the middle, Netz at the left edge and Akku at the right edge between
+     * them. As high as the field lets every way between two pills keep room
+     * for its line and its head. Pure.
      */
     fun lage(w: Float, h: Float): Lage {
-        val pw = (w - 2 * EDGE - 2 * CLEAR) / 3f
-        val ph = minOf(h * 0.27f, 46f, pw / 1.2f)
-        return Lage(
-            pw, ph,
-            mapOf(
-                "solar" to (w / 2 to 3f + ph / 2),
-                "haus" to (w / 2 to h - 3f - ph / 2),
-                "netz" to (EDGE + pw / 2 to h / 2),
-                "akku" to (w - EDGE - pw / 2 to h / 2),
-            ),
-        )
+        val pwMax = min((w - 2 * EDGE - ACROSS) / 2f, 100f)
+        val phMax = minOf(36f, h * 0.27f, pwMax / 1.8f)
+        val need = arrowSize(6f).first + 5f
+        // the tallest pills first (the type grows with them), then the widest
+        var ph = phMax
+        while (ph >= 20f) {
+            var pw = pwMax
+            while (pw >= ph * 1.6f) {
+                val l = place(w, h, pw, ph)
+                if (WAYS.all { (a, z) -> length(a, z, l) >= need }) return l
+                pw -= 4f
+            }
+            ph -= 1f
+        }
+        return place(w, h, max(20f * 1.6f, min(pwMax, 32f)), 20f)
     }
 
-    /** A way's air off [key]'s oval: Akku's ring takes its own room. */
+    private fun place(w: Float, h: Float, pw: Float, ph: Float) = Lage(
+        pw, ph,
+        mapOf(
+            "solar" to (w / 2 to 3f + ph / 2),
+            "haus" to (w / 2 to h - 3f - ph / 2),
+            "netz" to (EDGE + pw / 2 to h / 2),
+            "akku" to (w - EDGE - pw / 2 to h / 2),
+        ),
+    )
+
+    private fun length(a: String, z: String, l: Lage): Float = way(a, z, l).let { (p, q) -> hypot(q.first - p.first, q.second - p.second) }
+
+    /** A way's air off [key]'s pill: Akku's ring takes its own room. */
     private fun off(key: String) = if (key == "akku") RING + RING_W / 2 + GAP else GAP
 
     /**
-     * The way from [von] to [nach]: a straight line from the source oval's
-     * border to the destination oval's, along the line between their centres;
-     * it never enters an oval. Pure geometry.
+     * The way from [von] to [nach]: a straight line from the source pill's
+     * border to the destination pill's, along the line between their centres;
+     * it never enters a pill. Pure geometry.
      */
     fun way(von: String, nach: String, l: Lage): Pair<Pair<Float, Float>, Pair<Float, Float>> {
         val (ax, ay) = l.at.getValue(von)
@@ -119,8 +165,9 @@ object EnergyPicture {
         val d = hypot(zx - ax, zy - ay)
         val ux = (zx - ax) / d
         val uy = (zy - ay) / d
-        val s = l.reach(ux, uy) + off(von)
-        val e = l.reach(ux, uy) + off(nach)
+        // the pill grown by the air (and Akku's ring): a shallow way keeps it too
+        val s = l.reach(ux, uy, off(von))
+        val e = l.reach(ux, uy, off(nach))
         return (ax + ux * s to ay + uy * s) to (zx - ux * e to zy - uy * e)
     }
 
@@ -143,7 +190,7 @@ object EnergyPicture {
 
     /**
      * The flow picture at [wDp]×[hDp] dp and [density] px per dp. [f] null is
-     * nothing read yet: the ovals dashed, „…“ in them. Only the ways the power
+     * nothing read yet: the pills dashed, „…“ in them. Only the ways the power
      * takes now are drawn, each with its head at the destination.
      */
     fun flow(f: EnergyFluss?, wDp: Int, hDp: Int, density: Float): Bitmap {
@@ -171,47 +218,82 @@ object EnergyPicture {
                 close()
             }, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = col })
         }
-        for (key in EnergyFluss.KEYS) if (key in da) oval(c, f, key, lage)
+        for (key in EnergyFluss.KEYS) if (key in da) pill(c, f, key, lage)
         return shared(bmp)
     }
 
-    private fun oval(c: Canvas, f: EnergyFluss?, key: String, l: Lage) {
+    private fun pill(c: Canvas, f: EnergyFluss?, key: String, l: Lage) {
         val box = l.box(key)
         val (x, y) = l.at.getValue(key)
+        val ph = l.ph
+        val rad = ph / 2
         val known = f != null && key in f.known
         val col = color(key)
         if (known) {
-            c.drawOval(box, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = col; alpha = 46 })
-            c.drawOval(box, stroke(col, 2.6f))
+            c.drawRoundRect(box, rad, rad, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = col; alpha = 46 })
+            c.drawRoundRect(box, rad, rad, stroke(col, 2.6f))
         } else {
-            c.drawOval(box, stroke(FAINT, 2f).apply { pathEffect = DashPathEffect(floatArrayOf(5f, 4f), 0f) })
+            c.drawRoundRect(box, rad, rad, stroke(FAINT, 2f).apply { pathEffect = DashPathEffect(floatArrayOf(5f, 4f), 0f) })
         }
         val charge = f?.charge.takeIf { key == "akku" }
-        if (charge != null) {
-            // how full: a ring around the oval from the top, clockwise, centred on it
-            val ring = RectF(box.left - RING, box.top - RING, box.right + RING, box.bottom + RING)
-            c.drawOval(ring, stroke(col, RING_W).apply { alpha = 60 })
-            c.drawArc(ring, -90f, (360f * charge / 100f).toFloat(), false, stroke(col, RING_W).apply { strokeCap = Paint.Cap.ROUND })
-        }
-        // three lines: the name (Akku with how full), the number, what it does now
+        if (charge != null) ring(c, RectF(box.left - RING, box.top - RING, box.right + RING, box.bottom + RING), charge, col)
+        // two lines: the number, then the name in its colour and what it does now
+        // („Akku entlädt“); the grid says where the power goes („ins Netz“)
         val (zahl, said) = if (f == null) "…" to "" else f.text(key)
-        // the grid says where the power goes in its own words, „ins Netz“ / „aus dem Netz“, in its colour
-        val phrase = key == "netz" && said.endsWith("Netz")
-        val name = when {
-            phrase -> said
-            charge != null -> "Akku " + EnergyFluss.percent(charge)
-            else -> NAMES.getValue(key)
+        val name = NAMES.getValue(key)
+        val parts: List<Pair<String, Int>> = when {
+            key == "netz" && said.endsWith("Netz") -> listOf(said.removeSuffix("Netz") to SOFT, "Netz" to col)
+            said.isEmpty() -> listOf(name to col)
+            else -> listOf("$name " to col, said to SOFT)
         }
-        val wort = if (phrase) "" else said
-        val ph = l.ph
-        fun widthAt(dy: Float) = l.pw * kotlin.math.sqrt((1f - (dy / (ph / 2)) * (dy / (ph / 2))).coerceAtLeast(0.05f)) - 6f
-        val zahlP = fit(zahl, text(if (known || f == null) INK else FAINT, ph * 0.32f, 800), widthAt(ph * 0.12f))
-        val nameP = fit(name, text(col, ph * 0.2f, 800), widthAt(ph * 0.27f))
-        val wortP = fit(wort, text(SOFT, ph * 0.2f, 700), widthAt(ph * 0.3f))
-        val zahlY = y + zahlP.textSize * 0.36f
-        c.drawText(name, x, zahlY - zahlP.textSize * 0.95f, nameP)
+        val inner = l.pw - ph * 0.45f
+        val zahlP = fit(zahl, text(if (known || f == null) INK else FAINT, ph * 0.42f, 800), inner)
+        val lineP = text(SOFT, ph * 0.28f, 800).apply { textAlign = Paint.Align.LEFT }
+        while (lineP.textSize > 5f && parts.sumOf { lineP.measureText(it.first).toDouble() } > inner) lineP.textSize *= 0.93f
+        val total = zahlP.textSize * 0.95f + ph * 0.05f + lineP.textSize * 0.95f
+        val zahlY = y - total / 2 + zahlP.textSize * 0.8f
         c.drawText(zahl, x, zahlY, zahlP)
-        if (wort.isNotEmpty()) c.drawText(wort, x, zahlY + wortP.textSize * 1.2f, wortP)
+        val lineY = zahlY + ph * 0.05f + lineP.textSize * 0.98f
+        var lx = x - parts.sumOf { lineP.measureText(it.first).toDouble() }.toFloat() / 2
+        for ((t, cl) in parts) {
+            lineP.color = cl
+            c.drawText(t, lx, lineY, lineP)
+            lx += lineP.measureText(t)
+        }
+        if (charge != null) chip(c, l, EnergyFluss.percent(charge), col)
+    }
+
+    /** The chip's text size and its width for [s]. */
+    private fun chipPaint(ph: Float) = text(0xFF000000.toInt(), ph * 0.26f, 800)
+
+    /** The width of the „83 %“ label, for [Lage.chip]. */
+    fun chipWidth(s: String, ph: Float): Float = chipPaint(ph).measureText(s) + ph * 0.3f
+
+    /** How full, in words, on the ring: a small filled label. */
+    private fun chip(c: Canvas, l: Lage, s: String, col: Int) {
+        val p = chipPaint(l.ph)
+        val r = l.chip(chipWidth(s, l.ph))
+        c.drawRoundRect(r, r.height() / 2, r.height() / 2, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = col })
+        c.drawText(s, r.centerX(), r.centerY() + p.textSize * 0.36f, p)
+    }
+
+    /** How full, as a ring around [box] (a stadium) from the top middle, clockwise. */
+    private fun ring(c: Canvas, box: RectF, pct: Double, col: Int) {
+        val r = box.height() / 2
+        val cx = box.centerX()
+        val path = Path().apply {
+            moveTo(cx, box.top)
+            lineTo(box.right - r, box.top)
+            arcTo(RectF(box.right - 2 * r, box.top, box.right, box.bottom), -90f, 180f)
+            lineTo(box.left + r, box.bottom)
+            arcTo(RectF(box.left, box.top, box.left + 2 * r, box.bottom), 90f, 180f)
+            lineTo(cx, box.top)
+        }
+        val m = PathMeasure(path, false)
+        val part = Path()
+        m.getSegment(0f, m.length * (pct / 100.0).toFloat().coerceIn(0f, 1f), part, true)
+        c.drawPath(path, stroke(col, RING_W).apply { alpha = 60 })
+        c.drawPath(part, stroke(col, RING_W).apply { strokeCap = Paint.Cap.ROUND })
     }
 
     /**
