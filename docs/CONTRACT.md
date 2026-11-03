@@ -64,7 +64,7 @@ each row naming the Homes file and lines it came from.
 | app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Homes draws no card for one), `POST /napi/ha/call` |
 | energy | `GET /napi/portal/energy`: the flow now, per total `today` (kWh since the house's midnight; homes#213), and `charge`, how full the battery is (mdopp/homes#228) |
 | Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
-| Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
+| Standortverlauf | `GET /napi/standort`, `POST /napi/standort`, `…/standort/import…`: see (f) |
 | Homes-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
 | Share → Homes, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Homes' refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Homes | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Homes keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (homes#120); the share sheet's Direct Share target carries the assistant's name (#188) |
@@ -333,6 +333,34 @@ No Google Play services (the owner, 2026-11-02): the platform alone.
 - `GET /napi/standort` → `{verbunden, seit?}`: without a connection the
   screen says in one sentence to paste the Reitti token on Homes' page
   `/standort`, and a tap opens it there. The token never reaches the phone.
+
+### Standortverlauf übernehmen
+
+The owner's call, 2026-11-03: an old location history goes into Reitti by
+sharing the file to the app — no browser, no Reitti login. The share
+target „In den Standortverlauf übernehmen“ (`ui/StandortImportActivity`)
+takes `ACTION_SEND` of `application/json`, `application/geo+json`,
+`application/gpx+xml`, `application/gpx`, `application/xml`, `text/xml` and
+`application/octet-stream`; the name decides (`.json`, `.geojson`, `.gpx`).
+Homes reads Google Maps' Timeline.json (Android and iPhone), Takeout's
+Records.json, GPX and GeoJSON, and hands the points to the person's Reitti
+with their own token (mdopp/homes#234).
+
+- The upload is the backups' (e): `POST /napi/standort/import {name,
+  groesse}` → `{id, offset}` (the same name and size resume; 409 `{fehler,
+  grund: kein_schluessel}` before the person connected Reitti — the dialog
+  offers „Reitti verbinden“, Homes' `/standort`), `HEAD
+  /napi/standort/import/{id}` → `Upload-Offset`, `PATCH
+  /napi/standort/import/{id}` in pieces of 8 MiB (`standort/Import.kt`).
+  After a cut the app asks HEAD and goes on; „Abbrechen“ stops, and the
+  file shared again goes on where it stopped. At most 5 GB.
+- Then `GET /napi/standort/import/{id}` every 2 s: `{stand: hochladen |
+  laeuft | fertig | fehler, gelesen, groesse, punkte, text?, fehler?,
+  grund?}`. The dialog shows the per cent read and the places so far, and
+  at the end Homes' sentence (`text`, e.g. „12.345 Orte von März 2014 bis
+  Dezember 2024 übernommen …“) or why not (`fehler`). Five minutes without
+  progress end in a sentence, not a spinner; „Schließen“ leaves the import
+  to the box. It runs in the share dialog only: no job, no service.
 
 ## (g) Das Homes-Konto
 
