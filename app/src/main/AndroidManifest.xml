@@ -3,8 +3,7 @@
      home-screen widgets and pairing, and the daily
      pick-up of the phone's message backups (#194, laib ADR 0029).
      One foreground service keeps the widgets live while the screen is on; no
-     other notification but the one notice that Haus is now Homes (laib#1021),
-     no poll, no web shell. -->
+     other notification, no poll, no web shell. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -41,17 +40,12 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-    <!-- Haus heißt jetzt Homes (laib#1021): once Homes is installed, the start screen
-         offers Android's own dialog to remove this app. -->
-    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
-    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing; the new
-         app Homes, to tell whether it is installed yet (laib#1021). -->
+    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
     <queries>
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
-        <package android:name="cloud.dopp.homes" />
     </queries>
     <application
         android:allowBackup="false"
