@@ -8,6 +8,7 @@ import android.widget.RemoteViews
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.Energy
 import cloud.dopp.haus.data.EnergyFlow
+import kotlin.math.abs
 import kotlin.math.max
 
 /**
@@ -19,14 +20,15 @@ import kotlin.math.max
  *   page ([EnergyPicture], [EnergyFluss]) — Solar, Netz, Akku with how full
  *   it is as a ring, Haus, the ways the power takes now drawn — and beside it,
  *   with the room, what the counters added today (erzeugt, ins Netz,
- *   Netzbezug, in den Akku) in the ways' colours. While Haus says nothing
+ *   Netzbezug) in the ways' colours and the Autarkie now. While Haus says nothing
  *   about today the picture takes the whole cell.
  * - One cell high: the battery with its charge as a small ring picture (or the
  *   grid, while Haus does not say the charge), the grid's direction now
  *   beside it, and with a little more room the house's draw and one line of
  *   Heute.
  *
- * The body opens Haus's Energie page ([HausPages.ENERGIE]); the arrows read again.
+ * The body opens Haus's Energie page ([HausPages.ENERGIE]). No arrows to read
+ * again (owner, 2026-11-03): the live stream keeps it current.
  */
 object EnergyRender {
 
@@ -36,7 +38,6 @@ object EnergyRender {
         energy: Energy?,
         paired: Boolean,
         onTap: PendingIntent,
-        onRefresh: PendingIntent,
     ): RemoteViews {
         val opts = AppWidgetManager.getInstance(ctx).getAppWidgetOptions(appWidgetId)
         val minW = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
@@ -45,8 +46,8 @@ object EnergyRender {
         val maxH = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
         val w = if (minW > 0) minW else DEFAULT_W
         val h = max(maxH, minH).takeIf { it > 0 } ?: DEFAULT_H
-        return if (full(minW, minH)) buildFull(ctx, energy, paired, onTap, onRefresh, w, h)
-        else buildSmall(ctx, energy, paired, onTap, onRefresh, h, showSub(minH), showToday(minH), todayBeside(w))
+        return if (full(minW, minH)) buildFull(ctx, energy, paired, onTap, w, h)
+        else buildSmall(ctx, energy, paired, onTap, h, showSub(minH), showToday(minH), todayBeside(w))
     }
 
     /** The placed default, 4×2, when the launcher does not tell the size. */
@@ -70,16 +71,18 @@ object EnergyRender {
     fun showToday(minH: Int): Boolean = minH >= 95
 
     /**
-     * A leg's word: what it does, so the number needs no legend — PV, Haus,
-     * Ins Netz or Netzbezug, Akku lädt or entlädt.
+     * A leg's word: what it does now, so the number needs no legend — PV,
+     * Haus, ins Netz or aus dem Netz, Akku lädt or entlädt (owner,
+     * 2026-11-03: Jetzt in the present tense).
      */
     fun legWord(f: EnergyFlow?, fallback: String): String {
         val w = f?.watts
         return when (f?.sense) {
             "grid" -> when {
                 w == null -> "Netz"
-                w < 0 -> "Ins Netz"
-                else -> "Netzbezug"
+                abs(w) < 1 -> "Netz ruht"
+                w < 0 -> "ins Netz"
+                else -> "aus dem Netz"
             }
             "battery" -> if (w == null) "Akku" else "Akku " + EnergyStyle.directionFor("battery", w)
             else -> f?.label?.ifBlank { fallback } ?: fallback
@@ -111,7 +114,6 @@ object EnergyRender {
         e: Energy?,
         paired: Boolean,
         onTap: PendingIntent,
-        onRefresh: PendingIntent,
         h: Int,
         showSub: Boolean,
         showToday: Boolean,
@@ -119,7 +121,6 @@ object EnergyRender {
     ): RemoteViews {
         val v = RemoteViews(ctx.packageName, R.layout.widget_energy_small)
         v.setOnClickPendingIntent(R.id.e_root, onTap)
-        v.setOnClickPendingIntent(R.id.e_refresh, onRefresh)
         v.setViewVisibility(R.id.e_today, View.GONE)
         v.setViewVisibility(R.id.e_sub, if (showSub) View.VISIBLE else View.GONE)
         if (!paired) {
@@ -139,14 +140,15 @@ object EnergyRender {
             // the ring says the battery; the words say the grid, and the house
             v.setContentDescription(R.id.e_ring, f.name("akku") + ", " + f.text("akku").second)
             val g = e.grid
-            sub = "Haus " + f.text("haus").first
+            sub = "Haus verbraucht " + f.text("haus").first
             small(v, legWord(g, "Netz"), g?.let { EnergyStyle.formatWatts(EnergyFluss.inWatts(it)) } ?: "—", sub)
         } else {
             // the ring says the grid; the words say the house, and the battery
-            v.setContentDescription(R.id.e_ring, "Netz " + f.text("netz").let { it.second + " " + it.first })
+            v.setContentDescription(R.id.e_ring, gridPhrase(f))
             val b = e.battery
-            sub = if (b != null) legWord(b, "Akku") + " " + f.text("akku").first else "Jetzt, Verbrauch"
-            small(v, "Haus", f.text("haus").first, sub)
+            sub = if (b != null) legWord(b, "Akku") + " " + f.text("akku").first
+            else gridPhrase(f)
+            small(v, "Haus verbraucht", f.text("haus").first, sub)
         }
         val today = todayLine(e)
         if (side) {
@@ -164,16 +166,18 @@ object EnergyRender {
         return v
     }
 
+    /** The grid now in words: „4 W ins Netz“, „800 W aus dem Netz“, „Netz ruht“. */
+    private fun gridPhrase(f: EnergyFluss): String = f.text("netz").let { (n, w) -> if (w.endsWith("Netz")) "$n $w" else "Netz $w" }
+
     private fun small(v: RemoteViews, title: String, value: String, sub: String) {
         v.setTextViewText(R.id.e_title, title)
         v.setTextViewText(R.id.e_main, value)
         v.setTextViewText(R.id.e_sub, sub)
     }
 
-    private fun buildFull(ctx: Context, e: Energy?, paired: Boolean, onTap: PendingIntent, onRefresh: PendingIntent, w: Int, h: Int): RemoteViews {
+    private fun buildFull(ctx: Context, e: Energy?, paired: Boolean, onTap: PendingIntent, w: Int, h: Int): RemoteViews {
         val v = RemoteViews(ctx.packageName, R.layout.widget_energy)
         v.setOnClickPendingIntent(R.id.e_root, onTap)
-        v.setOnClickPendingIntent(R.id.e_refresh, onRefresh)
         if (!paired) {
             v.setViewVisibility(R.id.e_root, View.GONE)
             v.setViewVisibility(R.id.e_note, View.VISIBLE)
@@ -192,15 +196,20 @@ object EnergyRender {
         v.setContentDescription(R.id.e_flow, f?.let { "Jetzt: " + it.words() } ?: "Energie, wird geladen")
         if (!withToday) return v
         val totals = EnergyStyle.orderedTotals(e?.totals.orEmpty())
-        for (i in 0..3) {
+        // three rows (owner, 2026-11-03: „In den Akku“ goes): erzeugt, ins Netz, Netzbezug
+        for (i in TODAY_LABELS.indices) {
             v.setTextViewText(TODAY_LABELS[i], EnergyStyle.TOTAL_LABELS[i])
             val kwh = totals[i]?.today
             v.setTextViewText(TODAY_VALUES[i], EnergyStyle.formatKwh(kwh))
             v.setTextColor(TODAY_VALUES[i], if (kwh != null) EnergyStyle.TOTAL_COLORS[i] else EnergyStyle.MUTED)
         }
+        // Autarkie now, as the last line of the figures beside the picture
+        val autarkie = f?.autarkie
+        v.setViewVisibility(R.id.e_autarkie, if (autarkie != null) View.VISIBLE else View.GONE)
+        if (autarkie != null) v.setTextViewText(R.id.e_autarkie_v, EnergyFluss.percent(autarkie * 100))
         return v
     }
 
-    private val TODAY_LABELS = intArrayOf(R.id.e_today_l0, R.id.e_today_l1, R.id.e_today_l2, R.id.e_today_l3)
-    private val TODAY_VALUES = intArrayOf(R.id.e_today_v0, R.id.e_today_v1, R.id.e_today_v2, R.id.e_today_v3)
+    private val TODAY_LABELS = intArrayOf(R.id.e_today_l0, R.id.e_today_l1, R.id.e_today_l2)
+    private val TODAY_VALUES = intArrayOf(R.id.e_today_v0, R.id.e_today_v1, R.id.e_today_v2)
 }

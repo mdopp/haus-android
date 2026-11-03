@@ -8,4 +8,5 @@
     <string name="energy_widget_description">Jetzt und heute: Strom von PV, Haus, Netz und Akku. Tippen öffnet die Energie-Seite.</string>
     <string name="energy_now">Jetzt</string>
     <string name="energy_today">Heute</string>
+    <string name="energy_autarkie">Autarkie</string>
 </resources>

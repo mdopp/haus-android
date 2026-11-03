@@ -11,6 +11,8 @@ import android.widget.FrameLayout
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.Energy
+import cloud.dopp.haus.widget.EnergyFluss
+import cloud.dopp.haus.widget.EnergyPicture
 import cloud.dopp.haus.widget.EnergyRender
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import org.json.JSONObject
@@ -71,7 +73,7 @@ class EnergyWidgetPreviewTest {
             },
         )
         val host = FrameLayout(ctx)
-        val v = EnergyRender.build(ctx, id, e, true, EnergyWidgetProvider.tapPending(ctx, id), EnergyWidgetProvider.refreshPending(ctx, id))
+        val v = EnergyRender.build(ctx, id, e, true, EnergyWidgetProvider.tapPending(ctx, id))
             .apply(ctx, host)
         val d = ctx.resources.displayMetrics.density
         val w = (wDp * d).toInt()
@@ -117,5 +119,79 @@ class EnergyWidgetPreviewTest {
         assertSharp(draw(150, 72, energy(true), "energy-2x1"), R.id.e_ring, "2×1")
         draw(347, 72, energy(true), "energy-4x1")
         draw(150, 72, energy(true, charge = false), "energy-2x1-ohne-akkustand")
+    }
+
+    /** The house with these legs (W) — pv, house, grid (+drawn), battery (+charging) — at 83 %. */
+    private fun legs(pv: Int, haus: Int, netz: Int, akku: Int): Energy =
+        energy(true).copy(
+            flow = listOf(
+                cloud.dopp.haus.data.EnergyFlow("PV", pv.toDouble(), "W", "supply", "sensor.pv"),
+                cloud.dopp.haus.data.EnergyFlow("Haus", haus.toDouble(), "W", "draw", "sensor.haus"),
+                cloud.dopp.haus.data.EnergyFlow("Netz", netz.toDouble(), "W", "grid", "sensor.netz"),
+                cloud.dopp.haus.data.EnergyFlow("Akku", akku.toDouble(), "W", "battery", "sensor.akku"),
+            ),
+        )
+
+    /** Each of the six ways the power can take, the named one in it (coordinator, 2026-11-03). */
+    private val flows = mapOf(
+        "solar-haus" to legs(800, 800, 0, 0),
+        "solar-akku" to legs(1500, 500, 0, 1000),
+        "solar-netz" to legs(3000, 500, -2500, 0),
+        "netz-haus" to legs(0, 800, 800, 0),
+        "akku-haus" to legs(0, 271, -4, -276),
+        "netz-akku" to legs(0, 300, 1300, 1000),
+    )
+
+    @Test
+    fun everyWay() {
+        for ((name, e) in flows) {
+            val (von, nach) = name.split('-')
+            val f = cloud.dopp.haus.widget.EnergyFluss.of(e)
+            assertTrue("$name: the way is there", f.aktiv.any { it.von == von && it.nach == nach })
+            draw(347, 163, e, "energy-4x2-flows-$name")
+        }
+    }
+
+    /**
+     * Every way of the six, at 4×2, 2×2, a wide and a flat field (coordinator,
+     * 2026-11-03): it runs from the source pill's border to the destination's
+     * and never over a pill, Akku's ring or its „%“ label; its head sits at the destination
+     * end — nearer the destination than the source — and points into it.
+     */
+    @Test
+    fun everyHeadIsAtItsDestination() {
+        val ways = EnergyPicture.WAYS
+        for ((w, h) in listOf(187f to 147f, 136f to 147f, 323f to 147f, 187f to 120f, 187f to 94f)) {
+            val l = EnergyPicture.lage(w, h)
+            // on a pill (Akku with its ring), by the stadium's own shape
+            fun on(k: String, x: Float, y: Float) = l.on(k, x, y, if (k == "akku") 6.5f else 0.5f)
+            val chip = l.chip(EnergyPicture.chipWidth("100\u00a0%", l.ph))
+            fun border(k: String, x: Float, y: Float): Float {
+                val (cx, cy) = l.at.getValue(k)
+                val d = kotlin.math.hypot(x - cx, y - cy)
+                return d - l.reach((x - cx) / d, (y - cy) / d)
+            }
+            val ring = l.box("akku").apply { inset(-8f, -8f) }
+            assertTrue("${w}x$h: ring inside", ring.left >= 0 && ring.right <= w && ring.top >= 0 && ring.bottom <= h)
+            for ((von, nach) in ways) {
+                val (p, q) = EnergyPicture.way(von, nach, l)
+                val len = kotlin.math.hypot(q.first - p.first, q.second - p.second)
+                val head = EnergyPicture.head(p, q, 6f)
+                assertTrue("${w}x$h $von→$nach: $len long, room for its head", len >= EnergyPicture.arrowSize(6f).first + 4f)
+                for (i in 0..20) {
+                    val x = p.first + (q.first - p.first) * i / 20
+                    val y = p.second + (q.second - p.second) * i / 20
+                    for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach at $i/20 on $k", !on(k, x, y))
+                }
+                for ((x, y) in head) for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach: head on $k", !on(k, x, y))
+                for ((x, y) in head + listOf(p, q)) assertTrue("${w}x$h $von→$nach: on the „%“ label", !chip.contains(x, y))
+                val tip = head[0]
+                assertTrue("${w}x$h $von→$nach: the head by the destination", border(nach, tip.first, tip.second) < border(von, tip.first, tip.second))
+                // and it points into the destination: on, the tip would reach it
+                val (nx, ny) = l.at.getValue(nach)
+                val dot = (q.first - p.first) * (nx - tip.first) + (q.second - p.second) * (ny - tip.second)
+                assertTrue("${w}x$h $von→$nach: the head points into $nach", dot > 0)
+            }
+        }
     }
 }

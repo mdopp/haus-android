@@ -42,10 +42,11 @@ object EnergyStyle {
     /**
      * The heute cells' labels and colors, in [TOTAL_SLOTS] order: short, the
      * cells are narrow. The colours are the picture's (owner, 2026-11-03: as
-     * Haus's Energie page): the sun's, feeding in, drawing, the battery's.
+     * Haus's Energie page): the sun's, feeding in, drawing. The battery's
+     * slot is no row (owner, 2026-11-03: „In den Akku“ goes).
      */
-    val TOTAL_LABELS = listOf("Erzeugt", "Ins Netz", "Netzbezug", "In den Akku")
-    val TOTAL_COLORS = intArrayOf(EnergyPicture.SOLAR, EnergyPicture.EINSP, EnergyPicture.BEZUG, EnergyPicture.AKKU)
+    val TOTAL_LABELS = listOf("Erzeugt", "Ins Netz", "Netzbezug")
+    val TOTAL_COLORS = intArrayOf(EnergyPicture.SOLAR, EnergyPicture.EINSP, EnergyPicture.BEZUG)
 
     /**
      * Map the server `totals` onto the four canonical slots, preserving

@@ -113,7 +113,9 @@ class EnergyLogicTest {
         val f = fluss(0.0, 271.0, -4.0, -276.0, charge = 83.0)
         assertEquals("271 W" to "verbraucht", f.text("haus"))
         assertEquals("276 W" to "entlädt", f.text("akku"))
-        assertEquals("4 W" to "eingespeist", f.text("netz"))
+        assertEquals("owner: where the power goes", "4 W" to "ins Netz", f.text("netz"))
+        assertEquals("16 W" to "aus dem Netz", fluss(0.0, 16.0, 16.0, null).text("netz"))
+        assertEquals("0 W" to "ruht", fluss(0.0, 16.0, 0.0, -16.0).text("netz"))
         assertEquals("0 W" to "erzeugt", f.text("solar"))
         assertEquals("Akku 83\u00a0%", f.name("akku"))
         assertEquals("the one way that carries: Akku → Haus", listOf("akku" to "haus"), f.aktiv.map { it.von to it.nach })
@@ -147,16 +149,21 @@ class EnergyLogicTest {
         assertEquals("akku", cloud.dopp.haus.widget.EnergyPicture.singleKey(fluss(0.0, 500.0, 500.0, -10.0, charge = 50.0)))
     }
 
-    /** The diamond keeps its nodes apart in the 4×2 field and in a 2×2 one. */
-    @Test fun theNodesDoNotTouch() {
-        for ((w, h) in listOf(180f to 144f, 300f to 144f, 130f to 130f)) {
+    /**
+     * Wide, low pills with round ends (owner, 2026-11-03), apart and inside
+     * the field, spread over its width, Netz and Akku apart for a way across.
+     */
+    @Test fun thePillsDoNotTouchAndFillTheWidth() {
+        for ((w, h) in listOf(187f to 147f, 323f to 147f, 136f to 147f)) {
             val l = cloud.dopp.haus.widget.EnergyPicture.lage(w, h)
-            val p = l.at.values.toList()
-            for (i in p.indices) for (j in i + 1 until p.size) {
-                val d = kotlin.math.hypot(p[i].first - p[j].first, p[i].second - p[j].second)
-                assertTrue("${w}x$h: nodes $i and $j at $d", d > 2 * l.r * 1.2f)
+            val boxes = cloud.dopp.haus.widget.EnergyFluss.KEYS.map { l.box(it) }
+            for (i in boxes.indices) for (j in i + 1 until boxes.size) {
+                assertTrue("${w}x$h: pills $i and $j overlap", !android.graphics.RectF.intersects(boxes[i], boxes[j]))
             }
-            p.forEach { (x, y) -> assertTrue("${w}x$h: inside", x - l.r >= 0 && x + l.r <= w && y - l.r >= 0 && y + l.r <= h) }
+            boxes.forEach { assertTrue("${w}x$h: inside", it.left >= 0 && it.right <= w && it.top >= 0 && it.bottom <= h) }
+            assertTrue("${w}x$h: Netz at the left edge", l.box("netz").left <= 8.5f)
+            assertTrue("${w}x$h: Akku at the right edge", l.box("akku").right >= w - 8.5f)
+            assertTrue("${w}x$h: wide and low", l.pw >= l.ph * 1.6f)
         }
     }
 }

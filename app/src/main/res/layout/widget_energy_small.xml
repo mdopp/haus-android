@@ -42,12 +42,11 @@
                 android:id="@+id/e_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="18dp"
-                android:maxLines="1"
+                                android:maxLines="1"
                 android:ellipsize="end"
                 android:text="Netz"
                 android:textColor="#FF9AA0AE"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
                 android:textSize="12sp" />
 
             <TextView
@@ -59,7 +58,7 @@
                 android:text="—"
                 android:textColor="#FFF2F2F5"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:fontFamily="sans-serif-black" />
 
             <TextView
                 android:id="@+id/e_sub"
@@ -67,8 +66,9 @@
                 android:layout_height="wrap_content"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="#FF9AA0AE"
-                android:textSize="11sp" />
+                android:fontFamily="sans-serif-medium"
+                android:textColor="#FFC9CDD6"
+                android:textSize="12sp" />
 
             <!-- Heute, one line: only with a little more room than the bare tier. -->
             <TextView
@@ -79,7 +79,7 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:textColor="#FFE3B341"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
                 android:textSize="11sp"
                 android:visibility="gone" />
         </LinearLayout>
@@ -90,7 +90,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginEnd="22dp"
+            android:layout_marginEnd="6dp"
             android:orientation="vertical"
             android:gravity="end"
             android:visibility="gone">
@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 android:maxLines="1"
                 android:textColor="#FFF2F2F5"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
                 android:textSize="13sp" />
 
             <TextView
@@ -111,20 +111,8 @@
                 android:layout_marginTop="4dp"
                 android:maxLines="1"
                 android:textColor="#FFE3B341"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/e_refresh"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="4dp"
-        android:padding="4dp"
-        android:src="@drawable/ic_refresh"
-        android:tint="#FF9AA0AE"
-        android:contentDescription="@string/widget_refresh" />
 </FrameLayout>

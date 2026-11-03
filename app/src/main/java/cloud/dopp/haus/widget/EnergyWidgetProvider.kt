@@ -15,7 +15,7 @@ import kotlin.concurrent.thread
  * "Gesamt"): what flows now and what came together today, from
  * `/napi/portal/energy` ([EnergyRender]). No per-instance config — one house
  * picture. A tap opens Haus's Energie page at the paired address
- * (`https://haus.<domain>/energie`), the arrows read again.
+ * (`https://haus.<domain>/energie`); the live stream keeps it current.
  */
 class EnergyWidgetProvider : AppWidgetProvider() {
 
@@ -55,7 +55,7 @@ class EnergyWidgetProvider : AppWidgetProvider() {
         val tap = tapPending(context, appWidgetId)
         val onRefresh = refreshPending(context, appWidgetId)
         // Immediate render (loading / pair hint), then async fetch.
-        mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, null, paired, tap, onRefresh))
+        mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, null, paired, tap))
         if (!paired) return
         val pending = goAsync()
         thread {
@@ -67,7 +67,7 @@ class EnergyWidgetProvider : AppWidgetProvider() {
                 }
                 // the flow's sensors join the watch set: their frames read this widget again
                 energy?.let { e -> cloud.dopp.haus.realtime.WatchSet.rememberEnergy(context, e.flow.mapNotNull { it.entityId } + listOfNotNull(e.chargeEntityId)) }
-                mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, energy, true, tap, onRefresh))
+                mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, energy, true, tap))
             } catch (t: Throwable) {
                 WidgetFallback.show(context, appWidgetId, onRefresh)
             } finally {

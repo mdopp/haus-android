@@ -71,8 +71,8 @@ class EnergyFluss private constructor(
             "solar" -> watts(solar) to "erzeugt"
             "haus" -> watts(haus) to "verbraucht"
             "netz" -> when {
-                bezug > 0 -> watts(bezug) to "bezogen"
-                einsp > 0 -> watts(einsp) to "eingespeist"
+                bezug > 0 -> watts(bezug) to "aus dem Netz"
+                einsp > 0 -> watts(einsp) to "ins Netz"
                 else -> watts(0.0) to "ruht"
             }
             "akku" -> when {
@@ -97,7 +97,11 @@ class EnergyFluss private constructor(
     fun words(): String {
         val nodes = KEYS.filter { it in da }.joinToString(", ") { k ->
             val (n, w) = text(k)
-            if (k in known) "${name(k)} $w $n" else "${name(k)} $w"
+            when {
+                k !in known -> "${name(k)} $w"
+                w.endsWith("Netz") -> "$n $w" // „4 W ins Netz“
+                else -> "${name(k)} $w $n"
+            }
         }
         val ways = aktiv.joinToString(", ") { "${name(it.von).substringBefore(' ')} → ${name(it.nach).substringBefore(' ')} ${watts(it.w)}" }
         return listOf(nodes, ways).filter { it.isNotEmpty() }.joinToString(". ") + "."
