@@ -88,6 +88,7 @@ class ManifestTest {
         "ACCESS_NETWORK_STATE", // whether the phone is on a Wi-Fi
         // Das Homes-Konto (owner 2026-11-03, #206): into its own account only, each part behind its own switch
         "WRITE_CONTACTS", "READ_CALENDAR", "WRITE_CALENDAR", "READ_SYNC_SETTINGS", "WRITE_SYNC_SETTINGS",
+        "READ_SYNC_STATS", // whether a sync runs, for the line under „Jetzt abgleichen“
     )
 
     /**
