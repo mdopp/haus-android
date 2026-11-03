@@ -16,7 +16,6 @@ import android.widget.EditText
 import android.view.ContextThemeWrapper
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -224,6 +223,8 @@ class HomeActivity : AppCompatActivity() {
             shown.isEmpty() -> group.addView(note(group, getString(R.string.home_devices_none)))
             else -> shown.forEach { group.addView(deviceRow(group, it)) }
         }
+        // an open level sheet stays open across a fresh read and shows its level
+        levelSheet?.let { sheet -> shown?.firstOrNull { it.entityId == sheet.entityId }?.let { sheet.refresh(DeviceControls.of(it).slider) } }
         group.addView(
             row(group, R.drawable.ic_device, getString(R.string.home_devices_all)) {
                 openHomes(HomesPages.RAEUME)
@@ -261,12 +262,30 @@ class HomeActivity : AppCompatActivity() {
         icon.setColorFilter(getColor(if (card.isOn) R.color.homes_accent else R.color.homes_text_muted))
         v.findViewById<TextView>(R.id.row_name).text = card.name
         val state = v.findViewById<TextView>(R.id.row_room)
-        state.text = StartDevices.stateText(card)
-        v.contentDescription = card.name + ", " + state.text
+        val levelView = v.findViewById<TextView>(R.id.row_level)
+        val line = StartDevices.levelLine(card)
+        fun switching() {
+            state.text = getString(R.string.home_device_switching)
+            levelView.visibility = View.GONE
+        }
+        if (line == null) {
+            state.text = StartDevices.stateText(card)
+            v.contentDescription = card.name + ", " + state.text
+        } else {
+            val (words, level) = line
+            val percent = StartDevices.percent(level.value)
+            state.text = "$words ·"
+            levelView.text = percent
+            levelView.visibility = View.VISIBLE
+            levelView.contentDescription = getString(R.string.home_device_level, card.name, level.label, percent)
+            levelView.setOnClickListener { openLevel(card, level, ::switching) }
+            v.contentDescription = "${card.name}, $words, $percent"
+            reachAtLeast48dp(v, levelView)
+        }
         v.setOnClickListener {
             if (StartDevices.acts(card)) {
                 // the tap answers at once; the fresh state comes with DeviceTaps.ACTION_DONE
-                if (card.domain != "lock") state.text = getString(R.string.home_device_switching)
+                if (card.domain != "lock") switching()
                 sendBroadcast(WidgetActionReceiver.tap(this, card.entityId, card.name, card.supportedFeatures))
             } else {
                 openHomes(HomesPages.item(card.page))
@@ -276,64 +295,74 @@ class HomeActivity : AppCompatActivity() {
             openHomes(HomesPages.item(card.page))
             true
         }
-        controls(v.findViewById(R.id.row_controls), card, state)
+        controls(v.findViewById(R.id.row_controls), card, ::switching)
         return v
     }
 
-    /**
-     * The favorite's fine controls ([DeviceControls], owner 2026-11-03): a row
-     * of buttons, a slider. Each goes through the device receiver, so a
-     * sensitive call asks in the one dialog and the list reads again after.
-     */
-    private fun controls(holder: LinearLayout, card: Card, state: TextView) {
-        val c = DeviceControls.of(card)
-        if (c.none) return
-        holder.visibility = View.VISIBLE
-        fun send(service: String, data: Map<String, Any>?) {
-            state.text = getString(R.string.home_device_switching)
+    /** The level sheet open now, so a fresh read updates it instead of closing it. */
+    private var levelSheet: LevelSheet? = null
+
+    /** The favorite's level in its sheet (owner, 2026-11-03): each pick is one call through the device receiver. */
+    private fun openLevel(card: Card, level: DeviceControls.Slider, switching: () -> Unit) {
+        levelSheet?.dialog?.dismiss()
+        val sheet = LevelSheet(this, card.entityId, card.name, level) { service, data ->
+            switching()
             sendBroadcast(WidgetActionReceiver.call(this, card.entityId, card.name, service, data))
         }
-        if (c.buttons.isNotEmpty()) {
-            val bar = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                isBaselineAligned = false // a label that wraps must not push its button down
-            }
-            c.buttons.forEachIndexed { i, b ->
-                val btn = Button(ContextThemeWrapper(this, R.style.Widget_Homes_Button_Control), null, 0)
-                btn.text = b.label
-                btn.contentDescription = card.name + ": " + b.label
-                btn.setOnClickListener { send(b.service, b.data) }
-                bar.addView(
-                    btn,
-                    LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                        if (i > 0) marginStart = resources.getDimensionPixelSize(R.dimen.space_xs)
-                    },
-                )
-            }
-            holder.addView(bar)
+        sheet.dialog.setOnDismissListener { if (levelSheet === sheet) levelSheet = null }
+        levelSheet = sheet
+        sheet.show()
+    }
+
+    /**
+     * The level's touch target, at least 48 dp each way around it, while its
+     * text stays the size of the line: a delegate on the row, set once the
+     * row is laid out.
+     */
+    private fun reachAtLeast48dp(row: View, level: View) {
+        val min = (48 * resources.displayMetrics.density).toInt()
+        row.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            if (level.visibility != View.VISIBLE || level.width == 0) return@addOnLayoutChangeListener
+            val r = android.graphics.Rect(0, 0, level.width, level.height)
+            (row as ViewGroup).offsetDescendantRectToMyCoords(level, r)
+            val dy = ((min - r.height()) / 2).coerceAtLeast(0)
+            val dx = ((min - r.width()) / 2).coerceAtLeast(0)
+            r.inset(-dx, -dy)
+            row.touchDelegate = android.view.TouchDelegate(r, level)
         }
-        c.slider?.let { sl ->
-            val bar = SeekBar(this)
-            bar.max = 100
-            bar.progress = sl.value
-            bar.contentDescription = card.name + ": " + sl.label
-            bar.setPadding(0, bar.paddingTop, 0, bar.paddingBottom)
-            bar.setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(s: SeekBar, v: Int, fromUser: Boolean) {
-                        if (fromUser) state.text = getString(R.string.home_device_level, sl.label, v)
-                    }
+    }
 
-                    override fun onStartTrackingTouch(s: SeekBar) {}
-
-                    override fun onStopTrackingTouch(s: SeekBar) {
-                        val (service, data) = sl.call(s.progress)
-                        send(service, data)
-                    }
+    /**
+     * The favorite's fine buttons ([DeviceControls], owner 2026-11-03). No
+     * slider on the row: its level opens [LevelSheet]. Each goes through the
+     * device receiver, so a sensitive call asks in the one dialog and the
+     * list reads again after.
+     */
+    private fun controls(holder: LinearLayout, card: Card, switching: () -> Unit) {
+        val c = DeviceControls.of(card)
+        if (c.buttons.isEmpty()) return
+        holder.visibility = View.VISIBLE
+        fun send(service: String, data: Map<String, Any>?) {
+            switching()
+            sendBroadcast(WidgetActionReceiver.call(this, card.entityId, card.name, service, data))
+        }
+        val bar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            isBaselineAligned = false // a label that wraps must not push its button down
+        }
+        c.buttons.forEachIndexed { i, b ->
+            val btn = Button(ContextThemeWrapper(this, R.style.Widget_Homes_Button_Control), null, 0)
+            btn.text = b.label
+            btn.contentDescription = card.name + ": " + b.label
+            btn.setOnClickListener { send(b.service, b.data) }
+            bar.addView(
+                btn,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (i > 0) marginStart = resources.getDimensionPixelSize(R.dimen.space_xs)
                 },
             )
-            holder.addView(bar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
+        holder.addView(bar)
     }
 
     private fun note(group: ViewGroup, text: String): View =

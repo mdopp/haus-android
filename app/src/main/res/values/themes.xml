@@ -83,6 +83,58 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <!-- A favorite's level sheet (owner, 2026-11-03): Material's bottom sheet on the Homes ground. -->
+    <style name="Theme.Homes.Sheet" parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="colorPrimary">@color/homes_accent</item>
+        <item name="colorSecondary">@color/homes_accent</item>
+        <item name="colorAccent">@color/homes_accent</item>
+        <item name="colorSurface">@color/homes_sheet</item>
+        <item name="android:textColorPrimary">@color/homes_text</item>
+        <item name="android:textColorSecondary">@color/homes_text_muted</item>
+        <item name="android:backgroundDimAmount">0.55</item>
+        <item name="android:navigationBarColor">@color/homes_sheet</item>
+        <item name="bottomSheetStyle">@style/Widget.Homes.BottomSheet</item>
+        <!-- the sheet's own ground, not lightened by Material's dark elevation overlay -->
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
+
+    <style name="Widget.Homes.BottomSheet" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="backgroundTint">@color/homes_sheet</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Homes.Sheet</item>
+        <!-- a short sheet keeps its round top also when expanded -->
+        <item name="shouldRemoveExpandedCorners">false</item>
+    </style>
+
+    <style name="ShapeAppearance.Homes.Sheet" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">22dp</item>
+        <item name="cornerSizeTopRight">22dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <!-- The sheet's slider: full width, a thick accent track, no bubble. -->
+    <style name="Widget.Homes.Slider" parent="Widget.MaterialComponents.Slider">
+        <item name="trackColorActive">@color/homes_accent</item>
+        <item name="trackColorInactive">@color/homes_track</item>
+        <item name="thumbColor">@color/homes_accent</item>
+        <item name="haloColor">@color/homes_accent_faint</item>
+        <item name="trackHeight">8dp</item>
+        <item name="thumbRadius">12dp</item>
+        <item name="labelBehavior">gone</item>
+        <item name="tickVisible">false</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- A quick level in the sheet (25 %, Auf, …): accent text on an accent tint. -->
+    <style name="Widget.Homes.Button.Step" parent="Widget.Homes.Button">
+        <item name="android:background">@drawable/btn_homes_step</item>
+        <item name="android:textColor">@color/homes_accent</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+    </style>
+
     <!-- ── Text styles (#37) ────────────────────────────────────────────────
          A consistent type hierarchy using the tokens from dimens.xml. Plain
          (non-Widget) styles applied via style="…" on TextViews. -->

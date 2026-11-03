@@ -48,8 +48,10 @@
     <string name="home_devices_unreadable">Deine Favoriten lassen sich gerade nicht laden.</string>
     <string name="home_devices_loading">Lädt …</string>
     <string name="home_devices_all">Alle Geräte</string>
-    <!-- A favorite's slider while it moves: „Helligkeit 40 %“. -->
-    <string name="home_device_level">%1$s %2$d %%</string>
+    <!-- A favorite's level, the button that opens its sheet, for a screen reader: „Küchenlicht Helligkeit 60 %, einstellen“. -->
+    <string name="home_device_level">%1$s %2$s %3$s, einstellen</string>
+    <!-- The level sheet's close button (owner, 2026-11-03). -->
+    <string name="home_level_done">Fertig</string>
     <string name="home_device_switching">schaltet …</string>
 
     <!-- The live widgets (LiveService). -->

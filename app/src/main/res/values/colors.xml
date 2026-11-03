@@ -25,6 +25,11 @@
     <color name="homes_accent">#F97316</color>        <!-- orange-500 -->
     <color name="homes_accent_dark">#EA580C</color>   <!-- orange-600 (pressed) -->
     <color name="homes_accent_faint">#1FF97316</color><!-- 12% orange tint -->
+    <!-- The level sheet (owner, 2026-11-03, as Homes' sheet): its ground, its quick steps, its slider's empty track. -->
+    <color name="homes_sheet">#0E0E11</color>
+    <color name="homes_accent_step">#33F97316</color>
+    <color name="homes_accent_step_pressed">#55F97316</color>
+    <color name="homes_track">#33FFFFFF</color>
 
     <!-- The launcher icon and the app-icon shortcut glyphs sit among foreign
          icons on the home screen; they keep the brand blue (#130). -->

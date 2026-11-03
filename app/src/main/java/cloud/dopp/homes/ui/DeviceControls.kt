@@ -9,9 +9,13 @@ import kotlin.math.roundToInt
  * A favorite's fine controls on the start screen (owner, 2026-11-03: „Hoch,
  * runter, heller, dunkler, …“), the ones Homes' devices page offers
  * (mdopp/homes `internal/pages/raeume.go`, `regler.go`, `medien.go`): a lamp
- * its brightness, a cover Hoch, Stopp, Runter and its position, a heating
- * kälter and wärmer, a player Pause or Weiter, Leiser and Lauter. A lock has
- * none here: its tap opens its chooser.
+ * that is on its brightness, a cover Hoch, Stopp, Runter and its position, a
+ * heating kälter and wärmer, a player Pause or Weiter, Leiser and Lauter. A
+ * lock has none here: its tap opens its chooser.
+ *
+ * A level ([Slider]) is never a slider on the row (owner, 2026-11-03: a
+ * scroll moved them, homes#230): the row says it („an · 60 %“), the „60 %“
+ * opens [LevelSheet] with the large slider and its [Slider.steps].
  *
  * Every control is one `/napi/ha/call` on the card's own entity; Homes' rule
  * (`schalter.Do`) still decides each. Like the page, a cover offers its
@@ -24,8 +28,21 @@ object DeviceControls {
     /** One button: [label], the dotted [service], its [data] (null: none). */
     data class Button(val label: String, val service: String, val data: Map<String, Any>? = null)
 
-    /** A 0–100 slider at [value]; a pick of `v` calls [service] with [key] = v, 0 calls [zero] when set. */
-    data class Slider(val label: String, val value: Int, val service: String, val key: String, val zero: String? = null) {
+    /** A quick level in the sheet: „50 %“, „Zu“. */
+    data class Step(val label: String, val value: Int)
+
+    /**
+     * A 0–100 level at [value]; a pick of `v` calls [service] with [key] = v,
+     * 0 calls [zero] when set. [steps] are the sheet's quick levels, each one call.
+     */
+    data class Slider(
+        val label: String,
+        val value: Int,
+        val service: String,
+        val key: String,
+        val zero: String? = null,
+        val steps: List<Step> = emptyList(),
+    ) {
         /** The call a pick of [v] makes: (service, data). */
         fun call(v: Int): Pair<String, Map<String, Any>?> {
             val at = v.coerceIn(0, 100)
@@ -59,12 +76,23 @@ object DeviceControls {
         }
     }
 
-    /** A lamp HA can dim (a brightness, or a colour mode other than on/off): its brightness, 0 turns it off. */
+    /** A lamp's quick levels, as on Homes' sheet. */
+    val LIGHT_STEPS = listOf(Step("25 %", 25), Step("50 %", 50), Step("75 %", 75), Step("100 %", 100))
+
+    /** A cover's quick levels, as on Homes' sheet. */
+    val COVER_STEPS = listOf(Step("Auf", 100), Step("½", 50), Step("Zu", 0))
+
+    /**
+     * A lamp that is on and HA can dim (a brightness, or a colour mode other
+     * than on/off): its brightness, 0 turns it off. A lamp that is off has
+     * none (owner, 2026-11-03, homes#230): its tap turns it on, and the level
+     * comes with the fresh state.
+     */
     private fun light(card: Card, state: String): Controls {
         val dims = card.brightness != null || card.colorModes.any { it != "onoff" && it != "unknown" }
-        if (!dims || (state != "on" && state != "off")) return Controls()
-        val value = if (state == "on") card.brightnessPct ?: 0 else 0
-        return Controls(slider = Slider("Helligkeit", value, "light.turn_on", "brightness_pct", zero = "light.turn_off"))
+        if (!dims || state != "on") return Controls()
+        val value = card.brightnessPct ?: 0
+        return Controls(slider = Slider("Helligkeit", value, "light.turn_on", "brightness_pct", zero = "light.turn_off", steps = LIGHT_STEPS))
     }
 
     /** A cover Homes opens freely: what HA says it can, and its position when it reports one. */
@@ -82,7 +110,7 @@ object DeviceControls {
             Triple(COVER_CLOSE, "Runter", "cover.close_cover"),
         ).filter { f and it.first != 0 }.map { Button(it.second, it.third) }
         val slider = card.position?.takeIf { f and COVER_POSITION != 0 }
-            ?.let { Slider("Position", it, "cover.set_cover_position", "position") }
+            ?.let { Slider("Position", it.coerceIn(0, 100), "cover.set_cover_position", "position", steps = COVER_STEPS) }
         return Controls(buttons, slider)
     }
 
