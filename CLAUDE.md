@@ -65,8 +65,8 @@ These rules apply to every session, human or agent.
   device token. `konto/` holds it.
 - Read only on the phone; writes go as the sync adapter into the account's
   own entries only. Android's SyncManager runs the adapters (the switch,
-  „Jetzt abgleichen“, hourly); the app adds no job, alarm or worker for
-  them. `ManifestTest` holds this.
+  „Jetzt abgleichen“, hourly, and a `gemeinsam` frame of the open live
+  stream, #209); the app adds no job, alarm or worker for them. `ManifestTest` holds this.
 - The other direction stays: a person's own contacts go phone → archive
   („Kontakte übertragen“), and the Haus account's never do
   (`HausKontoAusschlussTest`, `e2e` step 8).

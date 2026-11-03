@@ -233,6 +233,22 @@ object Napi {
     /** The frame the stream carries, by its SSE event name. */
     const val CARD_STATE = "card_state"
 
+    /**
+     * The stream's other frame (#209, haus#223): the household's shared data
+     * changed, `{teil: kontakte|kalender}`; it carries no data, the Haus
+     * account syncs that part.
+     */
+    const val GEMEINSAM_FRAME = "gemeinsam"
+
+    /** A `gemeinsam` frame's payload. */
+    object GemeinsamFrameJson {
+        const val TEIL = "teil"
+    }
+
+    /** The values of a `gemeinsam` frame's `teil`. */
+    const val TEIL_KONTAKTE = "kontakte"
+    const val TEIL_KALENDER = "kalender"
+
     /** `GET /napi/defs/tool`: `{ok, defs: [def]}`. */
     object ToolDefJson {
         const val DEFS = "defs"
@@ -455,10 +471,11 @@ object Napi {
     /** Which entities this device's widgets show; 503 while HA is down. */
     val WATCH = Endpoint(Method.POST, "/napi/portal/watch", body = listOf("entity_ids"))
 
-    /** The live stream: `card_state` frames. */
+    /** The live stream: `card_state` frames, and `gemeinsam` for the Haus account. */
     val EVENTS = Endpoint(
         Method.GET, "/napi/portal/events",
-        reply = listOf(EventJson, CardJson), accept = "text/event-stream", events = listOf(CARD_STATE),
+        reply = listOf(EventJson, CardJson, GemeinsamFrameJson), accept = "text/event-stream",
+        events = listOf(CARD_STATE, GEMEINSAM_FRAME),
     )
 
     /** The tool catalog. */

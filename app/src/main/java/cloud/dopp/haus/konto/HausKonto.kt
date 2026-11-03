@@ -19,7 +19,8 @@ import java.security.MessageDigest
  * Two parts, each behind its own switch and permission: [Teil.KONTAKTE]
  * (ContactsContract) and [Teil.KALENDER] (CalendarContract, the reminders
  * too). Android's SyncManager runs each part's sync adapter: once at the
- * switch, on „Jetzt abgleichen“, and every [STUNDE] while the account syncs
+ * switch, on „Jetzt abgleichen“, when Haus says a part changed while the
+ * live stream is open ([anstossen]), and every [STUNDE] while the account syncs
  * automatically — no job, alarm or worker of the app's own. The account
  * stays while one part is on; with both off it goes, and Android removes its
  * contacts and calendars with it.
@@ -96,6 +97,16 @@ object HausKonto {
             putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
         }
         ContentResolver.requestSync(konto, teil.authority, extras)
+    }
+
+    /**
+     * Haus said [teil] changed (a `gemeinsam` frame, #209): sync it soon, if its
+     * switch is on. Not marked manual, so Android's own setting „Daten
+     * automatisch synchronisieren“ holds, as for the hourly sync.
+     */
+    fun anstossen(ctx: Context, teil: Teil) {
+        if (!an(ctx, teil)) return
+        ContentResolver.requestSync(konto, teil.authority, Bundle().apply { putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true) })
     }
 
     /** Whether Android syncs accounts by itself at all (Einstellungen → Konten). */
