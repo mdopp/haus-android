@@ -126,7 +126,12 @@ class HomeActivity : AppCompatActivity() {
         findViewById<SwitchCompat>(R.id.live_switch).setOnCheckedChangeListener { _, on ->
             if (on != Live.isEnabled(this)) Live.setEnabled(applicationContext, on)
         }
-        findViewById<TextView>(R.id.live_battery).setOnClickListener { if (!Live.exempt(this)) requestExemption() }
+        // The live row (owner, 2026-11-03): while the exemption is missing a tap asks for it, else it switches.
+        val onLiveRow = View.OnClickListener {
+            if (!Live.exempt(this)) requestExemption() else findViewById<SwitchCompat>(R.id.live_switch).toggle()
+        }
+        findViewById<View>(R.id.live_row).setOnClickListener(onLiveRow)
+        findViewById<TextView>(R.id.live_battery).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
         applySystemBarInsets()
         handleDeepLink(intent)

@@ -36,7 +36,15 @@ class StartPreviewTest {
     private fun ctx(): Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun drawTheStartScreen() {
+    fun drawTheStartScreen() = draw(exempt = true, suffix = "")
+
+    /** The same, the battery exemption missing: the live row asks for „Zulassen“. */
+    @Test
+    fun drawTheStartScreenWithoutTheExemption() = draw(exempt = false, suffix = "-ohne-akku")
+
+    private fun draw(exempt: Boolean, suffix: String) {
+        org.robolectric.Shadows.shadowOf(ctx().getSystemService(android.os.PowerManager::class.java))
+            .setIgnoringBatteryOptimizations(ctx().packageName, exempt)
         ServerStore.setBaseUrl(ctx(), "https://haus.example")
         TokenStore.backend = ctx().getSharedPreferences("test_tokens", Context.MODE_PRIVATE)
         TokenStore.save(ctx(), "haus_device_TESTTOKEN123")
@@ -55,7 +63,7 @@ class StartPreviewTest {
         val tag = System.getenv("START_PREVIEW_TAG") ?: "nachher"
         listOfNotNull(File(RepoFiles.root, "app/build/widget-preview"), System.getenv("WIDGET_PREVIEW_DIR")?.let(::File)).forEach { dir ->
             dir.mkdirs()
-            File(dir, "start-$tag.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            File(dir, "start-$tag$suffix.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
         }
     }
 

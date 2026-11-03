@@ -124,8 +124,8 @@ class HomeScreenTest {
         val section = a.findViewById<ViewGroup>(R.id.connected_section)
         val group = a.findViewById<View>(R.id.devices_group)
         val order = (0 until section.childCount).map { section.getChildAt(it) }
-        assertTrue("the devices come before the widgets", order.indexOf(group) < order.indexOf(a.findViewById(R.id.widgets_group)))
-        assertTrue("the devices come before the live switch", order.indexOf(group) < order.indexOf(a.findViewById(R.id.live_switch)))
+        assertTrue("the devices come before the widgets", order.indexOf(group) < order.indexOf(a.findViewById(R.id.widgets_card)))
+        assertTrue("the devices come before the live switch", order.indexOf(group) < order.indexOf(a.findViewById(R.id.widgets_card)))
         val rows = deviceRows(a).map { texts(it) }
         assertEquals(
             listOf(listOf("Küche", "an · 60 %"), listOf("Haustür", "abgeschlossen"), listOf("Bad", "21,5 °C"), listOf("Alle Geräte")),
@@ -210,21 +210,40 @@ class HomeScreenTest {
     private fun children(a: HomeActivity): List<View> =
         a.findViewById<ViewGroup>(R.id.connected_section).let { g -> (0 until g.childCount).map { g.getChildAt(it) } }
 
-    /** The live line sits in the widgets' block, under its hint; „Gekoppelt mit …“ right above „Kopplung aufheben“. */
+    /**
+     * The live switch is the last row of the widgets' card, in its row style
+     * (owner, 2026-11-03), under „Widget hinzufügen“ and its hint; „Gekoppelt
+     * mit …“ right above „Kopplung aufheben“.
+     */
     @Test
-    fun theLiveLineIsTheWidgetsAndThePairingSitsByUnpair() {
+    fun theLiveSwitchIsTheWidgetCardsLastRowAndThePairingSitsByUnpair() {
         paired()
         val a = open()
         val order = children(a)
         val title = order.indexOfFirst { (it as? TextView)?.text?.toString() == ctx().getString(R.string.home_widgets_title) }
-        val live = order.indexOf(a.findViewById(R.id.live_switch))
-        val battery = order.indexOf(a.findViewById(R.id.live_battery))
-        val widgets = order.indexOf(a.findViewById(R.id.widgets_group))
-        assertTrue("the widgets' title first", title in 0 until live)
-        assertTrue("the live switch, its line, then the widgets", live < battery && battery < widgets)
+        val card = a.findViewById<ViewGroup>(R.id.widgets_card)
+        assertTrue("the widgets' title, then the card", title in 0 until order.indexOf(card))
+        assertEquals("the widgets, then the live row", listOf(R.id.widgets_group, R.id.live_row), (0 until card.childCount).map { card.getChildAt(it).id })
+        val row = a.findViewById<ViewGroup>(R.id.live_row)
+        assertTrue("the switch is in the row", a.findViewById<View>(R.id.live_switch).parent === row)
+        assertEquals(listOf("Live-Widgets"), listOf(a.findViewById<TextView>(R.id.live_title).text.toString()))
+        assertEquals("no paragraph of its own", -1, order.indexOf(a.findViewById(R.id.live_battery)))
         val status = order.indexOf(a.findViewById(R.id.status))
         assertEquals("„Gekoppelt mit …“ right above „Kopplung aufheben“", order.indexOf(a.findViewById(R.id.logout_btn)) - 1, status)
         assertEquals("Gekoppelt mit 127.0.0.1", a.findViewById<TextView>(R.id.status).text.toString())
+    }
+
+    /** „Zulassen“ is asked for only while the exemption is missing; granted, the row's line is short. */
+    @Test
+    fun zulassenOnlyWhileTheExemptionIsMissing() {
+        paired()
+        val pm = shadowOf(ctx().getSystemService(android.os.PowerManager::class.java))
+        pm.setIgnoringBatteryOptimizations(ctx().packageName, true)
+        var line = open().findViewById<TextView>(R.id.live_battery).text.toString()
+        assertTrue("granted, yet it asks: $line", "Zulassen" !in line)
+        pm.setIgnoringBatteryOptimizations(ctx().packageName, false)
+        line = open().findViewById<TextView>(R.id.live_battery).text.toString()
+        assertTrue("missing, and it does not ask: $line", "Zulassen" in line)
     }
 
     private val shutter = """{"ok":true,"favorites":[
