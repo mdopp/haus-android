@@ -71,8 +71,8 @@ class EnergyFluss private constructor(
             "solar" -> watts(solar) to "erzeugt"
             "haus" -> watts(haus) to "verbraucht"
             "netz" -> when {
-                bezug > 0 -> watts(bezug) to "bezogen"
-                einsp > 0 -> watts(einsp) to "eingespeist"
+                bezug > 0 -> watts(bezug) to "bezieht"
+                einsp > 0 -> watts(einsp) to "speist ein"
                 else -> watts(0.0) to "ruht"
             }
             "akku" -> when {

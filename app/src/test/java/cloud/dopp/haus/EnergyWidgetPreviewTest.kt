@@ -71,7 +71,7 @@ class EnergyWidgetPreviewTest {
             },
         )
         val host = FrameLayout(ctx)
-        val v = EnergyRender.build(ctx, id, e, true, EnergyWidgetProvider.tapPending(ctx, id), EnergyWidgetProvider.refreshPending(ctx, id))
+        val v = EnergyRender.build(ctx, id, e, true, EnergyWidgetProvider.tapPending(ctx, id))
             .apply(ctx, host)
         val d = ctx.resources.displayMetrics.density
         val w = (wDp * d).toInt()

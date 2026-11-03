@@ -76,7 +76,7 @@ class EnergyWidgetTest {
         )
         val views = EnergyRender.build(
             ctx, id, e, paired,
-            EnergyWidgetProvider.tapPending(ctx, id), EnergyWidgetProvider.refreshPending(ctx, id),
+            EnergyWidgetProvider.tapPending(ctx, id),
         )
         return views.apply(ctx, android.widget.FrameLayout(ctx))
     }
@@ -104,7 +104,9 @@ class EnergyWidgetTest {
         assertEquals("12,4 kWh", v.text("e_today_v0"))
         assertEquals("6,0 kWh", v.text("e_today_v1"))
         assertEquals("3,1 kWh", v.text("e_today_v2"))
-        assertEquals("—", v.text("e_today_v3"))
+        assertNull("„In den Akku“ is gone", v.findViewById<View?>(ctx.resources.getIdentifier("e_today_v3", "id", ctx.packageName)))
+        assertEquals("Autarkie", v.text("e_autarkie_l"))
+        assertEquals("100\u00a0%", v.text("e_autarkie_v"))
         assertEquals("Heute", v.text("e_today_label"))
     }
 
@@ -144,18 +146,18 @@ class EnergyWidgetTest {
         assertTrue("the ring is a picture", bare.picture(R.id.e_ring) != null)
         assertEquals("Akku 83\u00a0%, entlädt", bare.findViewById<View>(R.id.e_ring).contentDescription.toString())
         assertEquals("2,1 kW", bare.text("e_main"))
-        assertEquals("Ins Netz", bare.text("e_title"))
+        assertEquals("Netz speist ein", bare.text("e_title"))
         assertEquals(View.GONE, bare.findViewById<View>(R.id.e_sub).visibility)
         assertEquals(View.GONE, bare.findViewById<View>(R.id.e_today).visibility)
         val taller = drawn(200, 100)
-        assertEquals("Haus 800 W", taller.text("e_sub"))
+        assertEquals("Haus verbraucht 800 W", taller.text("e_sub"))
         assertEquals("Heute 12,4 kWh erzeugt", taller.text("e_today"))
         assertEquals(View.VISIBLE, taller.findViewById<View>(R.id.e_today).visibility)
         assertNull("no today from Haus, no line", EnergyRender.todayLine(energy.copy(totals = emptyList())))
         // four cells wide, one high: the house and Heute beside the number
         val wide = drawn(300, 60)
         assertEquals(View.VISIBLE, wide.findViewById<View>(R.id.e_side).visibility)
-        assertEquals("Haus 800 W", wide.text("e_side1"))
+        assertEquals("Haus verbraucht 800 W", wide.text("e_side1"))
         assertEquals("Heute 12,4 kWh erzeugt", wide.text("e_side2"))
     }
 
@@ -163,7 +165,7 @@ class EnergyWidgetTest {
     @Test
     fun smallWithoutTheChargeShowsTheGrid() {
         val v = drawn(250, 100, e = energy.copy(charge = null))
-        assertEquals("Haus", v.text("e_title"))
+        assertEquals("Haus verbraucht", v.text("e_title"))
         assertEquals("800 W", v.text("e_main"))
         assertEquals("Akku entlädt 300 W", v.text("e_sub"))
     }
@@ -199,14 +201,19 @@ class EnergyWidgetTest {
         )
     }
 
-    /** The arrows read again; they open no page. */
+    /** No reload arrows (owner, 2026-11-03): the live stream keeps the widget current. */
     @Test
-    fun theArrowsReadAgain() {
-        ServerStore.setBaseUrl(ctx, "https://haus.dopp.example")
-        val v = drawn(250, 120)
-        v.findViewById<View>(R.id.e_refresh).performClick()
-        val app = shadowOf(ctx as android.app.Application)
-        assertNull(app.nextStartedActivity)
-        assertTrue(app.broadcastIntents.any { it.action == EnergyWidgetProvider.ACTION_REFRESH })
+    fun noReloadArrows() {
+        listOf("widget_energy.xml", "widget_energy_small.xml").forEach {
+            val xml = java.io.File(RepoFiles.main, "res/layout/$it").readText()
+            assertTrue(it, !xml.contains("ic_refresh"))
+        }
+    }
+
+    /** Every widget on solid black without an outline, as Android's own (owner, 2026-11-03). */
+    @Test
+    fun blackGroundNoOutline() {
+        val bg = java.io.File(RepoFiles.main, "res/drawable/widget_bg.xml").readText()
+        assertTrue(bg, bg.contains("<solid android:color=\"#FF000000\"") && !bg.contains("<stroke") && !bg.contains("<gradient"))
     }
 }

@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Every widget's ground (owner, 2026-11-03: „Hintergrund schwarz, kein Rand“,
+     as Android's own widgets): solid black, no outline, the rounded corners. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <gradient
-        android:angle="90"
-        android:startColor="#FF17171D"
-        android:endColor="#FF0D0D11" />
+    <solid android:color="#FF000000" />
     <corners android:radius="22dp" />
-    <stroke android:width="1dp" android:color="#1FFFFFFF" />
 </shape>

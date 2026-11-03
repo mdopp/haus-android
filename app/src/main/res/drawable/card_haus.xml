@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Tiered Haus card: subtle vertical gradient + hairline edge, matching the
-     widget_bg look so app screens and widgets read as one design language. -->
+     widgets' rounded look; the widgets themselves are solid black since 2026-11-03. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <gradient

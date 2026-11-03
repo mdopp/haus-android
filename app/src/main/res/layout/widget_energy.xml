@@ -4,8 +4,9 @@
      flow now as a picture like Haus's Energie page (EnergyPicture: Solar,
      Netz, Akku with its charge as a ring, Haus, the active ways drawn), and
      beside it, with the room and while Haus says it, what the counters added
-     today in the ways' colours. The tap sits on e_root, a child filling the
-     tile (#104); the arrows read again. No capitals. -->
+     today in the ways' colours, and the Autarkie now. The tap sits on e_root,
+     a child filling the tile (#104); no reload arrows, the live stream keeps
+     it current (owner, 2026-11-03). Heavy type, no capitals. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/e_frame"
     android:layout_width="match_parent"
@@ -36,7 +37,7 @@
             android:layout_width="@dimen/energy_today_width"
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
-            android:paddingTop="26dp"
+            android:paddingTop="4dp"
             android:paddingBottom="4dp"
             android:orientation="vertical">
 
@@ -47,9 +48,9 @@
                 android:layout_marginBottom="2dp"
                 android:maxLines="1"
                 android:text="@string/energy_today"
+                android:fontFamily="sans-serif-black"
                 android:textColor="#FFF2F2F5"
-                android:textStyle="bold"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -66,8 +67,9 @@
                     android:layout_weight="1"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textColor="#FF9AA0AE"
-                    android:textSize="11sp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#FFC9CDD6"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/e_today_v0"
@@ -76,9 +78,9 @@
                     android:layout_marginStart="4dp"
                     android:maxLines="1"
                     android:text="—"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="#FFF2F2F5"
-                    android:textStyle="bold"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -96,8 +98,9 @@
                     android:layout_weight="1"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textColor="#FF9AA0AE"
-                    android:textSize="11sp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#FFC9CDD6"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/e_today_v1"
@@ -106,9 +109,9 @@
                     android:layout_marginStart="4dp"
                     android:maxLines="1"
                     android:text="—"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="#FFF2F2F5"
-                    android:textStyle="bold"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -126,8 +129,9 @@
                     android:layout_weight="1"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textColor="#FF9AA0AE"
-                    android:textSize="11sp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#FFC9CDD6"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/e_today_v2"
@@ -136,12 +140,14 @@
                     android:layout_marginStart="4dp"
                     android:maxLines="1"
                     android:text="—"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="#FFF2F2F5"
-                    android:textStyle="bold"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
+            <!-- Autarkie now: the last of the figures (owner, 2026-11-03: not alone in a corner). -->
             <LinearLayout
+                android:id="@+id/e_autarkie"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
@@ -150,25 +156,27 @@
                 android:baselineAligned="false">
 
                 <TextView
-                    android:id="@+id/e_today_l3"
+                    android:id="@+id/e_autarkie_l"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textColor="#FF9AA0AE"
-                    android:textSize="11sp" />
+                    android:text="@string/energy_autarkie"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#FFC9CDD6"
+                    android:textSize="12sp" />
 
                 <TextView
-                    android:id="@+id/e_today_v3"
+                    android:id="@+id/e_autarkie_v"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:maxLines="1"
                     android:text="—"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="#FFF2F2F5"
-                    android:textStyle="bold"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
         </LinearLayout>
@@ -184,16 +192,4 @@
         android:textColor="#FF9AA0AE"
         android:textSize="13sp"
         android:visibility="gone" />
-
-    <ImageView
-        android:id="@+id/e_refresh"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="6dp"
-        android:padding="6dp"
-        android:src="@drawable/ic_refresh"
-        android:tint="#FF9AA0AE"
-        android:contentDescription="@string/widget_refresh" />
 </FrameLayout>
