@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.Card
 import cloud.dopp.haus.data.ServerStore
+import cloud.dopp.haus.widget.DeviceLook
 import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.WidgetActionActivity
 import cloud.dopp.haus.widget.WidgetActionReceiver
@@ -57,6 +58,75 @@ class DeviceWidgetTest {
         assertEquals("Küche", v.text(R.id.d_name))
         assertEquals("an · 60 %", v.text(R.id.d_state))
         assertEquals("before the first read: the bound name, „…“", "…", tile(id, null).text(R.id.d_state))
+    }
+
+    /**
+     * Owner, 2026-11-03: „Viel Text statt Bildern“. One cell: a garage says
+     * shut or open by its picture and colour, its name on one line without
+     * the room HA appends; no state in words — the picture says it.
+     */
+    @Test
+    fun aGarageIsAPicture() {
+        val id = placed("cover.garagentor", "Garagentor Garage")
+        WidgetStore.bind(ctx, id, "cover.garagentor", "Garagentor Garage", "cover", "garage")
+        fun card(state: String) = Card("cover.garagentor", "Garagentor Garage", "cover", "garage", state, null)
+        val shut = tile(id, card("closed"))
+        assertEquals("Garagentor", shut.text(R.id.d_name))
+        assertEquals(1, shut.findViewById<TextView>(R.id.d_name).maxLines)
+        assertEquals(View.GONE, shut.findViewById<View>(R.id.d_state).visibility)
+        assertEquals("Garagentor, zu", shut.findViewById<View>(R.id.d_body).contentDescription)
+        assertEquals(R.drawable.ic_garage_closed, DeviceLook.icon("cover", "garage", "closed"))
+        assertEquals(R.drawable.ic_garage_open, DeviceLook.icon("cover", "garage", "open"))
+        assertEquals(DeviceLook.SECURE, DeviceLook.tint("cover", "garage", card("closed")))
+        assertEquals(DeviceLook.OPEN, DeviceLook.tint("cover", "garage", card("open")))
+        assertEquals(DeviceLook.MOVING, DeviceLook.tint("cover", "garage", card("opening")))
+        // a device that does not answer says so in words, in the grey of nothing known
+        assertEquals(View.VISIBLE, tile(id, card("unavailable")).findViewById<View>(R.id.d_state).visibility)
+        assertEquals(DeviceLook.UNKNOWN, DeviceLook.tint("cover", "garage", card("unavailable")))
+    }
+
+    /** Pictures that differ by silhouette, not only by colour (#91). */
+    @Test
+    fun theStatesHaveTheirOwnPictures() {
+        assertEquals(R.drawable.ic_blind_closed, DeviceLook.icon("cover", "shutter", "closed"))
+        assertEquals(R.drawable.ic_blind_open, DeviceLook.icon("cover", null, "open"))
+        assertEquals(R.drawable.ic_light_on, DeviceLook.icon("light", null, "on"))
+        assertEquals(R.drawable.ic_light_off, DeviceLook.icon("light", null, "off"))
+        assertEquals(R.drawable.ic_lock_locked, DeviceLook.icon("lock", null, "locked"))
+        assertEquals(DeviceLook.SECURE, DeviceLook.tint("lock", null, Card("lock.t", "T", "lock", null, "locked", null)))
+        assertEquals(DeviceLook.ON, DeviceLook.tint("light", null, Card("light.k", "K", "light", null, "on", null)))
+        assertEquals(DeviceLook.OFF, DeviceLook.tint("light", null, Card("light.k", "K", "light", null, "off", null)))
+        assertEquals("nothing read yet", DeviceLook.UNKNOWN, DeviceLook.tint("light", null, null))
+    }
+
+    /** The name, one short line: the room HA repeats goes, the rest stays. */
+    @Test
+    fun theNameIsShort() {
+        assertEquals("Garagentor", DeviceLook.shortName("Garagentor Garage"))
+        assertEquals("Garagentor", DeviceLook.shortName("Garage Garagentor"))
+        assertEquals("Küche Licht", DeviceLook.shortName("Küche Licht"))
+        assertEquals("Bad", DeviceLook.shortName("Bad"))
+        assertEquals("Haustür", DeviceLook.shortName(" Haustür "))
+    }
+
+    /** A reading or a shutter in between needs its words even on one cell; a lamp's brightness is a bar. */
+    @Test
+    fun wordsOnlyWhereThePictureCannotSayIt() {
+        val bad = placed("climate.bad", "Bad")
+        val heating = tile(bad, Card("climate.bad", "Bad", "climate", null, "heat", null, temperature = 21.5))
+        assertEquals(View.VISIBLE, heating.findViewById<View>(R.id.d_state).visibility)
+        assertEquals("21,5 °C", heating.text(R.id.d_state))
+        val lamp = tile(placed("light.kueche", "Küche"), Card("light.kueche", "Küche", "light", null, "on", null, brightness = 153))
+        assertEquals(View.GONE, lamp.findViewById<View>(R.id.d_state).visibility)
+        assertEquals(View.VISIBLE, lamp.findViewById<View>(R.id.d_bar).visibility)
+    }
+
+    /** Two cells wide: the picture beside the name and the state, in words. */
+    @Test
+    fun wideShowsTheWordsBesideThePicture() {
+        assertTrue(DeviceWidgetProvider.wide(140, 72))
+        assertTrue(!DeviceWidgetProvider.wide(64, 72))
+        assertTrue("2×2 stays upright", !DeviceWidgetProvider.wide(140, 140))
     }
 
     @Test

@@ -52,4 +52,7 @@
     <dimen name="brand_rule_bottom_compact">18dp</dimen>
     <dimen name="hero_glow_size_compact">112dp</dimen>
 
+    <!-- The energy widget's Heute column beside the flow picture. -->
+    <dimen name="energy_today_width">116dp</dimen>
+
 </resources>

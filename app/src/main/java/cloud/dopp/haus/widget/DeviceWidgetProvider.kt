@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
@@ -19,7 +20,7 @@ import kotlin.concurrent.thread
  * One device per widget (restored by the owner, 2026-11-03: the active and
  * all-devices widgets went, not this one). Each instance is bound to one Home
  * Assistant entity through [WidgetConfigActivity]; it draws the entity's
- * icon, name and state, and the whole tile is the tap ([tapFor]): a light, a
+ * state as a picture ([DeviceLook]) with its name below, and the whole tile is the tap ([tapFor]): a light, a
  * switch, a cover toggles and a lock opens its chooser, through the same
  * [WidgetActionReceiver] as the start screen; anything else opens its page on
  * Haus. The live stream keeps it current (`card_state`, [wakeEntity]); a
@@ -83,23 +84,46 @@ class DeviceWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_REFRESH = "cloud.dopp.haus.widget.DEVICE_REFRESH"
 
-        /** The tile of [appWidgetId], drawn from [card] — the read one, or none yet (the bound name, "…"). */
+        /**
+         * The tile of [appWidgetId], drawn from [card] — the read one, or none
+         * yet (the bound name, the picture in the grey of nothing known).
+         * Picture first (owner, 2026-11-03, [DeviceLook]); one cell high and
+         * narrow, the words only where the picture cannot say it.
+         */
         fun build(ctx: Context, appWidgetId: Int, card: Card?): RemoteViews {
-            val v = RemoteViews(ctx.packageName, R.layout.widget_device)
+            val opts = AppWidgetManager.getInstance(ctx).getAppWidgetOptions(appWidgetId)
+            val minW = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+            val minH = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+            val wide = wide(minW, minH)
+            val v = RemoteViews(ctx.packageName, if (wide) R.layout.widget_device_wide else R.layout.widget_device)
             val domain = card?.domain ?: WidgetStore.domain(ctx, appWidgetId)
-            val name = WidgetStore.name(ctx, appWidgetId).ifBlank { card?.name.orEmpty() }
-            v.setImageViewResource(R.id.d_icon, DeviceIcons.forState(domain, card?.state))
-            val on = card?.isOn == true
-            v.setInt(R.id.d_icon, "setColorFilter", if (on) ON else OFF)
+            val deviceClass = card?.deviceClass ?: WidgetStore.deviceClass(ctx, appWidgetId)
+            val name = DeviceLook.shortName(WidgetStore.name(ctx, appWidgetId).ifBlank { card?.name.orEmpty() })
+            val tint = DeviceLook.tint(domain, deviceClass, card)
+            v.setImageViewResource(R.id.d_icon, DeviceLook.icon(domain, deviceClass, card?.state))
+            v.setInt(R.id.d_icon, "setColorFilter", tint)
             v.setTextViewText(R.id.d_name, name)
-            v.setTextViewText(R.id.d_state, card?.let { StartDevices.stateText(it) } ?: "…")
-            v.setOnClickPendingIntent(R.id.d_root, tapFor(ctx, appWidgetId, card))
+            val words = card?.let { StartDevices.stateText(it) } ?: "…"
+            val roomy = wide || minH >= TALL
+            v.setTextViewText(R.id.d_state, if (roomy || card == null) words else DeviceLook.compactWords(card, words))
+            val showWords = roomy || DeviceLook.needsWords(card)
+            v.setViewVisibility(R.id.d_state, if (showWords) View.VISIBLE else View.GONE)
+            val level = DeviceLook.level(card)
+            v.setViewVisibility(R.id.d_bar, if (level != null) View.VISIBLE else View.GONE)
+            if (level != null) v.setProgressBar(R.id.d_bar, 100, level, false)
+            // the words the picture stands for, for a screen reader
+            v.setContentDescription(R.id.d_body, "$name, $words")
+            val tap = tapFor(ctx, appWidgetId, card)
+            v.setOnClickPendingIntent(R.id.d_root, tap)
+            v.setOnClickPendingIntent(R.id.d_body, tap)
             return v
         }
 
-        /** The icon of a device that is on or open; otherwise the quiet grey. */
-        const val ON = 0xFFFFC107.toInt()
-        const val OFF = 0xFF9AA0AE.toInt()
+        /** Two cells wide and no more than about one high: the picture beside the words. Pure. */
+        fun wide(minW: Int, minH: Int): Boolean = minW >= 130 && minW >= minH * 3 / 2
+
+        /** From this height on the state is in words below the picture too. */
+        const val TALL = 110
 
         /**
          * The tile's tap: switch it as the start screen does (a lock opens its
@@ -123,16 +147,16 @@ class DeviceWidgetProvider : AppWidgetProvider() {
         /** Not bound yet (the picker was left): the tap opens the picker. */
         private fun unbound(ctx: Context, appWidgetId: Int): RemoteViews {
             val v = RemoteViews(ctx.packageName, R.layout.widget_device)
-            v.setInt(R.id.d_icon, "setColorFilter", OFF)
+            v.setInt(R.id.d_icon, "setColorFilter", DeviceLook.OFF)
             v.setTextViewText(R.id.d_name, ctx.getString(R.string.widget_device_label))
             v.setTextViewText(R.id.d_state, ctx.getString(R.string.widget_device_setup))
+            v.setViewVisibility(R.id.d_state, View.VISIBLE)
             val pick = Intent(ctx, WidgetConfigActivity::class.java)
                 .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            v.setOnClickPendingIntent(
-                R.id.d_root,
-                PendingIntent.getActivity(ctx, 100_000 + appWidgetId, pick, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE),
-            )
+            val tap = PendingIntent.getActivity(ctx, 100_000 + appWidgetId, pick, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            v.setOnClickPendingIntent(R.id.d_root, tap)
+            v.setOnClickPendingIntent(R.id.d_body, tap)
             return v
         }
 

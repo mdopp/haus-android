@@ -1,0 +1,16 @@
+<!-- A garage, door up (owner, 2026-11-03): the same building as
+     ic_garage_closed, the door rolled up to one slat under the roof and the
+     opening empty but for the ground, with an arrow saying it is open. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M12,2.6L22.6,8.2V21.4H1.4V8.2zM4.6,10.4V21.4H19.4V10.4z" />
+    <!-- the door, rolled up -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M5.6,11.4h12.8v1.8h-12.8z" />
+    <!-- an arrow up in the empty opening -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M12,14.2l3.4,3.4h-2.3v3.8h-2.2v-3.8h-2.3z" />
+</vector>

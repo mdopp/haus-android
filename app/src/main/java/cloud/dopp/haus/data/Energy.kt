@@ -29,10 +29,16 @@ data class EnergyTotal(
     val today: Double? = null,
 )
 
-/** The house energy picture: the live `flow` legs plus cumulative `totals`. */
+/**
+ * The house energy picture: the live `flow` legs plus cumulative `totals`,
+ * and how full the battery is ([charge], percent; [chargeEntityId] its
+ * sensor), null while Haus does not say.
+ */
 data class Energy(
     val flow: List<EnergyFlow>,
     val totals: List<EnergyTotal> = emptyList(),
+    val charge: Double? = null,
+    val chargeEntityId: String? = null,
 ) {
     val pv get() = flow.firstOrNull { it.sense == "supply" }
     val house get() = flow.firstOrNull { it.sense == "draw" }

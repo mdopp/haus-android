@@ -221,6 +221,9 @@ object Napi {
 
         /** A total's kWh since the house's midnight; absent when HA's history does not say. */
         const val TODAY = "today"
+
+        /** How full the battery is: a meter whose state is the percent; absent without one (mdopp/homes#228). */
+        const val CHARGE = "charge"
     }
 
     /** `GET /napi/portal/start/addable`: `{ok, rooms: [{room, cards: [device]}]}`. */

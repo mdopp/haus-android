@@ -6,8 +6,8 @@ no web shell, no messages, no approvals, no diagnostics.
 
 - **Start screen:** your favorite devices first (what you pinned with ☆ on
   Haus), a tap switches one; below them „Alle Geräte“, Haus's devices page.
-- **Widgets:** one device per widget (a tap switches it), one energy widget
-  (jetzt and heute; a tap opens Haus's Energie page), and the household's
+- **Widgets:** one device per widget (its state as a picture; a tap switches it), one energy widget
+  (the flow now as a picture with the battery's charge, and heute; a tap opens Haus's Energie page), and the household's
   documents or notes. One look for every confirmation.
 - **Share → Haus:** a link becomes a note; a photo (or several) from the
   camera app goes into Haus's document inbox, HEIC made JPEG on the phone.

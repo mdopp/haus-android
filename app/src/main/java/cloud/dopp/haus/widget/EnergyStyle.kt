@@ -6,28 +6,12 @@ import java.util.Locale
 import kotlin.math.abs
 
 /**
- * Pure (context-free) presentation helpers of the energy widget — colors, flow
+ * Pure (context-free) presentation helpers of the energy widget — flow
  * direction, W/kW and kWh formatting — mirroring Haus's Energie page.
  * JVM-testable (no Android APIs).
  */
 object EnergyStyle {
-    const val SUPPLY = 0xFF3DDC84.toInt()   // green: only what the sun makes and what goes into the grid
-    const val NEUTRAL = 0xFFF2F2F5.toInt()  // everything else: consumption, the battery, a missing value
     const val MUTED = 0xFF9AA0AE.toInt()    // labels, and the values while loading
-
-    /**
-     * The colour of a flow leg by its sense + sign (owner, 2026-11-03): green
-     * only for PV and for feeding the grid; the house's draw, a draw from the
-     * grid and the battery stay neutral — consumption is no alarm.
-     */
-    fun colorFor(sense: String?, watts: Double?): Int {
-        val w = watts ?: return NEUTRAL
-        return when (sense) {
-            "supply" -> if (w > 0) SUPPLY else NEUTRAL
-            "grid" -> if (w < 0) SUPPLY else NEUTRAL
-            else -> NEUTRAL
-        }
-    }
 
     /** The human direction suffix (Bezug/Einspeisung/lädt/entlädt), or "". */
     fun directionFor(sense: String?, watts: Double?): String {
@@ -52,17 +36,16 @@ object EnergyStyle {
         return String.format(Locale.GERMANY, "%.1f kWh", v)
     }
 
-    /** The four canonical legs in display order (PV / Haus / Netz / Akku). */
-    fun orderedLegs(
-        pv: EnergyFlow?, house: EnergyFlow?, grid: EnergyFlow?, battery: EnergyFlow?,
-    ): List<EnergyFlow?> = listOf(pv, house, grid, battery)
-
     /** The four canonical "heute" slots, keyed to server totals. */
     val TOTAL_SLOTS = listOf("pv", "export", "import", "battery")
 
-    /** The heute cells' labels and colors, in [TOTAL_SLOTS] order: short, the cells are narrow. */
+    /**
+     * The heute cells' labels and colors, in [TOTAL_SLOTS] order: short, the
+     * cells are narrow. The colours are the picture's (owner, 2026-11-03: as
+     * Haus's Energie page): the sun's, feeding in, drawing, the battery's.
+     */
     val TOTAL_LABELS = listOf("Erzeugt", "Ins Netz", "Netzbezug", "In den Akku")
-    val TOTAL_COLORS = intArrayOf(SUPPLY, SUPPLY, NEUTRAL, NEUTRAL)
+    val TOTAL_COLORS = intArrayOf(EnergyPicture.SOLAR, EnergyPicture.EINSP, EnergyPicture.BEZUG, EnergyPicture.AKKU)
 
     /**
      * Map the server `totals` onto the four canonical slots, preserving

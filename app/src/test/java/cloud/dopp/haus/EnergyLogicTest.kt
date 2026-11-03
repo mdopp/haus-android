@@ -5,36 +5,21 @@ import cloud.dopp.haus.data.EnergyTotal
 import cloud.dopp.haus.widget.EnergyStyle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * JVM coverage for the pure logic of the one energy widget — the flow
- * color/direction mapping, the size tiers and the totals-slot mapping.
+ * JVM coverage for the pure logic of the one energy widget — the flow's
+ * direction words, the size tiers, the totals-slot mapping and the flow now.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class EnergyLogicTest {
 
     // ── EnergyStyle: color + direction per leg ────────────────────────────────
-
-    /** Owner, 2026-11-03: green only for the sun and for feeding the grid; consumption is no alarm. */
-    @Test fun greenOnlyForTheSunAndFeedingIn() {
-        assertEquals(EnergyStyle.SUPPLY, EnergyStyle.colorFor("supply", 1200.0))
-        assertEquals(EnergyStyle.SUPPLY, EnergyStyle.colorFor("grid", -500.0))
-        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("grid", 500.0))
-        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("draw", 800.0))
-        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("battery", 300.0))
-        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("battery", -300.0))
-        assertEquals("no sun", EnergyStyle.NEUTRAL, EnergyStyle.colorFor("supply", 0.0))
-    }
-
-    @Test fun missingWattsIsNeutral() {
-        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("grid", null))
-    }
 
     @Test fun directionWordsMatchTheWebScreen() {
         assertEquals("Bezug", EnergyStyle.directionFor("grid", 100.0))
@@ -110,13 +95,68 @@ class EnergyLogicTest {
         assertNull(ordered[3])
     }
 
-    @Test fun orderedLegsPreserveTheDisplayOrder() {
-        val pv = EnergyFlow("PV", 1.0, "W", "supply")
-        val grid = EnergyFlow("Netz", 2.0, "W", "grid")
-        val ordered = EnergyStyle.orderedLegs(pv, null, grid, null)
-        assertSame(pv, ordered[0])
-        assertNull(ordered[1])
-        assertSame(grid, ordered[2])
-        assertNull(ordered[3])
+    // ── EnergyFluss: the page's flow now (internal/pages/energie_fluss.go) ─────
+
+    private fun fluss(pv: Double?, haus: Double?, netz: Double?, akku: Double?, charge: Double? = null, unit: String = "W") =
+        cloud.dopp.haus.widget.EnergyFluss.of(
+            cloud.dopp.haus.data.Energy(
+                listOfNotNull(
+                    EnergyFlow("PV", pv, unit, "supply"), EnergyFlow("Haus", haus, unit, "draw"),
+                    EnergyFlow("Netz", netz, unit, "grid"), akku?.let { EnergyFlow("Akku", it, unit, "battery") },
+                ),
+                charge = charge,
+            ),
+        )
+
+    /** The owner's evening (2026-11-03): no sun, the battery carries the house and a little goes into the grid. */
+    @Test fun theBatteryCarriesTheHouseAtNight() {
+        val f = fluss(0.0, 271.0, -4.0, -276.0, charge = 83.0)
+        assertEquals("271 W" to "verbraucht", f.text("haus"))
+        assertEquals("276 W" to "entlädt", f.text("akku"))
+        assertEquals("4 W" to "eingespeist", f.text("netz"))
+        assertEquals("0 W" to "erzeugt", f.text("solar"))
+        assertEquals("Akku 83\u00a0%", f.name("akku"))
+        assertEquals("the one way that carries: Akku → Haus", listOf("akku" to "haus"), f.aktiv.map { it.von to it.nach })
+        assertEquals(1.0, f.autarkie!!, 0.001)
+    }
+
+    /** At noon the sun fills the house first, then the battery, then the grid. */
+    @Test fun theSunFillsTheHouseThenTheBatteryThenTheGrid() {
+        val f = fluss(3.2, 0.8, -2.1, 0.3, unit = "kW")
+        val ways = f.aktiv.associate { (it.von to it.nach) to it.w }
+        assertEquals(800.0, ways.getValue("solar" to "haus"), 0.1)
+        assertEquals(300.0, ways.getValue("solar" to "akku"), 0.1)
+        assertEquals(2100.0, ways.getValue("solar" to "netz"), 0.1)
+        assertEquals(3, ways.size)
+        assertEquals("3,2 kW" to "erzeugt", f.text("solar"))
+        assertEquals("Akku", f.name("akku"))
+    }
+
+    /** A node that says no number: no ways, no Autarkie — the page draws none either. */
+    @Test fun anUnknownNodeDrawsNoWays() {
+        val f = fluss(null, 800.0, 800.0, null)
+        assertEquals(emptyList<Any>(), f.aktiv)
+        assertNull(f.autarkie)
+        assertEquals("–" to "unbekannt", f.text("solar"))
+    }
+
+    /** No battery leg: no charge shown even when Haus sent one. */
+    @Test fun noBatteryNoCharge() {
+        assertNull(fluss(0.0, 500.0, 500.0, null, charge = 50.0).charge)
+        assertEquals("netz", cloud.dopp.haus.widget.EnergyPicture.singleKey(fluss(0.0, 500.0, 500.0, null)))
+        assertEquals("akku", cloud.dopp.haus.widget.EnergyPicture.singleKey(fluss(0.0, 500.0, 500.0, -10.0, charge = 50.0)))
+    }
+
+    /** The diamond keeps its nodes apart in the 4×2 field and in a 2×2 one. */
+    @Test fun theNodesDoNotTouch() {
+        for ((w, h) in listOf(180f to 144f, 300f to 144f, 130f to 130f)) {
+            val l = cloud.dopp.haus.widget.EnergyPicture.lage(w, h)
+            val p = l.at.values.toList()
+            for (i in p.indices) for (j in i + 1 until p.size) {
+                val d = kotlin.math.hypot(p[i].first - p[j].first, p[i].second - p[j].second)
+                assertTrue("${w}x$h: nodes $i and $j at $d", d > 2 * l.r * 1.2f)
+            }
+            p.forEach { (x, y) -> assertTrue("${w}x$h: inside", x - l.r >= 0 && x + l.r <= w && y - l.r >= 0 && y + l.r <= h) }
+        }
     }
 }

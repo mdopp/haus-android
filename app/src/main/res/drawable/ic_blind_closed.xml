@@ -1,0 +1,11 @@
+<!-- A window with its shutter down (owner, 2026-11-03): the slats fill the
+     frame. Told apart from ic_blind_open by silhouette. One tintable colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M2.5,2.5h19v19h-19zM4.5,4.5v15h15v-15z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M5.5,5.5h13v2.2h-13zM5.5,8.6h13v2.2h-13zM5.5,11.7h13v2.2h-13zM5.5,14.8h13v2.2h-13zM5.5,17.9h13v1.6h-13z" />
+</vector>
