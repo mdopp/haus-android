@@ -29,13 +29,20 @@ const motif = master.replace(/<rect id="ground"[^>]*\/>/, '')
 const white = motif.replaceAll('#3ddc84', '#ffffff')
 /**
  * The notification icon is drawn at 24 dp, where the master's 6-unit line is
- * under 1.5 px: there the house and the prompt go to 9 units and the cursor to
- * 9 high, the same round caps and joins, so the mark stays legible.
+ * under 1.5 px: there the house goes to 8 units, so the mark stays legible.
+ * The prompt and cursor shrink to 0.72 around their own centre (their lines
+ * drawn at about 7 units) so a clear gap stays between them and the walls:
+ * at full size they ran into the house and blurred (owner, 2026-11-03).
  */
+const PROMPT_SCALE = 0.72
 const bold = white
-  .replace('stroke-width="6"', 'stroke-width="9"')
-  .replace('stroke-width="6.5"', 'stroke-width="9"')
-  .replace('y="64.5" width="15" height="6"', 'y="62" width="15" height="9"')
+  .replace('stroke-width="6"', 'stroke-width="8"')
+  .replace(
+    /(<path d="M39 51[^>]*\/>\s*<rect id="cursor"[^>]*\/>)/,
+    `<g transform="translate(54.5 60) scale(${PROMPT_SCALE}) translate(-54.5 -60)">$1</g>`,
+  )
+  .replace('stroke-width="6.5"', 'stroke-width="10"')
+  .replace('y="64.5" width="15" height="6"', 'y="62.25" width="15" height="9.5"')
 
 /** [svg] seen through [box] (x y w h), clipped to [clip] (an SVG shape in the box's units) when given. */
 function view(svg, box, clip) {
