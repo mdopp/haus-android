@@ -128,7 +128,7 @@ class HomeScreenTest {
         assertTrue("the devices come before the live switch", order.indexOf(group) < order.indexOf(a.findViewById(R.id.widgets_card)))
         val rows = deviceRows(a).map { texts(it) }
         assertEquals(
-            listOf(listOf("Küche", "an · 60 %"), listOf("Haustür", "abgeschlossen"), listOf("Bad", "21,5 °C"), listOf("Alle Geräte")),
+            listOf(listOf("Küche", "an ·", "60 %"), listOf("Haustür", "abgeschlossen"), listOf("Bad", "21,5 °C"), listOf("Alle Geräte")),
             rows,
         )
     }
@@ -270,9 +270,12 @@ class HomeScreenTest {
         assertEquals(WidgetActionReceiver.OP_CALL, call.getStringExtra(WidgetActionReceiver.EXTRA_OP))
         assertEquals("cover.open_cover", call.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
         assertNull(call.getStringExtra(WidgetActionReceiver.EXTRA_DATA))
-        fun seekBars(v: View): List<android.widget.SeekBar> =
-            if (v is android.widget.SeekBar) listOf(v) else if (v is ViewGroup) (0 until v.childCount).flatMap { seekBars(v.getChildAt(it)) } else emptyList()
-        assertEquals("its position", 40, seekBars(rows[0]).single().progress)
+        // its position is the level that opens the sheet, no slider on the row (owner, 2026-11-03)
+        assertEquals("40 %", rows[0].findViewById<TextView>(R.id.row_level).text.toString())
+        fun seekBars(v: View): List<View> =
+            if (v is android.widget.SeekBar || v is com.google.android.material.slider.Slider) listOf(v)
+            else if (v is ViewGroup) (0 until v.childCount).flatMap { seekBars(v.getChildAt(it)) } else emptyList()
+        assertTrue("no slider on a row", deviceRows(a).all { seekBars(it).isEmpty() })
     }
 
     /** A heating says its setpoint and goes wärmer by its step, the new setpoint in the call's data. */

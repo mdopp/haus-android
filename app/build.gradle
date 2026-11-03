@@ -88,6 +88,8 @@ dependencies {
     // --- Widgets and pairing ---
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
+    // The level sheet's BottomSheetDialog and Slider (owner, 2026-11-03)
+    implementation 'com.google.android.material:material:1.12.0'
     // Custom Tabs for pairing (/pair-device): it shares the browser's Authelia session.
     implementation 'androidx.browser:browser:1.8.0'
     // Encrypted-at-rest storage for the homes_device_… bearer token.

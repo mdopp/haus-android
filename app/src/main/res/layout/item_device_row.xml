@@ -37,15 +37,38 @@
             android:textColor="@color/homes_text"
             android:textSize="16sp" />
 
-        <TextView
-            android:id="@+id/row_room"
+        <!-- The state; with a level its words, then the level that opens the sheet (owner, 2026-11-03). -->
+        <LinearLayout
+            android:id="@+id/row_line"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end"
             android:layout_marginTop="2dp"
-            android:textColor="@color/homes_text_muted"
-            android:textSize="13sp" />
+            android:orientation="horizontal"
+            android:baselineAligned="true">
+
+            <TextView
+                android:id="@+id/row_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/homes_text_muted"
+                android:textSize="13sp" />
+
+            <cloud.dopp.homes.ui.LevelText
+                android:id="@+id/row_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:paddingBottom="3dp"
+                android:maxLines="1"
+                android:textColor="@color/homes_accent"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/row_controls"
