@@ -31,6 +31,16 @@ import java.io.File
  *
  * No Google Play services, anywhere (the owner's decision, 2026-11-02): no
  * `com.google.android.gms` library, class or permission.
+ *
+ * Das Haus-Konto (the owner's call of 2026-11-03, #206): the household's
+ * shared contacts and calendars in a real Android account „Haus“, so the
+ * dialer, WhatsApp, mail and the calendar app see them. Its authenticator and
+ * its two sync adapters are bound services Android alone may bind; none goes
+ * foreground or posts anything. Android's SyncManager runs them, hourly at
+ * most; the app schedules nothing of its own for them. They write only into
+ * the account's own entries, as the sync adapter, and never send anything
+ * back (supportsUploading false); each part behind its own switch and
+ * permission (WRITE_CONTACTS; READ_ and WRITE_CALENDAR).
  */
 class ManifestTest {
 
@@ -76,13 +86,16 @@ class ManifestTest {
         // Standortverlauf (owner 2026-11-02): behind its own switch
         "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "ACCESS_BACKGROUND_LOCATION",
         "ACCESS_NETWORK_STATE", // whether the phone is on a Wi-Fi
+        // Das Haus-Konto (owner 2026-11-03, #206): into its own account only, each part behind its own switch
+        "WRITE_CONTACTS", "READ_CALENDAR", "WRITE_CALENDAR", "READ_SYNC_SETTINGS", "WRITE_SYNC_SETTINGS",
     )
 
     /**
      * Exactly these permissions: the network, what the live service needs,
-     * and reading contacts, SMS and calls. No camera of the app's own: its
-     * capture screen is gone (owner, 2026-11-02); the QR scanner brings its own. No storage, and
-     * nothing that writes or sends contacts or messages.
+     * reading contacts, SMS and calls, and the Haus account's contacts and
+     * calendars. No camera of the app's own: its capture screen is gone
+     * (owner, 2026-11-02); the QR scanner brings its own. No storage, and
+     * nothing that sends messages.
      */
     @Test
     fun thePermissionsAreExactlyTheseAndNoOthers() {
@@ -102,7 +115,7 @@ class ManifestTest {
             ours + setOf("WAKE_LOCK", "cloud.dopp.haus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION", "CAMERA"),
             permissions(merged),
         )
-        listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION", "WRITE_CONTACTS", "SEND_SMS", "WRITE_CALL_LOG", "RECEIVE_SMS").forEach { word ->
+        listOf("STORAGE", "READ_MEDIA", "ACCESS_MEDIA_LOCATION", "SEND_SMS", "WRITE_CALL_LOG", "RECEIVE_SMS", "WRITE_SMS").forEach { word ->
             assertFalse("a storage permission: $word", permissions(merged).any { it.contains(word) })
         }
         val foreground = Regex("""android:foregroundServiceType="([^"]+)"""").findAll(merged).map { it.groupValues[1] }.toList()
@@ -124,8 +137,66 @@ class ManifestTest {
         val block = manifest.substringAfter(fgs).substringBefore("</service>")
         assertTrue("no special-use subtype", block.contains("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"))
         assertTrue("the subtype does not say what it is for", block.contains("live widget connection to the user's own Haus server"))
-        (services - fgs).forEach { assertTrue("$it is not a widget list", it.contains("RemoteViewsService\"")) }
+        val konto = services.filter { it.contains(".konto.") }
+        assertEquals(
+            "the Haus account's three services (#206)",
+            listOf(".konto.KontoDienst", ".konto.KontakteSyncDienst", ".konto.KalenderSyncDienst"),
+            konto.map { Regex("""android:name="([^"]+)"""").find(it)!!.groupValues[1] },
+        )
+        (services - fgs - konto.toSet()).forEach { assertTrue("$it is not a widget list", it.contains("RemoteViewsService\"")) }
         assertFalse("dataSync is capped at 6 h a day", manifest.contains("dataSync"))
+    }
+
+    /**
+     * The Haus account (#206): its services are bound by Android only (the
+     * account manager, the sync manager), and its sync adapters take Haus's
+     * data in and never send anything back.
+     */
+    @Test
+    fun theHausAccountIsBoundByAndroidAndReadOnly() {
+        val own = manifest.replace(removed, "")
+        fun dienst(name: String) = own.substringAfter("""android:name=".konto.$name"""").substringBefore("</service>")
+        assertTrue(dienst("KontoDienst").contains("""android:permission="android.permission.ACCOUNT_MANAGER""""))
+        assertTrue(dienst("KontoDienst").contains("android.accounts.AccountAuthenticator"))
+        listOf("KontakteSyncDienst" to "kontakte_sync", "KalenderSyncDienst" to "kalender_sync").forEach { (name, xml) ->
+            val d = dienst(name)
+            assertTrue(d, d.contains("""android:permission="android.permission.BIND_SYNC_ADAPTER""""))
+            assertTrue(d, d.contains("@xml/$xml"))
+            val adapter = File(RepoFiles.main, "res/xml/$xml.xml").readText()
+            assertTrue("$xml sends nothing back", adapter.contains("""android:supportsUploading="false""""))
+            assertTrue(adapter.contains("""android:accountType="cloud.dopp.haus""""))
+        }
+        assertFalse("the contacts app offers no editing", File(RepoFiles.main, "res/xml/kontakte_konto.xml").readText().contains("EditSchema"))
+        val kalender = sources.getValue("app/src/main/java/cloud/dopp/haus/konto/KalenderAbgleich.kt")
+        assertTrue("calendars read only", kalender.contains("Calendars.CAL_ACCESS_READ"))
+        assertFalse(kalender.contains("CAL_ACCESS_OWNER") || kalender.contains("CAL_ACCESS_CONTRIBUTOR") || kalender.contains("CAL_ACCESS_EDITOR"))
+        val konto = sources.getValue("app/src/main/java/cloud/dopp/haus/konto/HausKonto.kt")
+        assertTrue("hourly at most", konto.contains("STUNDE = 60L * 60L") && konto.contains("addPeriodicSync(konto, teil.authority, Bundle.EMPTY, STUNDE)"))
+    }
+
+    /**
+     * Only the Haus account writes contacts or calendars, and only as its
+     * sync adapter into its own account: every URI it writes is built by
+     * `alsAdapter`. Nothing else in the app writes either.
+     */
+    @Test
+    fun onlyTheHausAccountWritesContactsOrCalendars() {
+        val schreibt = listOf("applyBatch", "newInsert", "newUpdate", "newDelete", ".insert(", ".update(", ".delete(", "bulkInsert")
+        val konto = setOf(
+            "app/src/main/java/cloud/dopp/haus/konto/KontakteAbgleich.kt",
+            "app/src/main/java/cloud/dopp/haus/konto/KalenderAbgleich.kt",
+            "app/src/main/java/cloud/dopp/haus/konto/HausKonto.kt",
+        )
+        val fremd = sources.filterKeys { it !in konto }.filterValues { t -> t.contains("ContactsContract") || t.contains("CalendarContract") }
+            .flatMap { (p, t) -> schreibt.filter { t.contains(it) }.map { "$p: $it" } }
+        assertTrue("writes contacts or calendars outside the Haus account:\n" + fremd.joinToString("\n"), fremd.isEmpty())
+        konto.forEach { p ->
+            val t = sources.getValue(p)
+            Regex("""(?:newInsert|newUpdate|newDelete|\.insert|\.update|\.delete)\(([^,)]*)""").findAll(t).forEach { m ->
+                val ziel = m.groupValues[1].trim()
+                assertTrue("$p writes $ziel not as the account's sync adapter", ziel.startsWith("alsAdapter(") || ziel.startsWith("zeile") || ziel == "uri" || ziel.startsWith("KontakteAbgleich.alsAdapter(") || ziel.startsWith("KalenderAbgleich.alsAdapter("))
+            }
+        }
     }
 
     /** One receiver restarts the live service after a boot and after an app update, both allowed starts. */

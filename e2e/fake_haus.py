@@ -7,6 +7,10 @@ what the e2e asserts on, one timestamped line each:
   OPEN / CLOSE      an SSE stream on /napi/portal/events opened or went away
   WATCH <body>      a POST /napi/portal/watch
   UPLOAD ok|bad     a POST /napi/upload, whether it is Haus's multipart shape
+  GEMEINSAM <part> <code>
+                    a GET /napi/gemeinsam/kontakte|kalender (the Haus account, #206):
+                    200 with the household's cards or calendars, 304 when the
+                    phone named the ETag it has
   GET <path>        every other authed GET
   FRAME <id> -> n   a card_state pushed through /ctl/frame to n open streams
   ACTIVE_SET <ids> -> n
@@ -60,6 +64,24 @@ REPLIES = {
 }
 
 
+# The Haus account (#206): what Haus's /napi/gemeinsam serves (haus#218), in its shapes.
+# Oma Erna is also the person's own contact on the phone (LiveE2EKonto), with the same mobile number.
+GEMEINSAM = {
+    "kontakte": ("text/vcard; charset=utf-8",
+                 "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:urn:uuid:e2e-oma\r\nFN:Oma Erna\r\nN:Müller;Erna;;;\r\n"
+                 "TEL;TYPE=CELL:+49 170 1111111\r\nTEL;TYPE=HOME:+49 89 2222222\r\nEMAIL;TYPE=HOME:erna@haus.example\r\nEND:VCARD\r\n"
+                 "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:urn:uuid:e2e-klempner\r\nFN:Klempner Huber\r\nTEL;TYPE=WORK:+49 89 3333333\r\n"
+                 "ORG:Huber Sanitär\r\nEND:VCARD\r\n"),
+    "kalender": ("text/calendar; charset=utf-8",
+                 "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nX-WR-CALNAME:Haushalt\r\nX-HAUS-KALENDER:haushalt\r\nX-HAUS-ART:haushalt\r\n"
+                 "BEGIN:VEVENT\r\nUID:e2e-muell\r\nDTSTART:20300105T060000Z\r\nDTEND:20300105T063000Z\r\nSUMMARY:Müll raus\r\nEND:VEVENT\r\n"
+                 "END:VCALENDAR\r\n"
+                 "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nX-WR-CALNAME:Erinnerungen\r\nX-HAUS-KALENDER:erinnerungen\r\nX-HAUS-ART:erinnerungen\r\n"
+                 "BEGIN:VEVENT\r\nUID:e2e-arzt\r\nDTSTART:20300106T080000Z\r\nDTEND:20300106T080000Z\r\nSUMMARY:Arzt anrufen\r\n"
+                 "BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"),
+}
+
+
 class Haus(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -87,9 +109,29 @@ class Haus(BaseHTTPRequestHandler):
         if url.path == "/napi/portal/state":
             entity = parse_qs(url.query).get("entity_id", ["light.e2e"])[0]
             return self.reply(200, {"ok": True, "card": card(entity, "on")})
+        if url.path.startswith("/napi/gemeinsam/") and url.path.rsplit("/", 1)[1] in GEMEINSAM:
+            return self.gemeinsam(url.path.rsplit("/", 1)[1])
         if url.path in REPLIES:
             return self.reply(200, REPLIES[url.path])
         return self.reply(404, {"ok": False, "error": "no_such_path"})
+
+    def gemeinsam(self, part):
+        ctype, text = GEMEINSAM[part]
+        body = text.encode()
+        etag = '"%s-%d"' % (part, len(body))
+        if self.headers.get("If-None-Match") == etag:
+            log("GEMEINSAM %s 304" % part)
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.end_headers()
+            return
+        log("GEMEINSAM %s 200" % part)
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("ETag", etag)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_POST(self):
         url = urlparse(self.path)

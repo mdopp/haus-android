@@ -18,6 +18,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredPostal as Pos
 import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.Telephony
 import androidx.core.content.ContextCompat
+import cloud.dopp.haus.konto.HausKonto
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
@@ -38,11 +39,20 @@ object Erlaubnis {
  * `UID:<lookup key>`, one after the other into the file. Not Android's own
  * vCard export: that is 2.1, which the box's Radicale may refuse (haus#210).
  * Read only; no photo.
+ *
+ * The Haus account's contacts are not the person's (#206): they come from
+ * Haus and never go back to the archive. Their rows are left out; a contact
+ * Android joined from the person's own and a shared one keeps the UID it
+ * has without the shared one ([HausKonto.ohneHaus]) and the person's own
+ * name and numbers only; one that holds nothing of the person's (a shared
+ * contact with only a messenger's rows joined to it, a name at most) is
+ * no card at all.
  */
 class HandyKontakte(private val ctx: Context) : Adressbuch {
 
     override fun exportieren(datei: File): Int {
         if (!Erlaubnis.hat(ctx, Erlaubnis.KONTAKTE)) throw SecurityException("READ_CONTACTS")
+        val geteilt = hausQuellen()
         var n = 0
         OutputStreamWriter(FileOutputStream(datei), Charsets.UTF_8).buffered().use { w ->
             ctx.contentResolver.query(
@@ -50,20 +60,55 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
             )?.use { c ->
                 var id = -1L
                 var k: Kontakt? = null
+                var mitHaus = false
+                var eigen = false
+                fun fertig() {
+                    val karte = k ?: return
+                    if (!mitHaus || eigen) {
+                        w.write(Vcard.karte(karte))
+                        n++
+                    }
+                }
                 while (c.moveToNext()) {
                     val kid = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Data.CONTACT_ID))
                     if (kid != id || k == null) {
-                        k?.let { w.write(Vcard.karte(it)); n++ }
+                        fertig()
                         id = kid
-                        val uid = text(c, ContactsContract.Data.LOOKUP_KEY) ?: kid.toString()
-                        k = Kontakt(uid = uid, anzeigename = text(c, ContactsContract.Data.DISPLAY_NAME))
+                        val quellen = geteilt[kid].orEmpty()
+                        mitHaus = quellen.isNotEmpty()
+                        eigen = false
+                        val schluessel = text(c, ContactsContract.Data.LOOKUP_KEY)?.let { HausKonto.ohneHaus(it, quellen) }
+                        val uid = schluessel?.ifEmpty { null } ?: kid.toString()
+                        // a joined contact's display name may be the shared card's: the person's own name row says it
+                        k = Kontakt(uid = uid, anzeigename = if (mitHaus) null else text(c, ContactsContract.Data.DISPLAY_NAME))
                     }
-                    k = dazu(k!!, c)
+                    if (text(c, ContactsContract.RawContacts.ACCOUNT_TYPE) == HausKonto.TYP) continue
+                    val vorher = k!!
+                    k = dazu(vorher, c)
+                    // a name alone is not the person's: a messenger joins its own name row to every contact it knows
+                    if (k != vorher && text(c, ContactsContract.Data.MIMETYPE) != Name.CONTENT_ITEM_TYPE) eigen = true
                 }
-                k?.let { w.write(Vcard.karte(it)); n++ }
+                fertig()
             }
         }
         return n
+    }
+
+    /** The Haus account's raw contacts, by the contact Android joined each into: their SOURCE_IDs. */
+    private fun hausQuellen(): Map<Long, List<String>> {
+        val out = HashMap<Long, MutableList<String>>()
+        ctx.contentResolver.query(
+            ContactsContract.RawContacts.CONTENT_URI,
+            arrayOf(ContactsContract.RawContacts.CONTACT_ID, ContactsContract.RawContacts.SOURCE_ID),
+            "${ContactsContract.RawContacts.ACCOUNT_TYPE} = ? AND ${ContactsContract.RawContacts.DELETED} = 0",
+            arrayOf(HausKonto.TYP), null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                if (c.isNull(0) || c.isNull(1)) continue
+                out.getOrPut(c.getLong(0)) { ArrayList() }.add(c.getString(1))
+            }
+        }
+        return out
     }
 
     /** [k] with what the data row [c] adds. */
@@ -105,7 +150,7 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
     companion object {
         private val SPALTEN = arrayOf(
             ContactsContract.Data.CONTACT_ID, ContactsContract.Data.LOOKUP_KEY, ContactsContract.Data.DISPLAY_NAME,
-            ContactsContract.Data.MIMETYPE,
+            ContactsContract.Data.MIMETYPE, ContactsContract.RawContacts.ACCOUNT_TYPE,
             ContactsContract.Data.DATA1, ContactsContract.Data.DATA2, ContactsContract.Data.DATA3, ContactsContract.Data.DATA4,
             ContactsContract.Data.DATA5, ContactsContract.Data.DATA6, ContactsContract.Data.DATA7, ContactsContract.Data.DATA8,
             ContactsContract.Data.DATA9, ContactsContract.Data.DATA10,

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Das Haus-Konto (#206, owner 2026-11-03): the household's shared contacts,
+     calendars and reminders in the phone's own apps, read only. -->
+<resources>
+    <!-- the account's name in Android's settings, beside Google and the rest -->
+    <string name="konto_label">Haus</string>
+    <string name="konto_title">Haus auf dem Handy</string>
+    <string name="konto_intro">Die gemeinsamen Kontakte und Kalender des Hauses, auf diesem Handy im Konto „Haus“. So findest du sie beim Telefonieren, in WhatsApp, in der Mail und im Kalender.</string>
+    <string name="konto_nur_lesen">Auf dem Handy nur zum Lesen: ändern geht in Haus.</string>
+
+    <string name="konto_kontakte_titel">Kontakte des Hauses</string>
+    <!-- what a screen reader says for the switch -->
+    <string name="konto_kontakte_schalter">Kontakte des Hauses auf dem Handy</string>
+    <string name="konto_kontakte_was">Das gemeinsame Adressbuch aus Haus, im Adressbuch des Handys.</string>
+    <string name="konto_kontakte_stand">Zuletzt abgeglichen %1$s: %2$d Kontakte.</string>
+
+    <string name="konto_kalender_titel">Kalender des Hauses</string>
+    <string name="konto_kalender_schalter">Kalender des Hauses auf dem Handy</string>
+    <string name="konto_kalender_was">Die gemeinsamen Kalender aus Haus und eure Erinnerungen. Eine Erinnerung klingelt zu ihrer Zeit wie ein Termin.</string>
+    <string name="konto_kalender_stand">Zuletzt abgeglichen %1$s: %2$d Termine und Erinnerungen.</string>
+
+    <string name="konto_noch_nie">Noch nicht abgeglichen.</string>
+    <string name="konto_jetzt">Jetzt abgleichen</string>
+    <string name="konto_gleicht_ab">Gleicht ab …</string>
+    <string name="konto_fertig">Abgeglichen.</string>
+    <string name="konto_dauert">Android gleicht noch nicht ab. Es holt das bald von selbst nach.</string>
+    <string name="konto_nichts_an">Schalte oben ein, was aufs Handy soll.</string>
+    <string name="konto_von_selbst">Android gleicht etwa stündlich von selbst ab.</string>
+    <string name="konto_aus_automatisch">Android gleicht gerade nichts von selbst ab (Einstellungen → Konten → Daten automatisch synchronisieren). „Jetzt abgleichen“ geht trotzdem.</string>
+
+    <string name="konto_abgelehnt">Ohne die Erlaubnis kann die App nichts eintragen.</string>
+    <string name="konto_einstellungen">Android fragt nicht mehr nach der Erlaubnis: tippe hier und erlaube sie unter Berechtigungen.</string>
+
+    <string name="konto_andere_richtung">Deine eigenen Kontakte und Kalender gehen den anderen Weg: vom Handy in dein Archiv (Daten sichern). Die des Hauses gehen dabei nicht mit.</string>
+</resources>

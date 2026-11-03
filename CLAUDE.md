@@ -54,6 +54,23 @@ These rules apply to every session, human or agent.
   when a batch goes — live in `standort/Plan.kt` and `standort/Ruhe.kt`,
   plain and unit-tested.
 
+## Das Haus-Konto
+
+- The owner's call, 2026-11-03 (#206): the household's shared contacts,
+  calendars and reminders live in a real Android account „Haus“
+  (AccountManager, two sync adapters for ContactsContract and
+  CalendarContract), so the dialer, WhatsApp, mail and the calendar app use
+  them. „Erinnerungen gehören in den normalen Kalender, nicht in ein
+  Widget.“ Source: Haus's `/napi/gemeinsam/…` (vCard, iCalendar), with the
+  device token. `konto/` holds it.
+- Read only on the phone; writes go as the sync adapter into the account's
+  own entries only. Android's SyncManager runs the adapters (the switch,
+  „Jetzt abgleichen“, hourly); the app adds no job, alarm or worker for
+  them. `ManifestTest` holds this.
+- The other direction stays: a person's own contacts go phone → archive
+  („Kontakte übertragen“), and the Haus account's never do
+  (`HausKontoAusschlussTest`, `e2e` step 8).
+
 ## No Google Play services
 
 - The owner's decision, 2026-11-02 („ohne Google“): no

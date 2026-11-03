@@ -33,6 +33,7 @@ import cloud.dopp.haus.data.PairLinks
 import cloud.dopp.haus.data.Pairing
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
+import cloud.dopp.haus.konto.HausKonto
 import cloud.dopp.haus.data.ToolDef
 import cloud.dopp.haus.data.ToolDefs
 import cloud.dopp.haus.realtime.Live
@@ -291,7 +292,7 @@ class HomeActivity : AppCompatActivity() {
         renderMehr()
     }
 
-    /** Mehr: Daten sichern (#194), Standortverlauf (owner 2026-11-02). */
+    /** Mehr: Daten sichern (#194), Standortverlauf (owner 2026-11-02), Haus auf dem Handy (#206). */
     private fun renderMehr() {
         val group = findViewById<ViewGroup>(R.id.mehr_group)
         group.removeAllViews()
@@ -303,6 +304,11 @@ class HomeActivity : AppCompatActivity() {
         group.addView(
             row(group, R.drawable.ic_standort, getString(R.string.standort_title)) {
                 startActivity(Intent(this, StandortActivity::class.java))
+            },
+        )
+        group.addView(
+            row(group, R.drawable.ic_konto, getString(R.string.konto_title)) {
+                startActivity(Intent(this, HausKontoActivity::class.java))
             },
         )
     }
@@ -550,6 +556,7 @@ class HomeActivity : AppCompatActivity() {
         ServerStore.clear(this)
         Assistent.clear(this)
         Pairing.cancel(this)
+        HausKonto.entfernen(applicationContext) // the household's contacts and calendars leave with the pairing (#206)
         AppShortcuts.refreshAsync(applicationContext) // takes the share target away (#188)
         findViewById<EditText>(R.id.server_url).setText("")
         Live.ensure(applicationContext)

@@ -55,6 +55,12 @@ object Napi {
     /** The body of `POST /napi/kontakte`: the contacts as concatenated vCards. */
     const val VCARD = "text/vcard"
 
+    /** What `GET /napi/gemeinsam/kalender` answers: iCalendar, one VCALENDAR per shared calendar. */
+    const val ICALENDAR = "text/calendar"
+
+    /** The Haus account's request header: the state the phone has, Haus's last [ETAG] (#206). */
+    const val IF_NONE_MATCH = "If-None-Match"
+
     /**
      * One call. [query] and [body] are the names the client sends, in the order
      * it passes the values; [allowed] closes a parameter to the values Haus
@@ -360,6 +366,26 @@ object Napi {
     }
 
     /**
+     * A refused `GET /napi/gemeinsam/…` (the Haus account, #206): `{fehler}`
+     * with Haus's German sentence; the answer itself is vCard or iCalendar.
+     */
+    object GemeinsamJson {
+        const val FEHLER = "fehler"
+    }
+
+    /**
+     * The Haus account's calendar stream (#206): the properties of each
+     * VCALENDAR beside the standard ones — the calendar's id (the last part
+     * of its path in Radicale; [ERINNERUNGEN] for the reminders) and its kind.
+     */
+    object FeedIcal {
+        const val NAME = "X-WR-CALNAME"
+        const val KALENDER = "X-HAUS-KALENDER"
+        const val ART = "X-HAUS-ART"
+        const val ERINNERUNGEN = "erinnerungen"
+    }
+
+    /**
      * `GET /napi/standort` (Standortverlauf, owner 2026-11-02): whether the
      * person connected Reitti on Haus, `{verbunden, seit}` (RFC 3339, absent
      * when not); `{fehler, grund}` when the box has no Reitti (503).
@@ -515,6 +541,25 @@ object Napi {
      * on the box: every card, each with a UID, as [VCARD]; Haus mirrors the set.
      */
     val KONTAKTE = Endpoint(Method.POST, "/napi/kontakte", reply = listOf(KontakteJson))
+
+    /**
+     * The Haus account (#206): the household's shared contacts, as [VCARD].
+     * 304 when [IF_NONE_MATCH] names the state Haus has.
+     */
+    val GEMEINSAM_KONTAKTE = Endpoint(
+        Method.GET, "/napi/gemeinsam/kontakte", reply = listOf(GemeinsamJson),
+        headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+    )
+
+    /**
+     * The Haus account: the household's shared calendars and the reminders,
+     * as [ICALENDAR] ([FeedIcal]); series expanded by Haus, a month back and
+     * a year ahead.
+     */
+    val GEMEINSAM_KALENDER = Endpoint(
+        Method.GET, "/napi/gemeinsam/kalender", reply = listOf(GemeinsamJson),
+        headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+    )
 
     /** Standortverlauf: whether the person connected Reitti on Haus. */
     val STANDORT_STAND = Endpoint(Method.GET, "/napi/standort", reply = listOf(StandortStandJson))

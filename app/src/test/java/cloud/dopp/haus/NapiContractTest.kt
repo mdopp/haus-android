@@ -218,6 +218,17 @@ class NapiContractTest {
                 "internal/napi/sicherung_letzte.go:222-256 (http.ServeContent: Range, Content-Range; ETag :254), media :258-307",
                 sends = setOf("fehler"), headers = setOf("Range", "Content-Range", "ETag"),
             ),
+            // The Haus account (mdopp/haus main at 7adc744, the merge of haus#220, haus#218): vCard and iCalendar, refusals {fehler}.
+            Route(
+                "GET", "/napi/gemeinsam/kontakte",
+                "internal/napi/gemeinsam.go:71-91, the person and refusals :49-66, ETag :109-124, registered :44, napi.go:241",
+                sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
+            ),
+            Route(
+                "GET", "/napi/gemeinsam/kalender",
+                "internal/napi/gemeinsam.go:95-106, the stream internal/caldav/gemeinsam.go, ETag :109-124, registered :45",
+                sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
+            ),
             // Standortverlauf (mdopp/haus main at 145ec05, the merge of haus#212).
             Route(
                 "GET", "/napi/standort",
@@ -264,6 +275,7 @@ class NapiContractTest {
             "GET /napi/sicherung/schluessel", "POST /napi/kontakte",
             "GET /napi/sicherung/letzte", "GET /napi/sicherung/letzte/{quelle}/{pfad...}",
             "GET /napi/standort", "POST /napi/standort",
+            "GET /napi/gemeinsam/kontakte", "GET /napi/gemeinsam/kalender",
         )
 
         const val NAPI = "cloud.dopp.haus.data.Napi"
@@ -281,6 +293,7 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/haus/realtime/RealtimeProtocol.kt",
             "app/src/main/java/cloud/dopp/haus/data/SicherungClient.kt",
             "app/src/main/java/cloud/dopp/haus/data/StandortClient.kt",
+            "app/src/main/java/cloud/dopp/haus/data/GemeinsamClient.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")

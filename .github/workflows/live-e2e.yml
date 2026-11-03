@@ -12,6 +12,8 @@ on:
     paths:
       - 'app/src/main/java/cloud/dopp/haus/realtime/**'
       - 'app/src/main/java/cloud/dopp/haus/widget/**'
+      - 'app/src/main/java/cloud/dopp/haus/konto/**'
+      - 'app/src/main/java/cloud/dopp/haus/sicherung/Handy.kt'
       - 'app/src/main/AndroidManifest.xml'
       - 'app/src/androidTest/**'
       - 'e2e/**'
