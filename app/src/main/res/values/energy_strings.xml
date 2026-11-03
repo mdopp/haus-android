@@ -6,7 +6,6 @@
     <!-- The one energy widget (owner, 2026-11-02). -->
     <string name="energy_widget_label">Haus-Energie</string>
     <string name="energy_widget_description">Jetzt und heute: Strom von PV, Haus, Netz und Akku. Tippen öffnet die Energie-Seite.</string>
-    <string name="energy_now">Jetzt</string>
     <string name="energy_today">Heute</string>
     <string name="energy_autarkie">Autarkie</string>
 </resources>

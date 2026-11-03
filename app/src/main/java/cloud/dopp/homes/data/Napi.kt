@@ -451,9 +451,6 @@ object Napi {
     /** Reitti did not take the points now. */
     const val GRUND_REITTI_WEG = "reitti_weg"
 
-    /** The box has no Reitti. */
-    const val GRUND_NICHT_EINGERICHTET = "nicht_eingerichtet"
-
     /**
      * `POST /napi/standort/import` (a shared location history, owner
      * 2026-11-03): `{id, offset}`, or `{fehler, grund}` — 409

@@ -1,11 +1,9 @@
 package cloud.dopp.homes
 
 import android.app.Activity
-import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
-import android.view.View
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.homes.data.ApiClient
@@ -14,12 +12,9 @@ import cloud.dopp.homes.data.Assistent
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.ToolDefs
 import cloud.dopp.homes.data.TokenStore
-import cloud.dopp.homes.ui.HomeActivity
 import cloud.dopp.homes.widget.ToolActionActivity
 import cloud.dopp.homes.widget.ToolCells
 import cloud.dopp.homes.widget.ToolRow
-import cloud.dopp.homes.widget.WidgetCache
-import cloud.dopp.homes.widget.WidgetStore
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals

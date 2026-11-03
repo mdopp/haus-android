@@ -349,7 +349,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_home.xml"
-            line="186"
+            line="184"
             column="25"/>
     </issue>
 
@@ -426,7 +426,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_tool.xml"
-            line="28"
+            line="27"
             column="13"/>
     </issue>
 
@@ -437,7 +437,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_tool.xml"
-            line="50"
+            line="49"
             column="13"/>
     </issue>
 
@@ -569,7 +569,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="71"
+            line="70"
             column="21"/>
     </issue>
 
@@ -580,7 +580,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="105"
+            line="104"
             column="21"/>
     </issue>
 
@@ -591,7 +591,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="139"
+            line="138"
             column="21"/>
     </issue>
 
@@ -602,7 +602,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="174"
+            line="173"
             column="21"/>
     </issue>
 
@@ -684,266 +684,13 @@
     </issue>
 
     <issue
-        id="UnusedResources"
-        message="The resource `R.color.shortcut_background` appears to be unused"
-        errorLine1="    &lt;color name=&quot;shortcut_background&quot;>#F5F5F5&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="4"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.homes_card` appears to be unused"
-        errorLine1="    &lt;color name=&quot;homes_card&quot;>#14141A&lt;/color>          &lt;!-- card surface -->"
-        errorLine2="           ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="17"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.homes_brand_blue_dark` appears to be unused"
-        errorLine1="    &lt;color name=&quot;homes_brand_blue_dark&quot;>#2563EB&lt;/color> &lt;!-- blue-600 (pressed) -->"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="37"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.energy_supply` appears to be unused"
-        errorLine1="    &lt;color name=&quot;energy_supply&quot;>#66BB6A&lt;/color>        &lt;!-- PV / feed-in / discharge -->"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="57"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.energy_draw` appears to be unused"
-        errorLine1="    &lt;color name=&quot;energy_draw&quot;>#EF5350&lt;/color>          &lt;!-- consumption / import / charge -->"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="58"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.text_tile` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;text_tile&quot;>12sp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="30"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.hero_glow_size` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;hero_glow_size&quot;>190dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="33"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.brand_lockup_top` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;brand_lockup_top&quot;>32dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="48"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.brand_lockup_top_compact` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;brand_lockup_top_compact&quot;>4dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="49"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.brand_figure_height` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;brand_figure_height&quot;>39dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="50"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.brand_rule_bottom` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;brand_rule_bottom&quot;>14dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="51"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.brand_rule_bottom_compact` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;brand_rule_bottom_compact&quot;>18dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="52"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.hero_glow_size_compact` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;hero_glow_size_compact&quot;>112dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="53"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.energy_now` appears to be unused"
-        errorLine1="    &lt;string name=&quot;energy_now&quot;>Jetzt&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/energy_strings.xml"
-            line="9"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_box` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_box.xml"
-            line="1"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.style.Text_Homes_Tile` appears to be unused"
-        errorLine1="    &lt;style name=&quot;Text.Homes.Tile&quot;>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/themes.xml"
-            line="174"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.assistent_block` appears to be unused"
-        errorLine1="            android:id=&quot;@+id/assistent_block&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_home.xml"
-            line="24"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.assistent_rule` appears to be unused"
-        errorLine1="                android:id=&quot;@+id/assistent_rule&quot;"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_home.xml"
-            line="48"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.zurueck_signal` appears to be unused"
-        errorLine1="            android:id=&quot;@+id/zurueck_signal&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_zurueckholen.xml"
-            line="47"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.zurueck_whatsapp` appears to be unused"
-        errorLine1="            android:id=&quot;@+id/zurueck_whatsapp&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_zurueckholen.xml"
-            line="115"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.row_line` appears to be unused"
-        errorLine1="            android:id=&quot;@+id/row_line&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_device_row.xml"
-            line="42"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.header_room` appears to be unused"
-        errorLine1="    android:id=&quot;@+id/header_room&quot;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_room_header.xml"
-            line="5"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.e_frame` appears to be unused"
-        errorLine1="    android:id=&quot;@+id/e_frame&quot;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/widget_energy.xml"
-            line="11"
-            column="5"/>
-    </issue>
-
-    <issue
         id="UnusedIds"
         message="The resource `R.id.e_today_label` appears to be unused"
         errorLine1="                android:id=&quot;@+id/e_today_label&quot;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="48"
+            line="47"
             column="17"/>
     </issue>
 
@@ -954,40 +701,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="183"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.we_text` appears to be unused"
-        errorLine1="        android:id=&quot;@+id/we_text&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/widget_error.xml"
-            line="23"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.tw_icon` appears to be unused"
-        errorLine1="            android:id=&quot;@+id/tw_icon&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/widget_tool.xml"
-            line="24"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="SmallSp"
-        message="Avoid using sizes smaller than `11sp`: `10sp`"
-        errorLine1="                    android:textSize=&quot;10sp&quot; />"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/widget_energy.xml"
-            line="90"
+            line="182"
             column="21"/>
     </issue>
 
@@ -998,7 +712,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="124"
+            line="89"
             column="21"/>
     </issue>
 
@@ -1009,7 +723,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="158"
+            line="123"
             column="21"/>
     </issue>
 
@@ -1020,7 +734,18 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="194"
+            line="157"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="                    android:textSize=&quot;10sp&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="193"
             column="21"/>
     </issue>
 
@@ -1834,7 +1559,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="74"
+            line="73"
             column="21"/>
     </issue>
 
@@ -1845,7 +1570,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="108"
+            line="107"
             column="21"/>
     </issue>
 
@@ -1856,7 +1581,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="142"
+            line="141"
             column="21"/>
     </issue>
 
@@ -1867,7 +1592,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy.xml"
-            line="177"
+            line="176"
             column="21"/>
     </issue>
 
@@ -1878,7 +1603,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy_small.xml"
-            line="47"
+            line="46"
             column="17"/>
     </issue>
 
@@ -1889,7 +1614,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_energy_small.xml"
-            line="58"
+            line="57"
             column="17"/>
     </issue>
 

@@ -6,7 +6,6 @@
      line of heute. The tap sits on e_root, a child filling the tile (#104).
      No capitals. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/e_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg">

@@ -2,7 +2,6 @@ package cloud.dopp.homes
 
 import android.Manifest
 import android.app.Application
-import android.app.Service
 import android.content.Context
 import android.os.Looper
 import android.os.PowerManager
@@ -14,7 +13,6 @@ import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.konto.Anstoss
 import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.konto.HomesKonto.Teil
-import cloud.dopp.homes.realtime.Live
 import cloud.dopp.homes.realtime.LiveService
 import cloud.dopp.homes.realtime.RealtimeProtocol
 import cloud.dopp.homes.widget.EnergyWidgetProvider

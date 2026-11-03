@@ -20,7 +20,6 @@
         android:contentDescription="@null" />
 
     <TextView
-        android:id="@+id/we_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"

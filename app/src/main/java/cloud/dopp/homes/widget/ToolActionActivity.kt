@@ -101,7 +101,7 @@ class ToolActionActivity : Activity() {
             }
             runOnUiThread {
                 if (outcome == ApiClient.ActionOutcome.CONFIRM_REQUIRED && !confirmed) {
-                    confirm(actionId, params, appWidgetId)
+                    confirm(actionId, params)
                     return@runOnUiThread
                 }
                 // Only a run that actually happened is worth a refetch; a refused
@@ -121,7 +121,7 @@ class ToolActionActivity : Activity() {
      * knows no verb for a catalog action id, and inventing one would claim a
      * direction the def never stated).
      */
-    private fun confirm(actionId: String, params: JSONObject, appWidgetId: Int) {
+    private fun confirm(actionId: String, params: JSONObject) {
         // The same sheet the device widget uses (#113) — one shape for every
         // action dialog, Abbrechen always the footer.
         ActionDialog.show(

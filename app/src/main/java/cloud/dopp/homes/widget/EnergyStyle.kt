@@ -1,6 +1,5 @@
 package cloud.dopp.homes.widget
 
-import cloud.dopp.homes.data.EnergyFlow
 import cloud.dopp.homes.data.EnergyTotal
 import java.util.Locale
 import kotlin.math.abs

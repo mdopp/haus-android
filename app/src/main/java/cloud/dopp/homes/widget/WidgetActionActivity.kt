@@ -1,7 +1,6 @@
 package cloud.dopp.homes.widget
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient

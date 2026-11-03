@@ -1,5 +1,4 @@
 # scripts/deadcode.py: findings from before the gate; shrink it, never grow it
-dead cloud/dopp/homes/data/Napi.kt GRUND_NICHT_EINGERICHTET
 private cloud/dopp/homes/data/Models.kt SENSITIVE_DOMAINS
 private cloud/dopp/homes/data/Napi.kt ICALENDAR
 private cloud/dopp/homes/data/Napi.kt IMPORT_HOCHLADEN

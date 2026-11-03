@@ -39,7 +39,6 @@
 
         <!-- The state; with a level its words, then the level that opens the sheet (owner, 2026-11-03). -->
         <LinearLayout
-            android:id="@+id/row_line"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"

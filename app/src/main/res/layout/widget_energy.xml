@@ -8,7 +8,6 @@
      a child filling the tile (#104); no reload arrows, the live stream keeps
      it current (owner, 2026-11-03). Heavy type, no capitals. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/e_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg">
