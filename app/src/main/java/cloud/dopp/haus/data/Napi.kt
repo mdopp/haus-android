@@ -40,7 +40,7 @@ object Napi {
      * Where a backup comes from, as Haus names it (`quelle`, #194). `sms` is
      * the phone's SMS, MMS and call log, age-encrypted on the phone (laib ADR 0029).
      */
-    enum class Quelle(val wire: String) { WHATSAPP("whatsapp"), SIGNAL("signal"), DISCORD("discord"), SMS("sms") }
+    enum class Quelle(val wire: String) { WHATSAPP("whatsapp"), SIGNAL("signal"), SMS("sms") }
 
     /** The body of `POST /napi/kontakte`: the contacts as concatenated vCards. */
     const val VCARD = "text/vcard"
@@ -132,24 +132,6 @@ object Napi {
         const val UID = "uid"
     }
 
-    /** `GET /napi/box/home`. */
-    object BoxHomeJson {
-        const val SERVICES_UP = "servicesUp"
-        const val SERVICES_FAILED = "servicesFailed"
-        const val SERVICES_DOWN = "servicesDown"
-        const val PENDING_APPROVALS = "pendingApprovals"
-        const val PENDING_UPDATES = "pendingUpdates"
-    }
-
-    /** `GET /napi/box/services`: `{services: [row]}`. */
-    object BoxServicesJson {
-        const val SERVICES = "services"
-        const val NAME = "name"
-        const val ACTIVE_STATE = "activeState"
-        const val SUB_STATE = "subState"
-        const val HEALTH = "health"
-    }
-
     /** One entity as a card: the state path, the active list and the stream's frames carry it. */
     object CardJson {
         const val ENTITY_ID = "entity_id"
@@ -219,6 +201,9 @@ object Napi {
 
     /** The contacts tool of `/napi/defs/tool`: Haus lists it, the app no longer offers it (owner, 2026-11-02). */
     const val TOOL_CONTACTS = "contacts"
+
+    /** The reminders tool of `/napi/defs/tool`: not offered either (owner, 2026-11-03: reminders go into the phone's calendar). */
+    const val TOOL_TASKS = "task"
 
     /** The frame the stream carries, by its SSE event name. */
     const val CARD_STATE = "card_state"
@@ -390,10 +375,6 @@ object Napi {
     /** Who owns a device token: the pairing checks a new token here before storing it. */
     val WHOAMI = Endpoint(Method.GET, "/napi/whoami", reply = listOf(WhoamiJson))
 
-    /** The Box keys, for the admin widgets. */
-    val BOX_HOME = Endpoint(Method.GET, "/napi/box/home", reply = listOf(BoxHomeJson))
-    val BOX_SERVICES = Endpoint(Method.GET, "/napi/box/services", reply = listOf(BoxServicesJson))
-
     /** Switch one entity; a 403 asks for `confirmed`. */
     val HA_CALL = Endpoint(Method.POST, "/napi/ha/call", body = listOf("entity_id", "service", "data", "confirmed"))
 
@@ -439,7 +420,7 @@ object Napi {
     /** Share → Haus: what the phone shared, kept as a note when a link is in it. */
     val MERKEN = Endpoint(Method.POST, "/napi/merken", body = listOf("text"), reply = listOf(MerkenJson))
 
-    // --- Nachrichten sichern (#194, laib ADR 0029; Haus's side is haus#207) ---
+    // --- Daten sichern (#194, laib ADR 0029; Haus's side is haus#207) ---
 
     /** What reached the box per source, and the room left. */
     val SICHERUNG_STAND = Endpoint(Method.GET, "/napi/sicherung/stand", reply = listOf(StandJson))

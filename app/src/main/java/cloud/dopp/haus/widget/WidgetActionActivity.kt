@@ -112,7 +112,7 @@ class WidgetActionActivity : Activity() {
             val ok = runCatching { ApiClient(applicationContext).call(entityId, service, confirmed = true) }.getOrDefault(false)
             if (!ok) WidgetActionReceiver.reportFailure(applicationContext, name)
             WidgetStore.noteEntityUsed(applicationContext, entityId)
-            DeviceTaps.done(applicationContext)
+            DeviceTaps.done(applicationContext, entityId)
             runOnUiThread { finish() }
         }
     }

@@ -17,7 +17,7 @@ import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
 /**
- * Haus's side of Nachrichten sichern (#194) as the contract states it and
+ * Haus's side of Daten sichern (#194) as the contract states it and
  * haus#208 builds it (`internal/napi/sicherung.go`), in memory: the id is the
  * same for the same file; a finished upload stays known (HEAD says its size,
  * a PATCH at its size answers `fertig`); a path with a dot-name at any level
@@ -103,7 +103,7 @@ class FakeHaus : Dispatcher() {
 
     private fun stand(): MockResponse {
         val q = JSONObject()
-        listOf("whatsapp", "signal", "sms", "discord").forEach { name ->
+        listOf("whatsapp", "signal", "sms").forEach { name ->
             val dateien = fertig.filterKeys { it.startsWith("$name|") }
             q.put(
                 name,

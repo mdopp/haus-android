@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The energy widget at its smallest (2x1): jetzt, the grid's balance (or the
-     house's draw), and with a little room a line of heute. -->
+     house's draw), and with a little room a line of heute. Green only for what
+     goes into the grid; no capitals. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/e_root"
     android:layout_width="match_parent"
@@ -8,7 +9,10 @@
     android:orientation="horizontal"
     android:baselineAligned="false"
     android:background="@drawable/widget_bg"
-    android:padding="12dp">
+    android:paddingStart="10dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="8dp">
 
     <!-- Left accent strip — a bold color rail that reads the flow direction at a
          glance and gives the compact card structure (tinted in EnergyRender). -->
@@ -51,12 +55,10 @@
                 android:layout_weight="1"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="Netz"
+                android:text="Einspeisung"
                 android:textColor="#FFB0BEC5"
                 android:textStyle="bold"
-                android:textAllCaps="true"
-                android:letterSpacing="0.04"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
 
             <ImageView
                 android:id="@+id/e_refresh"
@@ -76,8 +78,8 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:text="1,2 kW"
-            android:textColor="#FFEF5350"
-            android:textSize="26sp"
+            android:textColor="#FFF2F2F5"
+            android:textSize="24sp"
             android:textStyle="bold" />
 
         <TextView
@@ -99,7 +101,7 @@
             android:layout_marginTop="3dp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="heute PV 12,4 kWh"
+            android:text="Heute 12,4 kWh erzeugt"
             android:textColor="#FF3DDC84"
             android:textStyle="bold"
             android:textSize="12sp"

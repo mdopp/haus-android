@@ -181,7 +181,7 @@ object ActionSheets {
             items = entries.map {
                 ActionItem(
                     labelRes = it.labelRes,
-                    tone = if (it == LockChoice.OPEN) ActionTone.DANGEROUS else ActionTone.NORMAL,
+                    tone = if (it == LockChoice.OPEN) ActionTone.DANGEROUS else ActionTone.PRIMARY,
                     service = it.service,
                 )
             },

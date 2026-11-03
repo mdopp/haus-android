@@ -5,7 +5,8 @@
 #
 #   1 the app starts the service: foreground (specialUse on 34+), OPEN and WATCH
 #   2 screen off: CLOSE within 5 s; forced idle for 90 s: no OPEN, no WATCH
-#   3 screen on: exactly one OPEN, a WATCH that names the energy widget's sensor;
+#   3 screen on: exactly one OPEN, a WATCH that names the energy widget's sensor
+#     and the device widget's device;
 #     a pushed frame of that sensor makes the energy widget read again, a frame
 #     of anything else reads nothing
 #   4 the process killed: with the battery exemption a new OPEN within 30 s;
@@ -113,6 +114,8 @@ sleep 8
 [ "$(since "$m" WATCH)" -ge 1 ] && pass "3 screen on posts the watch set" || fail "3 no WATCH after screen on"
 tail -n +$(( m + 1 )) "$LOG" | cut -d' ' -f2- | grep "^WATCH" | grep -q 'sensor.e2e_power' \
   && pass "3 the watch names the energy sensor" || fail "3 the watch does not name the energy sensor"
+tail -n +$(( m + 1 )) "$LOG" | cut -d' ' -f2- | grep "^WATCH" | grep -q 'light.e2e' \
+  && pass "3 the watch names the device widget's device" || fail "3 the watch does not name the device widget's device"
 sleep 5 # the screen-on reads land
 # each push must reach the open stream, or "no read" would prove nothing
 frame() { curl -sk -X POST "https://127.0.0.1:8443/ctl/frame?entity_id=$1&state=$2" | grep -q '"streams": [1-9]'; }

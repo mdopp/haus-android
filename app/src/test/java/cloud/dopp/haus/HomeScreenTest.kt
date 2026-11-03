@@ -67,11 +67,13 @@ class HomeScreenTest {
         val a = open()
         assertEquals(View.GONE, a.findViewById<View>(R.id.connect_section).visibility)
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.connected_section).visibility)
-        assertEquals(
-            WidgetTypes.ALL.count { !it.admin },
-            a.findViewById<ViewGroup>(R.id.widgets_group).childCount,
-        )
-        assertEquals(2, a.findViewById<ViewGroup>(R.id.box_group).childCount)
+        // one list, no groups (owner, 2026-11-03): one device and the energy, then the tools
+        val list = a.findViewById<ViewGroup>(R.id.widgets_group)
+        assertEquals(WidgetTypes.ALL.size, list.childCount)
+        assertEquals(listOf("Ein Gerät", "Energie · Jetzt und heute"), (0 until list.childCount).map { texts(list.getChildAt(it)).single() })
+        assertNull("no Box group", a.findViewById<View>(ctx().resources.getIdentifier("box_group", "id", ctx().packageName).takeIf { it != 0 } ?: View.NO_ID))
+        val all = texts(a.window.decorView)
+        listOf("Box", "Haushalt").forEach { assertTrue("a group heading: $it", it !in all) }
     }
 
     @Test
@@ -186,5 +188,20 @@ class HomeScreenTest {
         StartDevices.save(ctx(), favorites)
         open().findViewById<View>(R.id.logout_btn).performClick()
         assertNull(StartDevices.load(ctx()))
+    }
+
+    /** The favorites cannot be read (a Haus not yet updated): one sentence, and „Alle Geräte“ all the same. */
+    @Test
+    fun alleGeraeteStaysWhenTheFavoritesFail() {
+        paired() // 127.0.0.1:1 answers nothing
+        val a = open()
+        repeat(100) {
+            org.robolectric.shadows.ShadowLooper.idleMainLooper()
+            if (deviceRows(a).any { texts(it).contains(ctx().getString(R.string.home_devices_unreadable)) }) return@repeat
+            Thread.sleep(50)
+        }
+        val rows = deviceRows(a).map { texts(it) }
+        assertEquals(listOf(listOf(ctx().getString(R.string.home_devices_unreadable)), listOf("Alle Geräte")), rows)
+        assertEquals(View.VISIBLE, deviceRows(a).last().visibility)
     }
 }

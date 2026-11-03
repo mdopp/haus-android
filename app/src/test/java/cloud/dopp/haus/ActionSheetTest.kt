@@ -113,8 +113,8 @@ class ActionSheetTest {
         assertEquals(LockChoice.OPEN.service, sheet.items.last().service)
         assertEquals(ActionTone.DANGEROUS, sheet.items.last().tone)
         assertTrue(sheet.hasDangerous)
-        // The bolt directions stay ordinary rows.
-        for (item in sheet.items.dropLast(1)) assertEquals(ActionTone.NORMAL, item.tone)
+        // The bolt directions are positive actions: the one primary style (owner, 2026-11-03).
+        for (item in sheet.items.dropLast(1)) assertEquals(ActionTone.PRIMARY, item.tone)
 
         val rows = sheet.rows
         val note = rows.filterIsInstance<ActionRow.Note>().single()

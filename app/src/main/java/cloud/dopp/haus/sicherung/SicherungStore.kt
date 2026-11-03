@@ -7,7 +7,7 @@ import cloud.dopp.haus.data.Napi.Quelle
 import cloud.dopp.haus.data.SicherungClient
 
 /**
- * Nachrichten sichern's own prefs (#194): the granted folders, the backup sent
+ * Daten sichern's own prefs (#194): the granted folders, the backup sent
  * last per source, each source's last word and when a file last arrived, and
  * the ids of unfinished uploads; the two switches for contacts and for SMS and
  * calls, the high-water marks of SMS, MMS and calls, and the contacts' last

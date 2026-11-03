@@ -103,11 +103,20 @@ class PairingTest {
 
     private fun dialog(): AlertDialog? = ShadowAlertDialog.getLatestAlertDialog()
 
+    /** The question the app's one dialog asks (ActionDialog: the card's message). */
+    private fun message(d: AlertDialog): String = d.findViewById<android.widget.TextView>(R.id.ad_message)?.text.toString()
+
+    /** The dialog's yes: its first action. */
+    private fun yes(d: AlertDialog) = d.findViewById<android.view.ViewGroup>(R.id.ad_items)!!.getChildAt(0).performClick()
+
+    /** Its footer: Abbrechen, Später. */
+    private fun no(d: AlertDialog) = d.findViewById<android.view.View>(R.id.ad_cancel)!!.performClick()
+
     /** Say yes; the dialog delivers the click through the main looper. */
     private fun confirm() {
         val d = dialog()
         assertNotNull("no confirmation dialog", d)
-        d!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        yes(d!!)
         shadowOf(Looper.getMainLooper()).idle()
     }
 
@@ -188,18 +197,18 @@ class PairingTest {
      */
     @Test
     fun afterPairingItAsksOnceForTheExemptionAndSaysWhy() {
-        val why = "Damit die Widgets nach einem Neustart der App von selbst wieder live werden"
+        val why = "Damit die Widgets von selbst aktuell bleiben"
         val c = home()
         connect(c.get(), "haus.example")
         c.newIntent(Intent(Intent.ACTION_VIEW, link))
         confirm()
-        settle { TokenStore.get(ctx()) != null && dialog()?.let { shadowOf(it).message.toString().contains(why) } == true }
+        settle { TokenStore.get(ctx()) != null && dialog()?.let { message(it).contains(why) } == true }
         val d = dialog()
         assertNotNull(d)
-        assertTrue("no explanation: ${shadowOf(d).message}", shadowOf(d).message.toString().contains(why))
+        assertTrue("no explanation: ${message(d!!)}", message(d!!).contains(why))
         val activity = c.get()
         while (shadowOf(activity).nextStartedActivity != null) { /* the Custom Tab of the pairing */ }
-        d!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        yes(d!!)
         shadowOf(Looper.getMainLooper()).idle()
         val started = generateSequence { shadowOf(activity).nextStartedActivity }.toList()
         val asked = started.firstOrNull { it.action == android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS }
@@ -214,7 +223,7 @@ class PairingTest {
         confirm()
         settle { TokenStore.get(ctx()) != null }
         settle { false }
-        assertTrue("asked twice", dialog()?.let { shadowOf(it).message.toString().contains(why) } != true || !dialog()!!.isShowing)
+        assertTrue("asked twice", dialog()?.let { message(it).contains(why) } != true || !dialog()!!.isShowing)
     }
 
     /** Any page or app can fire the pair link; without a pairing the app started, it pairs nothing. */
@@ -235,7 +244,7 @@ class PairingTest {
         assertNull("stored before the person said yes", TokenStore.get(ctx()))
         val d = dialog()
         assertNotNull("no confirmation dialog", d)
-        assertTrue(shadowOf(d).message.toString().contains("haus.example"))
+        assertTrue(message(d!!).contains("haus.example"))
     }
 
     @Test
@@ -245,7 +254,7 @@ class PairingTest {
         c.newIntent(Intent(Intent.ACTION_VIEW, link))
         val d = dialog()
         assertNotNull("no confirmation dialog", d)
-        d!!.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
+        no(d!!)
         settle { false }
         assertNull(TokenStore.get(ctx()))
         c.newIntent(Intent(Intent.ACTION_VIEW, link))
@@ -287,7 +296,7 @@ class PairingTest {
         assertNull(TokenStore.get(ctx()))
         val d = dialog()
         assertNotNull("no confirmation dialog", d)
-        assertTrue(shadowOf(d).message.toString().contains("other.example"))
+        assertTrue(message(d!!).contains("other.example"))
         confirm()
         settle { TokenStore.get(ctx()) != null }
         assertEquals(listOf("https://other.example haus_device_T1"), asked)
@@ -303,7 +312,7 @@ class PairingTest {
         assertNull("opened before the person said yes", shadowOf(a).peekNextStartedActivity())
         val d = dialog()
         assertNotNull("no confirmation dialog", d)
-        assertTrue(shadowOf(d).message.toString().contains("other.example"))
+        assertTrue(message(d!!).contains("other.example"))
         confirm()
         assertEquals("https://other.example/pair-device", shadowOf(a).nextStartedActivity?.data?.toString())
     }

@@ -8,7 +8,7 @@ import java.io.IOException
  * With the screen off nothing goes over the network for the widgets
  * (docs/CONTRACT.md (c)). The live stream holds that by itself; this is the
  * gate every other widget request to Haus passes, in [ApiClient] and
- * [BoxApiClient]. The backup job ([SicherungClient], (e)) is the one caller
+ * [BoxApiClient] (the assistant's name). The backup job ([SicherungClient], (e)) is the one caller
  * that does not: it runs while the phone charges, mostly with the screen off. A widget update Android
  * delivers late, after the screen went off, reads nothing and keeps its last
  * card; the stream's resync redraws every fed widget when the screen is on

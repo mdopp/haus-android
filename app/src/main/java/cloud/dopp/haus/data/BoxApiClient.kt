@@ -1,20 +1,16 @@
 package cloud.dopp.haus.data
 
 import android.content.Context
-import cloud.dopp.haus.data.Napi.BoxHomeJson
-import cloud.dopp.haus.data.Napi.BoxServicesJson
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 /**
- * Read-only client for Haus's Box keys (`/napi/box/home`, `/napi/box/services`)
- * that the admin widgets show, and for the assistant's name (`/napi/assistent`).
- * Haus serves them from Laib; the app never talks to the Box directly.
+ * Read-only client for the assistant's name (`/napi/assistent`). The Box
+ * widgets are gone (owner, 2026-11-03), and with them the Box keys.
  *
- * All calls are blocking and must run off the main thread; they return null on
- * any failure (no server, no token, 401, network) so a widget render never throws.
- * Nothing here changes anything: approving and restarting happen on Laib's page.
+ * Blocking, off the main thread; null on any failure (no server, no token,
+ * 401, network). Nothing here changes anything.
  */
 class BoxApiClient(private val ctx: Context) {
 
@@ -43,38 +39,6 @@ class BoxApiClient(private val ctx: Context) {
     /** `GET /napi/assistent` → the assistant's name, or null. */
     fun getAssistent(): String? = get(Napi.ASSISTENT)?.let { Assistent.parse(it) }
 
-    /** `GET /napi/box/home` → the summary counts, or null on any failure. */
-    fun getHome(): BoxHome? {
-        val o = get(Napi.BOX_HOME) ?: return null
-        return BoxHome(
-            servicesUp = o.optInt(BoxHomeJson.SERVICES_UP, 0),
-            servicesFailed = o.optInt(BoxHomeJson.SERVICES_FAILED, 0),
-            servicesDown = o.optInt(BoxHomeJson.SERVICES_DOWN, 0),
-            pendingApprovals = o.optInt(BoxHomeJson.PENDING_APPROVALS, 0),
-            pendingUpdates = o.optInt(BoxHomeJson.PENDING_UPDATES, 0),
-        )
-    }
-
-    /**
-     * `GET /napi/box/services` → the service list. Null on a request failure (so a
-     * widget keeps its last cache instead of blanking), empty only when the
-     * answer genuinely has none.
-     */
-    fun listServices(): List<BoxService>? {
-        val root = get(Napi.BOX_SERVICES) ?: return null
-        val arr = root.optJSONArray(BoxServicesJson.SERVICES) ?: return emptyList()
-        return (0 until arr.length()).mapNotNull { i ->
-            arr.optJSONObject(i)?.let {
-                BoxService(
-                    name = it.optString(BoxServicesJson.NAME),
-                    activeState = it.optString(BoxServicesJson.ACTIVE_STATE),
-                    subState = it.optString(BoxServicesJson.SUB_STATE),
-                    health = it.optString(BoxServicesJson.HEALTH),
-                )
-            }
-        }
-    }
-
     private companion object {
         /** No reply here is larger; a bigger one is refused, never half read. */
         const val MAX_REPLY_BYTES = 1L shl 20
@@ -87,20 +51,3 @@ class BoxApiClient(private val ctx: Context) {
         }
     }
 }
-
-/** `/napi/box/home` summary counts. */
-data class BoxHome(
-    val servicesUp: Int,
-    val servicesFailed: Int,
-    val servicesDown: Int,
-    val pendingApprovals: Int,
-    val pendingUpdates: Int,
-)
-
-/** One row of `/napi/box/services`. */
-data class BoxService(
-    val name: String,
-    val activeState: String,
-    val subState: String,
-    val health: String,
-)

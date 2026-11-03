@@ -59,8 +59,8 @@ data class ToolDef(
 
     /**
      * Is this tool offered as a widget? A list it can fill, and not one the
-     * owner took off the offer (2026-11-02: contacts as a widget make no sense,
-     * [ToolDefs.NOT_OFFERED]). A widget placed before keeps working.
+     * owner took off the offer ([ToolDefs.NOT_OFFERED]). A widget placed before
+     * keeps working.
      */
     val isOffered: Boolean
         get() = isListable && id !in ToolDefs.NOT_OFFERED
@@ -103,8 +103,12 @@ data class ToolCellSchema(
  */
 object ToolDefs {
 
-    /** Tools Haus lists that the app does not offer as a widget (owner, 2026-11-02). */
-    val NOT_OFFERED = setOf(Napi.TOOL_CONTACTS)
+    /**
+     * Tools Haus lists that the app does not offer as a widget: contacts
+     * (owner, 2026-11-02) and reminders (2026-11-03, they go into the phone's
+     * calendar). Dokumente and Notizen stay.
+     */
+    val NOT_OFFERED = setOf(Napi.TOOL_CONTACTS, Napi.TOOL_TASKS)
 
     /**
      * A def's declared data path, as the app may call it: Haus names its rows

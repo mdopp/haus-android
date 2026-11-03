@@ -6,9 +6,9 @@ no web shell, no messages, no approvals, no diagnostics.
 
 - **Start screen:** your favorite devices first (what you pinned with ☆ on
   Haus), a tap switches one; below them „Alle Geräte“, Haus's devices page.
-- **Widgets:** one energy widget (jetzt and heute; a tap opens Haus's Energie
-  page), the household's tools (reminders with check-off, documents, notes)
-  and, for admins, the Box.
+- **Widgets:** one device per widget (a tap switches it), one energy widget
+  (jetzt and heute; a tap opens Haus's Energie page), and the household's
+  documents or notes. One look for every confirmation.
 - **Share → Haus:** a link becomes a note; a photo (or several) from the
   camera app goes into Haus's document inbox, HEIC made JPEG on the phone.
 - **Pairing:** enter Haus's address, confirm on `/pair-device`, done. The
@@ -23,7 +23,7 @@ no web shell, no messages, no approvals, no diagnostics.
   back by itself after the app was killed is what the battery-optimization
   exemption guarantees; the app asks for it once.
 
-- **Nachrichten sichern:** daily, on WLAN while charging, the phone's
+- **Daten sichern:** daily, on WLAN while charging, the phone's
   WhatsApp and Signal backups go to the box. Two optional switches, off by
   default, each on its own card and asking for its own permission: „Kontakte“
   (READ_CONTACTS; into the person's address book „Handy-Kontakte“ on the box)

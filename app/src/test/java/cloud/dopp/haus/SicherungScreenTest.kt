@@ -33,7 +33,7 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.TimeUnit
 
 /**
- * Mehr → Nachrichten sichern (#194): the home screen leads there; the screen
+ * Mehr → Daten sichern (#194): the home screen leads there; the screen
  * shows both sources, the guide and „Jetzt sichern“, asks for no key; the
  * daily run waits for WLAN, the charger and enough battery, „Jetzt sichern“
  * only for WLAN.
@@ -67,9 +67,9 @@ class SicherungScreenTest {
     fun homeLeadsToIt() {
         val a = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
         val mehr = a.findViewById<ViewGroup>(R.id.mehr_group)
-        assertEquals("Nachrichten sichern and Standortverlauf", 2, mehr.childCount)
+        assertEquals("Daten sichern and Standortverlauf", 2, mehr.childCount)
         val row = mehr.getChildAt(0)
-        assertEquals("Nachrichten sichern", row.findViewById<TextView>(R.id.type_label).text.toString())
+        assertEquals("Daten sichern", row.findViewById<TextView>(R.id.type_label).text.toString())
         row.performClick()
         val next = shadowOf(a).nextStartedActivity
         assertEquals(SicherungActivity::class.java.name, next.component?.className)
@@ -94,9 +94,13 @@ class SicherungScreenTest {
         val anleitung = texte(a.findViewById(R.id.sicherung_anleitung))
         listOf(
             "Ende-zu-Ende-verschlüsseltes Backup", "64-stelligen Schlüssel verwenden", "Vaultwarden",
-            "Chat-Backups", "Auf dem Gerät", "30-stellige Passphrase", "Discord",
+            "Chat-Backups", "Auf dem Gerät", "30-stellige Passphrase",
+            "SMS und Anrufe übertragen", "Handy-Kontakte", "App-Passwort", "jede Stunde", "Google-Kalender",
+            "Gelöschte Termine bleiben im Archiv", "Mehr → Standortverlauf",
             "je nach App-Version", "die sich selbst löschen", "einmaligen Ansicht",
         ).forEach { assertTrue("the guide lacks „$it“", anleitung.contains(it)) }
+        assertFalse("Discord is gone (owner, 2026-11-03)", anleitung.contains("Discord"))
+        assertEquals("Daten sichern", a.getString(R.string.sicherung_title))
         assertFalse("no key field: keys go into the vault on the box", hat(a.window.decorView, EditText::class.java))
     }
 
@@ -165,9 +169,8 @@ class SicherungScreenTest {
     }
 
     /**
-     * The intro covers all of it. The guide is only what happens outside the
-     * app (WhatsApp with the passkey warning, Signal, Discord): the cards on
-     * this screen explain themselves.
+     * The intro covers all of it; the guide says per source what to do and what
+     * happens (owner, 2026-11-03).
      */
     @Test
     fun theIntroAndTheGuideCoverContactsSmsAndCalls() {
@@ -179,9 +182,9 @@ class SicherungScreenTest {
         val anleitung = texte(a.findViewById(R.id.sicherung_anleitung))
         listOf(
             "nicht Passwort und nicht Passkey", "aus einem Passkey lässt sich der Schlüssel nicht auslesen",
-            "deaktivieren und sofort wieder aktivieren",
+            "aus- und gleich wieder einschalten",
         ).forEach { assertTrue("the guide lacks „$it“", anleitung.contains(it)) }
-        listOf("In der Haus-App", "in der Haus-App", "Mehr → Nachrichten sichern", "Eingeschränkte Einstellungen")
+        listOf("In der Haus-App", "in der Haus-App", "Mehr → Daten sichern", "Eingeschränkte Einstellungen")
             .forEach { assertFalse("the guide still says „$it“", anleitung.contains(it)) }
     }
 

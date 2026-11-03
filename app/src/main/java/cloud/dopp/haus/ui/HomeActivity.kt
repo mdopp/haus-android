@@ -1,6 +1,5 @@
 package cloud.dopp.haus.ui
 
-import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -37,6 +36,10 @@ import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.ToolDef
 import cloud.dopp.haus.data.ToolDefs
 import cloud.dopp.haus.realtime.Live
+import cloud.dopp.haus.widget.ActionDialog
+import cloud.dopp.haus.widget.ActionItem
+import cloud.dopp.haus.widget.ActionSheet
+import cloud.dopp.haus.widget.ActionTone
 import cloud.dopp.haus.widget.AppShortcuts
 import cloud.dopp.haus.widget.DeviceIcons
 import cloud.dopp.haus.widget.DeviceTaps
@@ -69,10 +72,10 @@ import kotlin.concurrent.thread
  * **Paired.** The app's icon and the assistant's name (`/napi/assistent`,
  * „Homes“ until Haus names one) head the screen; first below them the person's
  * favorite devices, a tap switches one, and „Alle Geräte“, Haus's devices
- * page ([StartDevices], owner 2026-11-02: the devices live in the app, not in
- * widgets); then the widget types, the tools
- * from Haus's catalog and the Box widgets, each one tap from the home screen;
- * under Mehr, Nachrichten sichern (#194); and the way to unpair.
+ * page ([StartDevices], owner 2026-11-02); then one list of widgets to add
+ * (owner, 2026-11-03: no groups) — one device, the energy, the tools from
+ * Haus's catalog —, each one tap from the home screen; under Mehr, Daten
+ * sichern (#194); and the way to unpair.
  */
 class HomeActivity : AppCompatActivity() {
 
@@ -282,13 +285,13 @@ class HomeActivity : AppCompatActivity() {
 
     // --- the widgets ----------------------------------------------------------
 
+    /** One list, no groups (owner, 2026-11-03): one device, the energy, then the tools. */
     private fun renderWidgetTypes() {
-        fill(findViewById(R.id.widgets_group), WidgetTypes.ALL.filter { !it.admin })
-        fill(findViewById(R.id.box_group), WidgetTypes.ALL.filter { it.admin })
+        showTools(listable(WidgetStore.toolCatalogJson(this)))
         renderMehr()
     }
 
-    /** Mehr: Nachrichten sichern (#194), Standortverlauf (owner 2026-11-02). */
+    /** Mehr: Daten sichern (#194), Standortverlauf (owner 2026-11-02). */
     private fun renderMehr() {
         val group = findViewById<ViewGroup>(R.id.mehr_group)
         group.removeAllViews()
@@ -302,13 +305,6 @@ class HomeActivity : AppCompatActivity() {
                 startActivity(Intent(this, StandortActivity::class.java))
             },
         )
-    }
-
-    private fun fill(group: ViewGroup, entries: List<WidgetTypes.Entry>) {
-        group.removeAllViews()
-        entries.forEach { entry ->
-            group.addView(row(group, entry.icon, getString(entry.label)) { pin(entry.provider) })
-        }
     }
 
     private fun row(group: ViewGroup, icon: Int, label: String, onTap: () -> Unit): View {
@@ -325,7 +321,6 @@ class HomeActivity : AppCompatActivity() {
      * offered, and not the contacts ([ToolDef.isOffered]).
      */
     private fun renderTools() {
-        showTools(listable(WidgetStore.toolCatalogJson(this)))
         if (toolsLoading) return
         toolsLoading = true
         thread {
@@ -340,12 +335,13 @@ class HomeActivity : AppCompatActivity() {
 
     private fun listable(json: String?): List<ToolDef> = ToolDefs.parseCatalog(json).filter { it.isOffered }
 
+    /** The widget list: the fixed types first, then a row per tool. */
     private fun showTools(defs: List<ToolDef>) {
-        val group = findViewById<ViewGroup>(R.id.tools_group)
+        val group = findViewById<ViewGroup>(R.id.widgets_group)
         group.removeAllViews()
-        val vis = if (defs.isEmpty()) View.GONE else View.VISIBLE
-        group.visibility = vis
-        findViewById<View>(R.id.tools_group_title).visibility = vis
+        WidgetTypes.ALL.forEach { entry ->
+            group.addView(row(group, entry.icon, getString(entry.label)) { pin(entry.provider) })
+        }
         defs.forEach { def ->
             group.addView(row(group, R.drawable.ic_services, def.label) { pinTool(def) })
         }
@@ -463,15 +459,18 @@ class HomeActivity : AppCompatActivity() {
         ) { pair(server, token) }
     }
 
-    /** Ask before pairing; [message] names the host. */
+    /** Ask before pairing; [message] names the host. The app's one dialog ([ActionDialog]). */
     private fun confirm(message: String, onNo: () -> Unit = {}, onYes: () -> Unit) {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.pairing_confirm_title)
-            .setMessage(message)
-            .setPositiveButton(R.string.pairing_confirm_yes) { _, _ -> onYes() }
-            .setNegativeButton(R.string.pairing_confirm_no) { _, _ -> onNo() }
-            .setOnCancelListener { onNo() }
-            .show()
+        ActionDialog.show(
+            activity = this,
+            title = getString(R.string.pairing_confirm_title),
+            message = message,
+            sheet = ActionSheet(listOf(ActionItem(R.string.pairing_confirm_yes, ActionTone.PRIMARY))),
+            onPick = { onYes() },
+            onCancel = onNo,
+            footer = getString(R.string.pairing_confirm_no),
+            paintScrim = false,
+        )
     }
 
     /** Check [token] with the Haus at [server] off the main thread, then store it and say how it went. */
@@ -510,13 +509,19 @@ class HomeActivity : AppCompatActivity() {
             return
         }
         prefs.edit().putBoolean(KEY_EXEMPTION, true).apply()
-        AlertDialog.Builder(this)
-            .setTitle(R.string.live_battery_title)
-            .setMessage(R.string.live_battery_why)
-            .setPositiveButton(R.string.live_battery_yes) { _, _ -> requestExemption() }
-            .setNegativeButton(R.string.live_battery_no, null)
-            .setOnDismissListener { askToNotify() }
-            .show()
+        ActionDialog.show(
+            activity = this,
+            title = getString(R.string.live_battery_title),
+            message = getString(R.string.live_battery_why),
+            sheet = ActionSheet(listOf(ActionItem(R.string.live_battery_yes, ActionTone.PRIMARY))),
+            onPick = {
+                requestExemption()
+                askToNotify()
+            },
+            onCancel = { askToNotify() },
+            footer = getString(R.string.live_battery_no),
+            paintScrim = false,
+        )
     }
 
     /** The system's own question for the exemption, else its settings list. */

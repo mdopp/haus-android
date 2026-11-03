@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Mehr → Nachrichten sichern (#194): the two folders, the cards with the
+<!-- Mehr → Daten sichern (#194): the two folders, the cards with the
      switches for contacts and for SMS and calls (laib ADR 0029), the state, „Jetzt
      sichern“, and the guide. Edge-to-edge like the home screen. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
@@ -206,19 +206,6 @@
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/sicherung_anleitung_whatsapp_title" />
-
-            <TextView
-                style="@style/Text.Haus.Body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:text="@string/sicherung_anleitung_whatsapp" />
-
-            <TextView
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_signal_title" />
 
             <TextView
@@ -232,14 +219,73 @@
                 style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/sicherung_anleitung_discord_title" />
+                android:text="@string/sicherung_anleitung_whatsapp_title" />
 
             <TextView
                 style="@style/Text.Haus.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
-                android:text="@string/sicherung_anleitung_discord" />
+                android:text="@string/sicherung_anleitung_whatsapp" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_sms_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_sms" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_kontakte_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_kontakte" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_mail_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_mail" />
+
+            <TextView
+                style="@style/Text.Haus.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sicherung_anleitung_kalender_title" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_kalender" />
+
+            <TextView
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:text="@string/sicherung_anleitung_standort" />
 
             <TextView
                 style="@style/Text.Haus.Body"

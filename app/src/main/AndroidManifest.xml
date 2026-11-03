@@ -18,7 +18,7 @@
          process died may go foreground on Android 12+ (asked once after pairing). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Kontakte, SMS und Anrufe (laib ADR 0029): optional, each asked for only when
-         its switch on „Nachrichten sichern“ is turned on; read only. On Android 13+
+         its switch on „Daten sichern“ is turned on; read only. On Android 13+
          a sideloaded app must first be allowed "restricted settings" for SMS and calls. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_SMS" />
@@ -70,6 +70,30 @@
                 <data android:scheme="cloud.dopp.haus" android:host="pair" />
             </intent-filter>
         </activity>
+        <!-- One device per widget (restored by the owner, 2026-11-03). -->
+        <receiver
+            android:name=".widget.DeviceWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_device_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/device_widget_info" />
+        </receiver>
+
+        <!-- The device widget's picker, when it is placed and from „Einrichten“. -->
+        <activity
+            android:name=".widget.WidgetConfigActivity"
+            android:exported="true"
+            android:label="@string/widget_device_label"
+            android:theme="@style/Theme.Haus.Config">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- The one energy widget (owner, 2026-11-02): jetzt and heute together. -->
         <receiver
             android:name=".widget.EnergyWidgetProvider"
@@ -136,7 +160,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Mehr → Nachrichten sichern (#194): the two folders, the state, „Jetzt
+        <!-- Mehr → Daten sichern (#194): the two folders, the state, „Jetzt
              sichern“, the guide. The folders come through the system picker
              (storage access framework): no storage permission. -->
         <activity
@@ -164,32 +188,6 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
-
-        <!-- Box overview widget (#42): the Box's summary from /napi/box/home. -->
-        <receiver
-            android:name=".widget.BoxOverviewWidgetProvider"
-            android:exported="true"
-            android:label="@string/box_overview_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/box_overview_widget_info" />
-        </receiver>
-
-        <!-- Box service-status summary widget (#44): healthy/warning/failure. -->
-        <receiver
-            android:name=".widget.BoxServicesWidgetProvider"
-            android:exported="true"
-            android:label="@string/box_services_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/box_services_widget_info" />
-        </receiver>
 
         <!-- Generic schema-driven .tool widget (#70): ONE provider that renders any
              tool from the catalog's tool-cell-schema — a new .tool plugin becomes a

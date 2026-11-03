@@ -12,7 +12,13 @@ import android.widget.TextView
 import cloud.dopp.haus.R
 
 /**
- * Draws an [ActionSheet] — the one dialog every widget action uses (#113/#114).
+ * Draws an [ActionSheet] — the one dialog of the whole app (#113/#114; owner,
+ * 2026-11-03: every confirmation looks alike). What — the title; why and what
+ * it means — the question; then the actions: the positive one filled in the
+ * accent, a secondary one outlined, the one that opens the house outlined in
+ * the warning colour; and the neutral footer („Abbrechen“, „Später“,
+ * „Fertig“) last. Used by the device actions, the tool rows, the pairing,
+ * the battery question and Share → Haus.
  *
  * The bare `AlertDialog` button row is gone: a sheet is a Haus card with the
  * actions stacked as full-width rows and **Abbrechen pinned underneath them**,
@@ -53,8 +59,13 @@ object ActionDialog {
         sheet: ActionSheet,
         onPick: (Int) -> Unit,
         onCancel: () -> Unit,
+        /** The neutral footer's word; null: no footer (a dialog that waits for an answer). */
+        footer: CharSequence? = activity.getString(R.string.widget_confirm_no),
+        /** A translucent action activity paints its window ([scrim]); a screen of the app does not. */
+        paintScrim: Boolean = true,
+        cancelable: Boolean = true,
     ): AlertDialog {
-        scrim(activity)
+        if (paintScrim) scrim(activity)
         val view = LayoutInflater.from(activity).inflate(R.layout.dialog_action, null)
         view.findViewById<TextView>(R.id.ad_title).text = title
         val msg = view.findViewById<TextView>(R.id.ad_message)
@@ -63,6 +74,7 @@ object ActionDialog {
         val dialog = AlertDialog.Builder(activity, R.style.Theme_Haus_ActionDialog)
             .setView(view)
             .setOnCancelListener { onCancel() }
+            .setCancelable(cancelable)
             .create()
 
         val stack = view.findViewById<LinearLayout>(R.id.ad_items)
@@ -78,7 +90,14 @@ object ActionDialog {
             // precisely what keeps it in one place across every sheet.
             ActionRow.Cancel -> Unit
         }
-        view.findViewById<View>(R.id.ad_cancel).setOnClickListener {
+        val cancel = view.findViewById<android.widget.Button>(R.id.ad_cancel)
+        if (footer == null) {
+            cancel.visibility = View.GONE
+            view.findViewById<View>(R.id.ad_divider).visibility = View.GONE
+        } else {
+            cancel.text = footer
+        }
+        cancel.setOnClickListener {
             dialog.dismiss()
             onCancel()
         }

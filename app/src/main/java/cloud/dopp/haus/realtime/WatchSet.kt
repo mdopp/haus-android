@@ -7,6 +7,7 @@ import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ScreenGate
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
+import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
@@ -15,8 +16,9 @@ import kotlin.concurrent.thread
 /**
  * The device's **watch set** (#48): the Home Assistant entities its widgets
  * show, posted to `POST /napi/portal/watch` so Haus streams `card_state` for
- * exactly those entities over `/napi/portal/events`: while the energy widget
- * is placed, the energy flow's sensors, which Haus sends at most every 10 s.
+ * exactly those entities over `/napi/portal/events`: the device of every
+ * device widget, and — while the energy widget is placed — the energy flow's
+ * sensors, which Haus sends at most every 10 s.
  *
  * Best-effort and guarded: it posts only when paired, off the caller's thread,
  * and a failure never touches the widgets. Haus answers 503 while Home
@@ -33,14 +35,15 @@ object WatchSet {
     private const val KEY_ENERGY = "energy"
 
     /**
-     * The current watch set: the energy flow's entities while the energy widget
-     * is placed; non-blank, de-duplicated.
+     * The current watch set: the device widgets' entities, and the energy
+     * flow's while the energy widget is placed; non-blank, de-duplicated.
      */
     fun currentEntities(ctx: Context): List<String> {
         val app = ctx.applicationContext
         val placed = AppWidgetManager.getInstance(app)
             .getAppWidgetIds(ComponentName(app, EnergyWidgetProvider::class.java)).isNotEmpty()
-        return (if (placed) energy(app) else emptySet()).filter { it.isNotBlank() }.distinct()
+        return (DeviceWidgetProvider.boundEntities(app) + if (placed) energy(app) else emptySet())
+            .filter { it.isNotBlank() }.distinct()
     }
 
     /** What the watch post sends: [currentEntities]. */

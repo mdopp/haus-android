@@ -11,19 +11,20 @@ import kotlin.math.abs
  * JVM-testable (no Android APIs).
  */
 object EnergyStyle {
-    const val SUPPLY = 0xFF66BB6A.toInt()   // green: PV / feed-in / discharge
-    const val DRAW = 0xFFEF5350.toInt()     // red: consumption / import / charge
-    const val NEUTRAL = 0xFFB0BEC5.toInt()
-    const val BATTERY = 0xFF7E9CFF.toInt()
+    const val SUPPLY = 0xFF3DDC84.toInt()   // green: only what the sun makes and what goes into the grid
+    const val NEUTRAL = 0xFFF2F2F5.toInt()  // everything else: consumption, the battery, a missing value
+    const val MUTED = 0xFF9AA0AE.toInt()    // labels, and the values while loading
 
-    /** The accent color for a flow leg by its sense + sign. */
+    /**
+     * The colour of a flow leg by its sense + sign (owner, 2026-11-03): green
+     * only for PV and for feeding the grid; the house's draw, a draw from the
+     * grid and the battery stay neutral — consumption is no alarm.
+     */
     fun colorFor(sense: String?, watts: Double?): Int {
         val w = watts ?: return NEUTRAL
         return when (sense) {
-            "supply" -> SUPPLY
-            "draw" -> DRAW
-            "grid" -> if (w >= 0) DRAW else SUPPLY
-            "battery" -> if (w >= 0) DRAW else SUPPLY
+            "supply" -> if (w > 0) SUPPLY else NEUTRAL
+            "grid" -> if (w < 0) SUPPLY else NEUTRAL
             else -> NEUTRAL
         }
     }
@@ -60,8 +61,8 @@ object EnergyStyle {
     val TOTAL_SLOTS = listOf("pv", "export", "import", "battery")
 
     /** The heute cells' labels and colors, in [TOTAL_SLOTS] order: short, the cells are narrow. */
-    val TOTAL_LABELS = listOf("Erzeugt", "Eingespeist", "Bezogen", "Akku geladen")
-    val TOTAL_COLORS = intArrayOf(SUPPLY, SUPPLY, DRAW, BATTERY)
+    val TOTAL_LABELS = listOf("Erzeugt", "Ins Netz", "Netzbezug", "In den Akku")
+    val TOTAL_COLORS = intArrayOf(SUPPLY, SUPPLY, NEUTRAL, NEUTRAL)
 
     /**
      * Map the server `totals` onto the four canonical slots, preserving

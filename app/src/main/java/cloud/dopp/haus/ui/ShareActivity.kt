@@ -10,6 +10,9 @@ import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ApiClient.Merken
 import cloud.dopp.haus.data.ApiClient.Upload
 import cloud.dopp.haus.widget.ActionDialog
+import cloud.dopp.haus.widget.ActionItem
+import cloud.dopp.haus.widget.ActionSheet
+import cloud.dopp.haus.widget.ActionTone
 import kotlin.concurrent.thread
 
 /**
@@ -43,7 +46,7 @@ class ShareActivity : Activity() {
             finish()
             return
         }
-        busy = dialog().setTitle(R.string.share_title).setMessage(R.string.share_running).setCancelable(false).show()
+        busy = waiting(getString(R.string.share_running))
         val api = ApiClient(applicationContext)
         thread {
             val result = api.merken(text)
@@ -58,16 +61,15 @@ class ShareActivity : Activity() {
             return
         }
         val photos = uris.take(PhotoShare.MAX_PHOTOS)
-        busy = dialog().setTitle(R.string.share_title)
-            .setMessage(resources.getQuantityString(R.plurals.share_photos_running, photos.size, 1, photos.size))
-            .setCancelable(false).show()
+        busy = waiting(resources.getQuantityString(R.plurals.share_photos_running, photos.size, 1, photos.size))
         val api = ApiClient(applicationContext)
         val resolver = contentResolver
         val at = java.util.Date()
         thread {
             val results = photos.mapIndexed { i, uri ->
                 runOnUiThread {
-                    busy?.setMessage(resources.getQuantityString(R.plurals.share_photos_running, photos.size, i + 1, photos.size))
+                    busy?.findViewById<android.widget.TextView>(R.id.ad_message)?.text =
+                        resources.getQuantityString(R.plurals.share_photos_running, photos.size, i + 1, photos.size)
                 }
                 val photo = PhotoShare.read(resolver, uri)
                 if (photo == null) {
@@ -81,7 +83,6 @@ class ShareActivity : Activity() {
     }
 
     private fun photosAnswer(results: List<Upload>, left: Int) {
-        busy?.setOnDismissListener(null)
         busy?.dismiss()
         val stored = results.count { it is Upload.Stored }
         val failed = results.firstOrNull { it !is Upload.Stored }
@@ -97,30 +98,38 @@ class ShareActivity : Activity() {
             else -> R.string.share_photos_partly to getString(R.string.share_photos_partly_text, stored, results.size, why)
         }
         val more = if (left > 0) " " + getString(R.string.share_photos_too_many, PhotoShare.MAX_PHOTOS, left) else ""
-        dialog().setTitle(title).setMessage(text + more).setPositiveButton(android.R.string.ok, null).show()
+        said(getString(title), text + more)
     }
 
-    private fun dialog() = AlertDialog.Builder(this, R.style.Theme_Haus_ShareDialog)
-        .setOnDismissListener { finish() }
+    /** The one dialog of the app ([ActionDialog]) while Haus works: what happens, no buttons. */
+    private fun waiting(message: String): AlertDialog =
+        ActionDialog.show(
+            activity = this, title = getString(R.string.share_title), message = message,
+            sheet = ActionSheet(emptyList()), onPick = {}, onCancel = {}, footer = null, cancelable = false,
+        )
+
+    /** What became of the share, in the same dialog: [open] adds „Notiz öffnen“; „Fertig“ closes. */
+    private fun said(title: String, message: String, open: String? = null) {
+        val sheet = ActionSheet(listOfNotNull(open?.let { ActionItem(R.string.share_open, ActionTone.PRIMARY) }))
+        ActionDialog.show(
+            activity = this, title = title, message = message, sheet = sheet,
+            onPick = {
+                open?.let { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }
+                finish()
+            },
+            onCancel = { finish() },
+            footer = getString(R.string.share_done),
+        )
+    }
 
     private fun answer(result: Merken) {
-        busy?.setOnDismissListener(null)
         busy?.dismiss()
-        val b = dialog()
         when (result) {
-            is Merken.Kept -> {
-                b.setTitle(if (result.already) R.string.share_already else R.string.share_kept).setMessage(result.said)
-                result.note?.let { note ->
-                    b.setNeutralButton(R.string.share_open) { _, _ ->
-                        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(note))) }
-                    }
-                }
-            }
-            is Merken.Refused -> b.setTitle(R.string.share_not_kept).setMessage(result.sentence)
-            Merken.NotPaired -> b.setTitle(R.string.share_not_kept).setMessage(R.string.share_not_paired)
-            Merken.Unreachable -> b.setTitle(R.string.share_not_kept).setMessage(R.string.share_unreachable)
+            is Merken.Kept -> said(getString(if (result.already) R.string.share_already else R.string.share_kept), result.said, result.note)
+            is Merken.Refused -> said(getString(R.string.share_not_kept), result.sentence)
+            Merken.NotPaired -> said(getString(R.string.share_not_kept), getString(R.string.share_not_paired))
+            Merken.Unreachable -> said(getString(R.string.share_not_kept), getString(R.string.share_unreachable))
         }
-        b.setPositiveButton(android.R.string.ok, null).show()
     }
 
     companion object {

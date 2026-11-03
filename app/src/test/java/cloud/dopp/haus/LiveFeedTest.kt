@@ -1,7 +1,6 @@
 package cloud.dopp.haus
 
-import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
-import cloud.dopp.haus.widget.BoxServicesWidgetProvider
+import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
 import org.junit.Assert.assertEquals
@@ -14,8 +13,9 @@ import java.io.File
 
 /**
  * Which widgets keep the live service running (#177 review, findings 3 and
- * 9): those it keeps current — the energy widget refetches on its sensors'
- * frames, and every one of them is read again on screen-on.
+ * 9): those it keeps current — a device widget draws its entity's frames,
+ * the energy widget refetches on its sensors', and every one of them is read
+ * again on screen-on.
  * Removing a fed widget looks again, so the last one gone stops the service.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -27,10 +27,7 @@ class LiveFeedTest {
     @Test
     fun theWidgetsTheStreamKeepsCurrentAreFed() {
         assertEquals(
-            setOf(
-                EnergyWidgetProvider::class.java, ToolWidgetProvider::class.java,
-                BoxOverviewWidgetProvider::class.java, BoxServicesWidgetProvider::class.java,
-            ),
+            setOf(DeviceWidgetProvider::class.java, EnergyWidgetProvider::class.java, ToolWidgetProvider::class.java),
             fed.toSet(),
         )
     }

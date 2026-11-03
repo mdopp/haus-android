@@ -21,19 +21,15 @@ class EnergyLogicTest {
 
     // ── EnergyStyle: color + direction per leg ────────────────────────────────
 
-    @Test fun gridImportIsRedExportIsGreen() {
-        assertEquals(EnergyStyle.DRAW, EnergyStyle.colorFor("grid", 500.0))
-        assertEquals(EnergyStyle.SUPPLY, EnergyStyle.colorFor("grid", -500.0))
-    }
-
-    @Test fun pvIsAlwaysGreenHouseAlwaysRed() {
+    /** Owner, 2026-11-03: green only for the sun and for feeding the grid; consumption is no alarm. */
+    @Test fun greenOnlyForTheSunAndFeedingIn() {
         assertEquals(EnergyStyle.SUPPLY, EnergyStyle.colorFor("supply", 1200.0))
-        assertEquals(EnergyStyle.DRAW, EnergyStyle.colorFor("draw", 800.0))
-    }
-
-    @Test fun batteryChargeIsRedDischargeIsGreen() {
-        assertEquals(EnergyStyle.DRAW, EnergyStyle.colorFor("battery", 300.0))
-        assertEquals(EnergyStyle.SUPPLY, EnergyStyle.colorFor("battery", -300.0))
+        assertEquals(EnergyStyle.SUPPLY, EnergyStyle.colorFor("grid", -500.0))
+        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("grid", 500.0))
+        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("draw", 800.0))
+        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("battery", 300.0))
+        assertEquals(EnergyStyle.NEUTRAL, EnergyStyle.colorFor("battery", -300.0))
+        assertEquals("no sun", EnergyStyle.NEUTRAL, EnergyStyle.colorFor("supply", 0.0))
     }
 
     @Test fun missingWattsIsNeutral() {
@@ -55,16 +51,16 @@ class EnergyLogicTest {
 
     // ── EnergyStyle: compact grid in/out balance (#25) ────────────────────────
 
-    @Test fun theSmallTierShowsHeuteWithALittleRoom() {
-        // the bare 2×1: jetzt only; a touch more room: a line of heute
-        assertEquals(false, cloud.dopp.haus.widget.EnergyRender.showToday(110, 40))
-        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showToday(110, 80))
-        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showToday(150, 40))
+    @Test fun theSmallTierAddsLinesOnlyWithHeight() {
+        assertEquals(false, cloud.dopp.haus.widget.EnergyRender.showSub(60))
+        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showSub(90))
+        assertEquals(false, cloud.dopp.haus.widget.EnergyRender.showToday(80))
+        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.showToday(100))
     }
 
     @Test fun twoCellsHighDrawJetztAndHeuteAsCells() {
         assertEquals(false, cloud.dopp.haus.widget.EnergyRender.full(250, 40))
-        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.full(250, 110))
+        assertEquals(true, cloud.dopp.haus.widget.EnergyRender.full(250, 120))
         assertEquals("a size the launcher did not tell: the placed default, 4×2", true, cloud.dopp.haus.widget.EnergyRender.full(0, 0))
     }
 

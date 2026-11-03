@@ -3,8 +3,9 @@ package cloud.dopp.haus.widget
 import android.content.Context
 
 /**
- * What the widgets keep per instance (the tool widget's binding, its rows) and
- * across them (the tool catalog, the app-icon menu's household and usage).
+ * What the widgets keep per instance (the device widget's device, the tool
+ * widget's binding and rows) and across them (the tool catalog, the app-icon
+ * menu's household and usage).
  */
 object WidgetStore {
     private const val PREFS = "haus_widgets"
@@ -12,13 +13,32 @@ object WidgetStore {
     private fun p(ctx: Context) =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
+    /** Bind device widget [id] to [entityId], with what it needs to draw before the first read. */
+    fun bind(ctx: Context, id: Int, entityId: String, name: String, domain: String, deviceClass: String?) {
+        p(ctx).edit()
+            .putString("e_$id", entityId)
+            .putString("n_$id", name)
+            .putString("d_$id", domain)
+            .putString("c_$id", deviceClass ?: "")
+            .apply()
+    }
+
+    fun entityId(ctx: Context, id: Int): String? = p(ctx).getString("e_$id", null)
+    fun name(ctx: Context, id: Int): String = p(ctx).getString("n_$id", "") ?: ""
+    fun domain(ctx: Context, id: Int): String = p(ctx).getString("d_$id", "") ?: ""
+    fun deviceClass(ctx: Context, id: Int): String? = p(ctx).getString("c_$id", "")?.ifBlank { null }
+
+    fun unbind(ctx: Context, id: Int) {
+        p(ctx).edit().remove("e_$id").remove("n_$id").remove("d_$id").remove("c_$id").apply()
+    }
+
     /**
-     * Does [id] already carry a binding? The exactly-once guard of the pin path
-     * (#105): the `successCallback` and the config activity can both reach a
-     * freshly placed tool widget, so whoever arrives first binds and the other
-     * steps aside.
+     * Does [id] already carry a binding of any kind — device or tool? The
+     * exactly-once guard of the pin path (#105): the `successCallback` and the
+     * config activity can both reach a freshly placed widget, so whoever
+     * arrives first binds and the other steps aside.
      */
-    fun isBound(ctx: Context, id: Int): Boolean = toolId(ctx, id) != null
+    fun isBound(ctx: Context, id: Int): Boolean = entityId(ctx, id) != null || toolId(ctx, id) != null
 
     // --- app-icon shortcut menu (#97/#100) -----------------------------------
 
