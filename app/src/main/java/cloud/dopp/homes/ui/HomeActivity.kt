@@ -258,7 +258,7 @@ class HomeActivity : AppCompatActivity() {
     private fun deviceRow(group: ViewGroup, card: Card): View {
         val v = layoutInflater.inflate(R.layout.item_device_row, group, false)
         val icon = v.findViewById<ImageView>(R.id.row_icon)
-        icon.setImageResource(DeviceIcons.forState(card.domain, card.state))
+        icon.setImageResource(DeviceIcons.forState(card.domain, card.state, card.deviceClass))
         icon.setColorFilter(getColor(if (card.isOn) R.color.homes_accent else R.color.homes_text_muted))
         v.findViewById<TextView>(R.id.row_name).text = card.name
         val state = v.findViewById<TextView>(R.id.row_room)
