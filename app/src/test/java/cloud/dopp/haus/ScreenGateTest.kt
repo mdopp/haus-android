@@ -60,7 +60,7 @@ class ScreenGateTest {
         assertTrue("refused at the gate, not at the socket: $refused", refused is ScreenGate.ScreenOffException)
         assertEquals(0, ApiClient(ctx()).postWatch(ApiClient.watchBody(listOf("sensor.pv"))))
         assertNull(ApiClient(ctx()).favoritesBody())
-        assertNull(BoxApiClient(ctx()).getPersona())
+        assertNull(BoxApiClient(ctx()).getAssistent())
     }
 
     @Test

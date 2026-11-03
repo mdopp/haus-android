@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -28,12 +27,11 @@ import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.haus.HausConfig
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.ApiClient
+import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.BoxApiClient
 import cloud.dopp.haus.data.Card
 import cloud.dopp.haus.data.PairLinks
 import cloud.dopp.haus.data.Pairing
-import cloud.dopp.haus.data.PersonaIcon
-import cloud.dopp.haus.data.PersonaStore
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.ToolDef
@@ -68,10 +66,11 @@ import kotlin.concurrent.thread
  * `/napi/whoami` before it is stored, an http address is refused with a
  * message, and a token that cannot be saved is said so.
  *
- * **Paired.** The persona (name, colours, icon from `/napi/persona`) heads the
- * screen; first below it the person's favorite devices, a tap switches one, and
- * „Alle Geräte“, Haus's devices page ([StartDevices], owner 2026-11-02: the
- * devices live in the app, not in widgets); then the widget types, the tools
+ * **Paired.** The app's icon and the assistant's name (`/napi/assistent`,
+ * „Homes“ until Haus names one) head the screen; first below them the person's
+ * favorite devices, a tap switches one, and „Alle Geräte“, Haus's devices
+ * page ([StartDevices], owner 2026-11-02: the devices live in the app, not in
+ * widgets); then the widget types, the tools
  * from Haus's catalog and the Box widgets, each one tap from the home screen;
  * under Mehr, Nachrichten sichern (#194); and the way to unpair.
  */
@@ -168,7 +167,7 @@ class HomeActivity : AppCompatActivity() {
             } else {
                 getString(R.string.home_connect_hint)
             }
-        renderPersona()
+        renderAssistent()
         if (!connected) return
         findViewById<TextView>(R.id.status).text = getString(R.string.home_connected, ServerStore.host(this) ?: "")
         findViewById<SwitchCompat>(R.id.live_switch).isChecked = Live.isEnabled(this)
@@ -178,66 +177,23 @@ class HomeActivity : AppCompatActivity() {
         renderDevices()
         renderWidgetTypes()
         renderTools()
-        refreshPersona()
+        refreshAssistent()
     }
 
-    // --- the persona ----------------------------------------------------------
+    // --- the assistant's name -----------------------------------------------
 
-    private fun renderPersona() {
-        val persona = if (paired()) PersonaStore.get(this) else null
-        findViewById<TextView>(R.id.persona_name).text = persona?.display ?: getString(R.string.appName)
-        val accent = persona?.accent?.let(::color) ?: getColor(R.color.haus_accent)
-        findViewById<View>(R.id.persona_rule).setBackgroundColor(accent)
-        val ground = persona?.ground?.let(::color) ?: getColor(R.color.haus_bg)
-        findViewById<View>(R.id.home_root).setBackgroundColor(ground)
-        val png = if (persona?.hasIcon == true) PersonaIcon.accept(PersonaStore.icon(this)) else null
-        showIcon(png)
+    private fun renderAssistent() {
+        findViewById<TextView>(R.id.assistent_name).text = Assistent.name(this)
     }
 
-    /** The PNG last drawn, so a redraw does not decode it again. */
-    private var drawnPng: ByteArray? = null
-
-    /**
-     * Draw the persona's [png], decoded off the main thread: a large or broken
-     * icon costs a missing icon, never a frozen screen. Within
-     * [PersonaIcon.MAX_BYTES] only, and at most [ICON_SIDE] px a side.
-     */
-    private fun showIcon(png: ByteArray?) {
-        val icon = findViewById<ImageView>(R.id.persona_icon)
-        if (png == null) {
-            drawnPng = null
-            icon.visibility = View.GONE
-            return
-        }
-        if (png.contentEquals(drawnPng)) return
-        drawnPng = png
+    /** Ask Haus for the assistant's name; redraw when it changed. */
+    private fun refreshAssistent() {
         thread {
-            val bitmap = runCatching { PersonaIcon.decode(png, ICON_SIDE) }.getOrNull()
-            runOnUiThread {
-                if (isFinishing || drawnPng !== png) return@runOnUiThread
-                icon.setImageBitmap(bitmap)
-                icon.visibility = if (bitmap == null) View.GONE else View.VISIBLE
-            }
-        }
-    }
-
-
-    private fun color(hex: String): Int? = runCatching { Color.parseColor(hex.trim()) }.getOrNull()
-
-    /** Ask Haus who the house is (laib#130); redraw when that changed. */
-    private fun refreshPersona() {
-        thread {
-            val client = BoxApiClient(applicationContext)
-            val fresh = runCatching { client.getPersona() }.getOrNull() ?: return@thread
-            val png = if (fresh.hasIcon) runCatching { client.getPersonaIcon() }.getOrNull() else null
-            val changed = fresh != PersonaStore.get(applicationContext) ||
-                !png.contentEquals(PersonaStore.icon(applicationContext))
-            if (!changed) return@thread
-            PersonaStore.save(applicationContext, fresh)
-            PersonaStore.saveIcon(applicationContext, png)
-            // the share sheet's target follows the persona's name and icon (#188)
+            val fresh = runCatching { BoxApiClient(applicationContext).getAssistent() }.getOrNull() ?: return@thread
+            if (!Assistent.save(applicationContext, fresh)) return@thread
+            // the share sheet's target carries the name (#188)
             runCatching { AppShortcuts.refresh(applicationContext) }
-            runOnUiThread { if (!isFinishing) renderPersona() }
+            runOnUiThread { if (!isFinishing) renderAssistent() }
         }
     }
 
@@ -587,9 +543,9 @@ class HomeActivity : AppCompatActivity() {
         devicesFailed = false
         TokenStore.clear(this)
         ServerStore.clear(this)
-        PersonaStore.clear(this)
+        Assistent.clear(this)
         Pairing.cancel(this)
-        AppShortcuts.refreshAsync(applicationContext) // takes the persona's share target away (#188)
+        AppShortcuts.refreshAsync(applicationContext) // takes the share target away (#188)
         findViewById<EditText>(R.id.server_url).setText("")
         Live.ensure(applicationContext)
         render()
@@ -614,9 +570,6 @@ class HomeActivity : AppCompatActivity() {
     private companion object {
         const val PREFS_ASKED = "haus_asked"
         const val KEY_EXEMPTION = "battery_exemption"
-
-        /** The persona icon's largest side as decoded: it is shown small. */
-        const val ICON_SIDE = 512
     }
 
     private fun appVersionName(): String = runCatching {

@@ -7,8 +7,9 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
+import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.PairLinks
-import cloud.dopp.haus.data.Persona
+import cloud.dopp.haus.data.Pairing
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
@@ -353,21 +354,22 @@ class PairingTest {
         assertEquals(listOf(HomeActivity::class.java.name), hits.map { it.activityInfo.name })
     }
 
-    /** The persona comes from /napi/persona: name, colours, icon. */
+    /** The assistant's name comes from /napi/assistent; nothing else is read. */
     @Test
-    fun thePersonaIsNameColoursAndIcon() {
-        val p = Persona.parse(
-            JSONObject(
-                """{"name":"joshua","display":"Joshua","greeting":"Hallo.","accent":"#3ddc84","ground":"#0c120e","icon":"/napi/persona/icon.png"}""",
-            ),
-        )
-        assertEquals("Joshua", p?.display)
-        assertEquals("#3ddc84", p?.accent)
-        assertEquals("#0c120e", p?.ground)
-        assertTrue(p?.hasIcon == true)
-        val plain = Persona.parse(JSONObject("""{"display":"Haus","accent":"#fff","ground":"#000","icon":""}"""))
-        assertFalse(plain?.hasIcon == true)
-        assertNull(Persona.parse(JSONObject("""{"display":""}""")))
+    fun theAssistantIsItsName() {
+        assertEquals("Homes", Assistent.parse(JSONObject("""{"name":"Homes"}""")))
+        assertEquals("Mira", Assistent.parse(JSONObject("""{"name":" Mira "}""")))
+        assertNull(Assistent.parse(JSONObject("""{"name":""}""")))
+        assertNull(Assistent.parse(JSONObject("{}")))
+    }
+
+    /** Pairing with another Haus forgets the name the old one gave. */
+    @Test
+    fun anotherHausForgetsTheName() {
+        ServerStore.setBaseUrl(ctx(), "https://haus.one")
+        Assistent.save(ctx(), "Mira")
+        assertEquals(Pairing.Outcome.PAIRED, Pairing.store(ctx(), "https://haus.two", "haus_device_T2"))
+        assertEquals("Homes", Assistent.name(ctx()))
     }
 
     /** A store the keystore refused: every write fails, nothing is read back. */

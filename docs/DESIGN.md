@@ -4,10 +4,12 @@ Der visuelle Standard für App-Screens **und** Widgets, damit alles wie *ein*
 Produkt wirkt. Neue UI/Widgets richten sich hiernach; Abweichungen sind bewusst
 zu begründen. Spiegelt das Web-Frontend von Haus.
 
-> **Zwei Akzente (#130).** In der App ist der Akzent **orange**, sofern die
-> Persona von Haus keinen eigenen nennt (`/napi/persona`, `accent`).
-> Launcher-Icon, App-Icon-Shortcuts und Widgets werden *neben fremden* Icons
-> gesehen; sie behalten das **Markenblau**.
+> **Akzente (#130).** In der App ist der Akzent **orange**. Der Kopf des
+> Startbildschirms trägt den festen Look des Assistenten (Besitzer,
+> 2026-11-02): **Phosphorgrün `#3DDC84` auf `#0C120E`**, die Farben des
+> App-Icons; die Box liefert dafür nur den Namen (`/napi/assistent`, sonst
+> „Homes“), keine Farben, kein Symbol. App-Icon-Shortcuts und Widgets werden
+> *neben fremden* Icons gesehen; sie behalten das **Markenblau**.
 
 ## Palette (`res/values/colors.xml`)
 | Rolle | Token | Hex |
@@ -15,6 +17,7 @@ zu begründen. Spiegelt das Web-Frontend von Haus.
 | Hintergrund | `haus_bg` | `#070709` |
 | Erhöht (Statusbar/Nav) | `haus_bg_elevated` | `#0C0C0E` |
 | **Akzent (Primär, In-App)** | `haus_accent` | `#F97316` (Orange) |
+| Assistent: Akzent / Grund (Startbildschirm, App-Icon) | `terminal_green` / `terminal_ground` | `#3DDC84` / `#0C120E` |
 | Akzent gedrückt | `haus_accent_dark` | `#EA580C` |
 | Akzent-Tint (12 %) | `haus_accent_faint` | `#1FF97316` |
 | **Markenblau** (Icon/Shortcuts/Widgets/Glow) | `haus_brand_blue` | `#3B82F6` |
@@ -82,8 +85,9 @@ Kacheln, die nur eine Aktion auslösen, folgen **einem** Muster:
 - Zustand als Balken/Prozent unten; Akzent = Domänenfarbe im aktiven Zustand.
 
 ## App-Screens
-Ein Bildschirm (`activity_home.xml`, #176): oben die Persona von Haus (Symbol,
-Name, eine Linie in ihrem Akzent, der Gruß), darunter ungekoppelt die Kopplung
+Ein Bildschirm (`activity_home.xml`, #176): oben das App-Icon, der Name des
+Assistenten („Homes“, sonst der Name der Box) und eine Linie in Phosphorgrün auf
+dem Grund `#0C120E`, darunter ungekoppelt die Kopplung
 (Adresse, „Koppeln", QR-Code), gekoppelt die Widgets zum Hinzufügen — erst das
 Haus, dann die Werkzeuge aus dem Katalog, zuletzt die Box. Konsistente
 Radien/Abstände/Typo aus den Tokens; runde Karten `card_haus`, alle mit

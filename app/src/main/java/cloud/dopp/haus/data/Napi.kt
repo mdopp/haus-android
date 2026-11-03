@@ -122,12 +122,9 @@ object Napi {
 
     // --- the replies, by the keys the app reads ---------------------------------
 
-    /** `GET /napi/persona`. */
-    object PersonaJson {
-        const val DISPLAY = "display"
-        const val ACCENT = "accent"
-        const val GROUND = "ground"
-        const val ICON = "icon"
+    /** `GET /napi/assistent`: the assistant's name, the box's one setting. */
+    object AssistentJson {
+        const val NAME = "name"
     }
 
     /** `GET /napi/whoami`: who owns the device token. */
@@ -387,11 +384,8 @@ object Napi {
 
     // --- the calls -------------------------------------------------------------
 
-    /** The house persona: name, colours, whether it has an icon (its greeting is not the app's, #184). */
-    val PERSONA = Endpoint(Method.GET, "/napi/persona", reply = listOf(PersonaJson))
-
-    /** The persona's icon, a PNG. */
-    val PERSONA_ICON = Endpoint(Method.GET, "/napi/persona/icon.png")
+    /** The household assistant's name („Homes“ when the box sets none). */
+    val ASSISTENT = Endpoint(Method.GET, "/napi/assistent", reply = listOf(AssistentJson))
 
     /** Who owns a device token: the pairing checks a new token here before storing it. */
     val WHOAMI = Endpoint(Method.GET, "/napi/whoami", reply = listOf(WhoamiJson))

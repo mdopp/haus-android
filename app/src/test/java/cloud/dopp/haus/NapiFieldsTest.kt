@@ -5,19 +5,16 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
-import android.util.Base64
 import android.view.View
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.BoxHome
 import cloud.dopp.haus.data.Napi
-import cloud.dopp.haus.data.Persona
-import cloud.dopp.haus.data.PersonaStore
+import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.ToolDefs
 import cloud.dopp.haus.data.TokenStore
-import cloud.dopp.haus.ui.HomeActivity
 import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
 import cloud.dopp.haus.widget.ToolActionActivity
 import cloud.dopp.haus.widget.ToolCells
@@ -26,7 +23,6 @@ import cloud.dopp.haus.widget.WidgetCache
 import cloud.dopp.haus.widget.WidgetStore
 import org.json.JSONObject
 import org.junit.After
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -44,8 +40,7 @@ import java.io.File
 /**
  * The `/napi` fields Haus added for the app (#178, mdopp/haus#30):
  *
- * - the persona's icon is a PNG at `/napi/persona/icon.png`, drawn with
- *   BitmapFactory; no SVG library, no SVG code;
+ * - no SVG library, no SVG code (the app draws its own icon only);
  * - every card and every tool row with an id names its own page on Haus
  *   (`page`): a start-screen device and a tool row open base + page, a
  *   card without one opens `/start`, and only a path on Haus is ever opened;
@@ -63,12 +58,6 @@ class NapiFieldsTest {
 
     private val pages = "cloud.dopp.haus.widget.HausPages"
 
-    /** A 1x1 PNG, as Haus serves a persona's `icon.png`. */
-    private val png: ByteArray = Base64.decode(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        Base64.DEFAULT,
-    )
-
     @Before
     fun paired() {
         ServerStore.setBaseUrl(ctx(), "https://haus.example")
@@ -79,59 +68,12 @@ class NapiFieldsTest {
     @After
     fun unpair() {
         ServerStore.clear(ctx())
-        PersonaStore.clear(ctx())
+        Assistent.clear(ctx())
     }
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
     private fun extraPage(): String = ToolActionActivity::class.java.getField("EXTRA_PAGE").get(null) as String
-
-    // --- the persona's icon: a PNG ----------------------------------------------
-
-    @Test
-    fun theIconIsThePngHausServes() {
-        assertEquals("/napi/persona/icon.png", Napi.PERSONA_ICON.path)
-    }
-
-    /** A PNG within the cap is taken whole; SVG text, an oversized file and nothing are not. */
-    @Test
-    fun onlyAPngWithinTheCapIsTaken() {
-        val icon = "cloud.dopp.haus.data.PersonaIcon"
-        assertArrayEquals(png, Reach.call(icon, "accept", png) as ByteArray?)
-        val svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".toByteArray()
-        assertNull("SVG taken as an icon", Reach.call(icon, "accept", svg))
-        val max = Class.forName(icon).getField("MAX_BYTES").getInt(null)
-        val atCap = png + ByteArray(max - png.size)
-        assertArrayEquals("a PNG exactly at the cap", atCap, Reach.call(icon, "accept", atCap) as ByteArray?)
-        assertNull("a PNG over the cap", Reach.call(icon, "accept", atCap + byteArrayOf(0)))
-        assertNull("half a signature", Reach.call(icon, "accept", png.copyOf(7)))
-        assertNull(Reach.call(icon, "accept", null))
-    }
-
-    /** The stored PNG is drawn on the app's screen when the persona names an icon, and not when it does not. */
-    @Test
-    fun theScreenDrawsThePng() {
-        ServerStore.setBaseUrl(ctx(), "https://127.0.0.1:1") // the screen asks Haus again: nobody answers
-        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84", "#0c120e", hasIcon = true))
-        val save = PersonaStore::class.java.methods.firstOrNull {
-            it.name == "saveIcon" && it.parameterTypes.getOrNull(1) == ByteArray::class.java
-        }
-        assertNotNull("PersonaStore keeps no PNG", save)
-        save!!.invoke(PersonaStore, ctx(), png)
-        val a = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
-        val icon = a.findViewById<View>(R.id.persona_icon)
-        repeat(100) {
-            idle()
-            if (icon.visibility == View.VISIBLE) return@repeat
-            Thread.sleep(20)
-        }
-        assertEquals("the PNG is not drawn", View.VISIBLE, icon.visibility)
-
-        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84", "#0c120e", hasIcon = false))
-        val b = Robolectric.buildActivity(HomeActivity::class.java).setup().get()
-        idle()
-        assertEquals("drawn although Haus names none", View.GONE, b.findViewById<View>(R.id.persona_icon).visibility)
-    }
 
     /** No SVG is left: not the library, not a path, not a parser. */
     @Test

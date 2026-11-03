@@ -2,4 +2,6 @@
 <resources>
     <!-- The app's name (#176, laib ADR 0022). -->
     <string name="appName">Haus</string>
+    <!-- The household assistant's name until Haus names the box's own (/napi/assistent). -->
+    <string name="assistent_name" translatable="false">Homes</string>
 </resources>

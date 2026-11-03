@@ -5,8 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
-import cloud.dopp.haus.data.Persona
-import cloud.dopp.haus.data.PersonaStore
+import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
@@ -15,7 +14,6 @@ import cloud.dopp.haus.widget.WidgetActionActivity
 import cloud.dopp.haus.widget.WidgetActionReceiver
 import cloud.dopp.haus.widget.WidgetTypes
 import org.junit.Assert.assertEquals
-import org.json.JSONObject
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -28,7 +26,7 @@ import org.robolectric.annotation.Config
 
 /**
  * The app's one screen (#176): unpaired it asks for Haus's address; paired it
- * shows the persona, the person's favorite devices first (owner, 2026-11-02),
+ * shows the assistant's name, the person's favorite devices first (owner, 2026-11-02),
  * and offers every widget — the house's first, the Box's apart, for whoever
  * looks after it.
  */
@@ -42,7 +40,7 @@ class HomeScreenTest {
     fun clean() {
         ServerStore.clear(ctx())
         TokenStore.clear(ctx())
-        PersonaStore.clear(ctx())
+        Assistent.clear(ctx())
         StartDevices.clear(ctx())
     }
 
@@ -60,7 +58,7 @@ class HomeScreenTest {
         val a = open()
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.connect_section).visibility)
         assertEquals(View.GONE, a.findViewById<View>(R.id.connected_section).visibility)
-        assertEquals("Haus", a.findViewById<TextView>(R.id.persona_name).text.toString())
+        assertEquals("Homes", a.findViewById<TextView>(R.id.assistent_name).text.toString())
     }
 
     @Test
@@ -77,54 +75,27 @@ class HomeScreenTest {
     }
 
     @Test
-    fun theScreenWearsThePersona() {
+    fun theScreenShowsTheAssistantsNameAndTheAppsIcon() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84", "#0c120e"))
+        Assistent.save(ctx(), "Mira")
         val a = open()
-        assertEquals("Joshua", a.findViewById<TextView>(R.id.persona_name).text.toString())
-        // the app's line, never the persona's greeting (#184: "Wollen wir ein Spiel spielen?" is the chat's)
+        assertEquals("Mira", a.findViewById<TextView>(R.id.assistent_name).text.toString())
         assertEquals(ctx().getString(R.string.home_claim), a.findViewById<TextView>(R.id.home_claim).text.toString())
-        // no icon announced → none drawn
-        assertEquals(View.GONE, a.findViewById<View>(R.id.persona_icon).visibility)
-    }
-
-    /**
-     * The acceptance of #184: Haus sends the greeting, the app reads it nowhere,
-     * so it is on no text of the screen and no source names its key (the store
-     * only drops what older versions kept).
-     */
-    @Test
-    fun theGreetingIsShownNowhere() {
-        paired()
-        val greeting = "Wollen wir ein Spiel spielen?"
-        val sent = Persona.parse(
-            JSONObject().put("display", "Joshua").put("greeting", "Hallo, hier ist Joshua. $greeting").put("accent", "#3ddc84"),
-        )
-        PersonaStore.save(ctx(), requireNotNull(sent))
-        val a = open()
-        val texts = mutableListOf<String>()
-        fun walk(v: View) {
-            if (v is TextView) texts.add(v.text.toString())
-            if (v is ViewGroup) (0 until v.childCount).forEach { walk(v.getChildAt(it)) }
-        }
-        walk(a.window.decorView)
-        assertTrue("the greeting is on the screen: $texts", texts.none { it.contains(greeting) || it.contains("Hallo, hier ist") })
-
-        val readers = RepoFiles.mainKotlin().filter { f ->
-            f.readLines().any { it.contains("\"greeting\"") && !it.contains(".remove(\"greeting\")") }
-        }
-        assertTrue("sources that read the greeting: $readers", readers.isEmpty())
+        assertEquals(View.VISIBLE, a.findViewById<View>(R.id.assistent_icon).visibility)
+        // the fixed look: green phosphor on the dark ground, whatever the box says
+        assertEquals(0xFF3DDC84.toInt(), ctx().getColor(R.color.terminal_green))
+        assertEquals(0xFF0C120E.toInt(), ctx().getColor(R.color.terminal_ground))
     }
 
     @Test
-    fun unpairingForgetsHausAndThePersona() {
+    fun unpairingForgetsHausAndTheAssistantsName() {
         paired()
-        PersonaStore.save(ctx(), Persona("Joshua", "#3ddc84"))
+        Assistent.save(ctx(), "Mira")
         val a = open()
         a.findViewById<View>(R.id.logout_btn).performClick()
         assertNull(TokenStore.get(ctx()))
         assertNull(ServerStore.baseUrl(ctx()))
-        assertNull(PersonaStore.get(ctx()))
+        assertEquals("Homes", Assistent.name(ctx()))
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.connect_section).visibility)
     }
 

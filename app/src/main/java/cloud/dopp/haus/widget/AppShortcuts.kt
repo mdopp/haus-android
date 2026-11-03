@@ -15,7 +15,7 @@ import kotlin.concurrent.thread
  *
  * The list has to be dynamic — a static shortcut is written at build time and
  * can never know the user's devices. `res/xml/shortcuts.xml` holds only the
- * share target of the persona's sharing shortcut ([ShareTarget], #188), which is
+ * share target of the assistant's sharing shortcut ([ShareTarget], #188), which is
  * published here with the devices and takes one of the launcher's slots.
  *
  * The device set is the **household catalogue** (#100), cached in [WidgetStore]
@@ -33,7 +33,7 @@ object AppShortcuts {
 
     /**
      * Republish the menu: when the app's screen becomes visible, so a
-     * restore/reinstall is picked up too, and when the persona changes. Off the
+     * restore/reinstall is picked up too, and when the assistant's name changes. Off the
      * caller's thread: it touches SharedPreferences and the launcher.
      */
     fun refreshAsync(ctx: Context) {
@@ -48,9 +48,15 @@ object AppShortcuts {
         // is the launcher's to state (0 below API 25 → nothing is published).
         val cap = ShortcutManagerCompat.getMaxShortcutCountPerActivity(app)
         val share = if (cap > 0) runCatching { ShareTarget.info(app, rank = cap - 1) }.getOrNull() else null
-        if (share == null) {
-            // Android keeps a long-lived shortcut for the share sheet after it left the dynamic set.
-            runCatching { ShortcutManagerCompat.removeLongLivedShortcuts(app, listOf(ShareTarget.ID)) }
+        // Android keeps a long-lived shortcut for the share sheet after it left the
+        // dynamic set: drop ours when there is no target, and any older share id
+        // an earlier version published (it would stay in the sheet beside this one).
+        runCatching {
+            val stale = ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_CACHED)
+                .map { it.id }
+                .filter { it.startsWith(ShareTarget.ID_PREFIX) && (share == null || it != ShareTarget.ID) }
+            val gone = if (share == null) (stale + ShareTarget.ID).distinct() else stale
+            if (gone.isNotEmpty()) ShortcutManagerCompat.removeLongLivedShortcuts(app, gone)
         }
         val entries = DeviceShortcuts.entries(
             catalogDevices(app), if (share == null) cap else cap - 1, WidgetStore.recentEntities(app),

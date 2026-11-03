@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Read-only client for Haus's Box keys (`/napi/box/home`, `/napi/box/services`)
- * that the admin widgets show, and for the house persona (`/napi/persona`).
+ * that the admin widgets show, and for the assistant's name (`/napi/assistent`).
  * Haus serves them from Laib; the app never talks to the Box directly.
  *
  * All calls are blocking and must run off the main thread; they return null on
@@ -40,14 +40,8 @@ class BoxApiClient(private val ctx: Context) {
         }
     }
 
-    /** `GET /napi/persona` → the house persona, or null. */
-    fun getPersona(): Persona? = get(Napi.PERSONA)?.let { Persona.parse(it) }
-
-    /**
-     * `GET /napi/persona/icon.png` → the persona's icon, or null when it has
-     * none, it is not a PNG, or it is larger than [PersonaIcon.MAX_BYTES].
-     */
-    fun getPersonaIcon(): ByteArray? = PersonaIcon.accept(bytes(Napi.PERSONA_ICON, PersonaIcon.MAX_BYTES.toLong()))
+    /** `GET /napi/assistent` → the assistant's name, or null. */
+    fun getAssistent(): String? = get(Napi.ASSISTENT)?.let { Assistent.parse(it) }
 
     /** `GET /napi/box/home` → the summary counts, or null on any failure. */
     fun getHome(): BoxHome? {
