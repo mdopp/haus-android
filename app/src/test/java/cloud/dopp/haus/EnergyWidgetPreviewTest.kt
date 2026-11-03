@@ -11,6 +11,8 @@ import android.widget.FrameLayout
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.Energy
+import cloud.dopp.haus.widget.EnergyFluss
+import cloud.dopp.haus.widget.EnergyPicture
 import cloud.dopp.haus.widget.EnergyRender
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import org.json.JSONObject
@@ -117,5 +119,82 @@ class EnergyWidgetPreviewTest {
         assertSharp(draw(150, 72, energy(true), "energy-2x1"), R.id.e_ring, "2×1")
         draw(347, 72, energy(true), "energy-4x1")
         draw(150, 72, energy(true, charge = false), "energy-2x1-ohne-akkustand")
+    }
+
+    /** The house with these legs (W) — pv, house, grid (+drawn), battery (+charging) — at 83 %. */
+    private fun legs(pv: Int, haus: Int, netz: Int, akku: Int): Energy =
+        energy(true).copy(
+            flow = listOf(
+                cloud.dopp.haus.data.EnergyFlow("PV", pv.toDouble(), "W", "supply", "sensor.pv"),
+                cloud.dopp.haus.data.EnergyFlow("Haus", haus.toDouble(), "W", "draw", "sensor.haus"),
+                cloud.dopp.haus.data.EnergyFlow("Netz", netz.toDouble(), "W", "grid", "sensor.netz"),
+                cloud.dopp.haus.data.EnergyFlow("Akku", akku.toDouble(), "W", "battery", "sensor.akku"),
+            ),
+        )
+
+    /** Each of the six ways the power can take, the named one in it (coordinator, 2026-11-03). */
+    private val flows = mapOf(
+        "solar-haus" to legs(800, 800, 0, 0),
+        "solar-akku" to legs(1500, 500, 0, 1000),
+        "solar-netz" to legs(3000, 500, -2500, 0),
+        "netz-haus" to legs(0, 800, 800, 0),
+        "akku-haus" to legs(0, 271, -4, -276),
+        "netz-akku" to legs(0, 300, 1300, 1000),
+    )
+
+    @Test
+    fun everyWay() {
+        for ((name, e) in flows) {
+            val (von, nach) = name.split('-')
+            val f = cloud.dopp.haus.widget.EnergyFluss.of(e)
+            assertTrue("$name: the way is there", f.aktiv.any { it.von == von && it.nach == nach })
+            draw(347, 163, e, "energy-4x2-flows-$name")
+        }
+    }
+
+    /**
+     * No way and no arrow lies on a pill, or on Akku's ring, at 4×2, 2×2 and
+     * a flat 4×2; the ring stays inside the field. Every way of the six.
+     */
+    @Test
+    fun noArrowOnAPill() {
+        val ways = listOf("solar" to "haus", "solar" to "akku", "solar" to "netz", "netz" to "haus", "akku" to "haus", "netz" to "akku")
+        for ((w, h) in listOf(199f to 147f, 136f to 147f, 323f to 147f, 199f to 120f)) {
+            val l = EnergyPicture.lage(w, h)
+            // a pill as the stadium it is, with Akku's ring (and its stroke) around it
+            class Guard(val b: android.graphics.RectF, val m: Float) {
+                fun contains(x: Float, y: Float): Boolean {
+                    val r = b.height() / 2
+                    val dx = kotlin.math.max(kotlin.math.abs(x - b.centerX()) - (b.width() / 2 - r), 0f)
+                    return kotlin.math.hypot(dx, y - b.centerY()) <= r + m
+                }
+            }
+            fun guard(key: String) = Guard(l.box(key), if (key == "akku") 7f else 1f)
+            val akku = l.box("akku").apply { inset(-8f, -8f) }
+            assertTrue("${w}x$h: ring inside", akku.left >= 0 && akku.right <= w && akku.top >= 0 && akku.bottom <= h)
+            for ((von, nach) in ways) {
+                val path = EnergyPicture.way(von, nach, l)
+                val m = android.graphics.PathMeasure(path, false)
+                assertTrue("${w}x$h $von→$nach: long enough for its arrow", m.length >= 14f)
+                // every point of the way, and the arrow's corners, off every pill
+                val pt = FloatArray(2)
+                var d = 0f
+                while (d <= m.length) {
+                    m.getPosTan(d, pt, null)
+                    for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach at $d (${pt.toList()}) on $k", !guard(k).contains(pt[0], pt[1]))
+                    d += 1f
+                }
+                val (pos, tan) = EnergyPicture.arrowAt(path)!!
+                val (long, half) = EnergyPicture.arrowSize(6f)
+                val corners = listOf(
+                    pos[0] + tan[0] * long to pos[1] + tan[1] * long,
+                    pos[0] - tan[0] * long - tan[1] * half to pos[1] - tan[1] * long + tan[0] * half,
+                    pos[0] - tan[0] * long + tan[1] * half to pos[1] - tan[1] * long - tan[0] * half,
+                )
+                for ((x, y) in corners) for (k in EnergyFluss.KEYS) {
+                    assertTrue("${w}x$h $von→$nach: arrow on $k", !guard(k).contains(x, y))
+                }
+            }
+        }
     }
 }

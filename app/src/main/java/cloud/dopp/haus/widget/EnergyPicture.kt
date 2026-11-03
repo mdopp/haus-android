@@ -20,9 +20,8 @@ import kotlin.math.roundToInt
  * heavier type, pills instead of small circles, spread across the width).
  * Solar on top, Netz at the left edge, Akku at the right edge with how full
  * it is as a ring around its pill, Haus below; each pill says its name in its
- * colour, its number and what it does now. The ways the power takes now are
- * drawn thick in their colour with an arrow, the others as a quiet dotted
- * track. Haus's colours and words (internal/pages/energie_fluss.go,
+ * colour, its number and what it does now. Only the ways the power takes
+ * now are drawn, thick in their colour with an arrow. Haus's colours and words (internal/pages/energie_fluss.go,
  * energie_verlauf.go), no animation.
  *
  * A widget cannot host a view of its own, so the picture is a bitmap drawn
@@ -42,7 +41,6 @@ object EnergyPicture {
     private const val INK = 0xFFF2F2F5.toInt()
     private const val SOFT = 0xFFC9CDD6.toInt() // the words: lighter than ink, heavier than Haus's muted
     private const val FAINT = 0xFF6B7280.toInt()
-    private const val TRACK = 0x33FFFFFF
 
     /** A node's colour. */
     fun color(key: String): Int = when (key) {
@@ -61,57 +59,63 @@ object EnergyPicture {
     }
 
     /** Where the pills sit, in dp: their size and each centre. */
-    data class Lage(val pw: Float, val ph: Float, val at: Map<String, Pair<Float, Float>>)
+    data class Lage(val pw: Float, val ph: Float, val at: Map<String, Pair<Float, Float>>) {
+        /** A pill's box. */
+        fun box(key: String): RectF = at.getValue(key).let { (x, y) -> RectF(x - pw / 2, y - ph / 2, x + pw / 2, y + ph / 2) }
+    }
 
-    /** The ring's room around a pill. */
+    /** The ring's room around a pill, and its stroke. */
     private const val RING = 5f
+    private const val RING_W = 3f
+
+    /** The side pills keep the ring and its stroke inside the field. */
+    private const val EDGE = RING + RING_W
 
     /** The air between the three rows, room for the ways and their arrows. */
-    private const val ROW_GAP = 14f
+    private const val ROW_GAP = 16f
+
+    /** A way's air off a pill's border. */
+    private const val GAP = 4f
 
     /**
      * The diamond spread over a [w]×[h] dp field in three rows: Solar on top
      * and Haus below in the middle, Netz at the left edge and Akku at the
-     * right between them. The rows keep [ROW_GAP] apart, so the pills can be
-     * wide. Pure.
+     * right between them. The rows keep [ROW_GAP] apart and the side pills
+     * leave the middle column free, so the pills can be wide and a way from
+     * Solar to Haus passes between them. Pure.
      */
     fun lage(w: Float, h: Float): Lage {
-        val ph = min(40f, (h - 2 * RING - 2 * ROW_GAP) / 3f).coerceAtLeast(24f)
-        val pw = min(ph * 2.4f, (w - 2 * RING) / 2f - 8f).coerceAtLeast(ph)
+        val tall = min(40f, (h - 6f - 2 * ROW_GAP) / 3f)
+        val pw = min(tall * 2.4f, (w - 2 * EDGE) / 2f - 14f)
+        val ph = min(tall, pw / 1.6f)
         return Lage(
             pw, ph,
             mapOf(
-                "solar" to (w / 2 to RING + ph / 2),
-                "haus" to (w / 2 to h - RING - ph / 2),
-                "netz" to (RING + pw / 2 to h / 2),
-                "akku" to (w - RING - pw / 2 to h / 2),
+                "solar" to (w / 2 to 3f + ph / 2),
+                "haus" to (w / 2 to h - 3f - ph / 2),
+                "netz" to (EDGE + pw / 2 to h / 2),
+                "akku" to (w - EDGE - pw / 2 to h / 2),
             ),
         )
     }
 
     /**
      * The flow picture at [wDp]×[hDp] dp and [density] px per dp. [f] null is
-     * nothing read yet: the pills dashed, „…“ in them.
+     * nothing read yet: the pills dashed, „…“ in them. Only the ways the
+     * power takes now are drawn (2026-11-03: no dotted stubs).
      */
     fun flow(f: EnergyFluss?, wDp: Int, hDp: Int, density: Float): Bitmap {
         val (bmp, c) = canvas(wDp, hDp, density)
         val lage = lage(wDp.toFloat(), hDp.toFloat())
         val da = f?.da ?: EnergyFluss.KEYS.toSet()
         val at = lage.at.filterKeys { it in da }
-        val gap = RING + 2f
-
-        // the tracks first: every way the house could have, quiet and dotted
-        val track = stroke(TRACK, 1.4f).apply { pathEffect = DashPathEffect(floatArrayOf(2f, 4f), 0f) }
-        for ((von, nach) in TRACKS) {
-            if (von in at && nach in at) c.drawPath(way(von, nach, lage, gap), track)
-        }
         // the ways the power takes now, as thick as they carry, an arrow saying where to
         val aktiv = f?.aktiv.orEmpty()
         val big = aktiv.maxOfOrNull { it.w } ?: 0.0
         for (w in aktiv) {
             if (w.von !in at || w.nach !in at) continue
-            val path = way(w.von, w.nach, lage, gap)
-            val width = 3f + 4f * (w.w / big).toFloat()
+            val path = way(w.von, w.nach, lage)
+            val width = 3f + 3f * (w.w / big).toFloat()
             val col = wayColor(w.farbe)
             c.drawPath(path, stroke(col, width).apply { alpha = 150; strokeCap = Paint.Cap.ROUND })
             arrow(c, path, width, col)
@@ -156,7 +160,7 @@ object EnergyPicture {
         wortP.textAlign = Paint.Align.LEFT
         c.drawText(if (wort.isEmpty()) name else "$name ", start, lineY, nameP)
         if (wort.isNotEmpty()) c.drawText(wort, start + nameW, lineY, wortP)
-        if (charge != null) chip(c, x, box.top - RING, EnergyFluss.percent(charge), col, ph)
+        if (charge != null) chip(c, box.left + pw * 0.27f, box.top - RING, EnergyFluss.percent(charge), col, ph)
     }
 
     /** How full, in words, on the ring's start: a small filled label at the pill's top. */
@@ -183,8 +187,8 @@ object EnergyPicture {
         val m = PathMeasure(path, false)
         val part = Path()
         m.getSegment(0f, m.length * (pct / 100.0).toFloat().coerceIn(0f, 1f), part, true)
-        c.drawPath(path, stroke(col, 3f).apply { alpha = 40 })
-        c.drawPath(part, stroke(col, 3f).apply { strokeCap = Paint.Cap.ROUND })
+        c.drawPath(path, stroke(col, RING_W).apply { alpha = 60 })
+        c.drawPath(part, stroke(col, RING_W).apply { strokeCap = Paint.Cap.ROUND })
     }
 
     /**
@@ -226,64 +230,89 @@ object EnergyPicture {
 
     private val NAMES = mapOf("solar" to "Solar", "haus" to "Haus", "netz" to "Netz", "akku" to "Akku")
 
-    /** The tracks the page draws, never Netz → Akku. */
-    private val TRACKS = listOf("solar" to "haus", "solar" to "akku", "solar" to "netz", "akku" to "haus", "netz" to "haus")
-
     /**
-     * The way from [von] to [nach] between their pills, [gap] off them.
-     * Solar and Haus share the middle column: a straight line down; Netz and
-     * Akku share the middle row: a straight line across. Between a side pill
-     * and the column an elbow: out of the side pill's top or bottom, near its
-     * inner end, curving into the middle pill's flank — long enough to see,
-     * and clear of the other pills.
+     * The way from [von] to [nach], from pill edge to pill edge, never over a
+     * pill. Solar and Haus share the middle column: a straight line down
+     * between Netz and Akku. Between a side pill and the column one quarter
+     * curve: out of the side pill's top or bottom, where it reaches past the
+     * column pill, into the column pill's flank. Netz and Akku: an arch
+     * through the channel between the upper rows. Pure geometry.
      */
-    private fun way(von: String, nach: String, l: Lage, gap: Float): Path {
-        val a = l.at.getValue(von)
-        val z = l.at.getValue(nach)
+    fun way(von: String, nach: String, l: Lage): Path {
         val path = Path()
         val middle = setOf("solar", "haus")
+        // the air off a pill: Akku's ring takes its own room
+        fun off(key: String) = if (key == "akku") RING + RING_W / 2 + GAP else GAP
         when {
             von in middle && nach in middle -> {
-                val dir = if (z.second > a.second) 1 else -1
-                path.moveTo(a.first, a.second + dir * (l.ph / 2 + gap))
-                path.lineTo(z.first, z.second - dir * (l.ph / 2 + gap))
+                val a = l.box(von)
+                val z = l.box(nach)
+                val down = z.top > a.top
+                path.moveTo(a.centerX(), if (down) a.bottom + off(von) else a.top - off(von))
+                path.lineTo(z.centerX(), if (down) z.top - off(nach) else z.bottom + off(nach))
             }
             von !in middle && nach !in middle -> {
-                val dir = if (z.first > a.first) 1 else -1
-                path.moveTo(a.first + dir * (l.pw / 2 + gap), a.second)
-                path.lineTo(z.first - dir * (l.pw / 2 + gap), z.second)
+                val a = l.box(von)
+                val z = l.box(nach)
+                val top = l.box("solar").bottom
+                val channel = (top + a.top) / 2
+                // out and in where the side pills reach past Solar, as the quarter curves do
+                val col = l.box("solar")
+                fun outer(b: RectF) = if (b.centerX() > col.centerX()) max(col.right + GAP + 14f, b.left + b.height() * 0.5f)
+                else min(col.left - GAP - 14f, b.right - b.height() * 0.5f)
+                val ax = outer(a)
+                val zx = outer(z)
+                path.moveTo(ax, a.top - off(von))
+                path.cubicTo(ax, channel, zx, channel, zx, z.top - off(nach))
             }
             else -> {
-                val side = if (von in middle) z else a
-                val mid = if (von in middle) a else z
-                val inward = if (mid.first > side.first) 1 else -1
-                val vertical = if (mid.second > side.second) 1 else -1
-                val sidePt = side.first + inward * l.pw * 0.3f to side.second + vertical * (l.ph / 2 + gap)
-                val midPt = mid.first - inward * (l.pw / 2 + gap) to mid.second
-                val (p, q) = if (von in middle) midPt to sidePt else sidePt to midPt
-                path.moveTo(p.first, p.second)
-                path.quadTo(sidePt.first, midPt.second, q.first, q.second)
+                val sideKey = if (von in middle) nach else von
+                val midKey = if (von in middle) von else nach
+                val side = l.box(sideKey)
+                val mid = l.box(midKey)
+                val right = side.centerX() > mid.centerX()
+                val below = mid.centerY() > side.centerY()
+                // where the side pill reaches past the column pill, near its rounded end
+                val sx = if (right) max(mid.right + GAP + 14f, side.left + side.height() * 0.5f)
+                else min(mid.left - GAP - 14f, side.right - side.height() * 0.5f)
+                val sy = if (below) side.bottom + off(sideKey) else side.top - off(sideKey)
+                val mx = if (right) mid.right + off(midKey) else mid.left - off(midKey)
+                val my = mid.centerY()
+                if (von == sideKey) {
+                    path.moveTo(sx, sy)
+                    path.quadTo(sx, my, mx, my)
+                } else {
+                    path.moveTo(mx, my)
+                    path.quadTo(sx, my, sx, sy)
+                }
             }
         }
         return path
     }
 
-    /** An arrow at the middle of [path], pointing along it. */
-    private fun arrow(c: Canvas, path: Path, width: Float, col: Int) {
+    /** Where the arrow of [path] sits and points: its middle, along it. */
+    fun arrowAt(path: Path): Pair<FloatArray, FloatArray>? {
         val m = PathMeasure(path, false)
-        if (m.length < 4f) return
+        if (m.length < 4f) return null
         val pos = FloatArray(2)
         val tan = FloatArray(2)
         m.getPosTan(m.length / 2, pos, tan)
-        val ux = tan[0]
-        val uy = tan[1]
-        val long = 7f + width * 0.7f
-        val half = 4.5f + width * 0.5f
+        return pos to tan
+    }
+
+    /** The arrow's half length along the way and half width across it. */
+    fun arrowSize(width: Float): Pair<Float, Float> = (5f + width * 0.4f) to (3.2f + width * 0.3f)
+
+    /** An arrow at the middle of [path], pointing along it. */
+    private fun arrow(c: Canvas, path: Path, width: Float, col: Int) {
+        val (pos, tan) = arrowAt(path) ?: return
+        val (long, half) = arrowSize(width)
         val (mx, my) = pos[0] to pos[1]
+        val (ux, uy) = tan[0] to tan[1]
         val arrowPath = Path().apply {
-            moveTo(mx + ux * long / 2, my + uy * long / 2)
-            lineTo(mx - ux * long / 2 - uy * half, my - uy * long / 2 + ux * half)
-            lineTo(mx - ux * long / 2 + uy * half, my - uy * long / 2 - ux * half)
+            moveTo(mx + ux * long, my + uy * long)
+            lineTo(mx - ux * long - uy * half, my - uy * long + ux * half)
+            lineTo(mx - ux * long + uy * half, my - uy * long - ux * half)
             close()
         }
         c.drawPath(arrowPath, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = col })
