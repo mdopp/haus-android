@@ -12,7 +12,6 @@ to them. Any change here is a **cross-repo change** with `mdopp/haus`.
 | device-token prefix | `haus_device_` | `app.TokenPrefix` |
 | pair deep link | `cloud.dopp.haus://pair#token=…&id=…` | `app.Scheme`, `pages/pair.go` |
 | setup QR content | `cloud.dopp.haus://setup?server=…&token=…` | `pages/geraete.go` |
-| Box keys | `/napi/box/home`, `/napi/box/services` | `app.BoxPrefix` |
 
 The scheme is named after the domain on purpose: a bare `haus://` could be
 registered by any other app on the phone and catch the token in the redirect.
@@ -61,14 +60,14 @@ each row naming the Haus file and lines it came from.
 |---|---|
 | pairing | `GET /napi/whoami`, `GET /napi/assistent` |
 | the start screen's devices | `GET /napi/portal/favorites` (the person's ☆ things on Haus, as cards in their order; haus#213), `POST /napi/ha/call`, `GET /napi/portal/state` (a cover's or a lock's state before its toggle) |
+| one device (widget, restored 2026-11-03) | `GET /napi/portal/state`, `POST /napi/ha/call`; its picker `GET /napi/portal/start/addable` |
 | app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
 | energy | `GET /napi/portal/energy`: the flow now and, per total, `today` (kWh since the house's midnight; haus#213) |
-| Nachrichten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
+| Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
 | Share → Haus, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Haus's refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Haus | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Haus keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (haus#120); the share sheet's Direct Share target carries the assistant's name (#188) |
-| tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{tasks,documents,notes}`; Haus also lists `contacts`, which the app no longer offers as a widget, owner 2026-11-02), `POST /napi/action-callback` |
-| Box (admins) | `GET /napi/box/home`, `GET /napi/box/services` |
+| tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{documents,notes}`; Haus also lists `contacts` and `task`, which the app no longer offers as a widget, owner 2026-11-02 and 2026-11-03), `POST /napi/action-callback` |
 | live stream | `POST /napi/portal/watch`, `GET /napi/portal/events` |
 
 Fields the widgets read beyond a value to show:
@@ -80,24 +79,22 @@ Fields the widgets read beyond a value to show:
 - `today` on every energy total: what it added since the house's midnight,
   in kWh, by the Energie page's rule; absent when HA's history does not say,
   and then the widget shows a dash, never the lifetime count.
-- `pendingApprovals` and `pendingUpdates` of `/napi/box/home`: Haus counts a
-  template update once, as an update, never as an approval. The Box widget
-  shows the two numbers apart.
 
 ## (c) The live stream
 
 One foreground service (`realtime/LiveService.kt`, type `specialUse`, a quiet
 "Live-Widgets" notification) runs while the app is paired, its switch is on
-(the default) and a widget the stream keeps current is placed (energy, tools,
-the Box widgets). It listens for the screen itself. While the screen is on it
+(the default) and a widget the stream keeps current is placed (one device,
+energy, tools; the Box widgets are gone, owner 2026-11-03). It listens for the screen itself. While the screen is on it
 holds `GET /napi/portal/events` and reads one frame, `card_state`; on
 screen-off it drops the connection. Once connected it posts its watch set
-(`POST /napi/portal/watch`: `entity_ids`, while the energy widget is placed
-the energy flow's sensors; re-posted inside Haus's one-hour TTL; a 503 while
+(`POST /napi/portal/watch`: `entity_ids`, the device widgets' devices and,
+while the energy widget is placed, the energy flow's sensors; re-posted inside Haus's one-hour TTL; a 503 while
 Home Assistant is down is retried with backoff, about two minutes) and has
 every fed widget read again.
 
-- `card_state` (`{entity_id, card}`) for an energy sensor reads the energy
+- `card_state` (`{entity_id, card}`) draws the device widgets of that entity
+  without a read; for an energy sensor it reads the energy
   widget again, at most every 10 s, Haus's sensor interval. Any other frame
   reads nothing. The app never asks for `active_set` (no `active` in its
   watch), and a stray one is not read.
@@ -127,7 +124,9 @@ through their chat channel, not the app (laib ADR 0022 §3).
 
 A widget's body tap opens one of Haus's pages in the browser at the paired
 address: `/energie` for the energy widget, `/start` for a tool widget's
-header, `/box` for the Box. The app has no web shell of its own; its start
+header, a device's own page for a device widget whose device a tap cannot
+switch (a lamp, a switch, a cover, a lock act on the tap instead). The app has
+no web shell of its own; its start
 screen opens Haus's pages in a Custom Tab: „Alle Geräte“ `/raeume`, a
 favorite's own page on a long press (or on a tap, for a device a tap cannot
 switch).
@@ -144,8 +143,7 @@ screen (`ToolActionActivity`) that opens the page or the sheet.
 Every page a widget opens carries `von=widget.<kind>` exactly once (`?von=…`,
 or `&von=…` after a query the page already has; a `von` of the page's own is
 replaced), so Haus counts server-side which widget a tap came from (#180).
-The kinds (`WidgetKind` in `widget/HausPages.kt`): `energy`, `box-overview`,
-`box-services`, `tool`. The app counts nothing and makes no call for it; a
+The kinds (`WidgetKind` in `widget/HausPages.kt`): `device`, `energy`, `tool`. The app counts nothing and makes no call for it; a
 launcher shortcut and the app's own links carry no `von`.
 
 ## (d2) The start screen's devices
@@ -162,7 +160,7 @@ chooser (#92: „Tür öffnen“ only when the card's `supported_features` names
 latch); anything else opens its page. When the call is done the list is read
 again. With no favorites the screen says in one sentence how to get some.
 
-## (e) Nachrichten sichern
+## (e) Daten sichern
 
 (#194, laib ADR 0029; Haus's side is haus#207.) Under Mehr → Nachrichten
 sichern the person grants two folders through the system folder picker
@@ -202,7 +200,7 @@ and 401 stop the run with a German sentence on the screen. Errors are
 `{"fehler": …}`, except the 401 of the shared login check
 (`{"error":"unauthorized"}`), for which the app says to pair again.
 
-`GET /napi/sicherung/stand` → `{quellen: {whatsapp|signal|sms|discord: {zuletzt,
+`GET /napi/sicherung/stand` → `{quellen: {whatsapp|signal|sms: {zuletzt,
 dateien, bytes, wartend}}, frei_bytes}` is shown per source on the screen.
 The app never asks for or stores a messenger's key: keys go into the
 person's vault on the box (laib#986).

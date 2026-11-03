@@ -30,8 +30,7 @@ import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.data.request
 import cloud.dopp.haus.ui.HomeActivity
-import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
-import cloud.dopp.haus.widget.BoxServicesWidgetProvider
+import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
 import okhttp3.OkHttpClient
@@ -55,8 +54,7 @@ object Live {
 
     /** The widgets the stream keeps current: frames, refetches on frames, or the screen-on resync. */
     val FED: List<Class<out AppWidgetProvider>> = listOf(
-        EnergyWidgetProvider::class.java, ToolWidgetProvider::class.java,
-        BoxOverviewWidgetProvider::class.java, BoxServicesWidgetProvider::class.java,
+        DeviceWidgetProvider::class.java, EnergyWidgetProvider::class.java, ToolWidgetProvider::class.java,
     )
 
     /**
@@ -147,7 +145,8 @@ object Live {
  *   widget read again, since Haus sends a card only when it changes.
  * - Screen off: drop the connection. Nothing polls; a widget nobody sees
  *   needs no update.
- * - A card of an energy sensor has the energy widget read again, coalesced.
+ * - A card draws the device widgets of its entity, no read; a card of an
+ *   energy sensor has the energy widget read again, coalesced.
  * - A 401 stops the service (the device was removed in Haus); any other loss
  *   reconnects with backoff, reset only after a healthy session.
  * - After its process died, Android restarts it (`START_STICKY`). That restart
@@ -300,6 +299,7 @@ class LiveService : Service() {
                 if (eventSource !== source) return@post
                 when (ev) {
                     is RealtimeProtocol.CardStateEvent -> {
+                        runCatching { DeviceWidgetProvider.wakeEntity(this@LiveService, ev.entityId, ev.card) }
                         // a sensor comes every 10 s at most: at most one energy refetch in that time
                         if (!energyQueued && ev.entityId in WatchSet.energy(this@LiveService)) {
                             energyQueued = true

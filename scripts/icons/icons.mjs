@@ -28,14 +28,14 @@ const motif = master.replace(/<rect id="ground"[^>]*\/>/, '')
 /** The house in white, strokes and fills alike: Android tints it (themed icon, notification). */
 const white = motif.replaceAll('#3ddc84', '#ffffff')
 /**
- * The notification icon is drawn at 24 dp, where the master's 5-unit line is
- * about 1.7 px: there the lines go to 8 units (house and prompt) and the
- * cursor to 8 units high, so the mark stays legible.
+ * The notification icon is drawn at 24 dp, where the master's 6-unit line is
+ * under 1.5 px: there the house and the prompt go to 9 units and the cursor to
+ * 9 high, the same round caps and joins, so the mark stays legible.
  */
 const bold = white
-  .replace('stroke-width="5"', 'stroke-width="8"')
-  .replace('stroke-width="6"', 'stroke-width="8"')
-  .replace('y="65" width="15" height="5.5"', 'y="63" width="15" height="8"')
+  .replace('stroke-width="6"', 'stroke-width="9"')
+  .replace('stroke-width="6.5"', 'stroke-width="9"')
+  .replace('y="64.5" width="15" height="6"', 'y="62" width="15" height="9"')
 
 /** [svg] seen through [box] (x y w h), clipped to [clip] (an SVG shape in the box's units) when given. */
 function view(svg, box, clip) {
@@ -53,7 +53,7 @@ const VISIBLE = '18 18 72 72'
 const ROUNDED = '<rect x="18" y="18" width="72" height="72" rx="16"/>'
 const CIRCLE = '<circle cx="54" cy="54" r="36"/>'
 /** The house's own bounds with a little air: the notification icon has no ground to spare. */
-const HOUSE = '19 15.5 70 70'
+const HOUSE = '25 25 58 58'
 
 function png(svg, px) {
   return new Resvg(svg, { fitTo: { mode: 'width', value: Math.round(px) } }).render().asPng()

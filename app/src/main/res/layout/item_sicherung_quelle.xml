@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One source on „Nachrichten sichern“ (#194): its folder, its last transfer,
+<!-- One source on „Daten sichern“ (#194): its folder, its last transfer,
      what the box reports, its last word, and the folder picker. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"

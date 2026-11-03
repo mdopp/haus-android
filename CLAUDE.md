@@ -3,14 +3,15 @@
 This repo is the **Haus app**: native Kotlin home-screen widgets, the
 pairing with **Haus** (`https://haus.<domain>`, repo `mdopp/haus`), the
 family's surface of the box Laib runs, and on the app's start screen the
-person's favorite devices (the owner's call, 2026-11-02: devices live in the
-app, not in widgets; the widgets are one energy widget, the tools and the
-Box's two). It is a widget client (laib ADR 0022):
+person's favorite devices (the owner's calls, 2026-11-02 and 2026-11-03: the
+widgets are one device per widget, one energy widget and the tools Dokumente
+and Notizen; no Box widgets; every confirmation is the one dialog,
+`widget/ActionDialog.kt`). It is a widget client (laib ADR 0022):
 no web shell, no messages, no approvals, no diagnostics, and for the widgets
 no network while the screen is off. The widgets stay live through one
 `specialUse` foreground service (`realtime/LiveService.kt`) that holds the
 stream only while the screen is on. The one thing beyond the widgets is
-Nachrichten sichern (#194, laib ADR 0029): it picks up the phone's WhatsApp
+Daten sichern (#194, laib ADR 0029; renamed 2026-11-03): it picks up the phone's WhatsApp
 and Signal backups and uploads them to Haus, and, each behind its own switch
 and permission, mirrors the contacts and sends the SMS and call log
 age-encrypted. The seam with Haus is

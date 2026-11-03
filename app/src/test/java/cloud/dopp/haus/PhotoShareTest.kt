@@ -106,6 +106,6 @@ class PhotoShareTest {
             .putExtra(Intent.EXTRA_STREAM, Uri.parse("content://media/external/images/1"))
         Robolectric.buildActivity(ShareActivity::class.java, i).create()
         val d = ShadowDialog.getLatestDialog() as AlertDialog
-        assertEquals("Legt das Foto ab …", d.findViewById<TextView>(android.R.id.message)?.text.toString())
+        assertEquals("Legt das Foto ab …", d.findViewById<TextView>(R.id.ad_message)?.text.toString())
     }
 }

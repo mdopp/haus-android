@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Nachrichten sichern's one job (#194, laib ADR 0029): a [Lauf] over the
+ * Daten sichern's one job (#194, laib ADR 0029): a [Lauf] over the
  * folders the person granted, then, each when its switch is on and its
  * permission granted, the contacts ([KontakteLauf]) and the SMS and calls
  * ([NachrichtenLauf]). Daily on an unmetered network while the phone
@@ -226,7 +226,7 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
     }
 }
 
-/** What „Nachrichten sichern“ shows of the two runs. */
+/** What „Daten sichern“ shows of the two runs. */
 sealed class Zustand {
     object Ruht : Zustand()
 

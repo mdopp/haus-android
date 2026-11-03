@@ -1,15 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
   <!-- The Haus icon, master of every size the app ships (owner, 2026-11-02):
        a green-phosphor terminal prompt inside a house drawn as a green line
-       (the outline variant), accent #3ddc84 on
+       (the outline variant, its motif scaled to 0.78 around the centre so
+       even a circle mask leaves 6 units of air), accent #3ddc84 on
        ground #0c120e. The 108 canvas is Android's adaptive icon; the house
        stays inside its 66 safe circle (centre 54,54). Edit here, then run
        scripts/icons (icons.mjs says how): it renders every PNG from this file.
        mdopp/haus carries the same master for the web app's icons. -->
+
   <rect id="ground" width="108" height="108" fill="#0c120e"/>
-  <g id="motif">
-    <path d="M54 24 L84 49 L77 49 L77 77 L31 77 L31 49 L24 49 Z" fill="none" stroke="#3ddc84" stroke-width="5" stroke-linejoin="round"/>
-    <path d="M39 51 L50 60 L39 69" fill="none" stroke="#3ddc84" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter"/>
-    <rect id="cursor" x="55" y="65" width="15" height="5.5" fill="#3ddc84"/>
+  <g id="motif" transform="translate(54 54) scale(0.78) translate(-54 -50.5)">
+    <path d="M54 24 L84 49 L77 49 L77 77 L31 77 L31 49 L24 49 Z" fill="none" stroke="#3ddc84" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M39 51 L50 60 L39 69" fill="none" stroke="#3ddc84" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect id="cursor" x="55" y="64.5" width="15" height="6" rx="1.5" fill="#3ddc84"/>
   </g>
 </svg>

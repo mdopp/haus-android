@@ -41,7 +41,7 @@ class WidgetVonTest {
     @Test
     fun theKinds() {
         assertEquals(
-            listOf("energy", "box-overview", "box-services", "tool"),
+            listOf("device", "energy", "tool"),
             WidgetKind.values().map { it.kind },
         )
         WidgetKind.values().forEach {
@@ -134,9 +134,8 @@ class WidgetVonTest {
     fun eachProviderTapsWithItsOwnKind() {
         val widget = File(RepoFiles.main, "java/cloud/dopp/haus/widget")
         val expected = mapOf(
+            "DeviceWidgetProvider.kt" to WidgetKind.DEVICE,
             "EnergyWidgetProvider.kt" to WidgetKind.ENERGY,
-            "BoxOverviewWidgetProvider.kt" to WidgetKind.BOX_OVERVIEW,
-            "BoxServicesWidgetProvider.kt" to WidgetKind.BOX_SERVICES,
             "ToolWidgetProvider.kt" to WidgetKind.TOOL,
         )
         val call = Regex("""(HausPages\.tap|ToolActionActivity\.template)\(([^\n]*)\)""")

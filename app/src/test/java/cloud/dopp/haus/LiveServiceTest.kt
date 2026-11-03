@@ -12,8 +12,7 @@ import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.TokenStore
 import cloud.dopp.haus.ui.HomeActivity
-import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
-import cloud.dopp.haus.widget.BoxServicesWidgetProvider
+import cloud.dopp.haus.widget.DeviceWidgetProvider
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import cloud.dopp.haus.widget.ToolWidgetProvider
 import okhttp3.Protocol
@@ -69,9 +68,8 @@ class LiveServiceTest {
     /** Every widget the stream keeps current. */
     private val fed: List<Pair<Class<out android.appwidget.AppWidgetProvider>, Int>> = listOf(
         EnergyWidgetProvider::class.java to R.layout.widget_energy,
-        BoxOverviewWidgetProvider::class.java to R.layout.widget_box_overview,
-        BoxServicesWidgetProvider::class.java to R.layout.widget_box_services,
         ToolWidgetProvider::class.java to R.layout.widget_tool,
+        DeviceWidgetProvider::class.java to R.layout.widget_device,
     )
 
     @Before
@@ -157,12 +155,12 @@ class LiveServiceTest {
      * The catch-up (#137, #138): Haus sends a card only when it changes, so what
      * changed while the screen was off reaches a widget only through this. Every
      * placed instance of every fed widget is asked, each once — the energy
-     * widget must not keep the morning's sun, a Box tile must not freeze.
+     * widget must not keep the morning's sun, a lamp tile not its old state.
      */
     @Test
     fun onceConnectedItPostsTheWatchSetAndReadsEveryFedWidgetAgain() {
         place(*fed.toTypedArray())
-        place(fed[0], fed[0], fed[3])
+        place(fed[0], fed[0], fed[2])
         start()
         val app = shadowOf(ctx() as android.app.Application)
         app.clearBroadcastIntents()

@@ -36,7 +36,7 @@ import cloud.dopp.haus.sicherung.Zustand
 import kotlin.concurrent.thread
 
 /**
- * Mehr → Nachrichten sichern (#194, laib ADR 0029). The person grants two
+ * Mehr → Daten sichern (#194, laib ADR 0029). The person grants two
  * folders through the system picker — WhatsApp's
  * (`Android/media/com.whatsapp/WhatsApp`, suggested) and the one they chose
  * in Signal — and sees per source whether the folder is granted, when a file

@@ -21,7 +21,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
- * Nachrichten sichern (#194, laib ADR 0029): the calls that bring the phone's
+ * Daten sichern (#194, laib ADR 0029): the calls that bring the phone's
  * WhatsApp and Signal backups to Haus, against the contract Haus builds in
  * haus#207 — what reached the box, which media are missing, and a resumable
  * upload (create, HEAD for the offset, PATCH the next bytes).

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Kontakte, SMS und Anrufe on „Nachrichten sichern“ (laib ADR 0029): two
+<!-- Kontakte, SMS und Anrufe on „Daten sichern“ (laib ADR 0029): two
      switches, each with its own permission; what goes where in one line. -->
 <resources>
     <string name="handy_kontakte_titel">Kontakte</string>

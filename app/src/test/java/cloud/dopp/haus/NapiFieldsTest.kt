@@ -9,13 +9,12 @@ import android.view.View
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ApiClient
-import cloud.dopp.haus.data.BoxHome
 import cloud.dopp.haus.data.Napi
 import cloud.dopp.haus.data.Assistent
 import cloud.dopp.haus.data.ServerStore
 import cloud.dopp.haus.data.ToolDefs
 import cloud.dopp.haus.data.TokenStore
-import cloud.dopp.haus.widget.BoxOverviewWidgetProvider
+import cloud.dopp.haus.ui.HomeActivity
 import cloud.dopp.haus.widget.ToolActionActivity
 import cloud.dopp.haus.widget.ToolCells
 import cloud.dopp.haus.widget.ToolRow
@@ -46,7 +45,6 @@ import java.io.File
  *   card without one opens `/start`, and only a path on Haus is ever opened;
  * - the watch names entities only: no active widget asks for `active_set`
  *   any more (owner, 2026-11-02);
- * - the Box widget shows approvals and updates apart, as Haus now counts them.
  *
  * Written before the code (red first): new names are reached through [Reach].
  */
@@ -212,20 +210,5 @@ class NapiFieldsTest {
     fun theWatchNamesEntitiesOnly() {
         assertEquals("""{"entity_ids":["sensor.pv"]}""", ApiClient.watchBody(listOf("sensor.pv")).toString())
         assertEquals(listOf("entity_ids"), Napi.WATCH.body)
-    }
-
-    // --- the Box: approvals and updates apart ------------------------------------
-
-    @Test
-    fun theBoxShowsApprovalsAndUpdatesApart() {
-        ServerStore.clear(ctx()) // no fetch: the widget draws its last numbers
-        val shadow = shadowOf(AppWidgetManager.getInstance(ctx()))
-        val id = shadow.createWidget(BoxOverviewWidgetProvider::class.java, R.layout.widget_box_overview)
-        WidgetCache.putHome(ctx(), id, BoxHome(servicesUp = 5, servicesFailed = 0, servicesDown = 0, pendingApprovals = 1, pendingUpdates = 3))
-        BoxOverviewWidgetProvider().onUpdate(ctx(), AppWidgetManager.getInstance(ctx()), intArrayOf(id))
-        repeat(50) { idle(); Thread.sleep(10) }
-        val v = shadow.getViewFor(id)
-        assertEquals("1", v.findViewById<TextView>(R.id.box_approvals).text.toString())
-        assertEquals("3", v.findViewById<TextView>(R.id.box_updates).text.toString())
     }
 }

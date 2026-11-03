@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The energy widget while Haus says nothing about today (owner, 2026-11-03):
+     „Jetzt“ alone fills the cell, the four flow legs large, two rows of two.
+     The same ids as widget_energy.xml, without its Heute part. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/e_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:paddingStart="16dp"
+    android:paddingEnd="10dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/e_now_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:text="@string/energy_now"
+            android:textColor="#FFF2F2F5"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/e_refresh"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:padding="5dp"
+            android:src="@drawable/ic_refresh"
+            android:tint="#FF9AA0AE"
+            android:contentDescription="@string/widget_refresh" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/e_now_l0" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
+                <TextView android:id="@+id/e_now_v0" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:text="—" android:textColor="#FFF2F2F5"
+                    android:textStyle="bold" android:textSize="22sp" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/e_now_l1" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
+                <TextView android:id="@+id/e_now_v1" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:text="—" android:textColor="#FFF2F2F5"
+                    android:textStyle="bold" android:textSize="22sp" />
+            </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/e_now_l2" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
+                <TextView android:id="@+id/e_now_v2" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:text="—" android:textColor="#FFF2F2F5"
+                    android:textStyle="bold" android:textSize="22sp" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/e_now_l3" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
+                <TextView android:id="@+id/e_now_v3" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                    android:text="—" android:textColor="#FFF2F2F5"
+                    android:textStyle="bold" android:textSize="22sp" />
+            </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

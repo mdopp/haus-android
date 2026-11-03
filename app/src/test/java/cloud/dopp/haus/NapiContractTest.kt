@@ -17,7 +17,7 @@ import java.lang.reflect.Modifier
  * Haus file and lines it was copied from (mdopp/haus at 8c1251e). When Haus
  * changes a handler, the row changes with it, in the same breath.
  *
- * The rows of Nachrichten sichern (`/napi/sicherung/…`, #194) are copied from
+ * The rows of Daten sichern (`/napi/sicherung/…`, #194) are copied from
  * Haus's PR for haus#207 (mdopp/haus#208 at ad8c269, not merged yet): when it
  * merges, the commit above moves on and the lines are checked again. The
  * archive key and the contacts (laib ADR 0029) are copied from mdopp/haus
@@ -175,10 +175,10 @@ class NapiContractTest {
                 body = setOf("text"), required = setOf("text"),
                 sends = setOf("titel", "art", "kurz", "schon", "teilweise", "notiz", "error"),
             ),
-            // Nachrichten sichern (haus#208 at ad8c269, routes sicherung.go:112-118; errors {fehler} :121-124).
+            // Daten sichern (haus#208 at ad8c269, routes sicherung.go:112-118; errors {fehler} :121-124).
             Route(
                 "GET", "/napi/sicherung/stand", "internal/napi/sicherung.go:283-291, the shape :208-220",
-                sends = setOf("quellen", "whatsapp", "signal", "sms", "discord", "zuletzt", "dateien", "bytes", "wartend", "frei_bytes", "fehler"),
+                sends = setOf("quellen", "whatsapp", "signal", "sms", "zuletzt", "dateien", "bytes", "wartend", "frei_bytes", "fehler"),
             ),
             Route(
                 "POST", "/napi/sicherung/fehlend", "internal/napi/sicherung.go:301-339, an entry :294-297",
@@ -244,7 +244,6 @@ class NapiContractTest {
         /** What the widgets and the pairing need: each must be declared. */
         val NEEDED = setOf(
             "GET /napi/assistent", "GET /napi/whoami",
-            "GET /napi/box/home", "GET /napi/box/services",
             "POST /napi/ha/call", "GET /napi/portal/state", "GET /napi/portal/energy",
             "GET /napi/portal/favorites", "GET /napi/portal/start/addable",
             "POST /napi/portal/watch", "GET /napi/portal/events",

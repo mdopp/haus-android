@@ -180,44 +180,6 @@
                 android:background="@drawable/card_haus"
                 android:orientation="vertical" />
 
-            <TextView
-                android:id="@+id/tools_group_title"
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_lg"
-                android:text="@string/home_widgets_group_tools"
-                android:visibility="gone" />
-
-            <LinearLayout
-                android:id="@+id/tools_group"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/card_haus"
-                android:orientation="vertical"
-                android:visibility="gone" />
-
-            <TextView
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_lg"
-                android:text="@string/home_widgets_group_box" />
-
-            <TextView
-                style="@style/Text.Haus.Label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_xs"
-                android:text="@string/home_box_hint" />
-
-            <LinearLayout
-                android:id="@+id/box_group"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/card_haus"
-                android:orientation="vertical" />
-
             <!-- Mehr (#194): what the app does beyond the widgets. -->
             <TextView
                 style="@style/Text.Haus.Title"

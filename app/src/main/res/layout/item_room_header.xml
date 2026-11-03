@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Section header in the device picker: the room name in small caps, accent
+     color. Non-clickable — the sectioned adapter marks it disabled. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/header_room"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="16dp"
+    android:paddingBottom="6dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:textStyle="bold"
+    android:letterSpacing="0.08"
+    android:textColor="@color/haus_accent"
+    android:textSize="12sp"
+    android:maxLines="1"
+    android:ellipsize="end" />

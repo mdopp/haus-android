@@ -38,7 +38,7 @@ class MapGedaechtnis : Gedaechtnis {
 }
 
 /**
- * One run of Nachrichten sichern (#194) over two folders on disk against the
+ * One run of Daten sichern (#194) over two folders on disk against the
  * fake Haus: what goes, what stays, what the screen is told — and that a run
  * without a granted folder asks Haus nothing.
  */

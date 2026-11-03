@@ -82,9 +82,8 @@ object HausPages {
  * before; the app itself counts nothing.
  */
 enum class WidgetKind(val kind: String) {
+    DEVICE("device"),
     ENERGY("energy"),
-    BOX_OVERVIEW("box-overview"),
-    BOX_SERVICES("box-services"),
     TOOL("tool"),
     ;
 

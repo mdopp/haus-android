@@ -33,17 +33,13 @@
     <string name="home_connected">Gekoppelt mit %1$s</string>
     <string name="home_widgets_title">Widget hinzufügen</string>
     <string name="home_widgets_hint">Tippen legt es auf den Startbildschirm.</string>
-    <string name="home_widgets_group_tools">Haushalt</string>
-    <string name="home_widgets_group_box">Box</string>
-    <string name="home_box_hint">Für alle, die sich um die Box kümmern.</string>
     <string name="home_add_widget_manual">Widget über den Startbildschirm hinzufügen (lang drücken → Widgets).</string>
     <string name="home_logout">Kopplung aufheben</string>
     <string name="home_logged_out">Kopplung aufgehoben.</string>
 
     <!-- The widget types the app offers (#34). -->
+    <string name="widget_type_device">Ein Gerät</string>
     <string name="widget_type_energy">Energie · Jetzt und heute</string>
-    <string name="widget_type_box_overview">Box · Übersicht</string>
-    <string name="widget_type_box_services">Box · Dienste</string>
 
     <!-- The start screen's devices (owner, 2026-11-02). -->
     <string name="home_devices_title">Deine Geräte</string>
@@ -61,10 +57,10 @@
     <string name="live_connecting">Verbinde …</string>
     <string name="live_on">Widgets live</string>
     <string name="live_paused">Pausiert, Bildschirm aus</string>
-    <string name="live_battery_on">Wird nach einem Neustart der App von selbst wieder live.</string>
-    <string name="live_battery_off">Nach einem Neustart der App wird es nicht sicher von selbst wieder live, sonst erst, wenn du sie öffnest oder ein Widget antippst. Tippen, um das zu ändern.</string>
-    <string name="live_battery_title">Akku-Optimierung</string>
-    <string name="live_battery_why">Damit die Widgets nach einem Neustart der App von selbst wieder live werden, braucht die App eine Ausnahme von der Akku-Optimierung. Verbunden ist sie trotzdem nur, solange der Bildschirm an ist.</string>
+    <string name="live_battery_on">Die Widgets bleiben von selbst aktuell.</string>
+    <string name="live_battery_off">Damit die Widgets von selbst aktuell bleiben: hier tippen und „Zulassen“ wählen.</string>
+    <string name="live_battery_title">Widgets aktuell halten</string>
+    <string name="live_battery_why">Damit die Widgets von selbst aktuell bleiben, tippe auf „Erlauben“ und dann im nächsten Fenster auf „Zulassen“.</string>
     <string name="live_battery_yes">Erlauben</string>
     <string name="live_battery_no">Später</string>
     <string name="live_reconnecting">Keine Verbindung zum Haus, neuer Versuch …</string>

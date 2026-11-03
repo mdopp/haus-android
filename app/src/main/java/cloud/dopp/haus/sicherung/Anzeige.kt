@@ -6,7 +6,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/** How „Nachrichten sichern“ writes sizes and times: German, pure. */
+/** How „Daten sichern“ writes sizes and times: German, pure. */
 object Anzeige {
 
     private val RFC3339 = Regex("""(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2}):(\d{2})(\.\d+)?([Zz]|[+-]\d{2}:\d{2})""")

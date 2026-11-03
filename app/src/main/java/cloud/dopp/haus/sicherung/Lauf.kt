@@ -51,7 +51,7 @@ data class Fortschritt(
 )
 
 /**
- * One run of Nachrichten sichern (#194): WhatsApp's newest database backup
+ * One run of Daten sichern (#194): WhatsApp's newest database backup
  * and the media Haus lacks, Signal's newest backup if it is newer than the
  * one sent last. Only reads the folders. Stops cleanly between two pieces
  * when [halt] says so or [frist] is up; the next run goes on.
@@ -112,8 +112,8 @@ class Lauf(
                 when (q) {
                     Quelle.WHATSAPP -> whatsapp(o)
                     Quelle.SIGNAL -> signal(o)
-                    // Discord comes as a data package; SMS and calls have their own run (NachrichtenLauf)
-                    Quelle.DISCORD, Quelle.SMS -> Ergebnis.FERTIG
+                    // SMS and calls have their own run (NachrichtenLauf)
+                    Quelle.SMS -> Ergebnis.FERTIG
                 }
             } catch (e: Ende) {
                 schluss(q, 0, e.ergebnis)
@@ -249,7 +249,7 @@ class Lauf(
     }
 
     companion object {
-        /** The sources the phone backs up, in this order; Discord comes as a shared data package, not here. */
+        /** The sources the phone backs up, in this order. */
         val QUELLEN = listOf(Quelle.WHATSAPP, Quelle.SIGNAL)
 
         /**
@@ -277,7 +277,7 @@ class Lauf(
             if (code == 401) return NICHT_GEKOPPELT // Haus's 401 body is no sentence for a person
             return satz ?: when (code) {
                 403 -> "Dieses Gerät gehört zu keiner Person: kopple die Haus-App neu, angemeldet mit deinem Namen."
-            503 -> "Auf der Box ist noch kein Nachrichten-Archiv eingerichtet: frag die Person, die sich um die Box kümmert."
+            503 -> "Auf der Box ist noch kein Archiv eingerichtet: frag die Person, die sich um die Box kümmert."
                 507 -> "Auf der Box ist kein Platz mehr für die Sicherung: frag die Person, die sich um die Box kümmert."
                 else -> "Haus hat die Sicherung nicht angenommen ($code)."
             }

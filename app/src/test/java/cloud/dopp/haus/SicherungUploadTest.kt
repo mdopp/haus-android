@@ -245,7 +245,7 @@ class SicherungUploadTest {
     @Test
     fun standAgainstTheFakeHaus() {
         val s = client().stand() as SicherungClient.Stand.Da
-        assertEquals(setOf(Quelle.WHATSAPP, Quelle.SIGNAL, Quelle.DISCORD, Quelle.SMS), s.quellen.keys)
+        assertEquals(setOf(Quelle.WHATSAPP, Quelle.SIGNAL, Quelle.SMS), s.quellen.keys)
         haus.keinArchiv = true
         assertEquals(
             SicherungClient.Stand.Fehler("Auf dieser Box ist noch kein Nachrichten-Archiv eingerichtet."),

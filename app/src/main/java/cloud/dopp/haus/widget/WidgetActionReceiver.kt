@@ -12,9 +12,9 @@ import cloud.dopp.haus.ui.HomeActivity
 import kotlin.concurrent.thread
 
 /**
- * Headless handler for a device's tap — from the start screen's favorites
- * (owner, 2026-11-02: devices only in the app) and from an app-icon shortcut
- * (#97). Runs in the background with **no visible UI**. Two things defer to
+ * Headless handler for a device's tap — from the start screen's favorites,
+ * a device widget (one device each, restored 2026-11-03) and an app-icon
+ * shortcut (#97). Runs in the background with **no visible UI**. Two things defer to
  * [WidgetActionActivity]: the server's 403 confirm gate — a garage/door open,
  * any `lock.*` — and a lock's chooser ([OP_LOCK_CHOOSE], #92), which asks
  * *before* anything is called rather than after.
@@ -27,6 +27,8 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_TAP) return
+        // A device widget's tap may start the live service (Android 12+ allows it here).
+        cloud.dopp.haus.realtime.Live.ensure(context)
         val entityId = intent.getStringExtra(EXTRA_ENTITY)?.takeIf { it.isNotBlank() } ?: return
         val op = intent.getStringExtra(EXTRA_OP) ?: OP_TOGGLE
         val domain = DeviceShortcuts.domainOf(entityId)
@@ -68,7 +70,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
                     WidgetStore.noteEntityUsed(app, entityId)
                 }
                 if (outcome == Tap.FAILED) reportFailure(app, name)
-                if (outcome != Tap.CONFIRMING) DeviceTaps.done(app)
+                if (outcome != Tap.CONFIRMING) DeviceTaps.done(app, entityId)
             } catch (e: ApiClient.NotConfiguredException) {
                 openHome(app)
             } catch (e: ApiClient.NotPairedException) {
@@ -79,7 +81,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
             } catch (e: Exception) {
                 // Network or server error: say that the tap went nowhere (#111).
                 reportFailure(app, name)
-                DeviceTaps.done(app)
+                DeviceTaps.done(app, entityId)
             } finally {
                 pending?.finish()
             }
@@ -161,14 +163,15 @@ class WidgetActionReceiver : BroadcastReceiver() {
 }
 
 /**
- * Tells the start screen that a device tap finished, so it reads the
- * favorites again: an app-internal broadcast (package-bound), received only
- * while the screen is open.
+ * A device tap finished: the start screen reads the favorites again (an
+ * app-internal broadcast, received only while it is open), and the device
+ * widgets of that entity read again.
  */
 object DeviceTaps {
     const val ACTION_DONE = "cloud.dopp.haus.widget.DEVICE_TAP_DONE"
 
-    fun done(ctx: Context) {
+    fun done(ctx: Context, entityId: String) {
         runCatching { ctx.sendBroadcast(Intent(ACTION_DONE).setPackage(ctx.packageName)) }
+        runCatching { DeviceWidgetProvider.refreshEntity(ctx, entityId) }
     }
 }

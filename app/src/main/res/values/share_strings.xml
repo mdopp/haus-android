@@ -8,6 +8,7 @@
     <string name="share_already">Schon gemerkt</string>
     <string name="share_not_kept">Nicht gemerkt</string>
     <string name="share_open">Notiz öffnen</string>
+    <string name="share_done">Fertig</string>
     <string name="share_not_paired">Diese App ist mit keinem Haus gekoppelt. Öffne die App und verbinde sie zuerst.</string>
     <string name="share_unreachable">Haus hat nicht rechtzeitig geantwortet. Ist das Handy im Netz? Teile den Link später noch einmal.</string>
 

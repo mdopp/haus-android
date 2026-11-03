@@ -145,7 +145,7 @@ class ManifestTest {
      */
     @Test
     fun theFedWidgetsWithoutAScreenStartTheServiceWhenPlaced() {
-        listOf("energy_widget_info.xml", "box_overview_widget_info.xml", "box_services_widget_info.xml").forEach { name ->
+        listOf("energy_widget_info.xml").forEach { name ->
             val info = File(RepoFiles.main, "res/xml/$name").readText()
             assertTrue(name, info.contains("""android:configure="cloud.dopp.haus.widget.LiveConfigActivity""""))
             assertFalse("$name: an optional configure step is skipped at placement", info.contains("configuration_optional"))
@@ -279,17 +279,18 @@ class ManifestTest {
     }
 
     /**
-     * The widgets the owner took out on 2026-11-02 are gone from the manifest,
-     * so the launcher's picker no longer offers them: the device widgets, the
-     * active devices, the camera and the two energy widgets beside the one that
-     * stays — with their configure screen, list service, capture screen and
-     * file provider. Their sources and widget infos are gone too.
+     * The widgets the owner took out (2026-11-02, 2026-11-03) are gone from the
+     * manifest, so the launcher's picker no longer offers them: all devices,
+     * the active devices, the camera, the two energy widgets beside the one that
+     * stays, the two Box widgets — with their list service, capture screen and
+     * file provider. Their sources and widget infos are gone too. The widget
+     * for one device came back (2026-11-03).
      */
     @Test
     fun theRemovedWidgetsAreNotInTheManifest() {
         val gone = listOf(
-            "DeviceWidgetProvider", "DevicesWidgetProvider", "ActiveDevicesWidgetProvider", "CameraWidgetProvider",
-            "EnergyStatsWidgetProvider", "EnergyTotalsWidgetProvider", "WidgetConfigActivity",
+            "DevicesWidgetProvider", "ActiveDevicesWidgetProvider", "CameraWidgetProvider",
+            "EnergyStatsWidgetProvider", "EnergyTotalsWidgetProvider", "BoxOverviewWidgetProvider", "BoxServicesWidgetProvider",
             "ActiveDevicesRemoteViewsService", "CameraCaptureActivity",
         )
         gone.forEach { name ->
@@ -301,12 +302,12 @@ class ManifestTest {
         assertFalse("the camera", manifest.contains("android.hardware.camera"))
         val providers = Regex("""<receiver\s+android:name="\.widget\.(\w+WidgetProvider)"""").findAll(manifest).map { it.groupValues[1] }.toSet()
         assertEquals(
-            setOf("EnergyWidgetProvider", "BoxOverviewWidgetProvider", "BoxServicesWidgetProvider", "ToolWidgetProvider"),
+            setOf("DeviceWidgetProvider", "EnergyWidgetProvider", "ToolWidgetProvider"),
             providers,
         )
         listOf(
-            "device_widget_info", "devices_widget_info", "active_devices_widget_info", "camera_widget_info",
-            "energy_stats_widget_info", "energy_totals_widget_info",
+            "devices_widget_info", "active_devices_widget_info", "camera_widget_info",
+            "energy_stats_widget_info", "energy_totals_widget_info", "box_overview_widget_info", "box_services_widget_info",
         ).forEach { assertFalse("res/xml/$it.xml is still there", File(RepoFiles.main, "res/xml/$it.xml").exists()) }
     }
 

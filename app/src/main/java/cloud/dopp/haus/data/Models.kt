@@ -44,7 +44,7 @@ data class Card(
         get() = brightness?.let { (it / 255.0 * 100).roundToInt().coerceIn(0, 100) }
 }
 
-/** One device of the household catalogue (`/napi/portal/start/addable`), for the app-icon menu. */
+/** One device of the household catalogue (`/napi/portal/start/addable`): the device picker, the app-icon menu. */
 data class Device(
     val entityId: String,
     val name: String,
