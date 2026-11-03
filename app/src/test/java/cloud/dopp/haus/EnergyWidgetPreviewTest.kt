@@ -153,47 +153,48 @@ class EnergyWidgetPreviewTest {
     }
 
     /**
-     * No way and no arrow lies on a pill, or on Akku's ring, at 4×2, 2×2 and
-     * a flat 4×2; the ring stays inside the field. Every way of the six.
+     * Every way of the six, at 4×2, 2×2, a wide and a flat field (coordinator,
+     * 2026-11-03): it runs from the source oval's border to the destination's
+     * and never over an oval or Akku's ring; its head sits at the destination
+     * end — nearer the destination than the source — and points into it.
      */
     @Test
-    fun noArrowOnAPill() {
+    fun everyHeadIsAtItsDestination() {
         val ways = listOf("solar" to "haus", "solar" to "akku", "solar" to "netz", "netz" to "haus", "akku" to "haus", "netz" to "akku")
-        for ((w, h) in listOf(199f to 147f, 136f to 147f, 323f to 147f, 199f to 120f)) {
+        for ((w, h) in listOf(187f to 147f, 136f to 147f, 323f to 147f, 187f to 120f, 187f to 94f)) {
             val l = EnergyPicture.lage(w, h)
-            // a pill as the stadium it is, with Akku's ring (and its stroke) around it
-            class Guard(val b: android.graphics.RectF, val m: Float) {
-                fun contains(x: Float, y: Float): Boolean {
-                    val r = b.height() / 2
-                    val dx = kotlin.math.max(kotlin.math.abs(x - b.centerX()) - (b.width() / 2 - r), 0f)
-                    return kotlin.math.hypot(dx, y - b.centerY()) <= r + m
-                }
+            // inside an oval (Akku with its ring), by the ellipse's own equation
+            fun on(k: String, x: Float, y: Float): Boolean {
+                val (cx, cy) = l.at.getValue(k)
+                val m = if (k == "akku") 6.5f else 0.5f
+                val a = l.pw / 2 + m
+                val b = l.ph / 2 + m
+                return ((x - cx) / a).let { it * it } + ((y - cy) / b).let { it * it } <= 1f
             }
-            fun guard(key: String) = Guard(l.box(key), if (key == "akku") 7f else 1f)
-            val akku = l.box("akku").apply { inset(-8f, -8f) }
-            assertTrue("${w}x$h: ring inside", akku.left >= 0 && akku.right <= w && akku.top >= 0 && akku.bottom <= h)
+            fun border(k: String, x: Float, y: Float): Float {
+                val (cx, cy) = l.at.getValue(k)
+                val d = kotlin.math.hypot(x - cx, y - cy)
+                return d - l.reach((x - cx) / d, (y - cy) / d)
+            }
+            val ring = l.box("akku").apply { inset(-8f, -8f) }
+            assertTrue("${w}x$h: ring inside", ring.left >= 0 && ring.right <= w && ring.top >= 0 && ring.bottom <= h)
             for ((von, nach) in ways) {
-                val path = EnergyPicture.way(von, nach, l)
-                val m = android.graphics.PathMeasure(path, false)
-                assertTrue("${w}x$h $von→$nach: long enough for its arrow", m.length >= 14f)
-                // every point of the way, and the arrow's corners, off every pill
-                val pt = FloatArray(2)
-                var d = 0f
-                while (d <= m.length) {
-                    m.getPosTan(d, pt, null)
-                    for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach at $d (${pt.toList()}) on $k", !guard(k).contains(pt[0], pt[1]))
-                    d += 1f
+                val (p, q) = EnergyPicture.way(von, nach, l)
+                val len = kotlin.math.hypot(q.first - p.first, q.second - p.second)
+                val head = EnergyPicture.head(p, q, 6f)
+                assertTrue("${w}x$h $von→$nach: $len long, room for its head", len >= EnergyPicture.arrowSize(6f).first + 4f)
+                for (i in 0..20) {
+                    val x = p.first + (q.first - p.first) * i / 20
+                    val y = p.second + (q.second - p.second) * i / 20
+                    for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach at $i/20 on $k", !on(k, x, y))
                 }
-                val (pos, tan) = EnergyPicture.arrowAt(path)!!
-                val (long, half) = EnergyPicture.arrowSize(6f)
-                val corners = listOf(
-                    pos[0] + tan[0] * long to pos[1] + tan[1] * long,
-                    pos[0] - tan[0] * long - tan[1] * half to pos[1] - tan[1] * long + tan[0] * half,
-                    pos[0] - tan[0] * long + tan[1] * half to pos[1] - tan[1] * long - tan[0] * half,
-                )
-                for ((x, y) in corners) for (k in EnergyFluss.KEYS) {
-                    assertTrue("${w}x$h $von→$nach: arrow on $k", !guard(k).contains(x, y))
-                }
+                for ((x, y) in head) for (k in EnergyFluss.KEYS) assertTrue("${w}x$h $von→$nach: head on $k", !on(k, x, y))
+                val tip = head[0]
+                assertTrue("${w}x$h $von→$nach: the head by the destination", border(nach, tip.first, tip.second) < border(von, tip.first, tip.second))
+                // and it points into the destination: on, the tip would reach it
+                val (nx, ny) = l.at.getValue(nach)
+                val dot = (q.first - p.first) * (nx - tip.first) + (q.second - p.second) * (ny - tip.second)
+                assertTrue("${w}x$h $von→$nach: the head points into $nach", dot > 0)
             }
         }
     }

@@ -72,7 +72,7 @@ object EnergyRender {
 
     /**
      * A leg's word: what it does now, so the number needs no legend — PV,
-     * Haus, Netz speist ein or bezieht, Akku lädt or entlädt (owner,
+     * Haus, ins Netz or aus dem Netz, Akku lädt or entlädt (owner,
      * 2026-11-03: Jetzt in the present tense).
      */
     fun legWord(f: EnergyFlow?, fallback: String): String {
@@ -81,8 +81,8 @@ object EnergyRender {
             "grid" -> when {
                 w == null -> "Netz"
                 abs(w) < 1 -> "Netz ruht"
-                w < 0 -> "Netz speist ein"
-                else -> "Netz bezieht"
+                w < 0 -> "ins Netz"
+                else -> "aus dem Netz"
             }
             "battery" -> if (w == null) "Akku" else "Akku " + EnergyStyle.directionFor("battery", w)
             else -> f?.label?.ifBlank { fallback } ?: fallback
@@ -144,10 +144,10 @@ object EnergyRender {
             small(v, legWord(g, "Netz"), g?.let { EnergyStyle.formatWatts(EnergyFluss.inWatts(it)) } ?: "—", sub)
         } else {
             // the ring says the grid; the words say the house, and the battery
-            v.setContentDescription(R.id.e_ring, "Netz " + f.text("netz").let { it.second + " " + it.first })
+            v.setContentDescription(R.id.e_ring, gridPhrase(f))
             val b = e.battery
             sub = if (b != null) legWord(b, "Akku") + " " + f.text("akku").first
-            else "Netz " + f.text("netz").let { it.second + " " + it.first }
+            else gridPhrase(f)
             small(v, "Haus verbraucht", f.text("haus").first, sub)
         }
         val today = todayLine(e)
@@ -165,6 +165,9 @@ object EnergyRender {
         }
         return v
     }
+
+    /** The grid now in words: „4 W ins Netz“, „800 W aus dem Netz“, „Netz ruht“. */
+    private fun gridPhrase(f: EnergyFluss): String = f.text("netz").let { (n, w) -> if (w.endsWith("Netz")) "$n $w" else "Netz $w" }
 
     private fun small(v: RemoteViews, title: String, value: String, sub: String) {
         v.setTextViewText(R.id.e_title, title)

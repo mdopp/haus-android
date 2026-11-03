@@ -146,7 +146,7 @@ class EnergyWidgetTest {
         assertTrue("the ring is a picture", bare.picture(R.id.e_ring) != null)
         assertEquals("Akku 83\u00a0%, entlädt", bare.findViewById<View>(R.id.e_ring).contentDescription.toString())
         assertEquals("2,1 kW", bare.text("e_main"))
-        assertEquals("Netz speist ein", bare.text("e_title"))
+        assertEquals("ins Netz", bare.text("e_title"))
         assertEquals(View.GONE, bare.findViewById<View>(R.id.e_sub).visibility)
         assertEquals(View.GONE, bare.findViewById<View>(R.id.e_today).visibility)
         val taller = drawn(200, 100)

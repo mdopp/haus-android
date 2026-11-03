@@ -113,8 +113,9 @@ class EnergyLogicTest {
         val f = fluss(0.0, 271.0, -4.0, -276.0, charge = 83.0)
         assertEquals("271 W" to "verbraucht", f.text("haus"))
         assertEquals("276 W" to "entlädt", f.text("akku"))
-        assertEquals("Jetzt in the present tense", "4 W" to "speist ein", f.text("netz"))
-        assertEquals("16 W" to "bezieht", fluss(0.0, 16.0, 16.0, null).text("netz"))
+        assertEquals("owner: where the power goes", "4 W" to "ins Netz", f.text("netz"))
+        assertEquals("16 W" to "aus dem Netz", fluss(0.0, 16.0, 16.0, null).text("netz"))
+        assertEquals("0 W" to "ruht", fluss(0.0, 16.0, 0.0, -16.0).text("netz"))
         assertEquals("0 W" to "erzeugt", f.text("solar"))
         assertEquals("Akku 83\u00a0%", f.name("akku"))
         assertEquals("the one way that carries: Akku → Haus", listOf("akku" to "haus"), f.aktiv.map { it.von to it.nach })
@@ -149,22 +150,19 @@ class EnergyLogicTest {
     }
 
     /**
-     * The pills keep apart and inside the field, and spread over its width
-     * (owner, 2026-11-03: the picture sat in the middle-left with empty space).
+     * The ovals keep apart and inside the field, spread over its width (owner,
+     * 2026-11-03), the columns apart so a way runs between them.
      */
-    @Test fun thePillsDoNotTouchAndFillTheWidth() {
-        for ((w, h) in listOf(200f to 147f, 331f to 147f, 144f to 147f)) {
+    @Test fun theOvalsDoNotTouchAndFillTheWidth() {
+        for ((w, h) in listOf(187f to 147f, 323f to 147f, 136f to 147f)) {
             val l = cloud.dopp.haus.widget.EnergyPicture.lage(w, h)
-            val boxes = l.at.values.map { (x, y) -> android.graphics.RectF(x - l.pw / 2, y - l.ph / 2, x + l.pw / 2, y + l.ph / 2) }
-            for (i in boxes.indices) for (j in i + 1 until boxes.size) {
-                assertTrue("${w}x$h: pills $i and $j overlap", !android.graphics.RectF.intersects(boxes[i], boxes[j]))
-            }
-            boxes.forEach { assertTrue("${w}x$h: inside", it.left >= 0 && it.right <= w && it.top >= 0 && it.bottom <= h) }
-            assertTrue("${w}x$h: Netz at the left edge", boxes.minOf { it.left } <= 8f)
-            assertTrue("${w}x$h: Akku at the right edge", boxes.maxOf { it.right } >= w - 8f)
-            assertTrue("${w}x$h: pills, not circles", l.pw >= l.ph * 1.6f)
-            val rows = boxes.sortedBy { it.top }
-            assertTrue("${w}x$h: room for the ways between the rows", rows[1].top - rows[0].bottom >= 10f)
+            val boxes = cloud.dopp.haus.widget.EnergyFluss.KEYS.associateWith { l.box(it) }
+            assertTrue("${w}x$h: Netz clear of the column", boxes.getValue("solar").left - boxes.getValue("netz").right >= 6f)
+            assertTrue("${w}x$h: Akku clear of the column", boxes.getValue("akku").left - boxes.getValue("solar").right >= 6f)
+            boxes.values.forEach { assertTrue("${w}x$h: inside", it.left >= 0 && it.right <= w && it.top >= 0 && it.bottom <= h) }
+            assertTrue("${w}x$h: Netz at the left edge", boxes.getValue("netz").left <= 8.5f)
+            assertTrue("${w}x$h: Akku at the right edge", boxes.getValue("akku").right >= w - 8.5f)
+            assertTrue("${w}x$h: ovals, not circles", l.pw >= l.ph * 1.15f)
         }
     }
 }
