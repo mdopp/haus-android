@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Haus launcher icon (owner, 2026-11-02): the terminal prompt inside a
+<!-- The Homes launcher icon (owner, 2026-11-02): the terminal prompt inside a
      green house on the dark ground, monochrome for themed icons (API 33).
      The PNGs come from art/icon.svg through scripts/icons; never by hand. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">

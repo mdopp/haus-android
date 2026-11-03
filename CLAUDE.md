@@ -1,7 +1,7 @@
-# haus-android — house rules
+# homes-android — house rules
 
-This repo is the **Haus app**: native Kotlin home-screen widgets, the
-pairing with **Haus** (`https://haus.<domain>`, repo `mdopp/haus`), the
+This repo is the **Homes app**: native Kotlin home-screen widgets, the
+pairing with **Homes** (`https://homes.<domain>`, repo `mdopp/homes`), the
 family's surface of the box Laib runs, and on the app's start screen the
 person's favorite devices (the owner's calls, 2026-11-02 and 2026-11-03: the
 widgets are one device per widget, one energy widget and the tools Dokumente
@@ -12,26 +12,30 @@ no network while the screen is off. The widgets stay live through one
 `specialUse` foreground service (`realtime/LiveService.kt`) that holds the
 stream only while the screen is on. The one thing beyond the widgets is
 Daten sichern (#194, laib ADR 0029; renamed 2026-11-03): it picks up the phone's WhatsApp
-and Signal backups and uploads them to Haus, and, each behind its own switch
+and Signal backups and uploads them to Homes, and, each behind its own switch
 and permission, mirrors the contacts and sends the SMS and call log
-age-encrypted. The seam with Haus is
+age-encrypted. The seam with Homes is
 `docs/CONTRACT.md`.
 
 These rules apply to every session, human or agent.
 
-## Haus is the contract
+## Homes is the contract
 
-- The app calls only what Haus serves. Every call is data in `data/Napi.kt`
+- The app calls only what Homes serves. Every call is data in `data/Napi.kt`
   (method, path, query, body fields, reply keys), `data/NapiRequest.kt` alone
-  builds requests from it, and `NapiContractTest` holds it to a copy of Haus's
-  handlers, file and line. A call the app needs that Haus lacks is a Haus
+  builds requests from it, and `NapiContractTest` holds it to a copy of Homes'
+  handlers, file and line. A call the app needs that Homes lacks is a Homes
   issue first, never a guess here.
-- One set of names: package `cloud.dopp.haus`, scheme `cloud.dopp.haus://`,
-  token prefix `haus_device_`. `NamesTest` fails on any older name.
+- One set of names: package `cloud.dopp.homes`, scheme `cloud.dopp.homes://`,
+  token prefix `homes_device_`. `NamesTest` fails on any older name.
+- Haus was renamed Homes (the owner's call, 2026-11-03, laib#1021): a new
+  package, so a new app; phones install Homes, pair again and place the
+  widgets again. What the server keeps as stored data keeps its old name:
+  the iCalendar properties `X-HAUS-KALENDER` and `X-HAUS-ART` of the shared
+  calendars. „Haus“ stays where it is the ordinary word: the energy flow's
+  „Haus“ (the building), „Haus-Energie“, „Kontakte des Hauses“, Haushalt.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
-  app. The live service's quiet notification is the only one — beside the
-  notice that Haus is now Homes (laib#1021, `wechsel/`, docs/CONTRACT.md (h)),
-  at most once a day, in this last `cloud.dopp.haus` build; do not add
+  app. The live service's quiet notification is the only one; do not add
   another, a second service, a poll (widget update periods stay 0), an
   alarm, a wakelock or a rescue worker. Recovery after a killed process rests
   on the battery-optimization exemption the person grants. `ManifestTest`
@@ -50,28 +54,28 @@ These rules apply to every session, human or agent.
   behind its own switch and the background-location permission,
   Android's own LocationManager delivers by PendingIntent to
   `standort/StandortEmpfaenger`, which stores the points and sends a
-  batch to Haus while that delivery has the phone awake. It is no job,
+  batch to Homes while that delivery has the phone awake. It is no job,
   service, alarm or wakelock; keep it that way (`ManifestTest`). The
   decisions — rate per mode and situation, resting told from the fixes,
   when a batch goes — live in `standort/Plan.kt` and `standort/Ruhe.kt`,
   plain and unit-tested.
 
-## Das Haus-Konto
+## Das Homes-Konto
 
 - The owner's call, 2026-11-03 (#206): the household's shared contacts,
-  calendars and reminders live in a real Android account „Haus“
+  calendars and reminders live in a real Android account „Homes“
   (AccountManager, two sync adapters for ContactsContract and
   CalendarContract), so the dialer, WhatsApp, mail and the calendar app use
   them. „Erinnerungen gehören in den normalen Kalender, nicht in ein
-  Widget.“ Source: Haus's `/napi/gemeinsam/…` (vCard, iCalendar), with the
+  Widget.“ Source: Homes' `/napi/gemeinsam/…` (vCard, iCalendar), with the
   device token. `konto/` holds it.
 - Read only on the phone; writes go as the sync adapter into the account's
   own entries only. Android's SyncManager runs the adapters (the switch,
   „Jetzt abgleichen“, hourly, and a `gemeinsam` frame of the open live
   stream, #209); the app adds no job, alarm or worker for them. `ManifestTest` holds this.
 - The other direction stays: a person's own contacts go phone → archive
-  („Kontakte übertragen“), and the Haus account's never do
-  (`HausKontoAusschlussTest`, `e2e` step 8).
+  („Kontakte übertragen“), and the Homes account's never do
+  (`HomesKontoAusschlussTest`, `e2e` step 8).
 
 ## No Google Play services
 
@@ -87,7 +91,7 @@ These rules apply to every session, human or agent.
   inside a house drawn as a green line, `#3ddc84` on `#0c120e`). Every PNG — launcher,
   adaptive foreground and monochrome, notification, store — is rendered from
   it by `scripts/icons` (`npm ci && node icons.mjs`), never drawn or resized
-  by hand. mdopp/haus carries the same master for the web app's icons.
+  by hand. mdopp/homes carries the same master for the web app's icons.
 
 ## Commits
 

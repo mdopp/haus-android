@@ -1,63 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App-wide Haus theme: dark surfaces + the orange accent.
+    <!-- App-wide Homes theme: dark surfaces + the orange accent.
          Applied in AndroidManifest to the application + activities so the
          onboarding/pairing/config screens stop looking like stock Android. -->
-    <style name="Theme.Haus" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/haus_accent</item>
-        <item name="colorPrimaryDark">@color/haus_bg_elevated</item>
-        <item name="colorAccent">@color/haus_accent</item>
-        <item name="android:colorBackground">@color/haus_bg</item>
-        <item name="android:windowBackground">@color/haus_bg</item>
-        <item name="android:textColorPrimary">@color/haus_text</item>
-        <item name="android:textColorSecondary">@color/haus_text_muted</item>
-        <item name="android:textColorHint">@color/haus_text_faint</item>
+    <style name="Theme.Homes" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/homes_accent</item>
+        <item name="colorPrimaryDark">@color/homes_bg_elevated</item>
+        <item name="colorAccent">@color/homes_accent</item>
+        <item name="android:colorBackground">@color/homes_bg</item>
+        <item name="android:windowBackground">@color/homes_bg</item>
+        <item name="android:textColorPrimary">@color/homes_text</item>
+        <item name="android:textColorSecondary">@color/homes_text_muted</item>
+        <item name="android:textColorHint">@color/homes_text_faint</item>
         <!-- The system bars carry the window's own background tones. -->
-        <item name="android:statusBarColor">@color/haus_surface_theme</item>
-        <item name="android:navigationBarColor">@color/haus_surface_bg</item>
-        <item name="buttonStyle">@style/Widget.Haus.Button</item>
-        <item name="editTextStyle">@style/Widget.Haus.EditText</item>
+        <item name="android:statusBarColor">@color/homes_surface_theme</item>
+        <item name="android:navigationBarColor">@color/homes_surface_bg</item>
+        <item name="buttonStyle">@style/Widget.Homes.Button</item>
+        <item name="editTextStyle">@style/Widget.Homes.EditText</item>
         <!-- No ALL CAPS anywhere (owner, 2026-11-03): a dialog's buttons neither. -->
-        <item name="buttonBarButtonStyle">@style/Widget.Haus.DialogButton</item>
-        <item name="android:buttonBarButtonStyle">@style/Widget.Haus.DialogButton</item>
+        <item name="buttonBarButtonStyle">@style/Widget.Homes.DialogButton</item>
+        <item name="android:buttonBarButtonStyle">@style/Widget.Homes.DialogButton</item>
     </style>
 
-    <style name="Widget.Haus.DialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+    <style name="Widget.Homes.DialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
         <item name="android:textAllCaps">false</item>
         <item name="textAllCaps">false</item>
     </style>
 
-    <style name="Widget.Haus.DialogButton.Platform" parent="android:Widget.Material.Button.Borderless.Colored">
+    <style name="Widget.Homes.DialogButton.Platform" parent="android:Widget.Material.Button.Borderless.Colored">
         <item name="android:textAllCaps">false</item>
     </style>
 
     <!-- Same theme, but drawn over whatever is behind (used by the widget config
          activity so the picker floats on a dimmed backdrop). -->
-    <style name="Theme.Haus.Config" parent="Theme.Haus" />
+    <style name="Theme.Homes.Config" parent="Theme.Homes" />
 
     <!-- Every widget action dialog (#113): the card is `dialog_action.xml`, so the
          window itself is transparent and only supplies the dim. One theme for all
          of them — the confirm, the lock chooser, the colour palette and whatever
          sheet comes next — because the point of the ticket is that they stop
          looking like three different dialogs. -->
-    <style name="Theme.Haus.ActionDialog" parent="android:Theme.Material.Dialog.Alert">
-        <item name="android:colorAccent">@color/haus_accent</item>
-        <item name="android:colorBackground">@color/haus_bg_elevated</item>
+    <style name="Theme.Homes.ActionDialog" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">@color/homes_accent</item>
+        <item name="android:colorBackground">@color/homes_bg_elevated</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimAmount">0.55</item>
         <item name="android:windowMinWidthMajor">80%</item>
         <item name="android:windowMinWidthMinor">92%</item>
-        <item name="android:textColorPrimary">@color/haus_text</item>
-        <item name="android:textColorSecondary">@color/haus_text_muted</item>
-        <item name="android:buttonBarButtonStyle">@style/Widget.Haus.DialogButton.Platform</item>
+        <item name="android:textColorPrimary">@color/homes_text</item>
+        <item name="android:textColorSecondary">@color/homes_text_muted</item>
+        <item name="android:buttonBarButtonStyle">@style/Widget.Homes.DialogButton.Platform</item>
     </style>
 
 
     <!-- Filled, rounded, accent-blue primary button. -->
-    <style name="Widget.Haus.Button" parent="Widget.AppCompat.Button">
-        <item name="android:background">@drawable/btn_haus</item>
-        <item name="android:textColor">@color/haus_text</item>
+    <style name="Widget.Homes.Button" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/btn_homes</item>
+        <item name="android:textColor">@color/homes_text</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">15sp</item>
@@ -68,14 +68,14 @@
     </style>
 
     <!-- Secondary/ghost button: outlined, muted — for less prominent actions. -->
-    <style name="Widget.Haus.Button.Ghost" parent="Widget.Haus.Button">
-        <item name="android:background">@drawable/btn_haus_ghost</item>
-        <item name="android:textColor">@color/haus_text_muted</item>
+    <style name="Widget.Homes.Button.Ghost" parent="Widget.Homes.Button">
+        <item name="android:background">@drawable/btn_homes_ghost</item>
+        <item name="android:textColor">@color/homes_text_muted</item>
         <item name="android:textStyle">normal</item>
     </style>
 
     <!-- A favorite's fine control on the start screen (Hoch, Stopp, Runter, …): the ghost button, smaller. -->
-    <style name="Widget.Haus.Button.Control" parent="Widget.Haus.Button.Ghost">
+    <style name="Widget.Homes.Button.Control" parent="Widget.Homes.Button.Ghost">
         <item name="android:minHeight">40dp</item>
         <item name="android:minWidth">0dp</item>
         <item name="android:paddingLeft">8dp</item>
@@ -86,50 +86,50 @@
     <!-- ── Text styles (#37) ────────────────────────────────────────────────
          A consistent type hierarchy using the tokens from dimens.xml. Plain
          (non-Widget) styles applied via style="…" on TextViews. -->
-    <style name="Text.Haus" parent="" />
+    <style name="Text.Homes" parent="" />
 
-    <style name="Text.Haus.Hero">
-        <item name="android:textColor">@color/haus_text</item>
+    <style name="Text.Homes.Hero">
+        <item name="android:textColor">@color/homes_text</item>
         <item name="android:textSize">@dimen/text_hero</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
 
-    <style name="Text.Haus.Headline">
-        <item name="android:textColor">@color/haus_text</item>
+    <style name="Text.Homes.Headline">
+        <item name="android:textColor">@color/homes_text</item>
         <item name="android:textSize">@dimen/text_headline</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
 
-    <style name="Text.Haus.Title">
-        <item name="android:textColor">@color/haus_text</item>
+    <style name="Text.Homes.Title">
+        <item name="android:textColor">@color/homes_text</item>
         <item name="android:textSize">@dimen/text_title</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="Text.Haus.Body">
-        <item name="android:textColor">@color/haus_text_muted</item>
+    <style name="Text.Homes.Body">
+        <item name="android:textColor">@color/homes_text_muted</item>
         <item name="android:textSize">@dimen/text_body</item>
         <item name="android:lineSpacingExtra">3sp</item>
     </style>
 
-    <style name="Text.Haus.Label">
-        <item name="android:textColor">@color/haus_text_muted</item>
+    <style name="Text.Homes.Label">
+        <item name="android:textColor">@color/homes_text_muted</item>
         <item name="android:textSize">@dimen/text_label</item>
     </style>
 
-    <style name="Text.Haus.Tile">
-        <item name="android:textColor">@color/haus_text</item>
+    <style name="Text.Homes.Tile">
+        <item name="android:textColor">@color/homes_text</item>
         <item name="android:textSize">@dimen/text_tile</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Dark, rounded input field. -->
-    <style name="Widget.Haus.EditText" parent="Widget.AppCompat.EditText">
-        <item name="android:background">@drawable/field_haus</item>
-        <item name="android:textColor">@color/haus_text</item>
-        <item name="android:textColorHint">@color/haus_text_faint</item>
+    <style name="Widget.Homes.EditText" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/field_homes</item>
+        <item name="android:textColor">@color/homes_text</item>
+        <item name="android:textColorHint">@color/homes_text_faint</item>
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
         <item name="android:paddingTop">14dp</item>

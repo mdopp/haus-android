@@ -8,7 +8,7 @@
 //   mipmap-*/ic_launcher_round.png       48 dp, the same in a circle
 //   mipmap-*/ic_launcher_foreground.png  108 dp, the adaptive icon's house (the ground is a colour)
 //   mipmap-*/ic_launcher_monochrome.png  108 dp, the themed icon (API 33): the house in white
-//   drawable-*/ic_stat_haus.png          24 dp, the notification icon: white, the lines bolder
+//   drawable-*/ic_stat_homes.png          24 dp, the notification icon: white, the lines bolder
 // and store_icon.png (512 px, the store listing). With a preview dir it also
 // writes the launcher as a launcher masks it at 192 px, at 24 px, and the
 // 24 px one blown up pixel for pixel.
@@ -77,7 +77,7 @@ for (const [name, scale] of Object.entries(DENSITIES)) {
   write(path.join(res, `mipmap-${name}/ic_launcher_round.png`), png(view(master, VISIBLE, CIRCLE), 48 * scale))
   write(path.join(res, `mipmap-${name}/ic_launcher_foreground.png`), png(motif, 108 * scale))
   write(path.join(res, `mipmap-${name}/ic_launcher_monochrome.png`), png(white, 108 * scale))
-  write(path.join(res, `drawable-${name}/ic_stat_haus.png`), png(view(bold, HOUSE), 24 * scale))
+  write(path.join(res, `drawable-${name}/ic_stat_homes.png`), png(view(bold, HOUSE), 24 * scale))
 }
 write(path.join(root, 'store_icon.png'), png(view(master, VISIBLE), 512))
 

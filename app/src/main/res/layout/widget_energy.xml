@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The energy widget, two cells high and more (owner, 2026-11-03: „Grafiken
      könnten helfen es besser zu verstehen. Und ein aktueller Akkustand“): the
-     flow now as a picture like Haus's Energie page (EnergyPicture: Solar,
+     flow now as a picture like Homes' Energie page (EnergyPicture: Solar,
      Netz, Akku with its charge as a ring, Haus, the active ways drawn), and
-     beside it, with the room and while Haus says it, what the counters added
+     beside it, with the room and while Homes says it, what the counters added
      today in the ways' colours, and the Autarkie now. The tap sits on e_root,
      a child filling the tile (#104); no reload arrows, the live stream keeps
      it current (owner, 2026-11-03). Heavy type, no capitals. -->

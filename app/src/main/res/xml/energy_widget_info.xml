@@ -11,5 +11,5 @@
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/widget_energy"
     android:previewLayout="@layout/widget_energy"
-    android:configure="cloud.dopp.haus.widget.LiveConfigActivity"
+    android:configure="cloud.dopp.homes.widget.LiveConfigActivity"
     android:updatePeriodMillis="0" />

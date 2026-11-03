@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Haus (#176, laib ADR 0022): the start screen with the favorite devices,
+<!-- Homes (#176, laib ADR 0022): the start screen with the favorite devices,
      home-screen widgets and pairing, and the daily
      pick-up of the phone's message backups (#194, laib ADR 0029).
      One foreground service keeps the widgets live while the screen is on; no
-     other notification but the one notice that Haus is now Homes (laib#1021),
-     no poll, no web shell. -->
+     other notification, no poll, no web shell. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -32,8 +31,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Das Haus-Konto (#206, owner 2026-11-03): the household's shared contacts and
-         calendars in an account „Haus“, each part asked for only when its switch is
+    <!-- Das Homes-Konto (#206, owner 2026-11-03): the household's shared contacts and
+         calendars in an account „Homes“, each part asked for only when its switch is
          turned on. The app writes into its own account only; its sync adapters run
          when Android's SyncManager says, hourly at most, and never send anything back. -->
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
@@ -41,17 +40,12 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-    <!-- Haus heißt jetzt Homes (laib#1021): once Homes is installed, the start screen
-         offers Android's own dialog to remove this app. -->
-    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
-    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing; the new
-         app Homes, to tell whether it is installed yet (laib#1021). -->
+    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
     <queries>
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
-        <package android:name="cloud.dopp.homes" />
     </queries>
     <application
         android:allowBackup="false"
@@ -59,10 +53,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/appName"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Haus">
+        android:theme="@style/Theme.Homes">
 
         <!-- The app's one screen: pairing, then the widgets. It also takes the
-             redirect from Haus's /pair-device, cloud.dopp.haus://pair#token=….
+             redirect from Homes' /pair-device, cloud.dopp.homes://pair#token=….
              The setup QR is scanned in-app and has NO intent filter: a link
              from any web page could otherwise point the app at a foreign server. -->
         <activity
@@ -82,7 +76,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="cloud.dopp.haus" android:host="pair" />
+                <data android:scheme="cloud.dopp.homes" android:host="pair" />
             </intent-filter>
         </activity>
         <!-- One device per widget (restored by the owner, 2026-11-03). -->
@@ -103,7 +97,7 @@
             android:name=".widget.WidgetConfigActivity"
             android:exported="true"
             android:label="@string/widget_device_label"
-            android:theme="@style/Theme.Haus.Config">
+            android:theme="@style/Theme.Homes.Config">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
@@ -149,8 +143,8 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- Share → Haus (haus#120): a link or a text from the share sheet, kept
-             as a note on Haus, and photos into its document inbox. Exported for
+        <!-- Share → Homes (homes#120): a link or a text from the share sheet, kept
+             as a note on Homes, and photos into its document inbox. Exported for
              ACTION_SEND text and ACTION_SEND(_MULTIPLE) images only; translucent
              with its own task, like the widget action dialog (#114). -->
         <activity
@@ -165,7 +159,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-            <!-- A photo or several from the camera app, into Haus's document inbox
+            <!-- A photo or several from the camera app, into Homes' document inbox
                  (owner, 2026-11-02). -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -182,32 +176,32 @@
             android:name=".ui.SicherungActivity"
             android:exported="false"
             android:label="@string/sicherung_title"
-            android:theme="@style/Theme.Haus" />
+            android:theme="@style/Theme.Homes" />
 
-        <!-- Sicherung zurückholen (haus-android#197): the newest Signal and WhatsApp
+        <!-- Sicherung zurückholen (homes-android#197): the newest Signal and WhatsApp
              backup from the box onto a new phone, into folders granted with write access. -->
         <activity
             android:name=".ui.ZurueckholenActivity"
             android:exported="false"
             android:label="@string/zurueck_title"
-            android:theme="@style/Theme.Haus" />
+            android:theme="@style/Theme.Homes" />
 
         <!-- Mehr → Standortverlauf (owner 2026-11-02): the switch, the mode, Reitti. -->
         <activity
             android:name=".ui.StandortActivity"
             android:exported="false"
             android:label="@string/standort_title"
-            android:theme="@style/Theme.Haus" />
+            android:theme="@style/Theme.Homes" />
 
-        <!-- Mehr → Haus auf dem Handy (#206): the two switches of the Haus account.
-             Exported without a filter: Android's settings open it on „Konto hinzufügen → Haus“. -->
+        <!-- Mehr → Homes auf dem Handy (#206): the two switches of the Homes account.
+             Exported without a filter: Android's settings open it on „Konto hinzufügen → Homes“. -->
         <activity
-            android:name=".ui.HausKontoActivity"
+            android:name=".ui.HomesKontoActivity"
             android:exported="true"
             android:label="@string/konto_title"
-            android:theme="@style/Theme.Haus" />
+            android:theme="@style/Theme.Homes" />
 
-        <!-- The Haus account (#206): its authenticator and its two sync adapters,
+        <!-- The Homes account (#206): its authenticator and its two sync adapters,
              bound by Android only (the permissions say so), none foreground. -->
         <service
             android:name=".konto.KontoDienst"
@@ -285,7 +279,7 @@
             android:name=".widget.ToolWidgetConfigActivity"
             android:exported="true"
             android:label="@string/tool_widget_label"
-            android:theme="@style/Theme.Haus.Config">
+            android:theme="@style/Theme.Homes.Config">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
@@ -310,7 +304,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="A live widget connection to the user's own Haus server: while the screen is on, it keeps the home-screen widgets showing the current state of the household." />
+                android:value="A live widget connection to the user's own Homes server: while the screen is on, it keeps the home-screen widgets showing the current state of the household." />
         </service>
 
         <!-- Starts the live widgets again after a reboot and after an app update. -->

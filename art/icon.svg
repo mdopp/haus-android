@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
-  <!-- The Haus icon, master of every size the app ships (owner, 2026-11-02):
+  <!-- The Homes icon, master of every size the app ships (owner, 2026-11-02):
        a green-phosphor terminal prompt inside a house drawn as a green line
        (the outline variant, its motif scaled to 0.78 around the centre so
        even a circle mask leaves 6 units of air), accent #3ddc84 on
        ground #0c120e. The 108 canvas is Android's adaptive icon; the house
        stays inside its 66 safe circle (centre 54,54). Edit here, then run
        scripts/icons (icons.mjs says how): it renders every PNG from this file.
-       mdopp/haus carries the same master for the web app's icons. -->
+       mdopp/homes carries the same master for the web app's icons. -->
 
   <rect id="ground" width="108" height="108" fill="#0c120e"/>
   <g id="motif" transform="translate(54 54) scale(0.78) translate(-54 -50.5)">

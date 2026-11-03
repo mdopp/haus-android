@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The live widgets on a real Android (an emulator in CI, .github/workflows/live-e2e.yml).
-# Needs: adb with one device, the fake Haus (e2e/fake_haus.py) on the host's 8443
-# logging to $HAUS_LOG, the debug and androidTest APKs built against e2e/make_ca.sh.
+# Needs: adb with one device, the fake Homes (e2e/fake_homes.py) on the host's 8443
+# logging to $HOMES_LOG, the debug and androidTest APKs built against e2e/make_ca.sh.
 #
 #   1 the app starts the service: foreground (specialUse on 34+), OPEN and WATCH
 #   2 screen off: CLOSE within 5 s; forced idle for 90 s: no OPEN, no WATCH
@@ -13,18 +13,18 @@
 #     without it, no notification of a dead service. An app update starts it.
 #   5 a real reboot: OPEN within 60 s of boot
 #   6 the share sheet: the assistant's Direct Share target "Homes" is in it (#188)
-#   7 a photo shared from the camera's way: one upload in Haus's shape, „Abgelegt“
-#   8 the Haus account (#206): its two switches sync through Android's SyncManager
-#     from the fake Haus; the shared contacts resolve by number, the calendars are
+#   7 a photo shared from the camera's way: one upload in Homes' shape, „Abgelegt“
+#   8 the Homes account (#206): its two switches sync through Android's SyncManager
+#     from the fake Homes; the shared contacts resolve by number, the calendars are
 #     read only, the reminder rings; „Kontakte übertragen“ sends none of it
 #   9 push (#209): a gemeinsam frame on the open stream syncs the calendar part at
 #     once, and the new entry is in the phone's calendar
 set -uo pipefail
-LOG=${HAUS_LOG:-haus.log}
+LOG=${HOMES_LOG:-homes.log}
 OUT=${E2E_OUT:-e2e-out}
 APK=app/build/outputs/apk/debug/app-debug.apk
 TEST_APK=app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-PKG=cloud.dopp.haus
+PKG=cloud.dopp.homes
 SVC=$PKG/.realtime.LiveService
 mkdir -p "$OUT"
 failed=()
@@ -66,7 +66,7 @@ adb install -r "$TEST_APK" >/dev/null || { fail "install tests"; exit 1; }
 # right after an install the widget service may not take the grant yet: up to three tries
 for try in 1 2 3; do
   on appwidget grantbind --package $PKG --user 0
-  on am instrument -w -e class cloud.dopp.haus.e2e.LiveE2ESetup $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/setup.txt"
+  on am instrument -w -e class cloud.dopp.homes.e2e.LiveE2ESetup $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/setup.txt"
   grep -q "OK (1 test)" "$OUT/setup.txt" && break
   say "setup try $try failed: $(grep -m1 AssertionError "$OUT/setup.txt")"
   sleep 5
@@ -187,7 +187,7 @@ grep -q "share_assistent" "$OUT/shortcut-6.txt" && pass "6 the share target is p
 # share and drop the answer (API 31): a second sheet comes up warm
 seen=no
 for sheet in 1 2 3; do
-  on am instrument -w -e class cloud.dopp.haus.e2e.LiveE2EShare $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/share.txt"
+  on am instrument -w -e class cloud.dopp.homes.e2e.LiveE2EShare $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/share.txt"
   for i in $(seq 1 5); do
     sleep 2
     on uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
@@ -205,15 +205,15 @@ on input keyevent KEYCODE_BACK
 # 7 --------------------------------------------------------------------------
 wake
 m=$(mark)
-on am instrument -w -r -e class cloud.dopp.haus.e2e.LiveE2EPhoto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/photo.txt"
+on am instrument -w -r -e class cloud.dopp.homes.e2e.LiveE2EPhoto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/photo.txt"
 photo=$(grep -m1 -o 'uri=content://[^ ]*' "$OUT/photo.txt" | cut -d= -f2-)
 [ -n "$photo" ] || say "photo setup: $(grep -m1 -E 'Error|Exception' "$OUT/photo.txt")"
 sleep 2
 on am start -a android.intent.action.SEND -t image/png --eu android.intent.extra.STREAM "$photo" \
   --grant-read-uri-permission -n $PKG/.ui.ShareActivity >/dev/null
-wait_for "$m" "UPLOAD" 1 30 && pass "7 the photo reaches Haus's upload" || fail "7 no upload of the shared photo"
+wait_for "$m" "UPLOAD" 1 30 && pass "7 the photo reaches Homes' upload" || fail "7 no upload of the shared photo"
 [ "$(since "$m" "UPLOAD ok")" -eq 1 ] && [ "$(since "$m" "UPLOAD")" -eq 1 ] \
-  && pass "7 exactly one upload, in Haus's shape" || fail "7 uploads: $(since "$m" "UPLOAD ok") ok of $(since "$m" "UPLOAD")"
+  && pass "7 exactly one upload, in Homes' shape" || fail "7 uploads: $(since "$m" "UPLOAD ok") ok of $(since "$m" "UPLOAD")"
 seen=no
 for i in $(seq 1 10); do
   on uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
@@ -227,15 +227,15 @@ on input keyevent KEYCODE_BACK
 
 # 8 --------------------------------------------------------------------------
 m=$(mark)
-on am instrument -w -r -e class cloud.dopp.haus.e2e.LiveE2EKonto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/konto.txt"
+on am instrument -w -r -e class cloud.dopp.homes.e2e.LiveE2EKonto $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/konto.txt"
 grep -q "OK (2 tests)" "$OUT/konto.txt" \
-  && pass "8 the Haus account: contacts and calendars on the phone, none in the archive" \
-  || { grep -m3 -E 'AssertionError|Exception' "$OUT/konto.txt"; fail "8 the Haus account"; }
-[ "$(since "$m" "GEMEINSAM kontakte 304")" -ge 1 ] && pass "8 an unchanged state costs Haus's 304" || fail "8 no 304 for the unchanged contacts"
+  && pass "8 the Homes account: contacts and calendars on the phone, none in the archive" \
+  || { grep -m3 -E 'AssertionError|Exception' "$OUT/konto.txt"; fail "8 the Homes account"; }
+[ "$(since "$m" "GEMEINSAM kontakte 304")" -ge 1 ] && pass "8 an unchanged state costs Homes' 304" || fail "8 no 304 for the unchanged contacts"
 
 # 9 --------------------------------------------------------------------------
 wake
-on am instrument -w -r -e class 'cloud.dopp.haus.e2e.LiveE2EKontoPush#ein' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-ein.txt"
+on am instrument -w -r -e class 'cloud.dopp.homes.e2e.LiveE2EKontoPush#ein' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-ein.txt"
 grep -q "OK (1 test)" "$OUT/push-ein.txt" || { grep -m3 -E 'AssertionError|Exception' "$OUT/push-ein.txt"; fail "9 the calendar part on"; }
 # the instrumentation ended the app's process: the app's screen, an allowed start, brings the stream back
 on am start -W -n $PKG/.ui.HomeActivity >/dev/null
@@ -243,7 +243,7 @@ for i in $(seq 1 30); do curl -sk https://127.0.0.1:8443/ctl/streams | grep -q '
 m=$(mark)
 curl -sk "https://127.0.0.1:8443/ctl/gemeinsam?teil=kalender" | grep -q '"streams": [1-9]' && pass "9 the frame reaches the open stream" || fail "9 no open stream for the frame"
 wait_for "$m" "GEMEINSAM kalender 200" 1 45 && pass "9 the frame syncs the calendar at once" || fail "9 no sync after the frame"
-on am instrument -w -r -e class 'cloud.dopp.haus.e2e.LiveE2EKontoPush#danach' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-danach.txt"
+on am instrument -w -r -e class 'cloud.dopp.homes.e2e.LiveE2EKontoPush#danach' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-danach.txt"
 grep -q "OK (1 test)" "$OUT/push-danach.txt" && pass "9 the new entry is in the phone's calendar" \
   || { grep -m3 -E 'AssertionError|Exception' "$OUT/push-danach.txt"; fail "9 the new entry is not on the phone"; }
 
