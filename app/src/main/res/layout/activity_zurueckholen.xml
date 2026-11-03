@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Sicherung zurückholen (haus-android#197): the newest Signal and WhatsApp
+<!-- Sicherung zurückholen (homes-android#197): the newest Signal and WhatsApp
      backup from the box onto a new phone. Per source what lies ready, the
      steps with the folder to grant, and „Zurückholen“; the totals below. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/zurueck_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/haus_bg"
+    android:background="@color/homes_bg"
     android:fillViewport="true"
     android:scrollbars="none">
 
@@ -20,26 +20,26 @@
         android:paddingBottom="@dimen/space_xl">
 
         <TextView
-            style="@style/Text.Haus.Headline"
+            style="@style/Text.Homes.Headline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_sm"
             android:text="@string/zurueck_title" />
 
         <TextView
-            style="@style/Text.Haus.Body"
+            style="@style/Text.Homes.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/zurueck_intro" />
 
-        <!-- Haus's sentence when the list did not come: not paired, no archive, unreachable. -->
+        <!-- Homes' sentence when the list did not come: not paired, no archive, unreachable. -->
         <TextView
-            android:id="@+id/zurueck_haus"
-            style="@style/Text.Haus.Body"
+            android:id="@+id/zurueck_homes"
+            style="@style/Text.Homes.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_sm"
-            android:textColor="@color/haus_accent"
+            android:textColor="@color/homes_accent"
             android:visibility="gone" />
 
         <!-- Signal -->
@@ -48,12 +48,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/card_haus"
+            android:background="@drawable/card_homes"
             android:orientation="vertical"
             android:padding="@dimen/card_padding">
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_xs"
@@ -61,12 +61,12 @@
 
             <TextView
                 android:id="@+id/signal_bereit"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -74,13 +74,13 @@
 
             <TextView
                 android:id="@+id/signal_ordner"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <Button
                 android:id="@+id/signal_waehlen"
-                style="@style/Widget.Haus.Button.Ghost"
+                style="@style/Widget.Homes.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -95,15 +95,15 @@
 
             <TextView
                 android:id="@+id/signal_meldung"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
-                android:textColor="@color/haus_accent"
+                android:textColor="@color/homes_accent"
                 android:visibility="gone" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -116,12 +116,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/card_haus"
+            android:background="@drawable/card_homes"
             android:orientation="vertical"
             android:padding="@dimen/card_padding">
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_xs"
@@ -129,19 +129,19 @@
 
             <TextView
                 android:id="@+id/whatsapp_bereit"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:text="@string/zurueck_whatsapp_schritt1" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -149,20 +149,20 @@
 
             <TextView
                 android:id="@+id/whatsapp_ordner"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <Button
                 android:id="@+id/whatsapp_waehlen"
-                style="@style/Widget.Haus.Button.Ghost"
+                style="@style/Widget.Homes.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:text="@string/zurueck_ordner_freigeben" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -177,17 +177,17 @@
 
             <TextView
                 android:id="@+id/whatsapp_meldung"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
-                android:textColor="@color/haus_accent"
+                android:textColor="@color/homes_accent"
                 android:visibility="gone" />
 
             <!-- the media wait for the open archive: this opens it -->
             <Button
                 android:id="@+id/whatsapp_archiv"
-                style="@style/Widget.Haus.Button.Ghost"
+                style="@style/Widget.Homes.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -195,7 +195,7 @@
                 android:visibility="gone" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
@@ -209,19 +209,19 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_lg"
             android:max="1000"
-            android:progressTint="@color/haus_accent"
+            android:progressTint="@color/homes_accent"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/zurueck_zustand"
-            style="@style/Text.Haus.Body"
+            style="@style/Text.Homes.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs" />
 
         <Button
             android:id="@+id/zurueck_anhalten"
-            style="@style/Widget.Haus.Button.Ghost"
+            style="@style/Widget.Homes.Button.Ghost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Haus account (#206): its type is the app's name; no password, the device token stays in TokenStore. -->
+<!-- The Homes account (#206): its type is the app's name; no password, the device token stays in TokenStore. -->
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="cloud.dopp.haus"
+    android:accountType="cloud.dopp.homes"
     android:icon="@mipmap/ic_launcher"
     android:smallIcon="@mipmap/ic_launcher"
     android:label="@string/konto_label" />

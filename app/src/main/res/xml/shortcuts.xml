@@ -3,9 +3,9 @@
      a shortcut of this category in the share sheet hands text/plain and images to
      the share activity. No static shortcut here: the app icon's menu is dynamic (#97). -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
-    <share-target android:targetClass="cloud.dopp.haus.ui.ShareActivity">
+    <share-target android:targetClass="cloud.dopp.homes.ui.ShareActivity">
         <data android:mimeType="text/plain" />
         <data android:mimeType="image/*" />
-        <category android:name="cloud.dopp.haus.category.SHARE_TO_HAUS" />
+        <category android:name="cloud.dopp.homes.category.SHARE_TO_HOMES" />
     </share-target>
 </shortcuts>

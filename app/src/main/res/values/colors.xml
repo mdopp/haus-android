@@ -11,42 +11,42 @@
     <!-- Adaptive launcher-icon background: the icon's ground. -->
     <color name="ic_launcher_background">@color/terminal_ground</color>
 
-    <!-- ── Haus palette ───────────────────────────────────────────────── -->
-    <color name="haus_bg">#070709</color>            <!-- window background -->
-    <color name="haus_bg_elevated">#0C0C0E</color>   <!-- status/nav bar -->
-    <color name="haus_card">#14141A</color>          <!-- card surface -->
-    <color name="haus_card_edge">#1FFFFFFF</color>   <!-- hairline card border -->
+    <!-- ── Homes palette ───────────────────────────────────────────────── -->
+    <color name="homes_bg">#070709</color>            <!-- window background -->
+    <color name="homes_bg_elevated">#0C0C0E</color>   <!-- status/nav bar -->
+    <color name="homes_card">#14141A</color>          <!-- card surface -->
+    <color name="homes_card_edge">#1FFFFFFF</color>   <!-- hairline card border -->
 
     <!-- The window's two background tones, for the status and navigation bar. -->
-    <color name="haus_surface_bg">#070709</color>    <!-- web background_color -->
-    <color name="haus_surface_theme">#0C0C0E</color> <!-- web theme_color -->
+    <color name="homes_surface_bg">#070709</color>    <!-- web background_color -->
+    <color name="homes_surface_theme">#0C0C0E</color> <!-- web theme_color -->
 
     <!-- The in-app accent of buttons, fields and hints. -->
-    <color name="haus_accent">#F97316</color>        <!-- orange-500 -->
-    <color name="haus_accent_dark">#EA580C</color>   <!-- orange-600 (pressed) -->
-    <color name="haus_accent_faint">#1FF97316</color><!-- 12% orange tint -->
+    <color name="homes_accent">#F97316</color>        <!-- orange-500 -->
+    <color name="homes_accent_dark">#EA580C</color>   <!-- orange-600 (pressed) -->
+    <color name="homes_accent_faint">#1FF97316</color><!-- 12% orange tint -->
 
     <!-- The launcher icon and the app-icon shortcut glyphs sit among foreign
          icons on the home screen; they keep the brand blue (#130). -->
-    <color name="haus_brand_blue">#3B82F6</color>      <!-- brand blue-500 -->
-    <color name="haus_brand_blue_dark">#2563EB</color> <!-- blue-600 (pressed) -->
+    <color name="homes_brand_blue">#3B82F6</color>      <!-- brand blue-500 -->
+    <color name="homes_brand_blue_dark">#2563EB</color> <!-- blue-600 (pressed) -->
 
-    <color name="haus_text">#F2F2F5</color>         <!-- primary text -->
-    <color name="haus_text_muted">#9AA0AE</color>   <!-- secondary/hint text -->
-    <color name="haus_text_faint">#6B7280</color>   <!-- tertiary -->
+    <color name="homes_text">#F2F2F5</color>         <!-- primary text -->
+    <color name="homes_text_muted">#9AA0AE</color>   <!-- secondary/hint text -->
+    <color name="homes_text_faint">#6B7280</color>   <!-- tertiary -->
 
-    <color name="haus_warn">#EF5350</color>         <!-- folgenschwere Aktion (#92) -->
-    <color name="haus_warn_faint">#1FEF5350</color> <!-- 12% warn tint (#113) -->
+    <color name="homes_warn">#EF5350</color>         <!-- folgenschwere Aktion (#92) -->
+    <color name="homes_warn_faint">#1FEF5350</color> <!-- 12% warn tint (#113) -->
 
     <!-- Backdrop of an action dialog (#114). The action activities are
          translucent; without a painted window they showed whatever sat on top of
          the app's task. Deckkraft auf 70 % gesenkt (#119): etwas mehr scheint
          durch, der Zweck bleibt — der Dialog sieht gleich aus, egal was dahinter
          liegt, weil seine Karte selbst deckend ist. -->
-    <color name="haus_scrim">#B3070709</color>
+    <color name="homes_scrim">#B3070709</color>
 
-    <color name="haus_field">#161620</color>        <!-- input field fill -->
-    <color name="haus_divider">#1AFFFFFF</color>    <!-- list divider -->
+    <color name="homes_field">#161620</color>        <!-- input field fill -->
+    <color name="homes_divider">#1AFFFFFF</color>    <!-- list divider -->
 
     <!-- Energy leg colors, shared by web + widgets. -->
     <color name="energy_supply">#66BB6A</color>        <!-- PV / feed-in / discharge -->

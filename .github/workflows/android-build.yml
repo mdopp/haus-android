@@ -1,4 +1,4 @@
-# CI for the Haus app (plain Gradle).
+# CI for the Homes app (plain Gradle).
 #
 # - A PR to main: a debug build and the unit tests prove the change.
 # - A push to main: a release-signed APK as a GitHub pre-release
@@ -87,8 +87,8 @@ jobs:
             name="$major.$minor.$((patch + 1))-dev.$GITHUB_RUN_NUMBER"
           fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
-          echo "HAUS_VERSION_NAME=$name" >> "$GITHUB_ENV"
-          echo "HAUS_VERSION_CODE=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "HOMES_VERSION_NAME=$name" >> "$GITHUB_ENV"
+          echo "HOMES_VERSION_CODE=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
           echo "version $name, code $GITHUB_RUN_NUMBER"
 
       # Signed builds only on a push, and only when the keystore secret exists.
@@ -163,7 +163,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: haus-android
+          name: homes-android
           path: |
             app/build/outputs/apk/**/*.apk
             app/build/outputs/bundle/**/*.aab

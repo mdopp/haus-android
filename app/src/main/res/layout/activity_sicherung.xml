@@ -6,7 +6,7 @@
     android:id="@+id/sicherung_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/haus_bg"
+    android:background="@color/homes_bg"
     android:fillViewport="true"
     android:scrollbars="none">
 
@@ -20,21 +20,21 @@
         android:paddingBottom="@dimen/space_xl">
 
         <TextView
-            style="@style/Text.Haus.Headline"
+            style="@style/Text.Homes.Headline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_sm"
             android:text="@string/sicherung_title" />
 
         <TextView
-            style="@style/Text.Haus.Body"
+            style="@style/Text.Homes.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/sicherung_intro" />
 
         <TextView
             android:id="@+id/sicherung_frei"
-            style="@style/Text.Haus.Body"
+            style="@style/Text.Homes.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_sm" />
@@ -54,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/card_haus"
+            android:background="@drawable/card_homes"
             android:orientation="vertical"
             android:padding="@dimen/card_padding">
 
@@ -66,7 +66,7 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    style="@style/Text.Haus.Title"
+                    style="@style/Text.Homes.Title"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -80,14 +80,14 @@
             </LinearLayout>
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/handy_kontakte_was" />
 
             <TextView
                 android:id="@+id/handy_kontakte_stand"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
@@ -95,12 +95,12 @@
             <!-- Why it is off or what went wrong; a tap opens App-Info when the way is through there. -->
             <TextView
                 android:id="@+id/handy_kontakte_meldung"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:background="?android:attr/selectableItemBackground"
-                android:textColor="@color/haus_accent"
+                android:textColor="@color/homes_accent"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -111,7 +111,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
-            android:background="@drawable/card_haus"
+            android:background="@drawable/card_homes"
             android:orientation="vertical"
             android:padding="@dimen/card_padding">
 
@@ -123,7 +123,7 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    style="@style/Text.Haus.Title"
+                    style="@style/Text.Homes.Title"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -137,14 +137,14 @@
             </LinearLayout>
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/handy_sms_was" />
 
             <TextView
                 android:id="@+id/handy_sms_stand"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
@@ -152,12 +152,12 @@
             <!-- Why it is off or what went wrong; a tap opens App-Info when the way is through there. -->
             <TextView
                 android:id="@+id/handy_sms_meldung"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:background="?android:attr/selectableItemBackground"
-                android:textColor="@color/haus_accent"
+                android:textColor="@color/homes_accent"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -175,28 +175,28 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_sm"
             android:max="1000"
-            android:progressTint="@color/haus_accent"
+            android:progressTint="@color/homes_accent"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/sicherung_zustand"
-            style="@style/Text.Haus.Body"
+            style="@style/Text.Homes.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs"
             android:text="@string/sicherung_ruht" />
 
-        <!-- a new phone: the newest backup back from the box (haus-android#197) -->
+        <!-- a new phone: the newest backup back from the box (homes-android#197) -->
         <Button
             android:id="@+id/sicherung_zurueck"
-            style="@style/Widget.Haus.Button.Ghost"
+            style="@style/Widget.Homes.Button.Ghost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
             android:text="@string/zurueck_oeffnen" />
 
         <TextView
-            style="@style/Text.Haus.Title"
+            style="@style/Text.Homes.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xl"
@@ -207,110 +207,110 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs"
-            android:background="@drawable/card_haus"
+            android:background="@drawable/card_homes"
             android:orientation="vertical"
             android:padding="@dimen/card_padding">
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_signal_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_signal" />
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_whatsapp_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_whatsapp" />
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_sms_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_sms" />
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_kontakte_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_kontakte" />
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_mail_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_mail" />
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_kalender_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_kalender" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_standort" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:text="@string/sicherung_anleitung_versionen" />
 
             <TextView
-                style="@style/Text.Haus.Title"
+                style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_nie_title" />
 
             <TextView
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Homes.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/sicherung_anleitung_nie" />

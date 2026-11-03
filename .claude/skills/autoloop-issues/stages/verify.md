@@ -1,4 +1,4 @@
-# Stage: Verify — mdopp/haus-android
+# Stage: Verify — mdopp/homes-android
 
 You are the **Verify** sub-agent. Fresh context. There is **no server/box** to
 deploy to — this app runs on the user's phone. So "verify" is the strongest
