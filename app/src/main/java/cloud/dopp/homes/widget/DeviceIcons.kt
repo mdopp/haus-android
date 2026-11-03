@@ -42,14 +42,33 @@ object DeviceIcons {
     }
 
     /**
-     * Type icon for a **live** card (#91). Everything but a lock is a domain, so
-     * it falls through to [forDomain]; a lock is drawn by its *state*, because a
-     * row is read in passing and `aufgeschlossen` vs `entriegelt` is exactly the
-     * distinction that gets lost when only the words differ.
+     * Type icon for a **live** card (#91). A lock is drawn by its *state*,
+     * because a row is read in passing and `aufgeschlossen` vs `entriegelt` is
+     * exactly the distinction that gets lost when only the words differ. A
+     * cover by its [deviceClass] and state: a garage or a gate as a garage, any
+     * other (shutter, blind, curtain, none named) as a shutter up or down —
+     * „Rollo“ showed the garage (owner, 2026-11-03). Everything else is its
+     * domain ([forDomain]).
      */
     @DrawableRes
-    fun forState(domain: String?, state: String?): Int =
-        if (domain == "lock") forLockState(state) else forDomain(domain)
+    fun forState(domain: String?, state: String?, deviceClass: String? = null): Int = when (domain) {
+        "lock" -> forLockState(state)
+        "cover" -> forCover(deviceClass, state)
+        else -> forDomain(domain)
+    }
+
+    /** A cover's picture: garage/gate as a garage, every other class as a shutter; open or opening is up. */
+    @DrawableRes
+    fun forCover(deviceClass: String?, state: String?): Int {
+        val offen = state?.trim()?.lowercase() in setOf("open", "opening")
+        return if (deviceClass?.trim()?.lowercase() in GARAGE_CLASSES) {
+            if (offen) R.drawable.ic_garage_open else R.drawable.ic_garage_closed
+        } else {
+            if (offen) R.drawable.ic_blind_open else R.drawable.ic_blind_closed
+        }
+    }
+
+    private val GARAGE_CLASSES = setOf("garage", "gate")
 
     /**
      * Lock state → glyph (#91). The four glyphs differ by **silhouette, not

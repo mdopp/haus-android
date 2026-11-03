@@ -79,11 +79,12 @@ class LockStateIconTest {
     }
 
     /**
-     * Only the lock is state-driven. Every other domain — and the picker rows,
-     * which have no state to show — keep [DeviceIcons.forDomain].
+     * Only the lock and the cover are state-driven (the cover: CoverIconTest).
+     * Every other domain — and the picker rows, which have no state to show —
+     * keep [DeviceIcons.forDomain].
      */
-    @Test fun onlyTheLockDomainReadsTheState() {
-        for (d in listOf("light", "switch", "cover", "climate", "sensor", null)) {
+    @Test fun onlyTheLockAndTheCoverReadTheState() {
+        for (d in listOf("light", "switch", "climate", "sensor", null)) {
             assertEquals("domain $d", DeviceIcons.forDomain(d), DeviceIcons.forState(d, "locked"))
             assertEquals("domain $d", DeviceIcons.forDomain(d), DeviceIcons.forState(d, null))
         }
