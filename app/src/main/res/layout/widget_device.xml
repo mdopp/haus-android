@@ -2,7 +2,7 @@
 <!-- One device (restored by the owner, 2026-11-03, slimmer than before): its
      icon in the state's colour, its name, its state. The whole tile is the tap:
      a light, a switch, a cover switches, a lock opens its chooser, anything
-     else opens its page on Haus. One frame, no capitals. -->
+     else opens its page on Homes. One frame, no capitals. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/d_root"
     android:layout_width="match_parent"

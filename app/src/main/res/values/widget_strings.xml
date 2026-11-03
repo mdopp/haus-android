@@ -35,7 +35,7 @@
     <!-- Fehlgeschlagener Tipp (#111): waehrend des Ausfalls antwortete
          /napi/ha/call mit 500, die Kachel schwieg und der Tipp sah folgenlos aus.
          %1$s = Geraetename. -->
-    <string name="widget_action_failed">%1$s nicht geschaltet – Haus antwortet nicht</string>
+    <string name="widget_action_failed">%1$s nicht geschaltet – Homes antwortet nicht</string>
 
     <!-- Die Auswahl eines Schlosses (#92). %1$s = Gerätename. Die Wörter der
          Einträge kommen aus widget_confirm_* (#85), nicht von hier. -->
@@ -49,7 +49,7 @@
     <string name="widget_config_pick">Gerät wählen:</string>
     <string name="widget_config_search_hint">Gerät oder Raum suchen …</string>
     <string name="widget_config_no_match">Keine Treffer.</string>
-    <string name="widget_config_empty">Keine Geräte gefunden. Ist Haus erreichbar?</string>
+    <string name="widget_config_empty">Keine Geräte gefunden. Ist Homes erreichbar?</string>
     <string name="widget_config_change">Gerät ändern:</string>
     <string name="widget_config_pair_first">Bitte zuerst das Gerät koppeln.</string>
     <!-- Neu-Einrichten aus dem Langdruck-Menü (#96): das Widget ist schon
@@ -57,8 +57,8 @@
     <string name="widget_config_current">%1$s · aktuell</string>
 
     <!-- Generic schema-driven .tool widget (#70/#72): one provider for every tool. -->
-    <string name="tool_widget_label">Haus · Tool</string>
-    <string name="tool_widget_description">Liste aus Haus: Dokumente oder Notizen</string>
+    <string name="tool_widget_label">Homes · Tool</string>
+    <string name="tool_widget_description">Liste aus Homes: Dokumente oder Notizen</string>
     <!-- %1$s = Tool-Name, %2$d = Anzahl Einträge. -->
     <string name="tool_title_count">%1$s · %2$d</string>
     <string name="tool_empty">Keine Einträge</string>

@@ -4,9 +4,9 @@
     <string name="app_version_fmt">Version %1$s</string>
     <string name="home_claim">Dein Zuhause, klar im Blick.</string>
 
-    <!-- Pairing (#176): Haus's address, then /pair-device, confirm, done. -->
-    <string name="home_connect_hint">Gib die Adresse deines Hauses ein. Danach meldest du dich an und bestätigst die Kopplung.</string>
-    <string name="home_url_hint">haus.example.org</string>
+    <!-- Pairing (#176): Homes' address, then /pair-device, confirm, done. -->
+    <string name="home_connect_hint">Gib die Adresse von Homes ein. Danach meldest du dich an und bestätigst die Kopplung.</string>
+    <string name="home_url_hint">homes.example.org</string>
     <string name="home_connect">Koppeln</string>
     <string name="home_enter_url">Bitte die Adresse eingeben.</string>
     <string name="home_reconnect">Bei %1$s anmelden, um die Kopplung abzuschließen.</string>
@@ -18,16 +18,16 @@
     <string name="server_http_refused">Die Adresse muss mit https:// beginnen. Über http:// ginge der Zugang unverschlüsselt durchs Netz.</string>
     <string name="pairing_not_started">Diesen Kopplungs-Link hat die App nicht angefordert. Zum Koppeln die Adresse hier eingeben.</string>
     <string name="pairing_confirm_title">Koppeln?</string>
-    <string name="pairing_confirm_link">Mit %1$s koppeln? Die App speichert dann den Zugang zu diesem Haus.</string>
-    <string name="pairing_confirm_setup">Mit %1$s koppeln? Die App wechselt dann zu diesem Haus und speichert den Zugang.</string>
+    <string name="pairing_confirm_link">Mit %1$s koppeln? Die App speichert dann deinen Zugang zu Homes.</string>
+    <string name="pairing_confirm_setup">Mit %1$s koppeln? Die App wechselt dann zu Homes unter dieser Adresse und speichert den Zugang.</string>
     <string name="pairing_confirm_server">Mit %1$s verbinden und dort koppeln?</string>
     <string name="pairing_confirm_yes">Koppeln</string>
     <string name="pairing_confirm_no">Abbrechen</string>
-    <string name="pairing_refused">Haus kennt diesen Zugang nicht. Bitte neu koppeln.</string>
-    <string name="pairing_unreachable">Haus ist gerade nicht erreichbar. Bitte später neu koppeln.</string>
+    <string name="pairing_refused">Homes kennt diesen Zugang nicht. Bitte neu koppeln.</string>
+    <string name="pairing_unreachable">Homes ist gerade nicht erreichbar. Bitte später neu koppeln.</string>
     <string name="pairing_not_saved">Der Zugang ließ sich auf diesem Telefon nicht speichern. Die App ist nicht gekoppelt; bitte neu koppeln.</string>
     <string name="home_no_browser">Kein Browser gefunden.</string>
-    <string name="pairing_action">Mit Haus koppeln</string>
+    <string name="pairing_action">Mit Homes koppeln</string>
 
     <!-- Paired. -->
     <string name="home_connected">Gekoppelt mit %1$s</string>
@@ -43,8 +43,8 @@
 
     <!-- The start screen's devices (owner, 2026-11-02). -->
     <string name="home_devices_title">Deine Geräte</string>
-    <string name="home_devices_hint">Tippen schaltet, lange drücken öffnet das Gerät in Haus.</string>
-    <string name="home_devices_none">Noch keine Favoriten. Markiere in Haus ein Gerät mit ☆, dann steht es hier.</string>
+    <string name="home_devices_hint">Tippen schaltet, lange drücken öffnet das Gerät in Homes.</string>
+    <string name="home_devices_none">Noch keine Favoriten. Markiere in Homes ein Gerät mit ☆, dann steht es hier.</string>
     <string name="home_devices_unreadable">Deine Favoriten lassen sich gerade nicht laden.</string>
     <string name="home_devices_loading">Lädt …</string>
     <string name="home_devices_all">Alle Geräte</string>
@@ -53,7 +53,7 @@
     <!-- The live widgets (LiveService). -->
     <string name="live_switch">Live-Widgets: aktuell, solange der Bildschirm an ist</string>
     <string name="live_channel">Live-Widgets</string>
-    <string name="live_channel_desc">Zeigt, ob die Widgets live mit deinem Haus verbunden sind.</string>
+    <string name="live_channel_desc">Zeigt, ob die Widgets live mit Homes verbunden sind.</string>
     <string name="live_connecting">Verbinde …</string>
     <string name="live_on">Widgets live</string>
     <string name="live_paused">Pausiert, Bildschirm aus</string>
@@ -63,5 +63,5 @@
     <string name="live_battery_why">Damit die Widgets von selbst aktuell bleiben, tippe auf „Erlauben“ und dann im nächsten Fenster auf „Zulassen“.</string>
     <string name="live_battery_yes">Erlauben</string>
     <string name="live_battery_no">Später</string>
-    <string name="live_reconnecting">Keine Verbindung zum Haus, neuer Versuch …</string>
+    <string name="live_reconnecting">Keine Verbindung zu Homes, neuer Versuch …</string>
 </resources>

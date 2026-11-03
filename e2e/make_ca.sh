@@ -9,7 +9,7 @@
 set -euo pipefail
 OUT=${1:-e2e/out}
 mkdir -p "$OUT"
-openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 3 -subj "/CN=haus e2e CA" \
+openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 3 -subj "/CN=homes e2e CA" \
   -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" \
   -keyout "$OUT/ca.key" -out "$OUT/ca.pem"
 openssl req -newkey rsa:2048 -nodes -sha256 -subj "/CN=10.0.2.2" -keyout "$OUT/server.key" -out "$OUT/server.csr"

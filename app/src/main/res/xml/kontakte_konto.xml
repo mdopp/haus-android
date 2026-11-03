@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- How the contacts app shows the Haus account (#206): no edit schema, so it
-     offers no editing of the shared contacts; they change in Haus. -->
+<!-- How the contacts app shows the Homes account (#206): no edit schema, so it
+     offers no editing of the shared contacts; they change in Homes. -->
 <ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android" />

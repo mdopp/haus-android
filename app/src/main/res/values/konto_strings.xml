@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Das Haus-Konto (#206, owner 2026-11-03): the household's shared contacts,
+<!-- Das Homes-Konto (#206, owner 2026-11-03): the household's shared contacts,
      calendars and reminders in the phone's own apps, read only. -->
 <resources>
     <!-- the account's name in Android's settings, beside Google and the rest -->
-    <string name="konto_label">Haus</string>
-    <string name="konto_title">Haus auf dem Handy</string>
-    <string name="konto_intro">Die gemeinsamen Kontakte und Kalender des Hauses, auf diesem Handy im Konto „Haus“. So findest du sie beim Telefonieren, in WhatsApp, in der Mail und im Kalender.</string>
-    <string name="konto_nur_lesen">Auf dem Handy nur zum Lesen: ändern geht in Haus.</string>
+    <string name="konto_label">Homes</string>
+    <string name="konto_title">Homes auf dem Handy</string>
+    <string name="konto_intro">Die gemeinsamen Kontakte und Kalender des Hauses, auf diesem Handy im Konto „Homes“. So findest du sie beim Telefonieren, in WhatsApp, in der Mail und im Kalender.</string>
+    <string name="konto_nur_lesen">Auf dem Handy nur zum Lesen: ändern geht in Homes.</string>
 
     <string name="konto_kontakte_titel">Kontakte des Hauses</string>
     <!-- what a screen reader says for the switch -->
     <string name="konto_kontakte_schalter">Kontakte des Hauses auf dem Handy</string>
-    <string name="konto_kontakte_was">Das gemeinsame Adressbuch aus Haus, im Adressbuch des Handys.</string>
+    <string name="konto_kontakte_was">Das gemeinsame Adressbuch aus Homes, im Adressbuch des Handys.</string>
     <string name="konto_kontakte_stand">Zuletzt abgeglichen %1$s: %2$d Kontakte.</string>
 
     <string name="konto_kalender_titel">Kalender des Hauses</string>
     <string name="konto_kalender_schalter">Kalender des Hauses auf dem Handy</string>
-    <string name="konto_kalender_was">Die gemeinsamen Kalender aus Haus und eure Erinnerungen. Eine Erinnerung klingelt zu ihrer Zeit wie ein Termin.</string>
+    <string name="konto_kalender_was">Die gemeinsamen Kalender aus Homes und eure Erinnerungen. Eine Erinnerung klingelt zu ihrer Zeit wie ein Termin.</string>
     <string name="konto_kalender_stand">Zuletzt abgeglichen %1$s: %2$d Termine und Erinnerungen.</string>
 
     <string name="konto_noch_nie">Noch nicht abgeglichen.</string>

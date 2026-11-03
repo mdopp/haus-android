@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Daten sichern (#194, laib ADR 0029; renamed by the owner, 2026-11-03). The
-     guide is the same as Haus's page „Daten sichern“ (haus#207): change both together. -->
+     guide is the same as Homes' page „Daten sichern“ (homes#207): change both together. -->
 <resources>
     <string name="home_mehr">Mehr</string>
     <string name="sicherung_title">Daten sichern</string>
@@ -38,7 +38,7 @@
         <item quantity="other">%1$d warten auf den Import.</item>
     </plurals>
     <string name="sicherung_box_laedt">Auf der Box: wird gelesen …</string>
-    <string name="sicherung_box_unerreichbar">Auf der Box: Haus ist gerade nicht erreichbar.</string>
+    <string name="sicherung_box_unerreichbar">Auf der Box: Homes ist gerade nicht erreichbar.</string>
     <string name="sicherung_box_frei">Frei auf der Box: %1$s</string>
 
     <string name="sicherung_jetzt">Jetzt sichern</string>
@@ -53,7 +53,7 @@
     </plurals>
     <string name="sicherung_ruht">Die nächste Sicherung läuft von selbst, wenn das Handy im WLAN lädt.</string>
 
-    <!-- The guide: the steps of Haus's page „Daten sichern“ (internal/pages/nachrichten.go),
+    <!-- The guide: the steps of Homes' page „Daten sichern“ (internal/pages/nachrichten.go),
          as this screen says them (owner, 2026-11-03). -->
     <string name="sicherung_anleitung_title">So richtest du es ein</string>
     <string name="sicherung_anleitung_signal_title">Signal</string>
@@ -63,11 +63,11 @@
     <string name="sicherung_anleitung_sms_title">SMS und Anrufe</string>
     <string name="sicherung_anleitung_sms">Hier oben „SMS und Anrufe übertragen“ einschalten. Die App verschlüsselt sie schon auf dem Handy; ins Archiv kommen sie, während es offen ist.</string>
     <string name="sicherung_anleitung_kontakte_title">Kontakte</string>
-    <string name="sicherung_anleitung_kontakte">Hier oben „Kontakte übertragen“ einschalten. Sie kommen in dein Adressbuch „Handy-Kontakte“ auf der Box und von dort ins Archiv, während es offen ist. Löschst du einen Kontakt auf dem Handy, bleibt er im Archiv. Die Kontakte des Hauses (Mehr → Haus auf dem Handy) gehen nicht mit.</string>
+    <string name="sicherung_anleitung_kontakte">Hier oben „Kontakte übertragen“ einschalten. Sie kommen in dein Adressbuch „Handy-Kontakte“ auf der Box und von dort ins Archiv, während es offen ist. Löschst du einen Kontakt auf dem Handy, bleibt er im Archiv. Die Kontakte des Hauses (Mehr → Homes auf dem Handy) gehen nicht mit.</string>
     <string name="sicherung_anleitung_mail_title">E-Mail</string>
     <string name="sicherung_anleitung_mail">In deinem Archiv den Zugang zu deinem Postfach eintragen: Server, Benutzername und ein App-Passwort. Das Archiv holt jede Stunde neue Mails ab, auch wenn es zu ist; im Postfach ändert es nichts.</string>
     <string name="sicherung_anleitung_kalender_title">Kalender</string>
-    <string name="sicherung_anleitung_kalender">In Haus unter Kalender deine Google-Kalender verbinden; eigene private Kalender legst du dort auch an. Das Archiv übernimmt jeden Termin, während es offen ist. Gelöschte Termine bleiben im Archiv.</string>
+    <string name="sicherung_anleitung_kalender">In Homes unter Kalender deine Google-Kalender verbinden; eigene private Kalender legst du dort auch an. Das Archiv übernimmt jeden Termin, während es offen ist. Gelöschte Termine bleiben im Archiv.</string>
     <string name="sicherung_anleitung_standort">Dein Standortverlauf gehört nicht dazu: er geht in deinen Reitti-Zeitstrahl (Mehr → Standortverlauf).</string>
     <string name="sicherung_anleitung_versionen">Die Menüs heißen je nach App-Version etwas anders. Findest du einen Punkt nicht, such in den Einstellungen der App nach „Backup“.</string>
     <string name="sicherung_anleitung_nie_title">Was nie ins Archiv kommt</string>

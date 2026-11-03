@@ -1,17 +1,17 @@
-# haus-android
+# homes-android
 
-**Haus** for Android: the household's home-screen widgets and the pairing with
-its server, [Haus](https://github.com/mdopp/haus). Nothing else (laib ADR 0022):
+**Homes** for Android: the household's home-screen widgets and the pairing with
+its server, [Homes](https://github.com/mdopp/homes). Nothing else (laib ADR 0022):
 no web shell, no messages, no approvals, no diagnostics.
 
 - **Start screen:** your favorite devices first (what you pinned with ☆ on
-  Haus), a tap switches one; below them „Alle Geräte“, Haus's devices page.
+  Homes), a tap switches one; below them „Alle Geräte“, Homes' devices page.
 - **Widgets:** one device per widget (a tap switches it), one energy widget
-  (jetzt and heute; a tap opens Haus's Energie page), and the household's
+  (jetzt and heute; a tap opens Homes' Energie page), and the household's
   documents or notes. One look for every confirmation.
-- **Share → Haus:** a link becomes a note; a photo (or several) from the
-  camera app goes into Haus's document inbox, HEIC made JPEG on the phone.
-- **Pairing:** enter Haus's address, confirm on `/pair-device`, done. The
+- **Share → Homes:** a link becomes a note; a photo (or several) from the
+  camera app goes into Homes' document inbox, HEIC made JPEG on the phone.
+- **Pairing:** enter Homes' address, confirm on `/pair-device`, done. The
   assistant's name — „Homes“ unless the box names another — comes from
   `/napi/assistent`; its look (green on a dark ground) and icon are the app's.
 - **Current while you look:** one foreground service (`specialUse`, with a
@@ -32,7 +32,7 @@ no web shell, no messages, no approvals, no diagnostics.
   must first get App-Info → ⋮ → „Eingeschränkte Einstellungen zulassen“ for
   SMS and calls; the screen says so.
 
-The seam with Haus is [`docs/CONTRACT.md`](docs/CONTRACT.md); the visual
+The seam with Homes is [`docs/CONTRACT.md`](docs/CONTRACT.md); the visual
 standard is [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Build
@@ -48,7 +48,12 @@ so each installs over the one before.
 
 Until the app is on Play, a phone follows the releases with
 [Obtainium](https://github.com/ImranR98/Obtainium): add
-`https://github.com/mdopp/haus-android`, turn on *Include prereleases*, and
+`https://github.com/mdopp/homes-android`, turn on *Include prereleases*, and
 allow Obtainium to install apps. Dev builds and releases carry the same key,
 so the phone moves between them without reinstalling. A debug build has a
 different key and must be uninstalled first; the app is then paired again.
+
+**Coming from Haus** (laib#1021): the app was called Haus. Homes has its own
+package id (`cloud.dopp.homes`), so it is a new app beside it: add it in
+Obtainium as above, pair it, place the widgets again, then remove Haus and its
+Obtainium entry.

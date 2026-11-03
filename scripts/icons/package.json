@@ -1,5 +1,5 @@
 {
-  "name": "haus-icons",
+  "name": "homes-icons",
   "private": true,
   "description": "Renders the app's icons from art/icon.svg (see icons.mjs).",
   "type": "module",

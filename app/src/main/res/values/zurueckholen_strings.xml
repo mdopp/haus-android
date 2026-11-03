@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Sicherung zurückholen (haus-android#197): German, short, for a person on a new phone. -->
+<!-- Sicherung zurückholen (homes-android#197): German, short, for a person on a new phone. -->
 <resources>
     <string name="zurueck_title">Sicherung zurückholen</string>
     <string name="zurueck_intro">Für ein neues Handy: Die App holt deine letzte Signal- und WhatsApp-Sicherung von der Box zurück. Bleib dabei im WLAN und lass die App offen.</string>

@@ -7,12 +7,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/card_haus"
+    android:background="@drawable/card_homes"
     android:padding="@dimen/space_md">
 
     <TextView
         android:id="@+id/ad_title"
-        style="@style/Text.Haus.Headline"
+        style="@style/Text.Homes.Headline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="4dp"
@@ -21,7 +21,7 @@
 
     <TextView
         android:id="@+id/ad_message"
-        style="@style/Text.Haus.Body"
+        style="@style/Text.Homes.Body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="4dp"
@@ -47,11 +47,11 @@
         android:layout_height="1dp"
         android:layout_marginTop="@dimen/space_xs"
         android:layout_marginBottom="@dimen/space_sm"
-        android:background="@color/haus_divider" />
+        android:background="@color/homes_divider" />
 
     <Button
         android:id="@+id/ad_cancel"
-        style="@style/Widget.Haus.Button.Ghost"
+        style="@style/Widget.Homes.Button.Ghost"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/widget_confirm_no" />

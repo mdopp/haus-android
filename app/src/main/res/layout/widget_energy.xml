@@ -2,9 +2,9 @@
 <!-- The one energy widget (owner, 2026-11-03, after the first version on his
      phone): one frame, no inner boxes, and the content fills the cell. „Jetzt“,
      the four flow legs, two rows of two, each its word and its value; „Heute“, what the counters added since
-     midnight, two rows of two — hidden while Haus does not say. Green only for
+     midnight, two rows of two — hidden while Homes does not say. Green only for
      what the sun makes and what goes into the grid; consumption is neutral.
-     No capitals. A tap opens Haus's /energie; the arrows read again. -->
+     No capitals. A tap opens Homes' /energie; the arrows read again. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/e_root"
     android:layout_width="match_parent"

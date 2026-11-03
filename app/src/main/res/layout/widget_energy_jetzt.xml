@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The energy widget while Haus says nothing about today (owner, 2026-11-03):
+<!-- The energy widget while Homes says nothing about today (owner, 2026-11-03):
      „Jetzt“ alone fills the cell, the four flow legs large, two rows of two.
      The same ids as widget_energy.xml, without its Heute part. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

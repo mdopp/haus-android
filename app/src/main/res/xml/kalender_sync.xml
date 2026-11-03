@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Haus account's calendars and reminders (#206): from Haus to the phone only, never back. -->
+<!-- The Homes account's calendars and reminders (#206): from Homes to the phone only, never back. -->
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="cloud.dopp.haus"
+    android:accountType="cloud.dopp.homes"
     android:contentAuthority="com.android.calendar"
     android:supportsUploading="false"
     android:userVisible="true"

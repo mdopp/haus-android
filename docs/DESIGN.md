@@ -1,8 +1,8 @@
-# Haus — Design Guideline
+# Homes — Design Guideline
 
 Der visuelle Standard für App-Screens **und** Widgets, damit alles wie *ein*
 Produkt wirkt. Neue UI/Widgets richten sich hiernach; Abweichungen sind bewusst
-zu begründen. Spiegelt das Web-Frontend von Haus.
+zu begründen. Spiegelt das Web-Frontend von Homes.
 
 > **Akzente (#130).** In der App ist der Akzent **orange**. Der Kopf des
 > Startbildschirms trägt den festen Look des Assistenten (Besitzer,
@@ -14,17 +14,17 @@ zu begründen. Spiegelt das Web-Frontend von Haus.
 ## Palette (`res/values/colors.xml`)
 | Rolle | Token | Hex |
 |---|---|---|
-| Hintergrund | `haus_bg` | `#070709` |
-| Erhöht (Statusbar/Nav) | `haus_bg_elevated` | `#0C0C0E` |
-| **Akzent (Primär, In-App)** | `haus_accent` | `#F97316` (Orange) |
+| Hintergrund | `homes_bg` | `#070709` |
+| Erhöht (Statusbar/Nav) | `homes_bg_elevated` | `#0C0C0E` |
+| **Akzent (Primär, In-App)** | `homes_accent` | `#F97316` (Orange) |
 | Assistent: Akzent / Grund (Startbildschirm, App-Icon) | `terminal_green` / `terminal_ground` | `#3DDC84` / `#0C120E` |
-| Akzent gedrückt | `haus_accent_dark` | `#EA580C` |
-| Akzent-Tint (12 %) | `haus_accent_faint` | `#1FF97316` |
-| **Markenblau** (Icon/Shortcuts/Widgets/Glow) | `haus_brand_blue` | `#3B82F6` |
-| Markenblau gedrückt | `haus_brand_blue_dark` | `#2563EB` |
-| Text | `haus_text` | `#F2F2F5` |
-| Text gedämpft | `haus_text_muted` | `#9AA0AE` |
-| Text schwach | `haus_text_faint` | `#6B7280` |
+| Akzent gedrückt | `homes_accent_dark` | `#EA580C` |
+| Akzent-Tint (12 %) | `homes_accent_faint` | `#1FF97316` |
+| **Markenblau** (Icon/Shortcuts/Widgets/Glow) | `homes_brand_blue` | `#3B82F6` |
+| Markenblau gedrückt | `homes_brand_blue_dark` | `#2563EB` |
+| Text | `homes_text` | `#F2F2F5` |
+| Text gedämpft | `homes_text_muted` | `#9AA0AE` |
+| Text schwach | `homes_text_faint` | `#6B7280` |
 | Energie „liefert"/„verbunden" | `energy_supply` | `#66BB6A` |
 | Energie „bezieht" | `energy_draw` | `#EF5350` |
 | Batterie | `energy_battery` | `#7E9CFF` |
@@ -32,8 +32,8 @@ zu begründen. Spiegelt das Web-Frontend von Haus.
 **Domänen-Akzente** (Geräte-Widgets, aktiver Zustand): Licht `#FFC107`,
 Cover/Jalousie `#7E9CFF`, Schalter `#66BB6A`, Klima `#FF8A65`.
 
-> Regel: **In-App-Akzent ist immer `haus_accent`, Akzent auf dem
-> Android-Startbildschirm immer `haus_brand_blue`.** `#7E9CFF` ist die
+> Regel: **In-App-Akzent ist immer `homes_accent`, Akzent auf dem
+> Android-Startbildschirm immer `homes_brand_blue`.** `#7E9CFF` ist die
 > *Batterie/Cover*-Farbe — nicht als generischer Akzent verwenden.
 
 ## Tokens (`res/values/dimens.xml`)
@@ -43,7 +43,7 @@ Cover/Jalousie `#7E9CFF`, Schalter `#66BB6A`, Klima `#FF8A65`.
 - Markenblock: `brand_lockup_top · brand_figure_height · brand_rule_bottom ·
   hero_glow_size · text_hero` (Erstauftritt) und dieselben mit `_compact`
   (gekoppelt, #130) — `OnboardingHomeActivity.renderBrand` schaltet um.
-- Text-Styles: `Text.Haus.Hero/Headline/Title/Body/Label/Tile` (`res/values/themes.xml`).
+- Text-Styles: `Text.Homes.Hero/Headline/Title/Body/Label/Tile` (`res/values/themes.xml`).
 
 ## Widgets — allgemein
 - Hintergrund immer **`@drawable/widget_bg`** (22dp, dezenter Vertikal-Verlauf, 1dp-Hairline).
@@ -62,8 +62,8 @@ Kacheln, die nur eine Aktion auslösen, folgen **einem** Muster:
    weißem Glyph — signalisiert „antippen". **Gleiche Größe** überall (Kreis **52dp**,
    Glyph-Padding 12dp), **zentriert**. Kein flaches getöntes Glyph, keine
    abweichende Farbe (`#7E9CFF` etc.).
-3. **Label:** **einzeilig**, `Text.Haus.Tile`-Größe (12–13sp) **bold**,
-   `haus_text`, `maxLines=1`. **Keine zweite/abgeschnittene Zeile** (kein
+3. **Label:** **einzeilig**, `Text.Homes.Tile`-Größe (12–13sp) **bold**,
+   `homes_text`, `maxLines=1`. **Keine zweite/abgeschnittene Zeile** (kein
    „Kamera öffnen"-Untertitel, der zu „Kamer…" trunkiert).
 4. **Konsistenz:** gleiche Icon-Größe, gleiche Position, gleiche Label-Zeilenzahl,
    gleiche Abstände über *alle* Auslöser-Kacheln.
@@ -89,8 +89,8 @@ Ein Bildschirm (`activity_home.xml`, #176): oben das App-Icon, der Name des
 Assistenten („Homes“, sonst der Name der Box) und eine Linie in Phosphorgrün auf
 dem Grund `#0C120E`, darunter ungekoppelt die Kopplung
 (Adresse, „Koppeln", QR-Code), gekoppelt die Widgets zum Hinzufügen — erst das
-Haus, dann die Werkzeuge aus dem Katalog, zuletzt die Box. Konsistente
-Radien/Abstände/Typo aus den Tokens; runde Karten `card_haus`, alle mit
+Homes, dann die Werkzeuge aus dem Katalog, zuletzt die Box. Konsistente
+Radien/Abstände/Typo aus den Tokens; runde Karten `card_homes`, alle mit
 demselben Innenabstand `card_padding`. Karten sagen in **einer** Zeile, was
 etwas tut.
 

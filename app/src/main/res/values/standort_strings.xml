@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Standortverlauf (owner 2026-11-02): one switch, off until the person turns it
-     on, its own permissions, two modes; the points go through Haus to Reitti. -->
+     on, its own permissions, two modes; the points go through Homes to Reitti. -->
 <resources>
     <string name="standort_title">Standortverlauf</string>
-    <string name="standort_intro">Die Haus-App zeichnet auf, wo du unterwegs warst, und schickt es über Haus in deinen eigenen Zeitstrahl in Reitti. Der Verlauf bleibt auf eurer Box.</string>
+    <string name="standort_intro">Die Homes-App zeichnet auf, wo du unterwegs warst, und schickt es über Homes in deinen eigenen Zeitstrahl in Reitti. Der Verlauf bleibt auf eurer Box.</string>
     <string name="standort_schalter_titel">Aufzeichnen</string>
     <!-- what a screen reader says for the switch -->
     <string name="standort_schalter">Standort aufzeichnen</string>
@@ -25,10 +25,10 @@
     <string name="standort_gesendet">Gesendet.</string>
     <string name="standort_nichts">Es wartet nichts.</string>
 
-    <string name="standort_reitti_laedt">Fragt Haus, ob Reitti verbunden ist …</string>
+    <string name="standort_reitti_laedt">Fragt Homes, ob Reitti verbunden ist …</string>
     <string name="standort_reitti_verbunden">Reitti ist verbunden.</string>
-    <string name="standort_reitti_fehlt">Verbinde zuerst Reitti: tippe hier und füge in Haus unter Standortverlauf einmal deinen Reitti-Schlüssel ein.</string>
-    <string name="standort_reitti_unerreichbar">Haus ist gerade nicht erreichbar; die Punkte warten auf dem Handy.</string>
+    <string name="standort_reitti_fehlt">Verbinde zuerst Reitti: tippe hier und füge in Homes unter Standortverlauf einmal deinen Reitti-Schlüssel ein.</string>
+    <string name="standort_reitti_unerreichbar">Homes ist gerade nicht erreichbar; die Punkte warten auf dem Handy.</string>
 
     <string name="standort_abgelehnt">Ohne die Erlaubnis für den Standort bleibt das aus.</string>
     <string name="standort_immer">Fast fertig: wähle beim Standort „Immer zulassen“, sonst zeichnet die App nur auf, während sie offen ist. Tippe hier, wenn Android nicht fragt.</string>

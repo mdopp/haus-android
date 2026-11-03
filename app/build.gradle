@@ -21,10 +21,10 @@ plugins {
 
 android {
     compileSdkVersion 36
-    namespace "cloud.dopp.haus"
+    namespace "cloud.dopp.homes"
     defaultConfig {
         // A new app (laib ADR 0022 §1): its own id, nothing carried from the old one.
-        applicationId "cloud.dopp.haus"
+        applicationId "cloud.dopp.homes"
         // Phase 3 raised 21 → 23: EncryptedSharedPreferences (Jetpack Security)
         // needs the AndroidKeyStore-backed master key from API 23.
         minSdkVersion 23
@@ -32,8 +32,8 @@ android {
         // CI sets both (#182): the code is the workflow's run number, so every
         // build installs over the one before it, dev and tag alike; the name is
         // the tag, or the next patch with -dev.<run> for a build of main.
-        versionCode(Integer.parseInt(System.getenv("HAUS_VERSION_CODE") ?: "1"))
-        versionName(System.getenv("HAUS_VERSION_NAME") ?: "0.0.0-local")
+        versionCode(Integer.parseInt(System.getenv("HOMES_VERSION_CODE") ?: "1"))
+        versionName(System.getenv("HOMES_VERSION_NAME") ?: "0.0.0-local")
         // The live e2e on emulators (e2e/, .github/workflows/live-e2e.yml).
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -90,7 +90,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     // Custom Tabs for pairing (/pair-device): it shares the browser's Authelia session.
     implementation 'androidx.browser:browser:1.8.0'
-    // Encrypted-at-rest storage for the haus_device_… bearer token.
+    // Encrypted-at-rest storage for the homes_device_… bearer token.
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
     // Read JPEG EXIF orientation so camera captures are rotated upright (#67).
     implementation 'androidx.exifinterface:exifinterface:1.3.7'
@@ -112,7 +112,7 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.13'
     testImplementation 'androidx.test:core:1.6.1'
     testImplementation 'androidx.test.ext:junit:1.2.1'
-    // A fake Haus for the resumable upload (#194), and WorkManager in tests.
+    // A fake Homes for the resumable upload (#194), and WorkManager in tests.
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
     testImplementation 'androidx.work:work-testing:2.10.0'
 
