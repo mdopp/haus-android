@@ -357,7 +357,7 @@ class ApiClient(private val ctx: Context) {
             return out
         }
 
-        /** `{ok, energy: {flow, totals}}` → [Energy], or null when Haus says it has none. */
+        /** `{ok, energy: {flow, totals, charge}}` → [Energy], or null when Haus says it has none. */
         internal fun parseEnergy(root: JSONObject): Energy? {
             if (!root.optBoolean(EnergyJson.OK, false)) return null
             val e = root.optJSONObject(EnergyJson.ENERGY) ?: return null
@@ -395,7 +395,10 @@ class ApiClient(private val ctx: Context) {
                     )
                 }
             }
-            return Energy(legs, totals)
+            // how full the battery is, when Haus says it (a meter whose state is the percent)
+            val charge = e.optJSONObject(EnergyJson.CHARGE)
+            val pct = charge?.optString(EnergyJson.STATE)?.toDoubleOrNull()?.takeIf { it in 0.0..100.0 }
+            return Energy(legs, totals, pct, charge?.optString(EnergyJson.ENTITY_ID)?.ifBlank { null })
         }
 
         /** A JSON string array (e.g. `supported_color_modes`) as a lower-case list. */

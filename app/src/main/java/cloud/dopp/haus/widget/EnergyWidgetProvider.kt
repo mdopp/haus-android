@@ -66,7 +66,7 @@ class EnergyWidgetProvider : AppWidgetProvider() {
                     null
                 }
                 // the flow's sensors join the watch set: their frames read this widget again
-                energy?.let { e -> cloud.dopp.haus.realtime.WatchSet.rememberEnergy(context, e.flow.mapNotNull { it.entityId }) }
+                energy?.let { e -> cloud.dopp.haus.realtime.WatchSet.rememberEnergy(context, e.flow.mapNotNull { it.entityId } + listOfNotNull(e.chargeEntityId)) }
                 mgr.updateAppWidget(appWidgetId, EnergyRender.build(context, appWidgetId, energy, true, tap, onRefresh))
             } catch (t: Throwable) {
                 WidgetFallback.show(context, appWidgetId, onRefresh)

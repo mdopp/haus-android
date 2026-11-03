@@ -8,19 +8,23 @@ import android.widget.RemoteViews
 import cloud.dopp.haus.R
 import cloud.dopp.haus.data.Energy
 import cloud.dopp.haus.data.EnergyFlow
+import kotlin.math.max
 
 /**
- * The one energy widget (owner, 2026-11-02; redrawn 2026-11-03 after the
- * first version on his phone): "Jetzt" and "Heute" together, filling the
- * cell, one frame, no capitals, green only for PV and feeding the grid.
+ * The one energy widget (owner, 2026-11-02; redrawn 2026-11-03 twice, the
+ * second time after „Das Energie Widget ist auch nur Text. Grafiken könnten
+ * helfen es besser zu verstehen. Und ein aktueller Akkustand“).
  *
- * - Two cells high and more: the four flow legs now (PV / Haus / Netz / Akku,
- *   two rows of two, worded by direction) above what the counters added today
- *   (erzeugt, eingespeist, bezogen, Akku geladen, kWh). While Haus says
- *   nothing about today (a box not yet updated), the Heute part is left out
- *   and Jetzt takes the whole cell — never a row of dashes.
- * - One cell high: the grid's balance now (or the house's draw), and with a
- *   little more room one line of Heute.
+ * - Two cells high and more: the flow now as a picture like Haus's Energie
+ *   page ([EnergyPicture], [EnergyFluss]) — Solar, Netz, Akku with how full
+ *   it is as a ring, Haus, the ways the power takes now drawn — and beside it,
+ *   with the room, what the counters added today (erzeugt, ins Netz,
+ *   Netzbezug, in den Akku) in the ways' colours. While Haus says nothing
+ *   about today the picture takes the whole cell.
+ * - One cell high: the battery with its charge as a small ring picture (or the
+ *   grid, while Haus does not say the charge), the grid's direction now
+ *   beside it, and with a little more room the house's draw and one line of
+ *   Heute.
  *
  * The body opens Haus's Energie page ([HausPages.ENERGIE]); the arrows read again.
  */
@@ -37,27 +41,37 @@ object EnergyRender {
         val opts = AppWidgetManager.getInstance(ctx).getAppWidgetOptions(appWidgetId)
         val minW = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
         val minH = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        return if (full(minW, minH)) buildFull(ctx, energy, paired, onTap, onRefresh)
-        else buildSmall(ctx, energy, paired, onTap, onRefresh, showSub(minH), showToday(minH))
+        // the portrait size: the launcher's narrowest width, its tallest height
+        val maxH = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+        val w = if (minW > 0) minW else DEFAULT_W
+        val h = max(maxH, minH).takeIf { it > 0 } ?: DEFAULT_H
+        return if (full(minW, minH)) buildFull(ctx, energy, paired, onTap, onRefresh, w, h)
+        else buildSmall(ctx, energy, paired, onTap, onRefresh, h, showSub(minH), showToday(minH), todayBeside(w))
     }
 
+    /** The placed default, 4×2, when the launcher does not tell the size. */
+    private const val DEFAULT_W = 300
+    private const val DEFAULT_H = 150
+
     /**
-     * Room for jetzt and heute as cells: two rows of cells need two cells of
-     * height. A size the launcher did not tell (0) draws the full widget — the
-     * placed default is 4×2. Pure, so it is JVM-testable.
+     * Room for the picture: two cells of height. A size the launcher did not
+     * tell (0) draws the full widget — the placed default is 4×2. Pure, so it
+     * is JVM-testable.
      */
     fun full(minW: Int, minH: Int): Boolean = (minW == 0 && minH == 0) || minH >= 110
 
-    /** The small tier's second line (the state while loading, "Jetzt"): only with more height than the bare 2×1. */
+    /** Room for Heute beside the picture: about four cells wide. Pure. */
+    fun todayBeside(w: Int): Boolean = w >= 250
+
+    /** The small tier's second line: only with more height than the bare 2×1. */
     fun showSub(minH: Int): Boolean = minH >= 85
 
     /** The small tier's line of heute: only with clearly more height than 2×1. */
     fun showToday(minH: Int): Boolean = minH >= 95
 
     /**
-     * A leg's word in a cell: what it does, so the colour needs no legend —
-     * PV, Haus, Ins Netz or Netzbezug, Akku
-     * lädt or entlädt.
+     * A leg's word: what it does, so the number needs no legend — PV, Haus,
+     * Ins Netz or Netzbezug, Akku lädt or entlädt.
      */
     fun legWord(f: EnergyFlow?, fallback: String): String {
         val w = f?.watts
@@ -90,14 +104,18 @@ object EnergyRender {
     /** Does Haus say anything about today? Without it the Heute part is left out. */
     fun hasToday(energy: Energy?): Boolean = energy?.totals.orEmpty().any { it.today != null }
 
+    private fun density(ctx: Context) = ctx.resources.displayMetrics.density
+
     private fun buildSmall(
         ctx: Context,
         e: Energy?,
         paired: Boolean,
         onTap: PendingIntent,
         onRefresh: PendingIntent,
+        h: Int,
         showSub: Boolean,
         showToday: Boolean,
+        side: Boolean,
     ): RemoteViews {
         val v = RemoteViews(ctx.packageName, R.layout.widget_energy_small)
         v.setOnClickPendingIntent(R.id.e_root, onTap)
@@ -105,19 +123,40 @@ object EnergyRender {
         v.setViewVisibility(R.id.e_today, View.GONE)
         v.setViewVisibility(R.id.e_sub, if (showSub) View.VISIBLE else View.GONE)
         if (!paired) {
-            small(v, "Energie", "—", "In der App koppeln", EnergyStyle.MUTED)
+            v.setViewVisibility(R.id.e_ring, View.GONE)
+            small(v, "Energie", "—", "In der App koppeln")
             return v
         }
-        val g = e?.grid ?: e?.house
-        val w = g?.watts
-        if (w == null) {
-            small(v, "Jetzt", if (e == null) "…" else "—", if (e == null) "Wird geladen" else "Keine Daten", EnergyStyle.MUTED)
+        val f = e?.let { EnergyFluss.of(it) }
+        // the ring as high as the cell less its padding
+        v.setImageViewBitmap(R.id.e_ring, EnergyPicture.single(f, (h - 12).coerceIn(28, 120), density(ctx)))
+        if (e == null || f == null) {
+            small(v, "Jetzt", "…", "Wird geladen")
             return v
         }
-        val onGrid = g.sense == "grid"
-        val title = if (onGrid) legWord(g, "Netz") else "Haus"
-        small(v, title, EnergyStyle.formatWatts(w), if (onGrid) "Jetzt, Netz" else "Jetzt, Verbrauch", EnergyStyle.colorFor(g.sense, w))
+        val sub: String
+        if (EnergyPicture.singleKey(f) == "akku") {
+            // the ring says the battery; the words say the grid, and the house
+            v.setContentDescription(R.id.e_ring, f.name("akku") + ", " + f.text("akku").second)
+            val g = e.grid
+            sub = "Haus " + f.text("haus").first
+            small(v, legWord(g, "Netz"), g?.let { EnergyStyle.formatWatts(EnergyFluss.inWatts(it)) } ?: "—", sub)
+        } else {
+            // the ring says the grid; the words say the house, and the battery
+            v.setContentDescription(R.id.e_ring, "Netz " + f.text("netz").let { it.second + " " + it.first })
+            val b = e.battery
+            sub = if (b != null) legWord(b, "Akku") + " " + f.text("akku").first else "Jetzt, Verbrauch"
+            small(v, "Haus", f.text("haus").first, sub)
+        }
         val today = todayLine(e)
+        if (side) {
+            // four cells wide: the second line and Heute beside the number, not below it
+            v.setViewVisibility(R.id.e_sub, View.GONE)
+            v.setViewVisibility(R.id.e_side, View.VISIBLE)
+            v.setTextViewText(R.id.e_side1, sub)
+            v.setTextViewText(R.id.e_side2, today.orEmpty())
+            return v
+        }
         if (showToday && today != null) {
             v.setTextViewText(R.id.e_today, today)
             v.setViewVisibility(R.id.e_today, View.VISIBLE)
@@ -125,31 +164,32 @@ object EnergyRender {
         return v
     }
 
-    /** The compact card: the big value in [accent], its word above it, the rail and the bolt green only with green news. */
-    private fun small(v: RemoteViews, title: String, value: String, sub: String, accent: Int) {
+    private fun small(v: RemoteViews, title: String, value: String, sub: String) {
         v.setTextViewText(R.id.e_title, title)
         v.setTextViewText(R.id.e_main, value)
-        v.setTextColor(R.id.e_main, accent)
         v.setTextViewText(R.id.e_sub, sub)
-        // the rail and the bolt are green only with green news, else quiet
-        val rail = if (accent == EnergyStyle.SUPPLY) accent else EnergyStyle.MUTED
-        v.setInt(R.id.e_accent, "setColorFilter", rail)
-        v.setInt(R.id.e_icon, "setColorFilter", rail)
     }
 
-    private fun buildFull(ctx: Context, e: Energy?, paired: Boolean, onTap: PendingIntent, onRefresh: PendingIntent): RemoteViews {
-        val note = when {
-            !paired -> "In der App koppeln"
-            e == null -> "…"
-            else -> null
-        }
-        // Heute only when Haus says it; otherwise Jetzt alone fills the cell, large
-        val withToday = note == null && hasToday(e)
-        val v = RemoteViews(ctx.packageName, if (withToday) R.layout.widget_energy else R.layout.widget_energy_jetzt)
+    private fun buildFull(ctx: Context, e: Energy?, paired: Boolean, onTap: PendingIntent, onRefresh: PendingIntent, w: Int, h: Int): RemoteViews {
+        val v = RemoteViews(ctx.packageName, R.layout.widget_energy)
         v.setOnClickPendingIntent(R.id.e_root, onTap)
         v.setOnClickPendingIntent(R.id.e_refresh, onRefresh)
-        val legs = EnergyStyle.orderedLegs(e?.pv, e?.house, e?.grid, e?.battery)
-        for (i in 0..3) now(v, i, legs[i], LEG_LABELS[i], note)
+        if (!paired) {
+            v.setViewVisibility(R.id.e_root, View.GONE)
+            v.setViewVisibility(R.id.e_note, View.VISIBLE)
+            v.setTextViewText(R.id.e_note, "In der App koppeln")
+            v.setOnClickPendingIntent(R.id.e_note, onTap)
+            return v
+        }
+        // Heute beside the picture only when Haus says it and the cell is wide enough
+        val withToday = e != null && hasToday(e) && todayBeside(w)
+        v.setViewVisibility(R.id.e_today_block, if (withToday) View.VISIBLE else View.GONE)
+        val f = e?.let { EnergyFluss.of(it) }
+        val todayW = if (withToday) ctx.resources.getDimension(R.dimen.energy_today_width) / density(ctx) + 8 else 0f
+        val gw = (w - 24 - todayW).toInt().coerceAtLeast(80)
+        val gh = (h - 16).coerceAtLeast(60)
+        v.setImageViewBitmap(R.id.e_flow, EnergyPicture.flow(f, gw, gh, density(ctx)))
+        v.setContentDescription(R.id.e_flow, f?.let { "Jetzt: " + it.words() } ?: "Energie, wird geladen")
         if (!withToday) return v
         val totals = EnergyStyle.orderedTotals(e?.totals.orEmpty())
         for (i in 0..3) {
@@ -161,24 +201,6 @@ object EnergyRender {
         return v
     }
 
-    /** One "jetzt" cell: the leg's label, its value in its direction's colour, and the direction word beside the label. */
-    private fun now(v: RemoteViews, i: Int, f: EnergyFlow?, fallbackLabel: String, note: String?) {
-        val label = legWord(f, fallbackLabel)
-        if (note != null) {
-            v.setTextViewText(NOW_LABELS[i], label)
-            v.setTextViewText(NOW_VALUES[i], note)
-            v.setTextColor(NOW_VALUES[i], EnergyStyle.MUTED)
-            return
-        }
-        val w = f?.watts
-        v.setTextViewText(NOW_LABELS[i], label)
-        v.setTextViewText(NOW_VALUES[i], EnergyStyle.formatWatts(w))
-        v.setTextColor(NOW_VALUES[i], EnergyStyle.colorFor(f?.sense, w))
-    }
-
-    private val LEG_LABELS = listOf("PV", "Haus", "Netz", "Akku")
-    private val NOW_LABELS = intArrayOf(R.id.e_now_l0, R.id.e_now_l1, R.id.e_now_l2, R.id.e_now_l3)
-    private val NOW_VALUES = intArrayOf(R.id.e_now_v0, R.id.e_now_v1, R.id.e_now_v2, R.id.e_now_v3)
     private val TODAY_LABELS = intArrayOf(R.id.e_today_l0, R.id.e_today_l1, R.id.e_today_l2, R.id.e_today_l3)
     private val TODAY_VALUES = intArrayOf(R.id.e_today_v0, R.id.e_today_v1, R.id.e_today_v2, R.id.e_today_v3)
 }

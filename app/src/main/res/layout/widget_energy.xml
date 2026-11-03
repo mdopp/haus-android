@@ -1,210 +1,199 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The one energy widget (owner, 2026-11-03, after the first version on his
-     phone): one frame, no inner boxes, and the content fills the cell. „Jetzt“,
-     the four flow legs, two rows of two, each its word and its value; „Heute“, what the counters added since
-     midnight, two rows of two — hidden while Haus does not say. Green only for
-     what the sun makes and what goes into the grid; consumption is neutral.
-     No capitals. A tap opens Haus's /energie; the arrows read again. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/e_root"
+<!-- The energy widget, two cells high and more (owner, 2026-11-03: „Grafiken
+     könnten helfen es besser zu verstehen. Und ein aktueller Akkustand“): the
+     flow now as a picture like Haus's Energie page (EnergyPicture: Solar,
+     Netz, Akku with its charge as a ring, Haus, the active ways drawn), and
+     beside it, with the room and while Haus says it, what the counters added
+     today in the ways' colours. The tap sits on e_root, a child filling the
+     tile (#104); the arrows read again. No capitals. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/e_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/widget_bg"
-    android:paddingStart="16dp"
-    android:paddingEnd="10dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="12dp">
+    android:background="@drawable/widget_bg">
 
     <LinearLayout
-        android:id="@+id/e_now_block"
+        android:id="@+id/e_root"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:baselineAligned="false"
+        android:paddingStart="10dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:id="@+id/e_flow"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/energy_widget_label" />
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:id="@+id/e_today_block"
+            android:layout_width="@dimen/energy_today_width"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:paddingTop="26dp"
+            android:paddingBottom="4dp"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/e_now_label"
-                android:layout_width="0dp"
+                android:id="@+id/e_today_label"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginBottom="2dp"
                 android:maxLines="1"
-                android:text="@string/energy_now"
+                android:text="@string/energy_today"
                 android:textColor="#FFF2F2F5"
                 android:textStyle="bold"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
-            <ImageView
-                android:id="@+id/e_refresh"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:padding="5dp"
-                android:src="@drawable/ic_refresh"
-                android:tint="#FF9AA0AE"
-                android:contentDescription="@string/widget_refresh" />
-        </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:baselineAligned="false">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:baselineAligned="false">
-            <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_now_l0" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_now_v0" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="17sp" />
+                <TextView
+                    android:id="@+id/e_today_l0"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="#FF9AA0AE"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/e_today_v0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:text="—"
+                    android:textColor="#FFF2F2F5"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
             </LinearLayout>
+
             <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_now_l1" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_now_v1" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="17sp" />
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:baselineAligned="false">
+
+                <TextView
+                    android:id="@+id/e_today_l1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="#FF9AA0AE"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/e_today_v1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:text="—"
+                    android:textColor="#FFF2F2F5"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
             </LinearLayout>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:baselineAligned="false">
+
             <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_now_l2" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_now_v2" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="17sp" />
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:baselineAligned="false">
+
+                <TextView
+                    android:id="@+id/e_today_l2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="#FF9AA0AE"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/e_today_v2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:text="—"
+                    android:textColor="#FFF2F2F5"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
             </LinearLayout>
+
             <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_now_l3" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_now_v3" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="17sp" />
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:baselineAligned="false">
+
+                <TextView
+                    android:id="@+id/e_today_l3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="#FF9AA0AE"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/e_today_v3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:text="—"
+                    android:textColor="#FFF2F2F5"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
             </LinearLayout>
+
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/e_today_block"
+    <!-- Instead of the picture while there is nothing to draw: not paired. -->
+    <TextView
+        android:id="@+id/e_note"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="16dp"
+        android:textColor="#FF9AA0AE"
+        android:textSize="13sp"
+        android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/e_today_label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:maxLines="1"
-            android:text="@string/energy_today"
-            android:textColor="#FFF2F2F5"
-            android:textStyle="bold"
-            android:textSize="14sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:baselineAligned="false">
-            <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_today_l0" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_today_v0" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="15sp" />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_today_l1" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_today_v1" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="15sp" />
-            </LinearLayout>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:baselineAligned="false">
-            <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_today_l2" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_today_v2" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="15sp" />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:orientation="horizontal"
-                android:gravity="center_vertical" android:paddingEnd="8dp">
-                <TextView android:id="@+id/e_today_l3" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:maxLines="1" android:ellipsize="end"
-                    android:textColor="#FF9AA0AE" android:textSize="13sp" />
-                <TextView android:id="@+id/e_today_v3" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="4dp"
-                    android:maxLines="1" android:text="—" android:textColor="#FFF2F2F5"
-                    android:textStyle="bold" android:textSize="15sp" />
-            </LinearLayout>
-        </LinearLayout>
-    </LinearLayout>
-</LinearLayout>
+    <ImageView
+        android:id="@+id/e_refresh"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="6dp"
+        android:padding="6dp"
+        android:src="@drawable/ic_refresh"
+        android:tint="#FF9AA0AE"
+        android:contentDescription="@string/widget_refresh" />
+</FrameLayout>

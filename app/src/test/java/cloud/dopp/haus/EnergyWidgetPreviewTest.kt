@@ -25,11 +25,12 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
 /**
- * The energy widget drawn at its two common sizes, 4×2 and 2×1 (owner,
- * 2026-11-03: on his phone it left empty space above „Jetzt“ and below
- * „Heute“). Asserted: the content reaches the bottom of the cell — no band of
- * nothing below the last row. The drawings land in `build/widget-preview/`
- * (and in `$WIDGET_PREVIEW_DIR` when set) to be looked at.
+ * The energy widget drawn at its common sizes, with the owner's evening of
+ * 2026-11-03 (no sun, the battery at 83 % carries the house): 4×2 as on his
+ * phone, with and without Heute and the charge, 2×2, 4×1 and 2×1. Asserted:
+ * the picture is drawn at the screen's density for its view. The drawings
+ * land in `build/widget-preview/` (and in `$WIDGET_PREVIEW_DIR` when set) to
+ * be looked at.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -38,22 +39,25 @@ class EnergyWidgetPreviewTest {
 
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
 
-    private fun energy(today: Boolean): Energy = ApiClient.parseEnergy(
+    private fun energy(today: Boolean, charge: Boolean = true): Energy = ApiClient.parseEnergy(
         JSONObject(
             """{"ok":true,"energy":{
               "flow":[
-                {"entity_id":"sensor.pv","label":"PV","sense":"supply","state":"3200","unit":"W"},
-                {"entity_id":"sensor.haus","label":"Haus","sense":"draw","state":"800","unit":"W"},
-                {"entity_id":"sensor.netz","label":"Netz","sense":"grid","state":"-2100","unit":"W"},
-                {"entity_id":"sensor.akku","label":"Akku","sense":"battery","state":"-300","unit":"W"}],
+                {"entity_id":"sensor.pv","label":"PV","sense":"supply","state":"0","unit":"W"},
+                {"entity_id":"sensor.haus","label":"Haus","sense":"draw","state":"271","unit":"W"},
+                {"entity_id":"sensor.netz","label":"Netz","sense":"grid","state":"-4","unit":"W"},
+                {"entity_id":"sensor.akku","label":"Akku","sense":"battery","state":"-276","unit":"W"}],
               "totals":[
-                {"entity_id":"sensor.pv_total","label":"PV-Erzeugung","state":"5012.4","unit":"kWh"${if (today) ""","today":12.4""" else ""}},
-                {"entity_id":"sensor.einspeisung_total","label":"Einspeisung","state":"2306","unit":"kWh"${if (today) ""","today":6.0""" else ""}},
-                {"entity_id":"sensor.netzbezug_total","label":"Netzbezug","state":"1803.1","unit":"kWh"${if (today) ""","today":3.1""" else ""}},
-                {"entity_id":"sensor.batterie_laden","label":"Batterie geladen","state":"700.5","unit":"kWh"${if (today) ""","today":2.0""" else ""}}],
+                {"entity_id":"sensor.pv_total","label":"PV-Erzeugung","state":"5012.4","unit":"kWh"${if (today) ""","today":8.2""" else ""}},
+                {"entity_id":"sensor.einspeisung_total","label":"Einspeisung","state":"2306","unit":"kWh"${if (today) ""","today":0.3""" else ""}},
+                {"entity_id":"sensor.netzbezug_total","label":"Netzbezug","state":"1803.1","unit":"kWh"${if (today) ""","today":2.0""" else ""}},
+                {"entity_id":"sensor.batterie_laden","label":"Batterie geladen","state":"700.5","unit":"kWh"${if (today) ""","today":5.7""" else ""}}],
+              ${if (charge) CHARGE else ""}
               "circuits":[]}}""",
         ),
     )!!
+
+    private val CHARGE = "\"charge\":{\"entity_id\":\"sensor.akku_soc\",\"label\":\"Akku-Füllstand\",\"state\":\"83\",\"unit\":\"%\"},"
 
     /** The widget at [wDp]×[hDp], laid out and drawn; written as [name]. */
     private fun draw(wDp: Int, hDp: Int, e: Energy, name: String): View {
@@ -85,35 +89,33 @@ class EnergyWidgetPreviewTest {
         return v
     }
 
-    /** The lowest bottom edge of any visible text, in the widget's own coordinates. */
-    private fun lowestText(v: View, top: Int = 0): Int {
-        if (v.visibility != View.VISIBLE) return 0
-        if (v is android.widget.TextView && v.text.isNotEmpty()) return top + v.bottom - v.top
-        if (v !is ViewGroup) return 0
-        return (0 until v.childCount).maxOfOrNull { lowestText(v.getChildAt(it), top + v.getChildAt(it).top) } ?: 0
-    }
+    private fun View.picture(name: Int): Bitmap? =
+        (findViewById<android.widget.ImageView>(name).drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
 
-    private fun assertFills(v: View, label: String) {
-        val slack = v.height - lowestText(v)
-        val limit = (28 * ctx.resources.displayMetrics.density).toInt() // the bottom padding and a little air
-        assertTrue("$label: ${slack}px of nothing below the last row (at most $limit)", slack <= limit)
+    /** The picture is drawn at the screen's density and fills its view: never blurred up, never a stamp in a corner. */
+    private fun assertSharp(v: View, id: Int, label: String) {
+        val bmp = v.picture(id) ?: error("$label: no picture")
+        val iv = v.findViewById<View>(id)
+        assertTrue("$label: picture ${bmp.width}x${bmp.height} for a view of ${iv.width}x${iv.height}",
+            bmp.width >= iv.width * 0.85 || bmp.height >= iv.height * 0.85)
     }
 
     @Test
-    fun fourByTwoFillsItsCell() {
-        val v = draw(300, 160, energy(true), "energy-4x2")
-        assertFills(v, "4×2 with heute")
-        assertEquals("12,4 kWh", v.findViewById<android.widget.TextView>(R.id.e_today_v0).text.toString())
-        // every value fits its cell: drawn whole, not cut off at the bottom
-        listOf(R.id.e_now_v0, R.id.e_now_v2, R.id.e_today_v2).forEach { id ->
-            val t = v.findViewById<View>(id)
-            assertTrue("value $id cut: ${t.height} < ${t.measuredHeight}", t.height >= t.measuredHeight)
-        }
-        assertFills(draw(300, 160, energy(false), "energy-4x2-ohne-heute"), "4×2 without heute")
+    fun fourByTwo() {
+        val v = draw(347, 163, energy(true), "energy-4x2")
+        assertSharp(v, R.id.e_flow, "4×2")
+        assertEquals("8,2 kWh", v.findViewById<android.widget.TextView>(R.id.e_today_v0).text.toString())
+        assertSharp(draw(347, 163, energy(false), "energy-4x2-ohne-heute"), R.id.e_flow, "4×2 without heute")
+        draw(347, 163, energy(true, charge = false), "energy-4x2-ohne-akkustand")
     }
 
     @Test
-    fun twoByOneFillsItsCell() {
-        assertFills(draw(150, 72, energy(true), "energy-2x1"), "2×1")
+    fun twoByTwo() = assertSharp(draw(160, 163, energy(true), "energy-2x2"), R.id.e_flow, "2×2")
+
+    @Test
+    fun oneHigh() {
+        assertSharp(draw(150, 72, energy(true), "energy-2x1"), R.id.e_ring, "2×1")
+        draw(347, 72, energy(true), "energy-4x1")
+        draw(150, 72, energy(true, charge = false), "energy-2x1-ohne-akkustand")
     }
 }

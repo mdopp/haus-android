@@ -1,45 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One device (restored by the owner, 2026-11-03, slimmer than before): its
-     icon in the state's colour, its name, its state. The whole tile is the tap:
-     a light, a switch, a cover switches, a lock opens its chooser, anything
-     else opens its page on Haus. One frame, no capitals. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- One device, picture first (owner, 2026-11-03: „Viel Text statt
+     Bildern“): the state's picture as large as the cell allows, in the
+     state's colour, the name on one line below it, the state in words only
+     where the picture cannot say it (DeviceLook.needsWords), a level bar for
+     a lamp's brightness or a shutter in between. The tap sits on d_body, a
+     child that fills the tile (the launcher does not reliably deliver a
+     click on the root, #104), and on the root as well. No capitals. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/d_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:background="@drawable/widget_bg"
-    android:padding="8dp">
+    android:background="@drawable/widget_bg">
 
-    <ImageView
-        android:id="@+id/d_icon"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
-        android:src="@drawable/ic_device"
-        android:contentDescription="@null" />
-
-    <TextView
-        android:id="@+id/d_name"
+    <LinearLayout
+        android:id="@+id/d_body"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:gravity="center"
-        android:maxLines="2"
-        android:ellipsize="end"
-        android:text="@string/widget_device_label"
-        android:textColor="#FFF2F2F5"
-        android:textStyle="bold"
-        android:textSize="13sp" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp">
 
-    <TextView
-        android:id="@+id/d_state"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="—"
-        android:textColor="#FF9AA0AE"
-        android:textSize="12sp" />
-</LinearLayout>
+        <ImageView
+            android:id="@+id/d_icon"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_device"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/d_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="9sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:text="@string/widget_device_label"
+            android:textColor="#FFF2F2F5"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/d_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="—"
+            android:textColor="#FF9AA0AE"
+            android:textSize="11sp"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/d_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
+            android:max="100"
+            android:progress="60"
+            android:progressTint="#FFFFC107"
+            android:progressBackgroundTint="#26FFFFFF"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

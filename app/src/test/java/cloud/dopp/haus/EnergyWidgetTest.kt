@@ -5,10 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.haus.data.ApiClient
 import cloud.dopp.haus.data.ServerStore
+import cloud.dopp.haus.widget.EnergyPicture
 import cloud.dopp.haus.widget.EnergyRender
 import cloud.dopp.haus.widget.EnergyWidgetProvider
 import org.json.JSONObject
@@ -23,8 +25,9 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * The one energy widget (owner, 2026-11-02): "jetzt" (the four flow legs) and
- * "heute" (what the counters added since midnight) together, and a tap opens
+ * The one energy widget (owner, 2026-11-02, redrawn 2026-11-03): the flow now
+ * as a picture with the battery's charge, and "heute" (what the counters added
+ * since midnight) beside it, and a tap opens
  * Haus's Energie page at the paired address — not hard-coded — counted as
  * this widget's (`von=widget.energy`, #180).
  */
@@ -51,6 +54,7 @@ class EnergyWidgetTest {
                 {"entity_id":"sensor.einspeisung_total","label":"Einspeisung","state":"2306","unit":"kWh","today":6.0},
                 {"entity_id":"sensor.netzbezug_total","label":"Netzbezug","state":"1803.1","unit":"kWh","today":3.1},
                 {"entity_id":"sensor.batterie_laden","label":"Batterie geladen","state":"700.5","unit":"kWh"}],
+              "charge":{"entity_id":"sensor.akku_soc","name":"Akku-Füllstand in Prozent","label":"Akku-Füllstand","state":"83","unit":"%"},
               "circuits":[]}}""",
         ),
     )!!
@@ -60,7 +64,7 @@ class EnergyWidgetTest {
      * our own: the provider's own refresh of the placed widget runs on a thread
      * and must not draw over what is asserted here.
      */
-    private fun drawn(w: Int, h: Int, paired: Boolean = true): View {
+    private fun drawn(w: Int, h: Int, paired: Boolean = true, e: cloud.dopp.haus.data.Energy = energy): View {
         val mgr = AppWidgetManager.getInstance(ctx)
         val id = shadowOf(mgr).createWidget(EnergyWidgetProvider::class.java, R.layout.widget_energy)
         mgr.updateAppWidgetOptions(
@@ -71,7 +75,7 @@ class EnergyWidgetTest {
             },
         )
         val views = EnergyRender.build(
-            ctx, id, energy, paired,
+            ctx, id, e, paired,
             EnergyWidgetProvider.tapPending(ctx, id), EnergyWidgetProvider.refreshPending(ctx, id),
         )
         return views.apply(ctx, android.widget.FrameLayout(ctx))
@@ -83,73 +87,93 @@ class EnergyWidgetTest {
         return findViewById<TextView>(id).text.toString()
     }
 
+    private fun View.picture(name: Int): android.graphics.Bitmap? =
+        (findViewById<ImageView>(name).drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+
+    /** Owner, 2026-11-03: a picture like the Energie page, the battery's charge in it, Heute beside it. */
     @Test
-    fun itShowsJetztAndHeuteTogether() {
-        val v = drawn(250, 120)
-        // jetzt: every leg, in its direction's words
-        assertEquals("3,2 kW", v.text("e_now_v0"))
-        assertEquals("800 W", v.text("e_now_v1"))
-        assertEquals("2,1 kW", v.text("e_now_v2"))
-        assertEquals("Ins Netz", v.text("e_now_l2"))
-        assertEquals("Akku entlädt", v.text("e_now_l3"))
+    fun itShowsThePictureAndHeuteBesideIt() {
+        val v = drawn(300, 150)
+        val bmp = v.picture(R.id.e_flow)
+        assertTrue("the flow is a picture", bmp != null && bmp.width > 100)
+        val said = v.findViewById<View>(R.id.e_flow).contentDescription.toString()
+        assertTrue(said, said.contains("Akku 83\u00a0% entlädt 300 W") && said.contains("Solar erzeugt 3,2 kW") && said.contains("Solar → Haus 800 W"))
         // heute: what each counter added since midnight; no today is a dash, never the lifetime count
+        assertEquals(View.VISIBLE, v.findViewById<View>(R.id.e_today_block).visibility)
         assertEquals("Erzeugt", v.text("e_today_l0"))
         assertEquals("12,4 kWh", v.text("e_today_v0"))
         assertEquals("6,0 kWh", v.text("e_today_v1"))
         assertEquals("3,1 kWh", v.text("e_today_v2"))
         assertEquals("—", v.text("e_today_v3"))
-        assertEquals("Jetzt", v.text("e_now_label"))
         assertEquals("Heute", v.text("e_today_label"))
     }
 
-    /** Green only for the sun and for feeding the grid; the house's draw and a draw from the grid stay neutral. */
+    /** Heute in the picture's colours: the sun's, feeding in, drawing. */
     @Test
-    fun consumptionIsNotRed() {
-        val v = drawn(250, 120)
+    fun heuteWearsThePicturesColours() {
+        val v = drawn(300, 150)
         fun color(name: String) = v.findViewById<TextView>(ctx.resources.getIdentifier(name, "id", ctx.packageName)).currentTextColor
-        assertEquals("PV", 0xFF3DDC84.toInt(), color("e_now_v0"))
-        assertEquals("Haus", 0xFFF2F2F5.toInt(), color("e_now_v1"))
-        assertEquals("Netz, Einspeisung", 0xFF3DDC84.toInt(), color("e_now_v2"))
-        assertEquals("Akku", 0xFFF2F2F5.toInt(), color("e_now_v3"))
-        assertEquals("Bezogen heute", 0xFFF2F2F5.toInt(), color("e_today_v2"))
-        val drawing = cloud.dopp.haus.widget.EnergyStyle
-        assertEquals("drawn from the grid", drawing.NEUTRAL, drawing.colorFor("grid", 900.0))
+        assertEquals(EnergyPicture.SOLAR, color("e_today_v0"))
+        assertEquals(EnergyPicture.EINSP, color("e_today_v1"))
+        assertEquals(EnergyPicture.BEZUG, color("e_today_v2"))
     }
 
-    /** A Haus that says nothing about today (not yet updated): no Heute part, no row of dashes. */
+    /** A Haus that says nothing about today, or a cell too narrow: the picture alone, no row of dashes. */
     @Test
-    fun withoutTodayTheHeutePartIsLeftOut() {
+    fun withoutTodayOrRoomThePictureIsAlone() {
         val noToday = energy.copy(totals = energy.totals.map { it.copy(today = null) })
-        val mgr = AppWidgetManager.getInstance(ctx)
-        val id = shadowOf(mgr).createWidget(EnergyWidgetProvider::class.java, R.layout.widget_energy)
-        mgr.updateAppWidgetOptions(id, Bundle().apply { putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250); putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110) })
-        val v = EnergyRender.build(ctx, id, noToday, true, EnergyWidgetProvider.tapPending(ctx, id), EnergyWidgetProvider.refreshPending(ctx, id))
-            .apply(ctx, android.widget.FrameLayout(ctx))
-        assertNull("no Heute part at all", v.findViewById<View>(R.id.e_today_block))
-        assertEquals("3,2 kW", v.findViewById<TextView>(R.id.e_now_v0).text.toString())
-        assertEquals(View.VISIBLE, drawn(250, 120).findViewById<View>(R.id.e_today_block).visibility)
+        assertEquals(View.GONE, drawn(300, 150, e = noToday).findViewById<View>(R.id.e_today_block).visibility)
+        val narrow = drawn(150, 150)
+        assertEquals(View.GONE, narrow.findViewById<View>(R.id.e_today_block).visibility)
+        assertTrue(narrow.picture(R.id.e_flow) != null)
     }
 
     /** No capitals anywhere in the widget's layouts (owner, 2026-11-03). */
     @Test
     fun noCapitals() {
-        listOf("widget_energy.xml", "widget_energy_jetzt.xml", "widget_energy_small.xml").forEach {
+        listOf("widget_energy.xml", "widget_energy_small.xml").forEach {
             val xml = java.io.File(RepoFiles.main, "res/layout/$it").readText()
             assertTrue(it, !xml.contains("textAllCaps=\"true\""))
         }
     }
 
+    /** One cell high: the battery's charge as a ring, the grid's direction beside it; with room the house and Heute. */
     @Test
-    fun smallItShowsJetztAndWithRoomALineOfHeute() {
-        val bare = drawn(250, 60)
+    fun smallItShowsTheChargeAndTheGrid() {
+        val bare = drawn(200, 60)
+        assertTrue("the ring is a picture", bare.picture(R.id.e_ring) != null)
+        assertEquals("Akku 83\u00a0%, entlädt", bare.findViewById<View>(R.id.e_ring).contentDescription.toString())
         assertEquals("2,1 kW", bare.text("e_main"))
         assertEquals("Ins Netz", bare.text("e_title"))
         assertEquals(View.GONE, bare.findViewById<View>(R.id.e_sub).visibility)
         assertEquals(View.GONE, bare.findViewById<View>(R.id.e_today).visibility)
-        val taller = drawn(250, 100)
+        val taller = drawn(200, 100)
+        assertEquals("Haus 800 W", taller.text("e_sub"))
         assertEquals("Heute 12,4 kWh erzeugt", taller.text("e_today"))
         assertEquals(View.VISIBLE, taller.findViewById<View>(R.id.e_today).visibility)
         assertNull("no today from Haus, no line", EnergyRender.todayLine(energy.copy(totals = emptyList())))
+        // four cells wide, one high: the house and Heute beside the number
+        val wide = drawn(300, 60)
+        assertEquals(View.VISIBLE, wide.findViewById<View>(R.id.e_side).visibility)
+        assertEquals("Haus 800 W", wide.text("e_side1"))
+        assertEquals("Heute 12,4 kWh erzeugt", wide.text("e_side2"))
+    }
+
+    /** A box that does not send the charge yet: the grid in the ring, the house in words. */
+    @Test
+    fun smallWithoutTheChargeShowsTheGrid() {
+        val v = drawn(250, 100, e = energy.copy(charge = null))
+        assertEquals("Haus", v.text("e_title"))
+        assertEquals("800 W", v.text("e_main"))
+        assertEquals("Akku entlädt 300 W", v.text("e_sub"))
+    }
+
+    /** Not paired: the widget says so instead of drawing. */
+    @Test
+    fun notPairedSaysSo() {
+        val v = drawn(300, 150, paired = false)
+        assertEquals(View.VISIBLE, v.findViewById<View>(R.id.e_note).visibility)
+        assertEquals("In der App koppeln", v.text("e_note"))
     }
 
     /** A tap opens https://<the paired Haus>/energie in the browser, once counted. */

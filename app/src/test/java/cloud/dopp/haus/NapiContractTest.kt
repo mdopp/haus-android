@@ -107,8 +107,9 @@ class NapiContractTest {
                 sends = setOf("ok", "error", "card") + CARD,
             ),
             Route(
-                "GET", "/napi/portal/energy", "internal/napi/energy.go:49-81, today :67 and :83-125 (haus#213)",
-                sends = setOf("ok", "error", "energy", "flow", "totals", "circuits", "today") + METER,
+                "GET", "/napi/portal/energy",
+                "internal/napi/energy.go:49-81, today :67 and :83-125 (haus#213); charge :73-76 and :89-107 (mdopp/homes#228 at b97b1c2, not merged yet)",
+                sends = setOf("ok", "error", "energy", "flow", "totals", "circuits", "today", "charge") + METER,
             ),
             Route(
                 "GET", "/napi/portal/entity-history", "internal/napi/home.go:219-252, ranges home.go:47",

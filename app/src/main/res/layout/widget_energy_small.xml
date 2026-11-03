@@ -1,110 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The energy widget at its smallest (2x1): jetzt, the grid's balance (or the
-     house's draw), and with a little room a line of heute. Green only for what
-     goes into the grid; no capitals. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/e_root"
+<!-- The energy widget one cell high (owner, 2026-11-03): a reduced picture —
+     the battery with its charge as a ring and in its middle (or, while Haus
+     does not say the charge, the grid) — and beside it the grid's direction
+     now in words and number; with a little more room the house's draw and a
+     line of heute. The tap sits on e_root, a child filling the tile (#104).
+     No capitals. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/e_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:baselineAligned="false"
-    android:background="@drawable/widget_bg"
-    android:paddingStart="10dp"
-    android:paddingEnd="8dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="8dp">
-
-    <!-- Left accent strip — a bold color rail that reads the flow direction at a
-         glance and gives the compact card structure (tinted in EnergyRender). -->
-    <ImageView
-        android:id="@+id/e_accent"
-        android:layout_width="4dp"
-        android:layout_height="match_parent"
-        android:layout_marginEnd="10dp"
-        android:src="@drawable/widget_pill"
-        android:tint="#FF66BB6A"
-        android:contentDescription="@null" />
+    android:background="@drawable/widget_bg">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/e_root"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_vertical">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+        <ImageView
+            android:id="@+id/e_ring"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:contentDescription="@null" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:baselineAligned="false">
-
-            <ImageView
-                android:id="@+id/e_icon"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_marginEnd="6dp"
-                android:src="@drawable/ic_bolt"
-                android:tint="#FF66BB6A"
-                android:contentDescription="@null" />
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/e_title"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginEnd="18dp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="Einspeisung"
-                android:textColor="#FFB0BEC5"
+                android:text="Netz"
+                android:textColor="#FF9AA0AE"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/e_main"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="—"
+                android:textColor="#FFF2F2F5"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/e_sub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="#FF9AA0AE"
+                android:textSize="11sp" />
+
+            <!-- Heute, one line: only with a little more room than the bare tier. -->
+            <TextView
+                android:id="@+id/e_today"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="#FFE3B341"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Four cells wide: the house and Heute beside, instead of below. -->
+        <LinearLayout
+            android:id="@+id/e_side"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="22dp"
+            android:orientation="vertical"
+            android:gravity="end"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/e_side1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textColor="#FFF2F2F5"
                 android:textStyle="bold"
                 android:textSize="13sp" />
 
-            <ImageView
-                android:id="@+id/e_refresh"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:padding="3dp"
-                android:src="@drawable/ic_refresh"
-                android:tint="#FFB0BEC5"
-                android:contentDescription="@string/widget_refresh" />
+            <TextView
+                android:id="@+id/e_side2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:textColor="#FFE3B341"
+                android:textStyle="bold"
+                android:textSize="12sp" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/e_main"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="1,2 kW"
-            android:textColor="#FFF2F2F5"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/e_sub"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="Bezug"
-            android:textColor="#FF8A939B"
-            android:textSize="12sp" />
-
-        <!-- Heute, one line: shown only with a little more room than the bare tier. -->
-        <TextView
-            android:id="@+id/e_today"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="Heute 12,4 kWh erzeugt"
-            android:textColor="#FF3DDC84"
-            android:textStyle="bold"
-            android:textSize="12sp"
-            android:visibility="gone" />
     </LinearLayout>
-</LinearLayout>
+
+    <ImageView
+        android:id="@+id/e_refresh"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        android:padding="4dp"
+        android:src="@drawable/ic_refresh"
+        android:tint="#FF9AA0AE"
+        android:contentDescription="@string/widget_refresh" />
+</FrameLayout>

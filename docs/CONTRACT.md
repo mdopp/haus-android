@@ -62,7 +62,7 @@ each row naming the Haus file and lines it came from.
 | the start screen's devices | `GET /napi/portal/favorites` (the person's ☆ things on Haus, as cards in their order; haus#213), `POST /napi/ha/call`, `GET /napi/portal/state` (a cover's or a lock's state before its toggle) |
 | one device (widget, restored 2026-11-03) | `GET /napi/portal/state`, `POST /napi/ha/call`; its picker `GET /napi/portal/start/addable` |
 | app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Haus draws no card for one), `POST /napi/ha/call` |
-| energy | `GET /napi/portal/energy`: the flow now and, per total, `today` (kWh since the house's midnight; haus#213) |
+| energy | `GET /napi/portal/energy`: the flow now, per total `today` (kWh since the house's midnight; haus#213), and `charge`, how full the battery is (mdopp/homes#228) |
 | Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`: see (f) |
 | Haus-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
@@ -81,6 +81,10 @@ Fields the widgets read beyond a value to show:
 - `today` on every energy total: what it added since the house's midnight,
   in kWh, by the Energie page's rule; absent when HA's history does not say,
   and then the widget shows a dash, never the lifetime count.
+- `charge` on the energy picture: the battery's charge sensor as a meter, its
+  `state` the percent (the Energie page's Akku ring); absent without a battery
+  leg or a number. Without it the widget draws the Akku node without its ring
+  and the small widget shows the grid instead; its sensor joins the watch set.
 
 ## (c) The live stream
 
@@ -91,7 +95,7 @@ energy, tools; the Box widgets are gone, owner 2026-11-03). It listens for the s
 holds `GET /napi/portal/events` and reads one frame, `card_state`; on
 screen-off it drops the connection. Once connected it posts its watch set
 (`POST /napi/portal/watch`: `entity_ids`, the device widgets' devices and,
-while the energy widget is placed, the energy flow's sensors; re-posted inside Haus's one-hour TTL; a 503 while
+while the energy widget is placed, the energy flow's sensors and the battery's charge; re-posted inside Haus's one-hour TTL; a 503 while
 Home Assistant is down is retried with backoff, about two minutes) and has
 every fed widget read again.
 
