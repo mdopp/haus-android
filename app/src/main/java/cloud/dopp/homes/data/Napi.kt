@@ -454,6 +454,42 @@ object Napi {
     /** The box has no Reitti. */
     const val GRUND_NICHT_EINGERICHTET = "nicht_eingerichtet"
 
+    /**
+     * `POST /napi/standort/import` (a shared location history, owner
+     * 2026-11-03): `{id, offset}`, or `{fehler, grund}` — 409
+     * [GRUND_KEIN_SCHLUESSEL] before the person connected Reitti on Homes.
+     */
+    object ImportJson {
+        const val ID = "id"
+        const val OFFSET = "offset"
+        const val FEHLER = "fehler"
+        const val GRUND = "grund"
+    }
+
+    /**
+     * `GET /napi/standort/import/{id}`: how far the import got. [STAND] is one
+     * of [IMPORT_HOCHLADEN], [IMPORT_LAEUFT], [IMPORT_FERTIG], [IMPORT_FEHLER];
+     * [GELESEN] of [GROESSE] bytes Homes has read, [PUNKTE] Reitti took;
+     * at the end [TEXT] (done) or [FEHLER] with [GRUND], each one German sentence.
+     */
+    object ImportStandJson {
+        const val STAND = "stand"
+        const val GELESEN = "gelesen"
+        const val GROESSE = "groesse"
+        const val PUNKTE = "punkte"
+        const val TEXT = "text"
+        const val FEHLER = "fehler"
+        const val GRUND = "grund"
+    }
+
+    /** An import's [ImportStandJson.STAND]: the file still arriving. */
+    const val IMPORT_HOCHLADEN = "hochladen"
+
+    /** Homes reads the file and hands it to Reitti. */
+    const val IMPORT_LAEUFT = "laeuft"
+    const val IMPORT_FERTIG = "fertig"
+    const val IMPORT_FEHLER = "fehler"
+
     // --- the calls -------------------------------------------------------------
 
     /** The household assistant's name („Homes“ when the box sets none). */
@@ -594,4 +630,28 @@ object Napi {
      * passes on to the person's Reitti.
      */
     val STANDORT = Endpoint(Method.POST, "/napi/standort", body = listOf("punkte"), reply = listOf(StandortJson))
+
+    // --- Standortverlauf übernehmen (owner 2026-11-03): a history shared to the app ---
+
+    /**
+     * Start the upload of a shared history file ([name] as the phone has it,
+     * its size in bytes), or resume the one of the same name and size: its id
+     * and how much Homes has. While its import runs the offset is the size.
+     */
+    val STANDORT_IMPORT = Endpoint(
+        Method.POST, "/napi/standort/import", body = listOf("name", "groesse"), reply = listOf(ImportJson),
+    )
+
+    /** How far the upload got: 204 with [UPLOAD_OFFSET], 404 when Homes does not know it. */
+    val STANDORT_IMPORT_OFFSET = Endpoint(
+        Method.HEAD, "/napi/standort/import/{id}", replyHeaders = listOf(UPLOAD_OFFSET),
+    )
+
+    /** The next bytes, at [UPLOAD_OFFSET]: at most 16 MiB a request; the last starts the import. */
+    val STANDORT_IMPORT_TEIL = Endpoint(
+        Method.PATCH, "/napi/standort/import/{id}", reply = listOf(TeilJson), headers = listOf(UPLOAD_OFFSET),
+    )
+
+    /** How far the import got, and at the end what came over or why not. */
+    val STANDORT_IMPORT_STAND = Endpoint(Method.GET, "/napi/standort/import/{id}", reply = listOf(ImportStandJson))
 }

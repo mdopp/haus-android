@@ -35,4 +35,25 @@
     <string name="standort_einstellungen">Android fragt nicht mehr nach. Tippe hier, erlaube unter „Berechtigungen“ den Standort mit „Immer zulassen“ und schalte es dann hier wieder ein.</string>
     <string name="standort_ohne_sensor">Dieses Handy hat keinen Bewegungssensor: die App merkt nicht, wann es ruht, und fragt immer im normalen Abstand nach dem Ort (mehr Akku).</string>
     <string name="standort_weg">Die App darf den Standort nicht mehr immer abfragen: schalte den Schalter noch einmal ein.</string>
+
+    <!-- Standortverlauf übernehmen (owner 2026-11-03): a history file shared to the app into the person's Reitti. -->
+    <string name="standort_import_label">In den Standortverlauf übernehmen</string>
+    <string name="standort_import_title">Standortverlauf</string>
+    <!-- %1$d Prozent, %2$s MB gesendet, %3$s MB insgesamt -->
+    <string name="standort_import_hoch">Lädt die Datei auf die Box … %1$d %% (%2$s von %3$s MB)</string>
+    <!-- %1$d Prozent gelesen, %2$s Orte so weit -->
+    <string name="standort_import_liest">Übernimmt die Orte in Reitti … %1$d %% gelesen, %2$s Orte bisher</string>
+    <string name="standort_import_beginnt">Bereitet die Datei vor …</string>
+    <string name="standort_import_fertig">Übernommen</string>
+    <string name="standort_import_nicht">Nicht übernommen</string>
+    <string name="standort_import_abbrechen">Abbrechen</string>
+    <string name="standort_import_schliessen">Schließen</string>
+    <string name="standort_import_verbinden">Reitti verbinden</string>
+    <string name="standort_import_falsch">Das ist kein Standortverlauf, den Homes kennt. Teile eine Datei mit der Endung .json (die Zeitachse aus Google Maps, Records.json aus Google Takeout, GeoJSON) oder .gpx.</string>
+    <string name="standort_import_unlesbar">Die geteilte Datei ließ sich auf dem Handy nicht öffnen.</string>
+    <string name="standort_import_unerreichbar">Homes hat nicht geantwortet. Ist das Handy im Netz? Teile die Datei später noch einmal; die App macht dann dort weiter, wo sie stehen blieb.</string>
+    <string name="standort_import_still">Die Box meldet seit fünf Minuten keinen Fortschritt. Sie arbeitet vielleicht noch weiter; teile die Datei später noch einmal, dann siehst du den Stand.</string>
+    <string name="standort_import_angehalten">Angehalten. Teile die Datei noch einmal, dann geht es dort weiter, wo es stehen blieb.</string>
+    <string name="standort_import_im_hintergrund">Die Box übernimmt die Orte weiter. Teile die Datei später noch einmal, dann siehst du, was daraus wurde.</string>
+    <string name="standort_import_abgelehnt">Homes hat die Datei nicht angenommen.</string>
 </resources>

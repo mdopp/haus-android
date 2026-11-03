@@ -173,6 +173,32 @@
             </intent-filter>
         </activity>
 
+        <!-- Share → „In den Standortverlauf übernehmen“ (owner 2026-11-03): an old
+             location history file (Google Maps' Timeline.json, Takeout's
+             Records.json, GPX, GeoJSON) into the person's Reitti, through Homes.
+             Exported for ACTION_SEND of those types only; a file manager that
+             says octet-stream is checked by its name (.json, .geojson, .gpx).
+             Translucent with its own task, like ShareActivity. -->
+        <activity
+            android:name=".ui.StandortImportActivity"
+            android:exported="true"
+            android:label="@string/standort_import_label"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/geo+json" />
+                <data android:mimeType="application/gpx+xml" />
+                <data android:mimeType="application/gpx" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+
         <!-- Mehr → Daten sichern (#194): the two folders, the state, „Jetzt
              sichern“, the guide. The folders come through the system picker
              (storage access framework): no storage permission. -->

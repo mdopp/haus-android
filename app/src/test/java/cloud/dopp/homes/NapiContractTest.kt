@@ -242,6 +242,28 @@ class NapiContractTest {
                 "internal/napi/standort.go:126-177, the point :49-56, registered :85, napi.go:249",
                 body = setOf("punkte"), sends = setOf("angenommen", "verworfen", "fehler", "grund"),
             ),
+            // Standortverlauf übernehmen (mdopp/homes#234 at adc0e27, not merged yet; registered standort_import.go:109-117,
+            // standort.go:90; refusals {fehler} sicherung.go, {fehler, grund} standort.go standortFehler).
+            Route(
+                "POST", "/napi/standort/import", "internal/napi/standort_import.go:190-257",
+                body = setOf("name", "groesse"), required = setOf("name", "groesse"),
+                sends = setOf("id", "offset", "fehler", "grund"),
+            ),
+            Route(
+                "HEAD", "/napi/standort/import/{id}", "internal/napi/standort_import.go:260-276",
+                headers = setOf("Upload-Offset"),
+            ),
+            Route(
+                "PATCH", "/napi/standort/import/{id}", "internal/napi/standort_import.go:280-356",
+                sends = setOf("offset", "fertig", "fehler"), headers = setOf("Upload-Offset"),
+            ),
+            Route(
+                "GET", "/napi/standort/import/{id}", "internal/napi/standort_import.go:426-441, the state :75-89",
+                sends = setOf(
+                    "name", "groesse", "stand", "format", "gelesen", "punkte", "besuche", "von", "bis",
+                    "text", "fehler", "grund", "geaendert",
+                ),
+            ),
         )
 
         /** Where Homes reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
@@ -277,6 +299,8 @@ class NapiContractTest {
             "GET /napi/sicherung/schluessel", "POST /napi/kontakte",
             "GET /napi/sicherung/letzte", "GET /napi/sicherung/letzte/{quelle}/{pfad...}",
             "GET /napi/standort", "POST /napi/standort",
+            "POST /napi/standort/import", "HEAD /napi/standort/import/{id}",
+            "PATCH /napi/standort/import/{id}", "GET /napi/standort/import/{id}",
             "GET /napi/gemeinsam/kontakte", "GET /napi/gemeinsam/kalender",
         )
 
@@ -295,6 +319,7 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/homes/realtime/RealtimeProtocol.kt",
             "app/src/main/java/cloud/dopp/homes/data/SicherungClient.kt",
             "app/src/main/java/cloud/dopp/homes/data/StandortClient.kt",
+            "app/src/main/java/cloud/dopp/homes/data/StandortImportClient.kt",
             "app/src/main/java/cloud/dopp/homes/data/GemeinsamClient.kt",
         )
 
