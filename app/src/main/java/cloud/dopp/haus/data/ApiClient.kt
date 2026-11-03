@@ -333,6 +333,11 @@ class ApiClient(private val ctx: Context) {
             // which the lock chooser reads as "no latch".
             supportedFeatures = o.optInt(CardJson.SUPPORTED_FEATURES, -1).takeIf { it >= 0 },
             page = o.optString(CardJson.PAGE).ifBlank { null },
+            setpoint = o.optDouble(CardJson.TEMPERATURE, Double.NaN).takeIf { !it.isNaN() },
+            minTemp = o.optDouble(CardJson.MIN_TEMP, Double.NaN).takeIf { !it.isNaN() },
+            maxTemp = o.optDouble(CardJson.MAX_TEMP, Double.NaN).takeIf { !it.isNaN() },
+            tempStep = o.optDouble(CardJson.TARGET_TEMP_STEP, Double.NaN).takeIf { !it.isNaN() && it > 0 },
+            colorModes = stringList(o.optJSONArray(CardJson.SUPPORTED_COLOR_MODES)),
         )
 
         /**

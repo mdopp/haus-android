@@ -159,14 +159,20 @@
                 android:orientation="vertical" />
 
             <TextView
-                android:id="@+id/status"
-                style="@style/Text.Haus.Body"
+                style="@style/Text.Haus.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_md"
-                android:gravity="center_horizontal" />
+                android:text="@string/home_widgets_title" />
 
-            <!-- The live widgets (LiveService): on by default once paired. -->
+            <TextView
+                style="@style/Text.Haus.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_xs"
+                android:text="@string/home_widgets_hint" />
+
+            <!-- The live widgets (LiveService): on by default once paired. Part of the
+                 widgets' block, under its hint (owner, 2026-11-03). -->
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/live_switch"
                 style="@style/Text.Haus.Body"
@@ -183,19 +189,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_md"
                 android:background="?android:attr/selectableItemBackground" />
-
-            <TextView
-                style="@style/Text.Haus.Title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/home_widgets_title" />
-
-            <TextView
-                style="@style/Text.Haus.Label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_xs"
-                android:text="@string/home_widgets_hint" />
 
             <LinearLayout
                 android:id="@+id/widgets_group"
@@ -220,12 +213,21 @@
                 android:background="@drawable/card_haus"
                 android:orientation="vertical" />
 
+            <!-- Where the app is paired, beside the way to unpair (owner, 2026-11-03). -->
+            <TextView
+                android:id="@+id/status"
+                style="@style/Text.Haus.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xl"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:gravity="center_horizontal" />
+
             <Button
                 android:id="@+id/logout_btn"
                 style="@style/Widget.Haus.Button.Ghost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_xl"
                 android:text="@string/home_logout" />
         </LinearLayout>
 

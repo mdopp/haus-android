@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A favorite device on the start screen: its icon, name and state; a tap switches it. -->
+<!-- A favorite device on the start screen: its icon, name and state; a tap switches it.
+     Below them its fine controls (owner, 2026-11-03), filled by HomeActivity. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -45,5 +46,13 @@
             android:layout_marginTop="2dp"
             android:textColor="@color/haus_text_muted"
             android:textSize="13sp" />
+
+        <LinearLayout
+            android:id="@+id/row_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>

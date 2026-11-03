@@ -59,7 +59,10 @@ object StartDevices {
                 "closing" -> "schließt …"
                 else -> state
             }
-            "climate" -> card.temperature?.let { String.format(Locale.GERMANY, "%.1f °C", it) } ?: words(state)
+            "climate" -> listOfNotNull(
+                card.temperature?.let { String.format(Locale.GERMANY, "%.1f °C", it) } ?: words(state),
+                card.setpoint?.takeIf { state != "off" }?.let { "Soll " + String.format(Locale.GERMANY, "%.1f °C", it) },
+            ).joinToString(" · ")
             "media_player" -> when (state) {
                 "playing" -> "spielt"
                 "paused" -> "pausiert"

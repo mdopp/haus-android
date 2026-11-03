@@ -204,4 +204,71 @@ class HomeScreenTest {
         assertEquals(listOf(listOf(ctx().getString(R.string.home_devices_unreadable)), listOf("Alle Geräte")), rows)
         assertEquals(View.VISIBLE, deviceRows(a).last().visibility)
     }
+
+    // --- the screen's order and the favorites' fine controls (owner, 2026-11-03) ---
+
+    private fun children(a: HomeActivity): List<View> =
+        a.findViewById<ViewGroup>(R.id.connected_section).let { g -> (0 until g.childCount).map { g.getChildAt(it) } }
+
+    /** The live line sits in the widgets' block, under its hint; „Gekoppelt mit …“ right above „Kopplung aufheben“. */
+    @Test
+    fun theLiveLineIsTheWidgetsAndThePairingSitsByUnpair() {
+        paired()
+        val a = open()
+        val order = children(a)
+        val title = order.indexOfFirst { (it as? TextView)?.text?.toString() == ctx().getString(R.string.home_widgets_title) }
+        val live = order.indexOf(a.findViewById(R.id.live_switch))
+        val battery = order.indexOf(a.findViewById(R.id.live_battery))
+        val widgets = order.indexOf(a.findViewById(R.id.widgets_group))
+        assertTrue("the widgets' title first", title in 0 until live)
+        assertTrue("the live switch, its line, then the widgets", live < battery && battery < widgets)
+        val status = order.indexOf(a.findViewById(R.id.status))
+        assertEquals("„Gekoppelt mit …“ right above „Kopplung aufheben“", order.indexOf(a.findViewById(R.id.logout_btn)) - 1, status)
+        assertEquals("Gekoppelt mit 127.0.0.1", a.findViewById<TextView>(R.id.status).text.toString())
+    }
+
+    private val shutter = """{"ok":true,"favorites":[
+        {"entity_id":"cover.wohnzimmer","name":"Rollladen","domain":"cover","device_class":"shutter","state":"open","current_position":40,"supported_features":15},
+        {"entity_id":"cover.garage","name":"Garage","domain":"cover","device_class":"garage","state":"closed","supported_features":3},
+        {"entity_id":"climate.bad","name":"Bad","domain":"climate","state":"heat","current_temperature":21.5,"temperature":22,"target_temp_step":0.5}]}"""
+
+    private fun buttons(v: View): List<android.widget.Button> =
+        if (v is android.widget.Button) listOf(v) else if (v is ViewGroup) (0 until v.childCount).flatMap { buttons(v.getChildAt(it)) } else emptyList()
+
+    /** A shutter offers Hoch, Stopp, Runter; Hoch sends cover.open_cover on that cover through the device receiver. */
+    @Test
+    fun aShutterFavoriteHasHochStoppRunter() {
+        paired()
+        StartDevices.save(ctx(), shutter)
+        val a = open()
+        val rows = deviceRows(a)
+        assertEquals(listOf("Hoch", "Stopp", "Runter"), buttons(rows[0]).map { it.text.toString() })
+        assertTrue("a garage keeps its tap only", buttons(rows[1]).isEmpty())
+        shadowOf(a.application).clearBroadcastIntents()
+        buttons(rows[0])[0].performClick()
+        val call = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
+        assertEquals("cover.wohnzimmer", call.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
+        assertEquals(WidgetActionReceiver.OP_CALL, call.getStringExtra(WidgetActionReceiver.EXTRA_OP))
+        assertEquals("cover.open_cover", call.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
+        assertNull(call.getStringExtra(WidgetActionReceiver.EXTRA_DATA))
+        fun seekBars(v: View): List<android.widget.SeekBar> =
+            if (v is android.widget.SeekBar) listOf(v) else if (v is ViewGroup) (0 until v.childCount).flatMap { seekBars(v.getChildAt(it)) } else emptyList()
+        assertEquals("its position", 40, seekBars(rows[0]).single().progress)
+    }
+
+    /** A heating says its setpoint and goes wärmer by its step, the new setpoint in the call's data. */
+    @Test
+    fun aHeatingFavoriteGoesWaermer() {
+        paired()
+        StartDevices.save(ctx(), shutter)
+        val a = open()
+        val row = deviceRows(a)[2]
+        assertEquals(listOf("Bad", "21,5 °C · Soll 22,0 °C"), texts(row).take(2))
+        val warm = buttons(row).single { it.text.toString() == "Wärmer" }
+        shadowOf(a.application).clearBroadcastIntents()
+        warm.performClick()
+        val call = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
+        assertEquals("climate.set_temperature", call.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
+        assertEquals(22.5, org.json.JSONObject(call.getStringExtra(WidgetActionReceiver.EXTRA_DATA)!!).getDouble("temperature"), 0.0)
+    }
 }

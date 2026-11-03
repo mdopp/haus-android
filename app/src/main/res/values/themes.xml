@@ -74,6 +74,15 @@
         <item name="android:textStyle">normal</item>
     </style>
 
+    <!-- A favorite's fine control on the start screen (Hoch, Stopp, Runter, …): the ghost button, smaller. -->
+    <style name="Widget.Haus.Button.Control" parent="Widget.Haus.Button.Ghost">
+        <item name="android:minHeight">40dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingRight">8dp</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
     <!-- ── Text styles (#37) ────────────────────────────────────────────────
          A consistent type hierarchy using the tokens from dimens.xml. Plain
          (non-Widget) styles applied via style="…" on TextViews. -->

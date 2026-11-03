@@ -1,0 +1,91 @@
+package cloud.dopp.haus
+
+import cloud.dopp.haus.data.ApiClient
+import cloud.dopp.haus.data.Card
+import cloud.dopp.haus.ui.DeviceControls
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/**
+ * A favorite's fine controls (owner, 2026-11-03: „Hoch, runter, heller,
+ * dunkler, …“), the ones Haus's devices page offers per kind, read off the
+ * card Haus sends (`/napi/portal/favorites`).
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class DeviceControlsTest {
+
+    private fun card(json: String): Card = ApiClient.parseCardJson(JSONObject(json))
+
+    private fun labels(c: DeviceControls.Controls) = c.buttons.map { it.label }
+
+    @Test
+    fun aDimmableLampHasItsBrightnessAndZeroTurnsItOff() {
+        val c = DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"on","brightness":153}"""))
+        val s = c.slider!!
+        assertEquals(60, s.value)
+        assertEquals("light.turn_on" to mapOf<String, Any>("brightness_pct" to 40), s.call(40))
+        assertEquals("light.turn_off" to null, s.call(0))
+        // off, but HA says it dims by its colour modes: the slider at 0
+        val off = DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"off","supported_color_modes":["brightness"]}"""))
+        assertEquals(0, off.slider!!.value)
+        // an on/off lamp: its tap only
+        assertTrue(DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"on","supported_color_modes":["onoff"]}""")).none)
+    }
+
+    @Test
+    fun aShutterHasHochStoppRunterAndItsPosition() {
+        val c = DeviceControls.of(card("""{"entity_id":"cover.w","domain":"cover","device_class":"shutter","state":"open","current_position":40,"supported_features":15}"""))
+        assertEquals(listOf("Hoch", "Stopp", "Runter"), labels(c))
+        assertEquals(listOf("cover.open_cover", "cover.stop_cover", "cover.close_cover"), c.buttons.map { it.service })
+        assertEquals("cover.set_cover_position" to mapOf<String, Any>("position" to 70), c.slider!!.call(70))
+        // what HA says it cannot, it does not offer: no stop, no position
+        val two = DeviceControls.of(card("""{"entity_id":"cover.w","domain":"cover","device_class":"blind","state":"open","current_position":40,"supported_features":3}"""))
+        assertEquals(listOf("Hoch", "Runter"), labels(two))
+        assertNull(two.slider)
+    }
+
+    /** A garage, a door, a gate, a cover HA does not name: no buttons; its tap and the one dialog stay. */
+    @Test
+    fun aGarageGetsNoControls() {
+        for (dc in listOf("garage", "door", "gate", null)) {
+            val cls = dc?.let { ""","device_class":"$it"""" } ?: ""
+            assertTrue(dc.toString(), DeviceControls.of(card("""{"entity_id":"cover.g","domain":"cover"$cls,"state":"closed","current_position":0,"supported_features":15}""")).none)
+        }
+    }
+
+    @Test
+    fun aHeatingGoesKaelterAndWaermerByItsStepWithinItsBounds() {
+        val c = DeviceControls.of(card("""{"entity_id":"climate.b","domain":"climate","state":"heat","current_temperature":21.5,"temperature":22,"target_temp_step":0.5,"min_temp":7,"max_temp":30}"""))
+        assertEquals(listOf("Kälter", "Wärmer"), labels(c))
+        assertEquals(listOf(21.5, 22.5), c.buttons.map { it.data!!["temperature"] })
+        assertTrue(c.buttons.all { it.service == "climate.set_temperature" })
+        val top = DeviceControls.of(card("""{"entity_id":"climate.b","domain":"climate","state":"heat","temperature":30,"max_temp":30}"""))
+        assertEquals(listOf("Kälter"), labels(top))
+        assertTrue(DeviceControls.of(card("""{"entity_id":"climate.b","domain":"climate","state":"off","temperature":22}""")).none)
+    }
+
+    @Test
+    fun aPlayerPausesOrGoesOnAndStepsItsVolume() {
+        val playing = DeviceControls.of(card("""{"entity_id":"media_player.r","domain":"media_player","state":"playing","supported_features":21517}"""))
+        assertEquals(listOf("Pause", "Leiser", "Lauter"), labels(playing))
+        assertEquals(listOf("media_player.media_pause", "media_player.volume_down", "media_player.volume_up"), playing.buttons.map { it.service })
+        val paused = DeviceControls.of(card("""{"entity_id":"media_player.r","domain":"media_player","state":"paused","supported_features":16384}"""))
+        assertEquals(listOf("Weiter"), labels(paused))
+        assertTrue(DeviceControls.of(card("""{"entity_id":"media_player.r","domain":"media_player","state":"off","supported_features":21517}""")).none)
+    }
+
+    /** A lock and a switch have their tap only; a device HA does not reach has nothing. */
+    @Test
+    fun locksSwitchesAndTheUnreachableHaveNone() {
+        assertTrue(DeviceControls.of(card("""{"entity_id":"lock.h","domain":"lock","state":"locked","supported_features":1}""")).none)
+        assertTrue(DeviceControls.of(card("""{"entity_id":"switch.k","domain":"switch","state":"on"}""")).none)
+        assertTrue(DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"unavailable","brightness":10}""")).none)
+    }
+}

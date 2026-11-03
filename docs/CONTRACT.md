@@ -163,6 +163,19 @@ chooser (#92: „Tür öffnen“ only when the card's `supported_features` names
 latch); anything else opens its page. When the call is done the list is read
 again. With no favorites the screen says in one sentence how to get some.
 
+Each favorite carries the fine controls Haus's devices page has (owner,
+2026-11-03; `ui/DeviceControls.kt`), read off the card's existing fields, no
+new route: a lamp that dims its brightness (`light.turn_on` with
+`brightness_pct`, 0 is `light.turn_off`); a cover whose `device_class` is
+named and is not a garage, a door or a gate Hoch, Stopp, Runter and its
+position (`cover.set_cover_position`), each as `supported_features` allows; a
+heating that is on Kälter and Wärmer (`climate.set_temperature`, by
+`target_temp_step` within `min_temp`/`max_temp`); a playing or paused player
+Pause or Weiter, Leiser and Lauter. Each is one `POST /napi/ha/call` through
+the device receiver; a call without data that Haus answers 403 asks in the
+one dialog, a call with data (only offered where Haus lets it go freely) that
+is refused says it did not work.
+
 ## (e) Daten sichern
 
 (#194, laib ADR 0029; Haus's side is haus#207.) Under Mehr → Nachrichten
