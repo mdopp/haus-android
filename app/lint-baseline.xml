@@ -1,0 +1,1918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.9.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.1)" variant="all" version="8.9.1">
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        p.edit().putString(key(quelle, pfad), &quot;${stand.name}|$etag&quot;).commit()"
+        errorLine2="                                                                     ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/RueckStore.kt"
+            line="33"
+            column="70"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        p.edit().putString(upload(quelle.wire, pfad), zeile).commit()"
+        errorLine2="                                                             ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="61"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        p.edit().putLong(MARKE + art.wire, wert).commit()"
+        errorLine2="                                                 ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="89"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="            p.edit().remove(AUSSTEHEND + name).commit()"
+        errorLine2="                                               ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="97"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="            p.edit().putString(AUSSTEHEND + name, ausstehendZeile(marken)).commit()"
+        errorLine2="                                                                           ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="99"
+            column="76"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="            p.edit().remove(ZAHLEN + name).commit()"
+        errorLine2="                                           ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="108"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="            p.edit().putString(ZAHLEN + name, ausstehendZeile(zahlen.mapValues { it.value.toLong() })).commit()"
+        errorLine2="                                                                                                       ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="110"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        e.commit() // the receiver&apos;s thread ends right after; the next delivery reads it"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="44"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="ImplicitSamInstance"
+        message="This argument is a new instance so `stopService` will not remove anything"
+        errorLine1="        if (!wanted(app)) runCatching { app.stopService(Intent(app, LiveService::class.java)) }"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/realtime/LiveService.kt"
+            line="137"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 29 (current min is 23): `android.Manifest.permission#ACCESS_BACKGROUND_LOCATION`"
+        errorLine1="    const val HINTEN = Manifest.permission.ACCESS_BACKGROUND_LOCATION"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/Aufzeichnung.kt"
+            line="32"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 26 (current min is 23): `android.appwidget.AppWidgetManager#requestPinAppWidget`"
+        errorLine1="        return mgr.requestPinAppWidget(component, null, callback(ctx, component, toolId, toolLabel))"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetPin.kt"
+            line="73"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:targetCellWidth=&quot;1&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/device_widget_info.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:targetCellHeight=&quot;1&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/device_widget_info.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
+        errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/device_widget_info.xml"
+            line="13"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:previewLayout=&quot;@layout/widget_device&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/device_widget_info.xml"
+            line="15"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:targetCellWidth=&quot;4&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/energy_widget_info.xml"
+            line="5"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:targetCellHeight=&quot;2&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/energy_widget_info.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:previewLayout=&quot;@layout/widget_energy&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/energy_widget_info.xml"
+            line="13"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:targetCellWidth=&quot;3&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/tool_widget_info.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:targetCellHeight=&quot;2&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/tool_widget_info.xml"
+            line="9"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
+        errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/tool_widget_info.xml"
+            line="12"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
+        errorLine1="    android:previewLayout=&quot;@layout/widget_tool&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/tool_widget_info.xml"
+            line="16"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `autoSizeTextType` is only used in API level 26 and higher (current min is 23)"
+        errorLine1="            android:autoSizeTextType=&quot;uniform&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device.xml"
+            line="43"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `autoSizeMinTextSize` is only used in API level 26 and higher (current min is 23)"
+        errorLine1="            android:autoSizeMinTextSize=&quot;9sp&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device.xml"
+            line="44"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `autoSizeMaxTextSize` is only used in API level 26 and higher (current min is 23)"
+        errorLine1="            android:autoSizeMaxTextSize=&quot;12sp&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device.xml"
+            line="45"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `autoSizeTextType` is only used in API level 26 and higher (current min is 23)"
+        errorLine1="                android:autoSizeTextType=&quot;uniform&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device_wide.xml"
+            line="54"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `autoSizeMinTextSize` is only used in API level 26 and higher (current min is 23)"
+        errorLine1="                android:autoSizeMinTextSize=&quot;10sp&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device_wide.xml"
+            line="55"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `autoSizeMaxTextSize` is only used in API level 26 and higher (current min is 23)"
+        errorLine1="                android:autoSizeMaxTextSize=&quot;13sp&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device_wide.xml"
+            line="56"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="BatteryLife"
+        message="Use of `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` violates the Play Store Content Policy regarding acceptable use cases, as described in https://developer.android.com/training/monitoring-device-state/doze-standby.html"
+        errorLine1="                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse(&quot;package:$packageName&quot;)),"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
+            line="633"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        val v = LayoutInflater.from(dialog.context).inflate(R.layout.sheet_level, null, false)"
+        errorLine2="                                                                                  ~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/LevelSheet.kt"
+            line="41"
+            column="83"/>
+    </issue>
+
+    <issue
+        id="RedundantLabel"
+        message="Redundant label can be removed"
+        errorLine1="            android:label=&quot;@string/appName&quot;>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="70"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="                        android:tint=&quot;@color/homes_accent&quot; />"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_home.xml"
+            line="186"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="        android:tint=&quot;@color/homes_accent&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_device_pick.xml"
+            line="19"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="        android:tint=&quot;@color/homes_accent&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_device_pick.xml"
+            line="55"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="        android:tint=&quot;@color/homes_text_muted&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_device_row.xml"
+            line="21"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="        android:tint=&quot;@color/homes_accent&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_widget_type.xml"
+            line="19"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="        android:tint=&quot;@color/homes_accent&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_widget_type.xml"
+            line="39"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="        android:tint=&quot;#FFB0BEC5&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_error.xml"
+            line="19"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="            android:tint=&quot;#FF7E9CFF&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_tool.xml"
+            line="28"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="            android:tint=&quot;#FF9AA0AE&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_tool.xml"
+            line="50"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;Kontakte&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;konto_kontakte_stand&quot;>Zuletzt abgeglichen %1$s: %2$d Kontakte.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/konto_strings.xml"
+            line="15"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;Termine&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;konto_kalender_stand&quot;>Zuletzt abgeglichen %1$s: %2$d Termine und Erinnerungen.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/konto_strings.xml"
+            line="20"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;von&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;share_photos_partly_text&quot;>%1$d von %2$d Fotos liegen jetzt in den Dokumenten von Homes. Die übrigen nicht: %3$s&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/share_strings.xml"
+            line="28"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;auf&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;share_photos_too_many&quot;>Homes nimmt höchstens %1$d auf einmal; %2$d blieben übrig. Teile sie danach noch einmal.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/share_strings.xml"
+            line="30"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;Punkte&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;standort_wartet&quot;>%1$d Punkte warten auf dem Handy.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/standort_strings.xml"
+            line="18"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;Punkte&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;standort_zuletzt&quot;>Zuletzt an Reitti: %1$s, %2$d Punkte.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/standort_strings.xml"
+            line="20"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;ältere&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;standort_verloren&quot;>Der Speicher auf dem Handy war voll: %1$d ältere Punkte sind verloren.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/standort_strings.xml"
+            line="22"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PermissionImpliesUnsupportedChromeOsHardware"
+        message="Permission exists without corresponding hardware `&lt;uses-feature android:name=&quot;android.hardware.telephony&quot; required=&quot;false&quot;>` tag"
+        errorLine1="    &lt;uses-permission android:name=&quot;android.permission.READ_SMS&quot; />"
+        errorLine2="     ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="24"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="DataExtractionRules"
+        message="The attribute `android:allowBackup` is deprecated from Android 12 and higher and may be removed in future versions. Consider adding the attribute `android:dataExtractionRules` specifying an `@xml` resource which configures cloud backups and device transfers on Android 12 and higher."
+        errorLine1="        android:allowBackup=&quot;false&quot;"
+        errorLine2="                             ~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="55"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields (static reference to `Bewegung` which has field `app` pointing to `Context`); this is a memory leak"
+        errorLine1="    /**"
+        errorLine2="    ^">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/Aufzeichnung.kt"
+            line="201"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields; this is a memory leak"
+        errorLine1="        @Volatile"
+        errorLine2="        ^">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/Aufzeichnung.kt"
+            line="208"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="                    android:layout_weight=&quot;1&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="71"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="                    android:layout_weight=&quot;1&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="105"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="                    android:layout_weight=&quot;1&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="139"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="                    android:layout_weight=&quot;1&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="174"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/terminal_ground` with a theme that also paints a background (inferred theme is `@style/Theme.Homes`)"
+        errorLine1="    android:background=&quot;@color/terminal_ground&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_home.xml"
+            line="9"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme_Homes`)"
+        errorLine1="    android:background=&quot;@color/homes_bg&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_homes_konto.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme_Homes`)"
+        errorLine1="    android:background=&quot;@color/homes_bg&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_sicherung.xml"
+            line="9"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme_Homes`)"
+        errorLine1="    android:background=&quot;@color/homes_bg&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_standort.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme_Homes_Config`)"
+        errorLine1="    android:background=&quot;@color/homes_bg&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_widget_config.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme_Homes`)"
+        errorLine1="    android:background=&quot;@color/homes_bg&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_zurueckholen.xml"
+            line="9"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?android:attr/selectableItemBackground` with a theme that also paints a background (inferred theme is `@style/Theme.Homes`)"
+        errorLine1="    android:background=&quot;?android:attr/selectableItemBackground&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_device_row.xml"
+            line="14"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.shortcut_background` appears to be unused"
+        errorLine1="    &lt;color name=&quot;shortcut_background&quot;>#F5F5F5&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="4"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.homes_card` appears to be unused"
+        errorLine1="    &lt;color name=&quot;homes_card&quot;>#14141A&lt;/color>          &lt;!-- card surface -->"
+        errorLine2="           ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="17"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.homes_brand_blue_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;homes_brand_blue_dark&quot;>#2563EB&lt;/color> &lt;!-- blue-600 (pressed) -->"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="37"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.energy_supply` appears to be unused"
+        errorLine1="    &lt;color name=&quot;energy_supply&quot;>#66BB6A&lt;/color>        &lt;!-- PV / feed-in / discharge -->"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="57"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.energy_draw` appears to be unused"
+        errorLine1="    &lt;color name=&quot;energy_draw&quot;>#EF5350&lt;/color>          &lt;!-- consumption / import / charge -->"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="58"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.text_tile` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;text_tile&quot;>12sp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="30"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.hero_glow_size` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;hero_glow_size&quot;>190dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="33"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.brand_lockup_top` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;brand_lockup_top&quot;>32dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="48"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.brand_lockup_top_compact` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;brand_lockup_top_compact&quot;>4dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="49"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.brand_figure_height` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;brand_figure_height&quot;>39dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="50"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.brand_rule_bottom` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;brand_rule_bottom&quot;>14dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="51"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.brand_rule_bottom_compact` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;brand_rule_bottom_compact&quot;>18dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="52"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.hero_glow_size_compact` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;hero_glow_size_compact&quot;>112dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="53"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.energy_now` appears to be unused"
+        errorLine1="    &lt;string name=&quot;energy_now&quot;>Jetzt&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/energy_strings.xml"
+            line="9"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_box` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/ic_box.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.Text_Homes_Tile` appears to be unused"
+        errorLine1="    &lt;style name=&quot;Text.Homes.Tile&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/themes.xml"
+            line="174"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.assistent_block` appears to be unused"
+        errorLine1="            android:id=&quot;@+id/assistent_block&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_home.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.assistent_rule` appears to be unused"
+        errorLine1="                android:id=&quot;@+id/assistent_rule&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_home.xml"
+            line="48"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.zurueck_signal` appears to be unused"
+        errorLine1="            android:id=&quot;@+id/zurueck_signal&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_zurueckholen.xml"
+            line="47"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.zurueck_whatsapp` appears to be unused"
+        errorLine1="            android:id=&quot;@+id/zurueck_whatsapp&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_zurueckholen.xml"
+            line="115"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.row_line` appears to be unused"
+        errorLine1="            android:id=&quot;@+id/row_line&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_device_row.xml"
+            line="42"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.header_room` appears to be unused"
+        errorLine1="    android:id=&quot;@+id/header_room&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_room_header.xml"
+            line="5"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.e_frame` appears to be unused"
+        errorLine1="    android:id=&quot;@+id/e_frame&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="11"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.e_today_label` appears to be unused"
+        errorLine1="                android:id=&quot;@+id/e_today_label&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="48"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.e_autarkie_l` appears to be unused"
+        errorLine1="                    android:id=&quot;@+id/e_autarkie_l&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="183"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.we_text` appears to be unused"
+        errorLine1="        android:id=&quot;@+id/we_text&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_error.xml"
+            line="23"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedIds"
+        message="The resource `R.id.tw_icon` appears to be unused"
+        errorLine1="            android:id=&quot;@+id/tw_icon&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_tool.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="                    android:textSize=&quot;10sp&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="90"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="                    android:textSize=&quot;10sp&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="124"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="                    android:textSize=&quot;10sp&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="158"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="                    android:textSize=&quot;10sp&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="194"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ReportShortcutUsage"
+        message="Calling this method indicates use of dynamic shortcuts, but there are no calls to methods that track shortcut usage, such as `pushDynamicShortcut` or `reportShortcutUsed`. Calling these methods is recommended, as they track shortcut usage and allow launchers to adjust which shortcuts appear based on activation history. Please see https://developer.android.com/develop/ui/views/launch/shortcuts/managing-shortcuts#track-usage"
+        errorLine1="        runCatching { ShortcutManagerCompat.setDynamicShortcuts(app, infos) }"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/AppShortcuts.kt"
+            line="69"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Int.toDrawable` instead?"
+        errorLine1="            ColorDrawable(activity.getColor(R.color.homes_scrim)),"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/ActionDialog.kt"
+            line="116"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(KEY_NAME, name).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/Assistent.kt"
+            line="31"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().clear().apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/Assistent.kt"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX function `createBitmap` instead?"
+        errorLine1="        val bmp = Bitmap.createBitmap(max(1, (wDp * scale).roundToInt()), max(1, (hDp * scale).roundToInt()), Bitmap.Config.ARGB_8888)"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/EnergyPicture.kt"
+            line="356"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        cr.query(Uri.parse(&quot;content://mms/$id/addr&quot;), arrayOf(&quot;address&quot;, &quot;type&quot;, &quot;charset&quot;), null, null, null)?.use { c ->"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/Handy.kt"
+            line="284"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        cr.query(Uri.parse(&quot;content://mms/part&quot;), null, &quot;mid = ?&quot;, arrayOf(id.toString()), &quot;seq ASC&quot;)?.use { c ->"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/Handy.kt"
+            line="292"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                    runCatching { cr.openInputStream(Uri.parse(&quot;content://mms/part/$teilId&quot;)) }.getOrNull()"
+        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/Handy.kt"
+            line="299"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        open(Uri.parse(HomesPages.url(base, page)))"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
+            line="380"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        open(Uri.parse(server + HomesConfig.PAIR_PATH))"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
+            line="496"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().putBoolean(KEY_EXEMPTION, true).apply()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
+            line="613"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse(&quot;package:$packageName&quot;)),"
+        errorLine2="                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
+            line="633"
+            column="78"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            Intent(Intent.ACTION_VIEW, Uri.parse(url(base, page, from))).addCategory(Intent.CATEGORY_BROWSABLE)"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/HomesPages.kt"
+            line="66"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        val e = p.edit().putLong(key(teil, &quot;zeit&quot;), zeit).remove(key(teil, &quot;meldung&quot;))"
+        errorLine2="                ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/konto/KontoStore.kt"
+            line="22"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(key(teil, &quot;meldung&quot;), satz).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/konto/KontoStore.kt"
+            line="30"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().remove(key(teil, &quot;etag&quot;)).remove(key(teil, &quot;zeit&quot;)).remove(key(teil, &quot;anzahl&quot;))"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/konto/KontoStore.kt"
+            line="42"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().remove(key(teil, &quot;etag&quot;)).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/konto/KontoStore.kt"
+            line="48"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putBoolean(KEY_ON, on).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/realtime/LiveService.kt"
+            line="96"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val uri = runCatching { Uri.parse(text.trim()) }.getOrNull() ?: return null"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/PairLinks.kt"
+            line="50"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(KEY_SERVER, server).putLong(KEY_AT, now).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/Pairing.kt"
+            line="40"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().clear().apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/Pairing.kt"
+            line="52"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(ZIEL + quelle.wire, baum.toString()).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/RueckStore.kt"
+            line="22"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(key(quelle, pfad), &quot;${stand.name}|$etag&quot;).commit()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/RueckStore.kt"
+            line="33"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(KEY, u).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/ServerStore.kt"
+            line="47"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="    fun clear(ctx: Context) = p(ctx).edit().remove(KEY).apply()"
+        errorLine2="                              ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/ServerStore.kt"
+            line="55"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                open?.let { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }"
+        errorLine2="                                                                                   ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/ShareActivity.kt"
+            line="117"
+            column="84"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(ORDNER + quelle.wire, baum.toString()).remove(MELDUNG + quelle.wire).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="26"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(GESENDET + quelle.wire, g.zeile()).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="32"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putLong(UEBERTRAGEN + quelle.wire, zeit).putInt(UEBERTRAGEN_DATEIEN + quelle.wire, dateien).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(MELDUNG + quelle.wire, &quot;${meldung.zeit}|${meldung.art.name}|${meldung.satz.orEmpty()}&quot;).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="46"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(upload(quelle.wire, pfad), zeile).commit()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="61"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().remove(upload(quelle.wire, pfad)).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="65"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putBoolean(KONTAKTE_AN, an).remove(KONTAKTE_MELDUNG).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="76"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putBoolean(SMS_AN, an).remove(MELDUNG + Quelle.SMS.wire).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="83"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putLong(MARKE + art.wire, wert).commit()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="89"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            p.edit().remove(AUSSTEHEND + name).commit()"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="97"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            p.edit().putString(AUSSTEHEND + name, ausstehendZeile(marken)).commit()"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="99"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            p.edit().remove(ZAHLEN + name).commit()"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="108"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            p.edit().putString(ZAHLEN + name, ausstehendZeile(zahlen.mapValues { it.value.toLong() })).commit()"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="110"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(LETZTE, &quot;$zeit|&quot; + ausstehendZeile(zahlen.mapValues { it.value.toLong() })).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="115"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(KONTAKTE_MELDUNG, &quot;${meldung.zeit}|${meldung.art.name}|${meldung.satz.orEmpty()}&quot;).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="127"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putString(KONTAKTE_ERGEBNIS, &quot;$zeit|${e.kontakte}|${e.neu}|${e.geaendert}|${e.entfernt}&quot;).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/sicherung/SicherungStore.kt"
+            line="140"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="    fun setzeAn(an: Boolean) = p.edit().putBoolean(AN, an).remove(IN_KRAFT).apply()"
+        errorLine2="                               ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="17"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="    fun setzeModus(m: Modus) = p.edit().putString(MODUS, m.wire).apply()"
+        errorLine2="                               ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="20"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        val e = p.edit().putBoolean(RUHT, s.ruht)"
+        errorLine2="                ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="36"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="    fun setzeInKraft(k: String?) = p.edit().putString(IN_KRAFT, k).apply()"
+        errorLine2="                                   ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="49"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        if (n > 0) p.edit().putInt(VERLOREN, verloren() + n).apply()"
+        errorLine2="                   ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="54"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putInt(FEHLSCHLAEGE, fehlschlaege + 1).putLong(LETZTER_FEHLSCHLAG, zeit).putString(MELDUNG, satz).apply()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="64"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit().putInt(FEHLSCHLAEGE, 0).remove(MELDUNG).putLong(GESENDET_ZEIT, zeit).putInt(GESENDET_ANZAHL, anzahl)"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/standort/StandortStore.kt"
+            line="68"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_FAVORITES, body).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/StartDevices.kt"
+            line="39"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/StartDevices.kt"
+            line="43"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        val ok = runCatching { prefs(ctx).edit().putString(KEY_TOKEN, token).commit() }.getOrDefault(false)"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/TokenStore.kt"
+            line="119"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        runCatching { prefs(ctx).edit().remove(KEY_TOKEN).apply() }"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/data/TokenStore.kt"
+            line="142"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            .setData(Uri.parse(&quot;homes://tool/$appWidgetId&quot;))"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/ToolWidgetProvider.kt"
+            line="149"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putStringSet(KEY_ENERGY, now).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/realtime/WatchSet.kt"
+            line="60"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        runCatching { p(ctx).edit().putString(&quot;card_$id&quot;, o.toString()).apply() }"
+        errorLine2="                      ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetCache.kt"
+            line="36"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().remove(&quot;card_$id&quot;).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetCache.kt"
+            line="61"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="18"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().remove(&quot;e_$id&quot;).remove(&quot;n_$id&quot;).remove(&quot;d_$id&quot;).remove(&quot;c_$id&quot;).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="32"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="50"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(KEY_SHORTCUT_RECENT, ShortcutUsage.encode(next)).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="82"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="96"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(&quot;toolname_$id&quot;, label).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="110"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="114"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(&quot;toolcells_$id&quot;, json).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="128"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().putString(KEY_TOOL_CATALOG, json).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="139"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="155"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            p(ctx).edit().remove(KEY_PENDING_TOOL).remove(KEY_PENDING_TOOL_AT).apply()"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="170"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p(ctx).edit().remove(KEY_PENDING_TOOL).remove(KEY_PENDING_TOOL_AT).apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
+            line="183"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)) }"
+        errorLine2="                                                               ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/ZurueckholenActivity.kt"
+            line="371"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            state.text = &quot;$words ·&quot;"
+        errorLine2="                         ~~~~~~~~~~">
+        <location
+            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
+            line="277"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;—&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;—&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_device_wide.xml"
+            line="57"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="                    android:text=&quot;—&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="74"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="                    android:text=&quot;—&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="108"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="                    android:text=&quot;—&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="142"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="                    android:text=&quot;—&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy.xml"
+            line="177"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Netz&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Netz&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy_small.xml"
+            line="47"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;—&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;—&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/widget_energy_small.xml"
+            line="58"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlSymmetry"
+        message="When you define `paddingStart` you should probably also define `paddingEnd` for right-to-left symmetry"
+        errorLine1="                    android:paddingStart=&quot;@dimen/space_lg&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_standort.xml"
+            line="113"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="RtlSymmetry"
+        message="When you define `paddingStart` you should probably also define `paddingEnd` for right-to-left symmetry"
+        errorLine1="                    android:paddingStart=&quot;@dimen/space_lg&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_standort.xml"
+            line="128"
+            column="21"/>
+    </issue>
+
+</issues>

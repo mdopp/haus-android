@@ -48,6 +48,16 @@ jobs:
           # the dev version counts from the last release tag
           fetch-depth: 0
 
+      # The code gates (CLAUDE.md "Code gates"), the cheap ones first: each
+      # package under its line cap, and no public declaration nobody names.
+      - name: Line caps
+        if: github.event_name == 'pull_request'
+        run: sh scripts/loc.sh
+
+      - name: Dead public code
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/deadcode.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -71,6 +81,17 @@ jobs:
       - name: Unit tests
         if: github.event_name == 'pull_request'
         run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      # The code gates: detekt and Android Lint, each against its baseline —
+      # a new finding fails, and so does a fixed one until its baseline
+      # entry is gone in the same PR (the ratchet).
+      - name: detekt
+        if: github.event_name == 'pull_request'
+        run: sh scripts/detekt-ratchet.sh
+
+      - name: Android Lint
+        if: github.event_name == 'pull_request'
+        run: ./gradlew :app:lintDebug
 
       # The version both signed builds carry (#182). A tag names itself; a build
       # of main is the next patch after the last release tag, -dev.<run>, which
@@ -167,4 +188,5 @@ jobs:
           path: |
             app/build/outputs/apk/**/*.apk
             app/build/outputs/bundle/**/*.aab
+            app/build/reports/lint-results-debug.html
           if-no-files-found: ignore

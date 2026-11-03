@@ -93,6 +93,42 @@ These rules apply to every session, human or agent.
   it by `scripts/icons` (`npm ci && node icons.mjs`), never drawn or resized
   by hand. mdopp/homes carries the same master for the web app's icons.
 
+## Code gates
+
+The owner's call, 2026-11-03: the code stays as clean as it can be, and a
+PR proves it. CI runs these on every PR (`.github/workflows/android-build.yml`);
+each one fails on a new finding, and each has a baseline of what was there
+before the gate, so the old findings pass while nothing new joins them.
+
+- **Android Lint** (`./gradlew :app:lintDebug`): the default checks, every
+  warning an error, plus `UnusedResources` and `UnusedIds`. Checks that turn
+  red with the calendar instead of the code (a newer library or SDK) are off,
+  in `app/build.gradle`. Baseline: `app/lint-baseline.xml`.
+- **detekt** (`sh scripts/detekt-ratchet.sh`): detekt's defaults with
+  `config/detekt.yml` — unused imports, private members, classes, properties
+  and parameters; `LongMethod` 60, `CyclomaticComplexMethod` 15, `LargeClass`
+  600, `LongParameterList`, `NestedBlockDepth`, `ComplexCondition`; a string
+  literal three times; swallowed and too generic exceptions. Complexity and
+  exceptions are judged in production code only. Baseline:
+  `app/detekt-baseline.xml`.
+- **Dead public code** (`python3 scripts/deadcode.py`): a non-private
+  top-level declaration, or member of a top-level `object`, that no other
+  file — Kotlin, XML, manifest, e2e, workflows — names. Nothing names it:
+  delete it; only its own file does: make it private. Baseline:
+  `scripts/deadcode-baseline.txt`.
+- **Line caps** (`sh scripts/loc.sh`): each package's production lines
+  under its cap, set at its size on 2026-11-03 plus 5 %; tests are counted,
+  not capped. Raising a cap is the owner's call, in the same PR, with its
+  reason next to the number; a new package needs its own line.
+
+**The ratchet.** A baseline only shrinks. A fixed finding fails the gate
+too, until its entry leaves the baseline in the same PR: lint reports it as
+`LintBaselineFixed` (delete the entry, or `./gradlew :app:updateLintBaseline`),
+the detekt script has already written the shrunk file (commit it), the
+dead-code script names the line to delete. Never regenerate a baseline to
+let a new finding in; fix it, or, where the rule is wrong for this code, say
+why in a `@Suppress` beside it.
+
 ## Commits
 
 - **Conventional Commits**: `type(scope): subject` — `feat`/`fix`/`refactor`/
@@ -118,8 +154,8 @@ These rules apply to every session, human or agent.
 
 ## Verify
 
-- There is no local Android SDK here: **CI is the proof** for build and unit
-  tests (Robolectric).
+- There is no local Android SDK here: **CI is the proof** for build, unit
+  tests (Robolectric) and the code gates.
 - A feature is verified on a **device or emulator** (install the APK, pair,
   place the widgets, watch them update while the screen is on). If you cannot
   run one, say so — a green build is not a verified feature.
