@@ -1,0 +1,71 @@
+# detekt on top of its defaults (buildUponDefaultConfig, app/build.gradle).
+# The gates (CLAUDE.md "Code gates"): unused code, complexity and the smells
+# below fail CI; detekt-baseline.xml holds what was there before the gate.
+# Only rules that say something about the code are on; layout taste (line
+# length, magic numbers in dp and colours) is the formatter's and the
+# reviewer's, not a gate.
+
+# Complexity and exception handling are judged in production code only; a
+# test may be long and may catch anything.
+complexity:
+  excludes: ['**/test/**', '**/androidTest/**']
+  LongMethod:
+    threshold: 60
+  CyclomaticComplexMethod:
+    threshold: 15
+  LargeClass:
+    threshold: 600
+  LongParameterList:
+    functionThreshold: 7
+    constructorThreshold: 8
+  NestedBlockDepth:
+    threshold: 4
+  TooManyFunctions:
+    active: false
+  # duplicate-ish: the same literal three times wants a name
+  StringLiteralDuplication:
+    active: true
+    threshold: 3
+    ignoreAnnotation: true
+    excludeStringsWithLessThan5Characters: true
+
+exceptions:
+  excludes: ['**/test/**', '**/androidTest/**']
+
+style:
+  # unused code
+  UnusedImports:
+    active: true
+  UnusedPrivateMember:
+    active: true
+  UnusedPrivateClass:
+    active: true
+  UnusedPrivateProperty:
+    active: true
+  UnusedParameter:
+    active: true
+  # taste, not a gate
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: false
+  WildcardImport:
+    active: false
+  ReturnCount:
+    active: false
+  ThrowsCount:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+  ForbiddenComment:
+    active: false
+
+naming:
+  # German names with umlauts and a test's `fun \`a sentence\`()` are the house style
+  FunctionNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+
+comments:
+  active: false

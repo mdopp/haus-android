@@ -17,6 +17,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    // The code gates (CLAUDE.md "Code gates"): unused code, complexity, smells.
+    id 'io.gitlab.arturbosch.detekt' version '1.23.8'
 }
 
 android {
@@ -68,8 +70,25 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-    lintOptions {
+    // The code gates (CLAUDE.md "Code gates"): every warning fails, except what
+    // lint-baseline.xml lists from before the gate; scripts/ratchet.sh asks to
+    // shrink it when an entry is fixed.
+    lint {
         checkReleaseBuilds false
+        abortOnError true
+        warningsAsErrors true
+        baseline file('lint-baseline.xml')
+        // off by default; a layout id nothing reads is dead weight too
+        enable += ['UnusedIds']
+        // the ratchet: a baseline entry that no longer matches fails, so the
+        // baseline shrinks in the PR that fixed it
+        error += ['LintBaselineFixed']
+        // these change with the calendar, not with the code: a new library or
+        // SDK release would turn a green commit red
+        disable += ['GradleDependency', 'NewerVersionAvailable', 'AndroidGradlePluginVersion',
+                    'OldTargetApi']
+        xmlReport true
+        textReport true
     }
     testOptions {
         unitTests {
@@ -78,8 +97,15 @@ android {
     }
 }
 
-repositories {
-    
+// The code gates (CLAUDE.md "Code gates"): config/detekt.yml on top of detekt's
+// defaults; detekt-baseline.xml holds what was there before the gate.
+detekt {
+    toolVersion = '1.23.8'
+    buildUponDefaultConfig = true
+    config.setFrom(rootProject.file('config/detekt.yml'))
+    baseline = file('detekt-baseline.xml')
+    source.setFrom('src/main/java', 'src/test/java', 'src/androidTest/java')
+    parallel = true
 }
 
 dependencies {
