@@ -15,7 +15,6 @@
     <ID>CyclomaticComplexMethod:HomesKontoActivity.kt$HomesKontoActivity$private fun render()</ID>
     <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$fun lies(text: String): List&lt;Kalender&gt;</ID>
     <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$private fun termin(e: List&lt;VcardLeser.Zeile&gt;, alarm: List&lt;VcardLeser.Zeile&gt;?): Termin?</ID>
-    <ID>CyclomaticComplexMethod:Import.kt$Import$private fun hochladen( name: String, groesse: Long, oeffnen: (Long) -&gt; InputStream, fortschritt: (Fortschritt) -&gt; Unit, halt: () -&gt; Boolean, ): String?</ID>
     <ID>CyclomaticComplexMethod:KontakteLauf.kt$KontakteLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>CyclomaticComplexMethod:NachrichtenLauf.kt$NachrichtenLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>CyclomaticComplexMethod:NachrichtenLauf.kt$NachrichtenLauf$private fun senden(f: File): Lauf.Ergebnis?</ID>
@@ -26,7 +25,6 @@
     <ID>CyclomaticComplexMethod:StandortActivity.kt$StandortActivity$private fun render()</ID>
     <ID>CyclomaticComplexMethod:StandortImportActivity.kt$StandortImportActivity$override fun onCreate(savedInstanceState: Bundle?)</ID>
     <ID>CyclomaticComplexMethod:StartDevices.kt$StartDevices$fun stateText(card: Card): String</ID>
-    <ID>CyclomaticComplexMethod:Uploader.kt$Uploader$fun hochladen( quelle: Napi.Quelle, ordner: Ordner, datei: Datei, pfad: String = datei.pfad, halt: () -&gt; Boolean = { false }, fortschritt: (Long) -&gt; Unit = {}, ): Ausgang</ID>
     <ID>CyclomaticComplexMethod:VcardLeser.kt$VcardLeser$private fun karte(zeilen: List&lt;String&gt;): Karte?</ID>
     <ID>CyclomaticComplexMethod:WidgetActionReceiver.kt$WidgetActionReceiver$override fun onReceive(context: Context, intent: Intent)</ID>
     <ID>CyclomaticComplexMethod:ZurueckholenActivity.kt$ZurueckholenActivity$private fun renderQuelle(q: Quelle)</ID>
@@ -37,7 +35,6 @@
     <ID>EmptyFunctionBlock:PairingTest.kt$PairingTest.Unwritable.Refusing${}</ID>
     <ID>EmptyFunctionBlock:ToolRemoteViewsService.kt$ToolCellFactory${}</ID>
     <ID>EmptyFunctionBlock:WidgetConfigActivity.kt$WidgetConfigActivity.&lt;no name provided&gt;${}</ID>
-    <ID>LongMethod:Import.kt$Import$private fun hochladen( name: String, groesse: Long, oeffnen: (Long) -&gt; InputStream, fortschritt: (Fortschritt) -&gt; Unit, halt: () -&gt; Boolean, ): String?</ID>
     <ID>LongMethod:NachrichtenLauf.kt$NachrichtenLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>LongMethod:SicherungWorker.kt$SicherungWorker$override fun doWork(): Result</ID>
     <ID>LongParameterList:ActionDialog.kt$ActionDialog$( activity: Activity, title: CharSequence, message: CharSequence?, sheet: ActionSheet, onPick: (Int) -&gt; Unit, onCancel: () -&gt; Unit, /** The neutral footer's word; null: no footer (a dialog that waits for an answer). */ footer: CharSequence? = activity.getString(R.string.widget_confirm_no), /** A translucent action activity paints its window ([scrim]); a screen of the app does not. */ paintScrim: Boolean = true, cancelable: Boolean = true, )</ID>
@@ -50,12 +47,10 @@
     <ID>MayBeConst:LevelSheetPreviewTest.kt$LevelSheetPreviewTest.Companion$/** A lamp on, a lamp off, a shutter open, a shutter closed, as `/napi/portal/favorites` sends them. */ val FAVORITES = """{"ok":true,"favorites":[ {"entity_id":"light.kueche","name":"Küchenlicht","domain":"light","state":"on","brightness":153,"supported_color_modes":["brightness"]}, {"entity_id":"light.flur","name":"Flurlicht","domain":"light","state":"off","supported_color_modes":["brightness"]}, {"entity_id":"cover.wohnzimmer","name":"Rollo","domain":"cover","device_class":"shutter","state":"open","current_position":60,"supported_features":15}, {"entity_id":"cover.bad","name":"Rollo Bad","domain":"cover","device_class":"shutter","state":"closed","current_position":0,"supported_features":15}]}"""</ID>
     <ID>MayBeConst:StartPreviewTest.kt$StartPreviewTest.Companion$/** One favorite of each kind, as Homes' `/napi/portal/favorites` sends them. */ val FAVORITES = """{"ok":true,"favorites":[ {"entity_id":"light.kueche","name":"Küche","domain":"light","state":"on","brightness":153,"supported_color_modes":["brightness"],"page":"/raeume/light.kueche"}, {"entity_id":"switch.kaffee","name":"Kaffeemaschine","domain":"switch","state":"off","page":"/raeume/switch.kaffee"}, {"entity_id":"cover.wohnzimmer","name":"Rollladen Wohnzimmer","domain":"cover","device_class":"shutter","state":"open","current_position":40,"supported_features":15,"page":"/raeume/cover.wohnzimmer"}, {"entity_id":"cover.garage","name":"Garage","domain":"cover","device_class":"garage","state":"closed","supported_features":3,"page":"/raeume/cover.garage"}, {"entity_id":"climate.bad","name":"Bad","domain":"climate","state":"heat","current_temperature":21.5,"temperature":22,"target_temp_step":0.5,"min_temp":7,"max_temp":30,"page":"/raeume/climate.bad"}, {"entity_id":"media_player.kueche","name":"Radio Küche","domain":"media_player","state":"playing","supported_features":21517,"volume_level":0.3,"media_title":"Nachrichten","page":"/raeume/media_player.kueche"}, {"entity_id":"lock.haustuer","name":"Haustür","domain":"lock","state":"locked","supported_features":1,"page":"/raeume/lock.haustuer"}]}"""</ID>
     <ID>NestedBlockDepth:Handy.kt$HandyKontakte$override fun exportieren(datei: File): Int</ID>
-    <ID>NestedBlockDepth:Import.kt$Import$private fun hochladen( name: String, groesse: Long, oeffnen: (Long) -&gt; InputStream, fortschritt: (Fortschritt) -&gt; Unit, halt: () -&gt; Boolean, ): String?</ID>
     <ID>NestedBlockDepth:Import.kt$Import$private fun warten(id: String, groesse: Long, fortschritt: (Fortschritt) -&gt; Unit, halt: () -&gt; Boolean): Ausgang</ID>
     <ID>NestedBlockDepth:KontakteLauf.kt$KontakteLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>NestedBlockDepth:KontoLauf.kt$KontoLauf$fun laufen(result: SyncResult)</ID>
     <ID>NestedBlockDepth:NachrichtenLauf.kt$NachrichtenLauf$fun laufen(): Lauf.Ergebnis</ID>
-    <ID>NestedBlockDepth:Uploader.kt$Uploader$fun hochladen( quelle: Napi.Quelle, ordner: Ordner, datei: Datei, pfad: String = datei.pfad, halt: () -&gt; Boolean = { false }, fortschritt: (Long) -&gt; Unit = {}, ): Ausgang</ID>
     <ID>StringLiteralDuplication:DeviceIcons.kt$DeviceIcons$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"light"</ID>
@@ -106,7 +101,7 @@
     <ID>SwallowedException:HomesKontoActivity.kt$HomesKontoActivity$e: Exception</ID>
     <ID>SwallowedException:Import.kt$Import$e: IOException</ID>
     <ID>SwallowedException:Import.kt$Import$e: Kuerzer</ID>
-    <ID>SwallowedException:Import.kt$Import$e: Unlesbar</ID>
+    <ID>SwallowedException:Import.kt$Import$e: Stueckweise.Unlesbar</ID>
     <ID>SwallowedException:KontakteLauf.kt$KontakteLauf$e: IOException</ID>
     <ID>SwallowedException:KontakteLauf.kt$KontakteLauf$e: SecurityException</ID>
     <ID>SwallowedException:KontoLauf.kt$KontoLauf$e: Exception</ID>

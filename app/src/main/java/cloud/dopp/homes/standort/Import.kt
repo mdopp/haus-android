@@ -1,9 +1,8 @@
 package cloud.dopp.homes.standort
 
 import cloud.dopp.homes.data.Napi
-import cloud.dopp.homes.data.SicherungClient
 import cloud.dopp.homes.data.StandortImportClient
-import cloud.dopp.homes.sicherung.Uploader
+import cloud.dopp.homes.sicherung.Stueckweise
 import java.io.IOException
 import java.io.InputStream
 import java.util.Locale
@@ -12,8 +11,8 @@ import java.util.Locale
  * Standortverlauf übernehmen (owner 2026-11-03): one shared history file to
  * Homes, which brings it into the person's Reitti, and what came of it.
  *
- * The file goes in pieces the way a backup does ([Uploader]): after a cut it
- * asks Homes where it stands (HEAD) and goes on from there; shared again
+ * The file goes in pieces the way a backup does ([Stueckweise]): after a cut
+ * it asks Homes where it stands (HEAD) and goes on from there; shared again
  * later, the same name and size resume Homes' partial upload. Then it asks
  * Homes every [FRAGE] how far the import got, until Homes says done or why
  * not — or nothing moved for [STILL], which is said, not waited out.
@@ -23,7 +22,7 @@ import java.util.Locale
  */
 class Import(
     private val client: StandortImportClient,
-    private val teil: Int = Uploader.TEIL,
+    private val teil: Int = Stueckweise.TEIL,
     private val schlafen: (Long) -> Unit = { Thread.sleep(it) },
     private val jetzt: () -> Long = { System.currentTimeMillis() },
 ) {
@@ -74,15 +73,11 @@ class Import(
         if (e.code == 401) Ausgang.NichtGekoppelt else Ausgang.Fehler(e.satz, e.grund)
     } catch (e: Kuerzer) {
         Ausgang.Fehler(KUERZER, null)
-    } catch (e: Unlesbar) {
+    } catch (e: Stueckweise.Unlesbar) {
         Ausgang.Fehler(UNLESBAR, null)
     } catch (e: IOException) {
         Ausgang.Unerreichbar
     }
-
-    private class Kuerzer : IOException("the file got shorter")
-
-    private class Unlesbar(cause: IOException) : IOException("the file cannot be read", cause)
 
     /** The upload: its id once the file is whole on the box, null when [halt] said stop. */
     private fun hochladen(
@@ -92,71 +87,28 @@ class Import(
         fortschritt: (Fortschritt) -> Unit,
         halt: () -> Boolean,
     ): String? {
-        var (id, offset) = mitVersuchen { client.anlegen(name, groesse) }
-        var stream: InputStream? = null
-        var stromAn = -1L
-        var ohneFortschritt = 0
-        val puffer = ByteArray(teil)
-        try {
-            while (offset < groesse) {
-                fortschritt(Fortschritt.Hochladen(offset, groesse))
-                if (halt()) return null
-                val n = minOf(teil.toLong(), groesse - offset).toInt()
-                val gelesen = try {
-                    if (stream == null || stromAn != offset) {
-                        stream?.close()
-                        stream = oeffnen(offset)
-                        stromAn = offset
-                    }
-                    lies(stream!!, puffer, n)
-                } catch (e: IOException) {
-                    throw Unlesbar(e)
-                }
-                if (gelesen < n) throw Kuerzer()
-                stromAn += n
-                val antwort = try {
-                    client.senden(id, offset, puffer, n)
-                } catch (e: StandortImportClient.Abgelehnt) {
-                    throw e
-                } catch (e: IOException) {
-                    // a cut: ask Homes where it stands, after a pause
-                    if (++ohneFortschritt > VERSUCHE) throw e
-                    schlafen(PAUSE * ohneFortschritt)
-                    val wo = mitVersuchen { client.offset(id) }
-                    if (wo == null) {
-                        val neu = mitVersuchen { client.anlegen(name, groesse) }
-                        id = neu.first
-                        offset = neu.second
-                    } else {
-                        offset = wo
-                    }
-                    continue
-                }
-                when (antwort) {
-                    is SicherungClient.Teil.Weiter -> {
-                        ohneFortschritt = if (antwort.offset > offset || antwort.fertig) 0 else ohneFortschritt + 1
-                        offset = if (antwort.fertig) groesse else antwort.offset
-                    }
-                    is SicherungClient.Teil.Versatz -> {
-                        ohneFortschritt++
-                        offset = antwort.offset
-                    }
-                    SicherungClient.Teil.Unbekannt -> {
-                        ohneFortschritt++
-                        val neu = client.anlegen(name, groesse)
-                        id = neu.first
-                        offset = neu.second
-                    }
-                    is SicherungClient.Teil.Voll -> throw StandortImportClient.Abgelehnt(507, antwort.satz, null)
-                }
-                if (ohneFortschritt > VERSUCHE) throw IOException("no progress")
-            }
-        } finally {
-            runCatching { stream?.close() }
+        val ruf = object : Stueckweise.Ruf {
+            override fun anlegen() = client.anlegen(name, groesse)
+            override fun senden(id: String, offset: Long, puffer: ByteArray, laenge: Int) = client.senden(id, offset, puffer, laenge)
         }
-        fortschritt(Fortschritt.Hochladen(groesse, groesse))
-        return id
+        // a cut: ask Homes where it stands, after a pause; Homes' refusals end it
+        val nachSchnitt = { id: String, e: IOException, inFolge: Int ->
+            if (e is StandortImportClient.Abgelehnt || inFolge > VERSUCHE) throw e
+            schlafen(PAUSE * inFolge)
+            mitVersuchen { client.offset(id) }?.let { id to it } ?: mitVersuchen { client.anlegen(name, groesse) }
+        }
+        val start = mitVersuchen { client.anlegen(name, groesse) }
+        val stueckweise = Stueckweise(ruf, teil, halt, { fortschritt(Fortschritt.Hochladen(it, groesse)) }, nachSchnitt)
+        return when (val e = stueckweise.laden(start, groesse, oeffnen)) {
+            is Stueckweise.Ende.Fertig -> e.id
+            Stueckweise.Ende.Angehalten -> null
+            Stueckweise.Ende.Kuerzer -> throw Kuerzer()
+            is Stueckweise.Ende.Voll -> throw StandortImportClient.Abgelehnt(507, e.satz, null)
+            is Stueckweise.Ende.Fest -> throw IOException("no progress")
+        }
     }
+
+    private class Kuerzer : IOException("the file got shorter")
 
     /** Ask Homes how far import [id] got until it ended, or stood still for [STILL]. */
     private fun warten(id: String, groesse: Long, fortschritt: (Fortschritt) -> Unit, halt: () -> Boolean): Ausgang {
@@ -237,17 +189,6 @@ class Import(
             if (n.isNotEmpty()) return ENDUNGEN.any { n.endsWith(it) }
             val m = mime?.lowercase(Locale.ROOT)?.substringBefore(';')?.trim()
             return m != null && m != "application/octet-stream" && m in TYPEN
-        }
-
-        /** Read [n] bytes into [puffer]; fewer only at the end of the file. */
-        private fun lies(s: InputStream, puffer: ByteArray, n: Int): Int {
-            var gelesen = 0
-            while (gelesen < n) {
-                val r = s.read(puffer, gelesen, n - gelesen)
-                if (r < 0) break
-                gelesen += r
-            }
-            return gelesen
         }
 
         /** [s] moved on by [n] bytes; false when it ended before. */

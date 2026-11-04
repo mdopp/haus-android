@@ -25,15 +25,13 @@ interface Ordner {
 }
 
 /**
- * One file to Homes over the resumable upload (#194): in pieces of [teil]
- * bytes, and after any interruption it goes on where Homes stands instead of
- * starting over. The upload's id is remembered ([Merker]) until the file is
- * whole; the next run asks Homes for the offset (HEAD) and continues from it.
- * A 409 (or a 408 after a partial write) continues from the offset Homes
- * returns; a 404 starts a new upload. Homes keeps a finished upload known for
- * seven days: when the last answer was lost, HEAD says offset = size, and an
- * offset at the size — after HEAD or straight from the creation (a partial
- * already complete) — is a finished file.
+ * One file to Homes over the resumable upload (#194, [Stueckweise]): after any
+ * interruption it goes on where Homes stands instead of starting over. The
+ * upload's id is remembered ([Merker]) until the file is whole; the next run
+ * asks Homes for the offset (HEAD) and continues from it. A cut ends this run.
+ * Homes keeps a finished upload known for seven days: when the last answer was
+ * lost, HEAD says offset = size, and an offset at the size — after HEAD or
+ * straight from the creation (a partial already complete) — is a finished file.
  */
 class Uploader(
     private val client: SicherungClient,
@@ -73,63 +71,31 @@ class Uploader(
         pfad: String = datei.pfad,
         halt: () -> Boolean = { false },
         fortschritt: (Long) -> Unit = {},
-    ): Ausgang {
-        var stream: InputStream? = null
-        try {
-            var (id, offset) = beginnen(quelle, pfad, datei)
-            var stromAn = -1L
-            var konflikte = 0
-            var neu = 0
-            val puffer = ByteArray(teil)
-            while (true) {
-                if (offset < 0 || offset > datei.groesse) return Ausgang.Fehler(0, null)
-                fortschritt(offset)
-                if (offset == datei.groesse) {
-                    merker.vergissUpload(quelle, pfad)
-                    return Ausgang.Fertig
-                }
-                if (halt()) return Ausgang.Angehalten
-                if (stream == null || stromAn != offset) {
-                    stream?.close()
-                    stream = ordner.oeffnen(datei.pfad, offset)
-                    stromAn = offset
-                }
-                val n = minOf(teil.toLong(), datei.groesse - offset).toInt()
-                if (lies(stream, puffer, n) < n) return Ausgang.Veraendert
-                stromAn += n
-                when (val t = client.senden(id, offset, puffer, n)) {
-                    is SicherungClient.Teil.Weiter -> {
-                        konflikte = if (t.offset > offset || t.fertig) 0 else konflikte + 1
-                        if (konflikte > MAX_KONFLIKTE) return Ausgang.Fehler(0, null)
-                        if (t.fertig) {
-                            merker.vergissUpload(quelle, pfad)
-                            fortschritt(datei.groesse)
-                            return Ausgang.Fertig
-                        }
-                        offset = t.offset
-                    }
-                    is SicherungClient.Teil.Versatz -> {
-                        if (++konflikte > MAX_KONFLIKTE) return Ausgang.Fehler(409, null)
-                        offset = t.offset
-                    }
-                    SicherungClient.Teil.Unbekannt -> {
-                        if (++neu > MAX_NEU) return Ausgang.Fehler(404, null)
-                        merker.vergissUpload(quelle, pfad)
-                        val (nid, noff) = anlegen(quelle, pfad, datei)
-                        id = nid
-                        offset = noff
-                    }
-                    is SicherungClient.Teil.Voll -> return Ausgang.Voll(t.satz)
-                }
+    ): Ausgang = try {
+        val ruf = object : Stueckweise.Ruf {
+            override fun anlegen(): Pair<String, Long> {
+                merker.vergissUpload(quelle, pfad)
+                return anlegen(quelle, pfad, datei)
             }
-        } catch (e: SicherungClient.Abgelehnt) {
-            if (e.code == 507) return Ausgang.Voll(e.satz ?: "Auf der Box ist kein Platz mehr für die Sicherung.")
-            return Ausgang.Fehler(e.code, e.satz)
-        } catch (e: IOException) {
-            return if (halt()) Ausgang.Angehalten else Ausgang.Fehler(0, null)
-        } finally {
-            runCatching { stream?.close() }
+
+            override fun senden(id: String, offset: Long, puffer: ByteArray, laenge: Int) =
+                client.senden(id, offset, puffer, laenge)
         }
+        val start = beginnen(quelle, pfad, datei)
+        when (val e = Stueckweise(ruf, teil, halt, fortschritt).laden(start, datei.groesse) { ordner.oeffnen(datei.pfad, it) }) {
+            is Stueckweise.Ende.Fertig -> {
+                merker.vergissUpload(quelle, pfad)
+                Ausgang.Fertig
+            }
+            Stueckweise.Ende.Angehalten -> Ausgang.Angehalten
+            Stueckweise.Ende.Kuerzer -> Ausgang.Veraendert
+            is Stueckweise.Ende.Voll -> Ausgang.Voll(e.satz)
+            is Stueckweise.Ende.Fest -> Ausgang.Fehler(e.code, null)
+        }
+    } catch (e: SicherungClient.Abgelehnt) {
+        if (e.code == 507) Ausgang.Voll(e.satz ?: "Auf der Box ist kein Platz mehr für die Sicherung.") else Ausgang.Fehler(e.code, e.satz)
+    } catch (e: IOException) {
+        if (halt()) Ausgang.Angehalten else Ausgang.Fehler(0, null)
     }
 
     /** The upload remembered for this file, where Homes stands with it; else a new one. */
@@ -163,23 +129,6 @@ class Uploader(
 
     companion object {
         /** 8 MiB a PATCH: Homes takes up to 16. */
-        const val TEIL = 8 * 1024 * 1024
-
-        /** PATCHes in a row that bring no progress before the run gives up on the file. */
-        private const val MAX_KONFLIKTE = 3
-
-        /** New uploads after a 404 before the run gives up on the file. */
-        private const val MAX_NEU = 2
-
-        /** Read [n] bytes into [puffer]; fewer only at the end of the file. */
-        private fun lies(s: InputStream, puffer: ByteArray, n: Int): Int {
-            var gelesen = 0
-            while (gelesen < n) {
-                val r = s.read(puffer, gelesen, n - gelesen)
-                if (r < 0) break
-                gelesen += r
-            }
-            return gelesen
-        }
+        const val TEIL = Stueckweise.TEIL
     }
 }
