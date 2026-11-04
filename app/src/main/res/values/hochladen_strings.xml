@@ -10,6 +10,15 @@
     <string name="hochladen_spaeter_text">Das Hochladen geht später von selbst weiter, sobald das Handy wieder im Netz ist.</string>
     <string name="hochladen_heute_nicht">Android lässt die App gerade nicht länger hochladen. Es geht später von selbst weiter – oder sofort, wenn du die Homes-App öffnest.</string>
 
+    <!-- The start screen's row (owner, 2026-11-04: what shows as a notification shows in the open app too). -->
+    <string name="hochladen_zeile_lauf">Lädt hoch: %1$s · %2$d %%</string>
+    <string name="hochladen_zeile_beginnt">Lädt hoch: %1$s</string>
+    <string name="hochladen_zeile_pause">Hochladen pausiert – geht später weiter</string>
+    <plurals name="hochladen_zeile_musik">
+        <item quantity="one">%1$d Datei in der Musik</item>
+        <item quantity="other">%1$d Dateien in der Musik</item>
+    </plurals>
+
     <!-- Share → „Zur Musik hinzufügen“ (POST /napi/musik). -->
     <string name="musik_label">Zur Musik hinzufügen</string>
     <string name="musik_titel">Musik</string>

@@ -139,6 +139,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
         cloud.dopp.homes.verbindung.Verbindung.zeigen(this, findViewById(R.id.verbindung)) { unpair() }
         Abschnitte.zeigen(this) // Öffnen and Deine Aufgaben, from /napi/einrichtung (owner, 2026-11-04)
+        cloud.dopp.homes.hochladen.Stand.zeigen(this, findViewById(R.id.hochladen_zeile)) // uploads, as their notification says
         padForSystemBars(findViewById(R.id.home_root))
         handleDeepLink(intent)
         render()

@@ -199,6 +199,24 @@ class LiveServiceTest {
         assertEquals("again after the first backoff", 2, opened.size)
     }
 
+    /**
+     * The „1“ on the app's icon (owner, 2026-11-04): a phone that made the old
+     * channel, which showed a badge, gets a new one without — a channel's
+     * settings are fixed once it is made — and the old one is gone.
+     */
+    @Test
+    fun anOldChannelWithABadgeIsReplacedByOneWithout() {
+        val nm = ctx().getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(android.app.NotificationChannel("live_widgets", "Live-Widgets", NotificationManager.IMPORTANCE_LOW))
+        assertTrue(nm.getNotificationChannel("live_widgets").canShowBadge())
+        place(fed.first())
+        val s = shadowOf(start().get())
+        val channel = nm.getNotificationChannel(s.lastForegroundNotification.channelId)
+        assertFalse("shows a badge", channel.canShowBadge())
+        assertTrue("the old channel is still there", nm.getNotificationChannel("live_widgets") == null)
+        assertEquals(listOf(channel.id), nm.notificationChannels.map { it.id }.filter { it.startsWith("live_widgets") })
+    }
+
     @Test
     fun withoutAWidgetToFeedItDoesNotRun() {
         val c = start()

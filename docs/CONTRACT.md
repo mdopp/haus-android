@@ -554,3 +554,12 @@ one is named by its type. It is switched by the box's `teilen` key `musik`.
   line is gone, the notification says „Hochladen pausiert“ and that it goes
   on later — by itself, or at once when the app is opened — and WorkManager
   runs it again. Never a silent stop.
+- What the notification says shows in the open app too (owner,
+  2026-11-04), from the one state the job writes (`hochladen/Stand.kt`): a
+  quiet row at the top of the start screen — „Lädt hoch: <Datei> · 40 %“,
+  „Hochladen pausiert – geht später weiter“, or what came of the files („3
+  Dateien in der Musik“, „Standortverlauf: …“, why not). Running and paused
+  stay until done; a result, once seen in the app, goes with its
+  notification. The channel „Hochladen“ shows a badge on the app's icon;
+  the live widgets' channel does not (`live_widgets_v2`, the old one
+  deleted): nothing there to act on, and the app shows it by its switch.

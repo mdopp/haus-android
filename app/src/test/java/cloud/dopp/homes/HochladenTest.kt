@@ -14,6 +14,11 @@ import cloud.dopp.homes.hochladen.Hochladen
 import cloud.dopp.homes.hochladen.HochladenWorker
 import cloud.dopp.homes.hochladen.MusikClient
 import cloud.dopp.homes.hochladen.MusikDatei
+import cloud.dopp.homes.hochladen.Stand
+import cloud.dopp.homes.ui.HomeActivity
+import android.view.View
+import android.widget.TextView
+import org.robolectric.Robolectric
 import cloud.dopp.homes.hochladen.Ziel
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -50,6 +55,7 @@ class HochladenTest {
     @After fun zu() {
         runCatching { server.shutdown() }
         Auftraege.alle(ctx()).forEach { Auftraege.weg(ctx(), it.id) }
+        ctx().getSharedPreferences("homes_hochladen_stand", Context.MODE_PRIVATE).edit().clear().commit()
     }
 
     // --- what the music takes ----------------------------------------------------
@@ -171,6 +177,79 @@ class HochladenTest {
         assertEquals(ListenableWorker.Result.retry(), lauf())
         assertEquals("the file waits", 1, Auftraege.alle(ctx()).size)
         assertTrue(gesagt().toString(), gesagt().any { it.startsWith("Hochladen pausiert: Das Hochladen geht später von selbst weiter") })
+    }
+
+    // --- the same in the open app (owner, 2026-11-04) -----------------------------
+
+    @Test fun theRowSaysWhatTheNotificationSays() {
+        val r = ctx().resources
+        assertEquals("Lädt hoch: Lied.mp3 · 40 %", Stand.text(r, "Lied.mp3", 40, null, 0, null))
+        assertEquals("Lädt hoch: Lied.mp3", Stand.text(r, "Lied.mp3", -1, null, 2, null))
+        assertEquals("Hochladen pausiert – geht später weiter", Stand.text(r, null, -1, "Das Hochladen geht später …", 2, null))
+        assertEquals("3 Dateien in der Musik", Stand.text(r, null, -1, null, 3, null))
+        assertEquals(
+            "1 Datei in der Musik · Standortverlauf: 12.345 Orte übernommen.",
+            Stand.text(r, null, -1, null, 1, "Standortverlauf: 12.345 Orte übernommen."),
+        )
+        assertEquals(null, Stand.text(r, null, -1, null, 0, null))
+    }
+
+    @Test fun aResultSeenInTheAppGoesWithItsNotification() {
+        repeat(3) { Stand.fertig(ctx(), musik = true, zeile = null) }
+        assertEquals("3 Dateien in der Musik", Stand.text(ctx()))
+        Hochladen.sagen(ctx(), "Bei der Musik", "„Lied.mp3“ ist auf der Box.", "a1")
+        val nm = ctx().getSystemService(NotificationManager::class.java)
+        assertEquals(1, nm.activeNotifications.size)
+        Stand.gesehen(ctx())
+        assertEquals("the notification went", 0, nm.activeNotifications.size)
+        assertEquals("the row stays while the screen is open", "3 Dateien in der Musik", Stand.text(ctx()))
+        Stand.vergessen(ctx())
+        assertEquals("gone at the next visit", null, Stand.text(ctx()))
+        Stand.fertig(ctx(), musik = false, zeile = "Musik: Das ist keine Musik.")
+        assertEquals("Musik: Das ist keine Musik.", Stand.text(ctx()))
+    }
+
+    @Test fun runningAndPausedStayUntilDone() {
+        Stand.lauf(ctx(), "Album.zip", 12)
+        Stand.gesehen(ctx())
+        Stand.vergessen(ctx())
+        assertEquals("Lädt hoch: Album.zip · 12 %", Stand.text(ctx()))
+        Stand.pause(ctx(), "später")
+        Stand.gesehen(ctx())
+        Stand.vergessen(ctx())
+        assertEquals("Hochladen pausiert – geht später weiter", Stand.text(ctx()))
+        Stand.leer(ctx())
+    }
+
+    @Test fun theStartScreenShowsTheRowAndTheNextVisitNotTheSeenResult() {
+        Stand.fertig(ctx(), musik = false, zeile = "Standortverlauf: 12.345 Orte übernommen.")
+        Hochladen.sagen(ctx(), "Übernommen", "12.345 Orte übernommen.", "s1")
+        val c = Robolectric.buildActivity(HomeActivity::class.java).setup()
+        val zeile = c.get().findViewById<TextView>(R.id.hochladen_zeile)
+        assertEquals(View.VISIBLE, zeile.visibility)
+        assertEquals("Standortverlauf: 12.345 Orte übernommen.", zeile.text.toString())
+        assertEquals("seen in the app: its notification went", 0, ctx().getSystemService(NotificationManager::class.java).activeNotifications.size)
+        c.pause().resume()
+        assertEquals(View.GONE, zeile.visibility)
+    }
+
+    @Test fun theJobWritesTheRowsState() {
+        koppeln(server.url("/").toString().trimEnd('/'))
+        server.enqueue(MockResponse().setBody("""{"ok":true,"dateien":["Lied.mp3"]}"""))
+        anstellen("Lied.mp3")
+        lauf()
+        assertEquals("1 Datei in der Musik", Stand.text(ctx()))
+        server.shutdown()
+        anstellen("Zwei.mp3")
+        lauf()
+        assertEquals("Hochladen pausiert – geht später weiter", Stand.text(ctx()))
+    }
+
+    /** The uploads' channel keeps its badge: the open app shows the same (owner, 2026-11-04). */
+    @Test fun theUploadsChannelKeepsItsBadge() {
+        Hochladen.sagen(ctx(), "Bei der Musik", "„Lied.mp3“ ist auf der Box.", "b1")
+        val nm = ctx().getSystemService(NotificationManager::class.java)
+        assertTrue(nm.getNotificationChannel("hochladen").canShowBadge())
     }
 
     /** Android 15's six data-sync hours used up: the family reads that it goes on later, not a failure. */
