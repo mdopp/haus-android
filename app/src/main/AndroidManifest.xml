@@ -191,9 +191,10 @@
 
         <!-- Share → „In den Standortverlauf übernehmen“ (owner 2026-11-03): an old
              location history file (Google Maps' Timeline.json, Takeout's
-             Records.json, GPX, GeoJSON) into the person's Reitti, through Homes.
-             Exported for ACTION_SEND of those types only; a file manager that
-             says octet-stream is checked by its name (.json, .geojson, .gpx).
+             Records.json, GPX, GeoJSON, a Takeout ZIP as it is) into the person's
+             Reitti, through Homes. Exported for ACTION_SEND of those types only; a
+             file manager that says octet-stream is checked by its name (.json,
+             .geojson, .gpx, .zip).
              Translucent with its own task, like ShareActivity. -->
         <activity
             android:name=".ui.StandortImportActivity"
@@ -212,6 +213,8 @@
                 <data android:mimeType="application/xml" />
                 <data android:mimeType="text/xml" />
                 <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
             </intent-filter>
         </activity>
 

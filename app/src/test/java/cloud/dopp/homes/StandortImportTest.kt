@@ -56,6 +56,9 @@ class StandortImportTest {
         val anfragen = ArrayList<String>()
 
         @Volatile var keinReitti = false
+
+        /** An older Homes: a ZIP is refused at its start, with its sentence. */
+        @Volatile var keinZip = false
         @Volatile var laeuftNoch = 2
         @Volatile var bleibtStehen = false
 
@@ -73,6 +76,7 @@ class StandortImportTest {
                         return json(409, JSONObject().put("fehler", KEIN_REITTI).put("grund", Napi.GRUND_KEIN_SCHLUESSEL))
                     }
                     val o = JSONObject(String(body))
+                    if (keinZip && o.getString("name").endsWith(".zip")) return json(400, JSONObject().put("fehler", ALT_ZIP))
                     if (o.getString("name") != name || o.getLong("groesse") != groesse) {
                         name = o.getString("name")
                         groesse = o.getLong("groesse")
@@ -107,6 +111,7 @@ class StandortImportTest {
 
         companion object {
             const val ID = "0123456789abcdef0123456789abcdef"
+            const val ALT_ZIP = "Diese Datei kann Homes nicht lesen: JSON, GeoJSON oder GPX."
             fun json(code: Int, o: JSONObject): MockResponse =
                 MockResponse().setResponseCode(code).setHeader("Content-Type", "application/json").setBody(o.toString())
         }
@@ -206,8 +211,39 @@ class StandortImportTest {
         assertTrue(Import.nimmt("punkte.geojson", null))
         assertTrue(Import.nimmt(null, "application/gpx+xml"))
         assertFalse(Import.nimmt("foto.jpg", "application/octet-stream"))
-        assertFalse(Import.nimmt("takeout.zip", "application/zip"))
         assertFalse(Import.nimmt(null, "application/octet-stream"))
+    }
+
+    /** A Google Takeout comes as a ZIP (owner, 2026-11-04): taken by its type, or by its name from a file manager. */
+    @Test
+    fun aTakeoutZipIsTaken() {
+        assertTrue(Import.nimmt("takeout-20261104.zip", "application/zip"))
+        assertTrue(Import.nimmt("Takeout.ZIP", "application/octet-stream"))
+        assertTrue(Import.nimmt(null, "application/zip"))
+        assertTrue(Import.nimmt(null, "application/x-zip-compressed"))
+        assertFalse(Import.nimmt("musik.mp3", "application/octet-stream"))
+        assertEquals("takeout.zip", Import.dateiname("takeout.zip", "application/zip"))
+        assertEquals("a ZIP without a name keeps its kind", "Standortverlauf.zip", Import.dateiname(null, "application/zip"))
+        assertEquals("Standortverlauf.json", Import.dateiname(" ", "application/json"))
+    }
+
+    /** The ZIP goes as it is, in pieces from the stream: the app neither unpacks nor holds it. */
+    @Test
+    fun aZipGoesAsItIs() {
+        val inhalt = datei(2500).also { it[0] = 0x50; it[1] = 0x4b; it[2] = 3; it[3] = 4 }
+        val a = import().uebernehmen("takeout.zip", inhalt.size.toLong(), { ab -> ByteArrayInputStream(inhalt, ab.toInt(), inhalt.size) })
+        assertEquals(Ausgang.Fertig(FERTIG), a)
+        assertEquals("takeout.zip", homes.name)
+        assertArrayEquals(inhalt, homes.daten.toByteArray())
+    }
+
+    /** An older Homes refuses the ZIP: its sentence is what the person reads, as for any refusal. */
+    @Test
+    fun anOlderHomesSaysItCannotReadAZip() {
+        homes.keinZip = true
+        val a = import().uebernehmen("takeout.zip", 10, { ByteArrayInputStream(ByteArray(10)) })
+        assertTrue("$a", a is Ausgang.Fehler && a.satz == FakeImport.ALT_ZIP)
+        assertEquals(0, homes.daten.size())
     }
 
     // --- the share target ------------------------------------------------------

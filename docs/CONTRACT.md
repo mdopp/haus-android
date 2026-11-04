@@ -346,11 +346,16 @@ The owner's call, 2026-11-03: an old location history goes into Reitti by
 sharing the file to the app — no browser, no Reitti login. The share
 target „In den Standortverlauf übernehmen“ (`ui/StandortImportActivity`)
 takes `ACTION_SEND` of `application/json`, `application/geo+json`,
-`application/gpx+xml`, `application/gpx`, `application/xml`, `text/xml` and
-`application/octet-stream`; the name decides (`.json`, `.geojson`, `.gpx`).
-Homes reads Google Maps' Timeline.json (Android and iPhone), Takeout's
-Records.json, GPX and GeoJSON, and hands the points to the person's Reitti
-with their own token (mdopp/homes#234).
+`application/gpx+xml`, `application/gpx`, `application/xml`, `text/xml`,
+`application/octet-stream`, `application/zip` and
+`application/x-zip-compressed`; the name decides (`.json`, `.geojson`,
+`.gpx`, `.zip`), and a file without one is named by its type. Homes reads
+Google Maps' Timeline.json (Android and iPhone), Takeout's Records.json,
+GPX and GeoJSON, and hands the points to the person's Reitti with their own
+token (mdopp/homes#234). A Google Takeout ZIP (owner, 2026-11-04) goes as
+it is, streamed like any other file: the app neither unpacks nor holds it,
+Homes reads it; an older Homes refuses it with its sentence, which the
+dialog shows as any refusal.
 
 - The upload is the backups' (e): `POST /napi/standort/import {name,
   groesse}` → `{id, offset}` (the same name and size resume; 409 `{fehler,

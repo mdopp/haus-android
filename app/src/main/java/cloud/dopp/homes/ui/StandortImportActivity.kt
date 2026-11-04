@@ -68,7 +68,8 @@ class StandortImportActivity : Activity() {
             return
         }
         val (name, groesse) = beschreibe(contentResolver, uri)
-        if (!Import.nimmt(name, contentResolver.getType(uri) ?: intent.type)) {
+        val typ = contentResolver.getType(uri) ?: intent.type
+        if (!Import.nimmt(name, typ)) {
             said(getString(R.string.standort_import_nicht), getString(R.string.standort_import_falsch))
             return
         }
@@ -90,7 +91,7 @@ class StandortImportActivity : Activity() {
                     f.length() to { ab: Long -> vonAn(FileInputStream(f), ab) }
                 }
                 Import(StandortImportClient(base, token)).uebernehmen(
-                    name = name ?: "Standortverlauf.json",
+                    name = Import.dateiname(name, typ),
                     groesse = laenge,
                     oeffnen = oeffnen,
                     fortschritt = { f -> runOnUiThread { zeige(f) } },
