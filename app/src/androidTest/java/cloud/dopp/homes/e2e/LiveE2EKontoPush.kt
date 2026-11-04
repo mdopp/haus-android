@@ -1,5 +1,6 @@
 package cloud.dopp.homes.e2e
 
+import android.content.ContentResolver
 import android.provider.CalendarContract
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -30,7 +31,15 @@ class LiveE2EKontoPush {
         var warte = 180
         while (store.stand(Teil.KALENDER) == null && warte-- > 0) Thread.sleep(500)
         assertTrue("no first sync; last word: ${store.meldung(Teil.KALENDER)}", store.stand(Teil.KALENDER) != null)
+        // The switch also starts Android's own syncs (automatic, periodic): let them end
+        // before this run ends and takes the process along, or SyncManager counts the
+        // killed one as failed and holds the part's next sync back — the frame's too.
+        warte = 60
+        while (laeuft() && warte-- > 0) Thread.sleep(500)
     }
+
+    private fun laeuft(): Boolean = ContentResolver.isSyncActive(HomesKonto.konto, Teil.KALENDER.authority) ||
+        ContentResolver.isSyncPending(HomesKonto.konto, Teil.KALENDER.authority)
 
     @Test
     fun danach() {
