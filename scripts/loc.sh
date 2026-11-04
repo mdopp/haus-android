@@ -41,6 +41,8 @@ budget standort  1098  # 1,046: Standortverlauf — recording, batching, import
 budget kann      460  #   340 on 2026-11-04: what the box can do, /napi/kann kept and read, „Hier anfordern“ (homes ADR 0001);
                        # 360 -> 420 (owner-approved, homes ADR 0001 plan): the share targets switched by teilen, homes-android#232;
                        # 420 -> 460: the widget providers switched by widgets, homes-android#233
+budget einrichtung 603 #   574 on 2026-11-04, a new package (owner): /napi/einrichtung kept and read, „Öffnen“ and „Deine Aufgaben“
+                       # on the start screen, the launcher's four shortcuts and their trampoline
 budget realtime   667  #   635: the live stream and its foreground service
 budget verbindung 247  #   235 on 2026-11-04: what the app says about its line to Homes, one answer for the
                        # notification, the start screen and the widgets (box not reachable, no network, paused)

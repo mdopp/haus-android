@@ -19,7 +19,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import cloud.dopp.homes.HomesConfig
 import cloud.dopp.homes.R
@@ -32,6 +31,8 @@ import cloud.dopp.homes.data.PairLinks
 import cloud.dopp.homes.data.Pairing
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.einrichtung.Abschnitte
+import cloud.dopp.homes.einrichtung.EinrichtungStore
 import cloud.dopp.homes.kann.Anbieter
 import cloud.dopp.homes.kann.Anfordern
 import cloud.dopp.homes.kann.KannLeser
@@ -137,6 +138,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.live_battery).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
         cloud.dopp.homes.verbindung.Verbindung.zeigen(this, findViewById(R.id.verbindung)) { unpair() }
+        Abschnitte.zeigen(this) // Öffnen and Deine Aufgaben, from /napi/einrichtung (owner, 2026-11-04)
         padForSystemBars(findViewById(R.id.home_root))
         handleDeepLink(intent)
         render()
@@ -594,6 +596,7 @@ class HomeActivity : AppCompatActivity() {
         Pairing.cancel(this)
         HomesKonto.entfernen(applicationContext) // the household's contacts and calendars leave with the pairing (#206)
         KannStore.clear(this) // the next Homes says afresh what it can do
+        EinrichtungStore.clear(this) // and its modules and tasks
         Teilen.schalten(this, null) // every share target and widget provider as before
         Anbieter.schalten(this, null)
         Anfordern.clear()
@@ -605,17 +608,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /** In a Custom Tab (it shares the browser's Authelia session), else the browser. */
-    private fun open(uri: Uri) {
-        try {
-            CustomTabsIntent.Builder().build().launchUrl(this, uri)
-        } catch (e: Exception) {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, uri))
-            } catch (e2: Exception) {
-                toast(getString(R.string.home_no_browser))
-            }
-        }
-    }
+    private fun open(uri: Uri) = Abschnitte.oeffnen(this, uri)
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 

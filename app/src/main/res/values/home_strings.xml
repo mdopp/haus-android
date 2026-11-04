@@ -68,4 +68,23 @@
     <string name="live_battery_why">Damit die Widgets von selbst aktuell bleiben, tippe auf „Erlauben“ und dann im nächsten Fenster auf „Zulassen“.</string>
     <string name="live_battery_yes">Erlauben</string>
     <string name="live_battery_no">Später</string>
+    <!-- Öffnen, Deine Aufgaben and the launcher's shortcuts (owner, 2026-11-04; einrichtung/). -->
+    <string name="oeffnen_titel">Öffnen</string>
+    <string name="oeffnen_hinweis">Öffnet im Browser, mit deiner Anmeldung dort.</string>
+    <string name="aufgaben_titel">Deine Aufgaben</string>
+    <plurals name="aufgaben_offen">
+        <item quantity="one">%d Aufgabe offen</item>
+        <item quantity="other">%d Aufgaben offen</item>
+    </plurals>
+    <!-- A task whose app the phone lacks: the tap opens its store page. -->
+    <string name="aufgabe_holen">%1$s installieren</string>
+    <!-- A task whose app is on the phone: the tap opens its steps on Homes. -->
+    <string name="aufgabe_weiter">In Homes fertig einrichten</string>
+    <string name="kurz_garage">Garagentor</string>
+    <string name="kurz_garage_lang">Garagentor öffnen oder schließen</string>
+    <string name="kurz_einkauf">Einkaufsliste</string>
+    <string name="kurz_zeitleiste">Zeitleiste</string>
+    <string name="kurz_scannen">Dokument scannen</string>
+    <string name="scannen_keine_kamera">Keine Kamera-App gefunden.</string>
+    <string name="scannen_erlaubnis">Ohne Zugriff auf die Kamera lässt sich kein Dokument scannen.</string>
 </resources>

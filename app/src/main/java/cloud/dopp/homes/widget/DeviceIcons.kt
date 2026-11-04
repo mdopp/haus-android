@@ -5,7 +5,7 @@ import cloud.dopp.homes.R
 
 /**
  * Shared HA-domain → type-icon mapping used by the start screen's device rows
- * and the app-icon shortcuts, so a light/switch/cover/climate reads the same
+ * and the widgets, so a light/switch/cover/climate reads the same
  * everywhere. Pure (no Android context) → unit-testable on the JVM.
  */
 object DeviceIcons {
@@ -18,27 +18,6 @@ object DeviceIcons {
         // A door with a keyhole (#84).
         "lock" -> R.drawable.ic_door_lock
         else -> R.drawable.ic_device
-    }
-
-    /**
-     * Domain → **app-icon shortcut** badge (#99). Deliberately *not* [forDomain]:
-     * those glyphs are white on transparent because they sit on the app's dark
-     * screen and are tinted there. The launcher draws a shortcut icon on a light
-     * background under a round adaptive mask, so a white glyph with no background
-     * of its own collapses into a plain white disc — the reported symptom.
-     *
-     * The `ic_shortcut_*` drawables are therefore self-contained: the same glyph,
-     * but on an opaque brand-blue field and inset into the mask's safe zone.
-     * [forDomain] stays exactly as it is — it is right for the dark screen.
-     */
-    @DrawableRes
-    fun forShortcut(domain: String?): Int = when (domain) {
-        "light" -> R.drawable.ic_shortcut_light
-        "switch" -> R.drawable.ic_shortcut_switch
-        "cover" -> R.drawable.ic_shortcut_cover
-        "climate" -> R.drawable.ic_shortcut_climate
-        "lock" -> R.drawable.ic_shortcut_lock
-        else -> R.drawable.ic_shortcut_device
     }
 
     /**

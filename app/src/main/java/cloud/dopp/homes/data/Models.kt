@@ -62,18 +62,3 @@ data class Device(
 
 /** Covers whose open is confirm-first, matching the server's gate. */
 val SENSITIVE_COVER_CLASSES = setOf("garage", "door", "gate")
-
-/**
- * Domains Homes gates **wholesale**, device class irrelevant — Homes'
- * `sensitiveDomains` in `internal/napi/home.go` (#84). Every `lock.*`
- * service is sensitive there, `lock.lock` as much as `lock.unlock`, so a bare
- * tap gets `403 sensitive_action` and only the re-sent `confirmed=true` runs.
- */
-private val SENSITIVE_DOMAINS = setOf("lock", "alarm_control_panel")
-
-/**
- * Is a device (by [domain] + [deviceClass]) safety-gated — i.e. its action needs
- * a confirmation (#38, #84)? Mirrors the server's gate.
- */
-fun isSensitiveDevice(domain: String?, deviceClass: String?): Boolean =
-    domain in SENSITIVE_DOMAINS || (domain == "cover" && deviceClass in SENSITIVE_COVER_CLASSES)

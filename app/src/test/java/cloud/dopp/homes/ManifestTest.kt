@@ -379,7 +379,14 @@ class ManifestTest {
             assertFalse("$name is still in the merged manifest", merged.contains(".$name\""))
             assertTrue("$name.kt is still there", RepoFiles.mainKotlin().none { it.name == "$name.kt" })
         }
-        assertFalse("the capture's file provider", manifest.contains("androidx.core.content.FileProvider"))
+        // the capture's file provider went with it; the one left is Dokument scannen's (owner, 2026-11-04)
+        assertEquals(1, Regex("""<provider\b""").findAll(manifest).count())
+        val provider = manifest.substringAfter("<provider").substringBefore("</provider>")
+        assertTrue(provider, provider.contains("androidx.core.content.FileProvider") && provider.contains("""android:exported="false""""))
+        assertTrue(provider, provider.contains("""android:authorities="${'$'}{applicationId}.scan""""))
+        val pfade = File(RepoFiles.main, "res/xml/scan_pfade.xml").readText()
+        assertEquals("only cache/scan/ is shared", listOf("cache-path"), Regex("""<([a-z-]+-path)\b""").findAll(pfade).map { it.groupValues[1] }.toList())
+        assertTrue(pfade, pfade.contains("""path="scan/""""))
         assertFalse("the camera", manifest.contains("android.hardware.camera"))
         val providers = Regex("""<receiver\s+android:name="\.widget\.(\w+WidgetProvider)"""").findAll(manifest).map { it.groupValues[1] }.toSet()
         assertEquals(
@@ -390,6 +397,25 @@ class ManifestTest {
             "devices_widget_info", "active_devices_widget_info", "camera_widget_info",
             "energy_stats_widget_info", "energy_totals_widget_info", "box_overview_widget_info", "box_services_widget_info",
         ).forEach { assertFalse("res/xml/$it.xml is still there", File(RepoFiles.main, "res/xml/$it.xml").exists()) }
+    }
+
+    /**
+     * Which of Homes' module apps the phone has (owner, 2026-11-04): Android 11+
+     * answers for the packages the manifest names, one by one — never every
+     * package (QUERY_ALL_PACKAGES is not among [ours]).
+     */
+    @Test
+    fun theModulesAppsAreAskedForByName() {
+        val queries = manifest.substringAfter("<queries>").substringBefore("</queries>")
+        val pakete = Regex("""<package android:name="([^"]+)"""").findAll(queries).map { it.groupValues[1] }.toSet()
+        assertEquals(
+            setOf(
+                "app.alextran.immich", "org.jellyfin.mobile", "com.x8bit.bitwarden", "com.audiobookshelf.app",
+                "org.thoughtcrime.securesms", "io.homeassistant.companion.android",
+            ),
+            pakete,
+        )
+        assertFalse(permissions(merged).contains("QUERY_ALL_PACKAGES"))
     }
 
     @Test

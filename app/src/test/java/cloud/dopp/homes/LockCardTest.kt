@@ -1,12 +1,10 @@
 package cloud.dopp.homes
 
-import cloud.dopp.homes.data.isSensitiveDevice
 import cloud.dopp.homes.ui.StartDevices
 import cloud.dopp.homes.widget.DeviceIcons
 import cloud.dopp.homes.widget.WidgetActionReceiver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -25,20 +23,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class LockCardTest {
-
-    /** Every `lock.*` service is sensitive server-side, so the badge is too. */
-    @Test fun lockIsSensitiveRegardlessOfDeviceClass() {
-        assertTrue(isSensitiveDevice("lock", null))
-        assertTrue(isSensitiveDevice("lock", "door"))
-        assertTrue(isSensitiveDevice("lock", "irgendwas"))
-        // The server's second wholesale domain comes along for free.
-        assertTrue(isSensitiveDevice("alarm_control_panel", null))
-        // Unchanged: covers stay class-gated, ordinary domains stay open.
-        assertTrue(isSensitiveDevice("cover", "garage"))
-        assertEquals(false, isSensitiveDevice("cover", "shade"))
-        assertEquals(false, isSensitiveDevice("light", null))
-        assertEquals(false, isSensitiveDevice(null, "door"))
-    }
 
     @Test fun stateTextNamesTheBoltNotTheDoor() {
         assertEquals("abgeschlossen", StartDevices.lockLabel("locked"))

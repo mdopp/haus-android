@@ -519,6 +519,29 @@ object Napi {
         const val MEHR = "mehr"
     }
 
+    /** `GET /napi/einrichtung` (owner 2026-11-04), beside KannJson's version and module; an older Homes: 404. */
+    object EinrichtungJson {
+        const val OFFEN = "offen"
+        const val ZIELE = "ziele"
+        const val EINKAUF = "einkauf"
+        const val ZEITLEISTE = "zeitleiste"
+        const val SCANNEN = "scannen"
+    }
+
+    /** One module there: a [WEB] address, or its own app (KannJson's app: name, [PAKET], [STORE]) and [AUFGABE]. */
+    object EinrichtungModulJson {
+        const val NAME = "name"
+        const val TITEL = ModulJson.TITEL
+        const val ICON = "icon"
+        const val WEB = "web"
+        const val NUR_WEB = "nur_web"
+        const val PAKET = "paket"
+        const val STORE = "store"
+        const val AUFGABE = "aufgabe" // its TITEL, [ERLEDIGT] and [EINRICHTEN]
+        const val ERLEDIGT = "erledigt"
+        const val EINRICHTEN = "einrichten"
+    }
+
     /** A refused `POST /napi/kann/anfordern`: `{error}`, a German sentence (401 says `unauthorized`). */
     object AnfordernJson {
         const val ERROR = MerkenJson.ERROR
@@ -720,4 +743,8 @@ object Napi {
         Method.POST, "/napi/kann/anfordern", body = listOf("modul"),
         reply = listOf(ModulJson, AngebotJson, AnfordernJson),
     )
+
+    /** The person's modules and setup tasks (owner 2026-11-04); `/apps` ticks those whose app the phone has. */
+    val EINRICHTUNG = Endpoint(Method.GET, "/napi/einrichtung", reply = listOf(KannJson, EinrichtungJson, EinrichtungModulJson))
+    val EINRICHTUNG_APPS = Endpoint(Method.POST, "/napi/einrichtung/apps", body = listOf("pakete"), reply = EINRICHTUNG.reply)
 }

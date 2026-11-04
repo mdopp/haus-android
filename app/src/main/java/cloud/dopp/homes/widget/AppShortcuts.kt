@@ -3,27 +3,31 @@ package cloud.dopp.homes.widget
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.net.toUri
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import cloud.dopp.homes.data.ApiClient
 import cloud.dopp.homes.data.Device
+import cloud.dopp.homes.data.ServerStore
+import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.einrichtung.EinrichtungStore
+import cloud.dopp.homes.einrichtung.Kurz
+import cloud.dopp.homes.einrichtung.Verknuepfung
+import cloud.dopp.homes.einrichtung.VerknuepfungActivity
+import cloud.dopp.homes.einrichtung.Verknuepfungen
+import cloud.dopp.homes.ui.StartDevices
 import kotlin.concurrent.thread
 
 /**
- * Publishes the app-icon long-press menu (#97): one **dynamic** shortcut per
- * device of the household.
+ * Publishes the app-icon long-press menu (owner, 2026-11-04): Garagentor,
+ * Einkaufsliste, Zeitleiste and Dokument scannen ([Verknuepfungen], pure and
+ * JVM-tested), each only where the box has it, as **dynamic** shortcuts —
+ * built from Homes' answer, so a missing target hides its shortcut, and each
+ * one pinnable to the home screen like any shortcut.
  *
- * The list has to be dynamic — a static shortcut is written at build time and
- * can never know the user's devices. `res/xml/shortcuts.xml` holds only the
- * share target of the assistant's sharing shortcut ([ShareTarget], #188), which is
- * published here with the devices and takes one of the launcher's slots.
- *
- * The device set is the **household catalogue** (#100), cached in [WidgetStore]
- * so the menu survives an offline republish.
- *
- * Which entries exist, in which order, and how many — [DeviceShortcuts], pure
- * and JVM-tested. This object only does the parts that need a `Context`: ask the
- * launcher for the cap, read the store, build the icons and intents.
+ * `res/xml/shortcuts.xml` holds only the share target of the assistant's
+ * sharing shortcut ([ShareTarget], #188), which is published here last and
+ * takes one of the launcher's slots.
  *
  * Everything is best-effort: a launcher that rejects the publish (or one of the
  * OEM launchers that supports no shortcuts at all) must never take the app down
@@ -33,8 +37,9 @@ object AppShortcuts {
 
     /**
      * Republish the menu: when the app's screen becomes visible, so a
-     * restore/reinstall is picked up too, and when the assistant's name changes. Off the
-     * caller's thread: it touches SharedPreferences and the launcher.
+     * restore/reinstall is picked up too, when the assistant's name changes,
+     * and when Homes' modules do. Off the caller's thread: it touches
+     * SharedPreferences and the launcher.
      */
     fun refreshAsync(ctx: Context) {
         val app = ctx.applicationContext
@@ -58,16 +63,20 @@ object AppShortcuts {
             val gone = if (share == null) (stale + ShareTarget.ID).distinct() else stale
             if (gone.isNotEmpty()) ShortcutManagerCompat.removeLongLivedShortcuts(app, gone)
         }
-        val entries = DeviceShortcuts.entries(
-            catalogDevices(app), if (share == null) cap else cap - 1, WidgetStore.recentEntities(app),
-        )
-        val infos = entries.mapIndexed { i, e -> info(app, e, i) } + listOfNotNull(share)
+        val paired = ServerStore.isConfigured(app) && TokenStore.isPaired(app)
+        val entries = if (!paired) emptyList() else Verknuepfungen.liste(EinrichtungStore.einrichtung(app)?.ziele.orEmpty(), garage(app))
+        val infos = entries.take(maxOf(0, if (share == null) cap else cap - 1)).mapIndexed { i, v -> info(app, v, i) } + listOfNotNull(share)
         if (infos.isEmpty()) {
             runCatching { ShortcutManagerCompat.removeAllDynamicShortcuts(app) }
             return
         }
         runCatching { ShortcutManagerCompat.setDynamicShortcuts(app, infos) }
     }
+
+    /** The garage among the person's favourites, else among the household's devices. */
+    private fun garage(ctx: Context): ShortcutDevice? =
+        Verknuepfungen.garage(StartDevices.load(ctx).orEmpty().map { ShortcutDevice(it.entityId, it.name, it.domain, it.deviceClass) })
+            ?: Verknuepfungen.garage(catalogDevices(ctx))
 
     /**
      * The household catalogue: the cache while it is fresh, otherwise refetched
@@ -86,47 +95,30 @@ object AppShortcuts {
     fun catalogOf(devices: List<Device>): List<ShortcutDevice> =
         devices.map { ShortcutDevice(it.entityId, it.name, it.domain, it.deviceClass) }
 
-    private fun info(ctx: Context, entry: ShortcutEntry, rank: Int): ShortcutInfoCompat =
-        ShortcutInfoCompat.Builder(ctx, entry.id)
-            .setShortLabel(entry.label)
-            .setLongLabel(entry.label)
-            // Not the widget glyph: that one is white on transparent and the
-            // launcher turned it into a white disc (#99). See DeviceIcons.forShortcut.
-            .setIcon(IconCompat.createWithResource(ctx, DeviceIcons.forShortcut(entry.device.domain)))
+    private fun info(ctx: Context, v: Verknuepfung, rank: Int): ShortcutInfoCompat =
+        ShortcutInfoCompat.Builder(ctx, Verknuepfungen.PREFIX + v.art.id)
+            .setShortLabel(ctx.getString(v.art.kurz))
+            .setLongLabel(ctx.getString(v.art.lang))
+            // its own opaque field, not a white glyph the launcher would turn into a disc (#99)
+            .setIcon(IconCompat.createWithResource(ctx, v.art.bild))
             .setRank(rank)
-            .setIntent(intentFor(ctx, entry))
+            .setIntent(intentFor(ctx, v))
             .build()
 
     /**
-     * The intent behind one entry. **No shortcut carries a service** — a tap
-     * either opens a screen, or asks [WidgetActionReceiver] for the device's own
-     * toggle, which is domain-checked there and gated by the server's 403. A
-     * lock lands on the #92 chooser and nothing else, so the entry sits behind
-     * the device lock and the latch stays unreachable from here.
-     *
-     * The **entity id is what identifies the device** (#100).
+     * The intent behind one entry. **No shortcut carries a service**: the
+     * garage's asks [WidgetActionReceiver] for the device's own tap — Homes'
+     * 403 puts the confirm dialog before an open, as on the start screen —
+     * and the others land on [VerknuepfungActivity], which opens the address
+     * in a Custom Tab or the camera.
      */
-    fun intentFor(ctx: Context, entry: ShortcutEntry): Intent {
-        return when (entry.action) {
-            ShortcutAction.CHOOSE -> Intent(ctx, WidgetActionActivity::class.java)
-                .setAction(Intent.ACTION_VIEW)
-                .putExtra(WidgetActionReceiver.EXTRA_ENTITY, entry.device.entityId)
-                .putExtra(WidgetActionActivity.EXTRA_LOCK_CHOOSE, true)
-
-            ShortcutAction.TOGGLE -> Intent(ctx, WidgetActionActivity::class.java)
-                .setAction(Intent.ACTION_VIEW)
-                .putExtra(WidgetActionReceiver.EXTRA_ENTITY, entry.device.entityId)
-                .putExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, true)
-
-            // A device the shortcut cannot act on opens the devices page in the browser.
-            ShortcutAction.OPEN -> HomesPages.intent(ctx, HomesPages.RAEUME)
-        }
-            .apply {
-                // For wording only.
-                if (entry.action != ShortcutAction.OPEN) {
-                    putExtra(WidgetActionActivity.EXTRA_NAME, entry.label)
-                }
-            }
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-    }
+    fun intentFor(ctx: Context, v: Verknuepfung): Intent = when (v.art) {
+        Kurz.GARAGE -> Intent(ctx, WidgetActionActivity::class.java)
+            .setAction(Intent.ACTION_VIEW)
+            .putExtra(WidgetActionReceiver.EXTRA_ENTITY, v.ziel)
+            .putExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, true)
+            .putExtra(WidgetActionActivity.EXTRA_NAME, v.name) // for wording only
+        Kurz.SCANNEN -> Intent(ctx, VerknuepfungActivity::class.java).setAction(VerknuepfungActivity.SCANNEN)
+        Kurz.EINKAUF, Kurz.ZEITLEISTE -> Intent(ctx, VerknuepfungActivity::class.java).setAction(Intent.ACTION_VIEW).setData(v.ziel.toUri())
+    }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
 }

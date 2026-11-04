@@ -176,7 +176,7 @@ app/src/main/java/cloud/dopp/homes/
   data/        every call to Homes: Napi.kt (the calls as data), NapiRequest.kt,
                pairing, token and server store, ScreenGate
   widget/      the device, energy and tool widgets, the one ActionDialog,
-               shortcuts and the widget picker
+               publishing the shortcuts, and the widget picker
   ui/          the app's screens: start (favourites, LevelSheet), share,
                Daten sichern, Zurückholen, Standortverlauf, Homes-Konto
   realtime/    LiveService, the one foreground service, and the stream protocol
@@ -186,6 +186,8 @@ app/src/main/java/cloud/dopp/homes/
   standort/    location recording (Plan, Ruhe, Puffer) and the history import
   konto/       the Homes account: two sync adapters, vCard and iCal readers
   kann/        what the box can do (/napi/kann, homes ADR 0001): kept, read, „Hier anfordern“
+  einrichtung/ the person's modules and tasks (/napi/einrichtung): „Öffnen“, „Deine Aufgaben“,
+               the installed-apps report, the launcher's four shortcuts and their trampoline
 app/src/test/  JVM tests with Robolectric, including the preview renders
 e2e/           emulator runs (.github/workflows/live-e2e.yml)
 art/icon.svg   the one icon master; scripts/icons renders every PNG
