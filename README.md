@@ -1,3 +1,5 @@
+English · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md)
+
 # Homes for Android
 
 **Your home on your home screen: switch a lamp, watch the solar power,

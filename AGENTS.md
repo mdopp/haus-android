@@ -137,6 +137,17 @@ dead-code script names the line to delete. Never regenerate a baseline to
 let a new finding in; fix it, or, where the rule is wrong for this code, say
 why in a `@Suppress` beside it.
 
+## README in four languages
+
+README changes: update all four languages in the same PR. `README.md` is
+English; `README.de.md` (du), `README.es.md` (tú, no region) and
+`README.fr.md` (vous) carry the same sections, pictures and diagram, with
+the language switcher on top. The app's German UI words stay German (in
+ES and FR with a short gloss). `python3 scripts/readme_langs.py` (CI step
+*README languages*) fails when a translation is missing, has another
+number of `#` headings than the English one, or when a PR changes
+`README.md` without the other three.
+
 ## Commits
 
 - **Conventional Commits**: `type(scope): subject` — `feat`/`fix`/`refactor`/
@@ -186,7 +197,7 @@ app/src/test/  JVM tests with Robolectric, including the preview renders
 e2e/           emulator runs (.github/workflows/live-e2e.yml)
 art/icon.svg   the one icon master; scripts/icons renders every PNG
 config/        detekt.yml
-scripts/       loc.sh, deadcode.py, detekt-ratchet.sh, icons/
+scripts/       loc.sh, deadcode.py, detekt-ratchet.sh, readme_langs.py, icons/
 docs/          CONTRACT (the seam with Homes), DESIGN (the look), img/ (README pictures)
 ```
 
