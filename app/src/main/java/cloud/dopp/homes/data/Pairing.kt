@@ -18,7 +18,7 @@ import android.content.Context
 object Pairing {
 
     /** How long a started pairing waits for its pair link. */
-    const val PENDING_TTL_MS = 15L * 60L * 1000L
+    private const val PENDING_TTL_MS = 15L * 60L * 1000L
 
     private const val PREFS = "homes_pairing"
     private const val KEY_SERVER = "server"

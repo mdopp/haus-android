@@ -36,7 +36,7 @@ object EnergyStyle {
     }
 
     /** The four canonical "heute" slots, keyed to server totals. */
-    val TOTAL_SLOTS = listOf("pv", "export", "import", "battery")
+    private val TOTAL_SLOTS = listOf("pv", "export", "import", "battery")
 
     /**
      * The heute cells' labels and colors, in [TOTAL_SLOTS] order: short, the

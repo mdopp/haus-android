@@ -61,7 +61,7 @@ object Aufzeichnung {
     fun puffer(ctx: Context) = Puffer(File(ctx.applicationContext.filesDir, "standort/punkte.txt"))
 
     /** Connected to a Wi-Fi now (any; the owner, 2026-11-02). Needs no location permission. */
-    fun imWlan(ctx: Context): Boolean {
+    private fun imWlan(ctx: Context): Boolean {
         val cm = ctx.applicationContext.getSystemService(ConnectivityManager::class.java) ?: return false
         val caps = cm.getNetworkCapabilities(cm.activeNetwork ?: return false) ?: return false
         return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)

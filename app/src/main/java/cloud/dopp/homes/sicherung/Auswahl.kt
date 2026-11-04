@@ -37,14 +37,14 @@ object Auswahl {
     const val MEDIEN = "Media"
 
     /** WhatsApp's current end-to-end encrypted backup; the dated ones beside it are older days. */
-    const val MSGSTORE = "msgstore.db.crypt15"
+    private const val MSGSTORE = "msgstore.db.crypt15"
     const val MSGSTORE_PFAD = "$DATENBANKEN/$MSGSTORE"
 
     /**
      * A file changed in the last ten minutes may still be being written (the
      * messenger's nightly backup): it waits for the next run.
      */
-    const val RUHE_MS = 10 * 60 * 1000L
+    private const val RUHE_MS = 10 * 60 * 1000L
 
     /** Signal's on-device backups: `signal-<date and time>.backup` (older versions) or `signal-backup-….backup`. */
     private val SIGNAL = Regex("""signal-.+\.backup""")

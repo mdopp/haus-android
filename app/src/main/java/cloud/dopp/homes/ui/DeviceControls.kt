@@ -77,10 +77,10 @@ object DeviceControls {
     }
 
     /** A lamp's quick levels, as on Homes' sheet. */
-    val LIGHT_STEPS = listOf(Step("25 %", 25), Step("50 %", 50), Step("75 %", 75), Step("100 %", 100))
+    private val LIGHT_STEPS = listOf(Step("25 %", 25), Step("50 %", 50), Step("75 %", 75), Step("100 %", 100))
 
     /** A cover's quick levels, as on Homes' sheet. */
-    val COVER_STEPS = listOf(Step("Auf", 100), Step("½", 50), Step("Zu", 0))
+    private val COVER_STEPS = listOf(Step("Auf", 100), Step("½", 50), Step("Zu", 0))
 
     /**
      * A lamp that is on and HA can dim (a brightness, or a colour mode other
@@ -96,7 +96,7 @@ object DeviceControls {
     }
 
     /** A cover Homes opens freely: what HA says it can, and its position when it reports one. */
-    fun coverFree(card: Card): Boolean {
+    private fun coverFree(card: Card): Boolean {
         val dc = card.deviceClass?.trim()?.lowercase(Locale.ROOT)
         return !dc.isNullOrEmpty() && dc !in SENSITIVE_COVER_CLASSES
     }

@@ -24,13 +24,13 @@ import java.util.Locale
 object PhotoShare {
 
     /** What Homes takes as it comes (`uploadTypes` in Homes' upload.go), with the extension it gets. */
-    val TAKEN = mapOf("image/jpeg" to "jpg", "image/png" to "png", "image/webp" to "webp", "image/gif" to "gif")
+    private val TAKEN = mapOf("image/jpeg" to "jpg", "image/png" to "png", "image/webp" to "webp", "image/gif" to "gif")
 
     /** Homes' limit per file. */
-    const val MAX_BYTES = 25L shl 20
+    private const val MAX_BYTES = 25L shl 20
 
     /** A converted photo's long edge: sharp enough for a document, far below 25 MB. */
-    const val MAX_EDGE = 4096
+    private const val MAX_EDGE = 4096
 
     /** Homes takes at most this many files from one share; the rest is said. */
     const val MAX_PHOTOS = 20
@@ -78,7 +78,7 @@ object PhotoShare {
     }
 
     /** Decode [bytes] (HEIC on Android 9+, and every format the platform reads), at most [MAX_EDGE] long, as JPEG. */
-    fun toJpeg(bytes: ByteArray): ByteArray? {
+    private fun toJpeg(bytes: ByteArray): ByteArray? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null

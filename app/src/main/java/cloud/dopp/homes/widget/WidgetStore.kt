@@ -87,7 +87,7 @@ object WidgetStore {
     private const val KEY_SHORTCUT_RECENT = "shortcut_recent_json"
 
     /** How long a cached catalogue is published from before it is refetched. */
-    const val SHORTCUT_CATALOG_TTL_MS = 6 * 60 * 60 * 1000L
+    private const val SHORTCUT_CATALOG_TTL_MS = 6 * 60 * 60 * 1000L
 
     // --- generic .tool widget (#70/#72) --------------------------------------
 
@@ -188,5 +188,5 @@ object WidgetStore {
     private const val KEY_PENDING_TOOL_AT = "pending_tool_at"
 
     /** How long a picked-but-not-yet-placed tool id stays valid. */
-    const val PENDING_TOOL_TTL_MS = 5 * 60 * 1000L
+    private const val PENDING_TOOL_TTL_MS = 5 * 60 * 1000L
 }

@@ -97,7 +97,7 @@ object Live {
         ensure(ctx)
     }
 
-    fun fedPlaced(ctx: Context): Boolean {
+    private fun fedPlaced(ctx: Context): Boolean {
         val mgr = AppWidgetManager.getInstance(ctx) ?: return false
         return FED.any { runCatching { mgr.getAppWidgetIds(ComponentName(ctx, it)) }.getOrNull()?.isNotEmpty() == true }
     }

@@ -62,7 +62,7 @@ object EnergyRender {
     fun full(minW: Int, minH: Int): Boolean = (minW == 0 && minH == 0) || minH >= 110
 
     /** Room for Heute beside the picture: about four cells wide. Pure. */
-    fun todayBeside(w: Int): Boolean = w >= 250
+    private fun todayBeside(w: Int): Boolean = w >= 250
 
     /** The small tier's second line: only with more height than the bare 2×1. */
     fun showSub(minH: Int): Boolean = minH >= 85
@@ -75,7 +75,7 @@ object EnergyRender {
      * Haus, ins Netz or aus dem Netz, Akku lädt or entlädt (owner,
      * 2026-11-03: Jetzt in the present tense).
      */
-    fun legWord(f: EnergyFlow?, fallback: String): String {
+    private fun legWord(f: EnergyFlow?, fallback: String): String {
         val w = f?.watts
         return when (f?.sense) {
             "grid" -> when {
@@ -105,7 +105,7 @@ object EnergyRender {
     }
 
     /** Does Homes say anything about today? Without it the Heute part is left out. */
-    fun hasToday(energy: Energy?): Boolean = energy?.totals.orEmpty().any { it.today != null }
+    private fun hasToday(energy: Energy?): Boolean = energy?.totals.orEmpty().any { it.today != null }
 
     private fun density(ctx: Context) = ctx.resources.displayMetrics.density
 

@@ -36,9 +36,9 @@ object EnergyPicture {
     // Homes' dark palette (family.go, energie_verlauf.go): the widgets are dark.
     const val SOLAR = 0xFFE3B341.toInt()
     const val NETZ = 0xFF4F8FF7.toInt()
-    const val AKKU = 0xFFA78BFA.toInt()
+    private const val AKKU = 0xFFA78BFA.toInt()
     const val HAUS = 0xFFF97316.toInt()
-    const val EIGEN = 0xFFC27C0E.toInt()
+    private const val EIGEN = 0xFFC27C0E.toInt()
     const val EINSP = 0xFF1FA592.toInt()
     const val BEZUG = 0xFF4F8FF7.toInt()
     private const val INK = 0xFFF2F2F5.toInt()
@@ -54,7 +54,7 @@ object EnergyPicture {
     }
 
     /** A way's colour by its name (eigen, einsp, bezug, akku). */
-    fun wayColor(farbe: String): Int = when (farbe) {
+    private fun wayColor(farbe: String): Int = when (farbe) {
         "eigen" -> EIGEN
         "einsp" -> EINSP
         "bezug" -> BEZUG
@@ -142,7 +142,7 @@ object EnergyPicture {
     }
 
     /** The second line's full size, sp (coordinator, 2026-11-03: about 13–14 bold). */
-    const val LINE_MAX = 13.5f
+    private const val LINE_MAX = 13.5f
 
     /** The widest second line, „Haus verbraucht“, in em at weight 800 (96 dp at 13 sp). */
     private const val LONGEST_EM = 96f / 13f
@@ -151,7 +151,7 @@ object EnergyPicture {
      * The second lines' one size in [l]: the largest at which „Haus
      * verbraucht“ fits a pill, at most [LINE_MAX] — the same in all four.
      */
-    fun lineSize(l: Lage): Float = minOf(LINE_MAX, (l.pw - 0.5f * l.ph) / LONGEST_EM, l.ph * 0.34f)
+    private fun lineSize(l: Lage): Float = minOf(LINE_MAX, (l.pw - 0.5f * l.ph) / LONGEST_EM, l.ph * 0.34f)
 
     private fun place(w: Float, h: Float, pw: Float, ph: Float) = Lage(
         pw, ph,

@@ -23,14 +23,14 @@ object DeviceLook {
     const val ON = 0xFFFFC107.toInt()       // Homes --state: what is on
     const val SECURE = 0xFF10B981.toInt()   // Homes --ok: shut, locked
     const val OPEN = 0xFFF59E0B.toInt()     // Homes --warn: a garage or a lock open
-    const val LATCH = 0xFFFF7043.toInt()    // a lock's latch pulled
+    private const val LATCH = 0xFFFF7043.toInt()    // a lock's latch pulled
     const val MOVING = 0xFF7E9CFF.toInt()   // opening, closing, locking
-    const val JAMMED = 0xFFEF5350.toInt()   // Homes --danger
+    private const val JAMMED = 0xFFEF5350.toInt()   // Homes --danger
     const val OFF = 0xFF9AA0AE.toInt()      // Homes --muted: off, shut shutter
     const val UNKNOWN = 0xFF6B7280.toInt()  // Homes --faint: nothing known, or not reachable
 
     /** A garage, a gate, a door: a cover whose open is worth noticing. */
-    fun isGarage(domain: String?, deviceClass: String?): Boolean = domain == "cover" && deviceClass in SENSITIVE_COVER_CLASSES
+    private fun isGarage(domain: String?, deviceClass: String?): Boolean = domain == "cover" && deviceClass in SENSITIVE_COVER_CLASSES
 
     private fun norm(state: String?) = state?.trim()?.lowercase()
 

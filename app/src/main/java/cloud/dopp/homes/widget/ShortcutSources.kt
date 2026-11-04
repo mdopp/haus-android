@@ -18,7 +18,7 @@ import org.json.JSONObject
 object ShortcutUsage {
 
     /** How many entities the history remembers. */
-    const val CAP = 12
+    private const val CAP = 12
 
     /** [entityId] to the front of [history], deduplicated and capped. */
     fun record(history: List<String>, entityId: String, cap: Int = CAP): List<String> {

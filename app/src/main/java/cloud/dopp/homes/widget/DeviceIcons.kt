@@ -59,7 +59,7 @@ object DeviceIcons {
 
     /** A cover's picture: garage/gate as a garage, every other class as a shutter; open or opening is up. */
     @DrawableRes
-    fun forCover(deviceClass: String?, state: String?): Int {
+    private fun forCover(deviceClass: String?, state: String?): Int {
         val offen = state?.trim()?.lowercase() in setOf("open", "opening")
         return if (deviceClass?.trim()?.lowercase() in GARAGE_CLASSES) {
             if (offen) R.drawable.ic_garage_open else R.drawable.ic_garage_closed
