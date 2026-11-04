@@ -123,26 +123,53 @@
                 android:textColor="@color/homes_text"
                 android:visibility="gone" />
 
-            <TextView
-                style="@style/Text.Homes.Title"
+            <!-- The section's head: the title and „Alle →“, Homes' devices page (owner, 2026-11-04).
+                 The link keeps its 48 dp; the hint below moves up into the head's spare room. -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/home_devices_title" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    style="@style/Text.Homes.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/home_devices_title" />
+
+                <TextView
+                    android:id="@+id/devices_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:minWidth="48dp"
+                    android:layout_marginEnd="-8dp"
+                    android:gravity="center"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:text="@string/home_devices_all_link"
+                    android:contentDescription="@string/home_devices_all"
+                    android:textColor="@color/homes_accent"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 style="@style/Text.Homes.Label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="-10dp"
                 android:layout_marginBottom="@dimen/space_xs"
                 android:text="@string/home_devices_hint" />
 
-            <!-- The favorites from Homes (/napi/portal/favorites), then „Alle Geräte“. -->
+            <!-- The favorites from Homes (/napi/portal/favorites) as tiles (FavoritenAnsicht). -->
             <LinearLayout
                 android:id="@+id/devices_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/space_lg"
-                android:background="@drawable/card_homes"
                 android:orientation="vertical" />
 
             <TextView

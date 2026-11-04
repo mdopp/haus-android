@@ -158,21 +158,26 @@ launcher shortcut and the app's own links carry no `von`.
 (Owner, 2026-11-02: the devices live in the app, the device, active-devices
 and camera widgets are gone.) Paired, the app's screen shows first the
 person's favorite devices — `GET /napi/portal/favorites`, the things they
-pinned with ☆ on Homes, in their order — and below them „Alle Geräte“, which
-opens Homes' `/raeume`. The list read last is kept and drawn at once; a read
-that fails keeps it. A tap acts as the device widget's did, through
-`widget/WidgetActionReceiver`: a light or a switch toggles, a cover opens or
-closes (a garage, a door, a gate asks first: Homes' 403), a lock opens its
+pinned with ☆ on Homes, in their order — as tiles (owner, 2026-11-04,
+`ui/FavoritenAnsicht.kt`), and in the section's head „Alle →“, which opens
+Homes' `/raeume`. The list read last is kept and drawn at once; a read that
+fails keeps it. A tap acts as the device widget's did, through
+`widget/WidgetActionReceiver`: a light or a switch toggles, a garage, a door
+or a gate opens or closes (asking first: Homes' 403), a lock opens its
 chooser (#92: „Tür öffnen“ only when the card's `supported_features` names a
-latch); anything else opens its page. When the call is done the list is read
-again. With no favorites the screen says in one sentence how to get some.
+latch); a cover with a position opens its level sheet; anything else opens
+its page. A long press opens the device's page. When the call is done the
+list is read again. With no favorites the screen says in one sentence how to
+get some.
 
 Each favorite carries the fine controls Haus's devices page has (owner,
 2026-11-03; `ui/DeviceControls.kt`), read off the card's existing fields, no
 new route: a lamp that dims its brightness (`light.turn_on` with
 `brightness_pct`, 0 is `light.turn_off`); a cover whose `device_class` is
-named and is not a garage, a door or a gate Hoch, Stopp, Runter and its
-position (`cover.set_cover_position`), each as `supported_features` allows; a
+named and is not a garage, a door or a gate its position
+(`cover.set_cover_position`, the sheet's Auf, ½, Zu and Stopp); every cover,
+a garage too, Hoch, Stopp, Runter as ▲ ■ ▼ on its tile, each as
+`supported_features` allows; a
 heating that is on Kälter and Wärmer (`climate.set_temperature`, by
 `target_temp_step` within `min_temp`/`max_temp`); a playing or paused player
 Pause or Weiter, Leiser and Lauter. Each is one `POST /napi/ha/call` through

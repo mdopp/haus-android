@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A favourite's fine controls side by side (owner, 2026-11-04): one quiet pill, no outline, as the widgets dropped theirs. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:insetTop="4dp" android:insetBottom="4dp">
+    <shape android:shape="rectangle">
+        <solid android:color="#FF1E1E25" />
+        <corners android:radius="20dp" />
+    </shape>
+</inset>

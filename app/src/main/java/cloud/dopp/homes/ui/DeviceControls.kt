@@ -71,9 +71,12 @@ object DeviceControls {
     private const val MEDIA_VOLUME_STEP = 1024
     private const val MEDIA_PLAY = 16384
 
+    /** The state HA says, or null when [card] does not answer or nothing is known. */
+    private fun answer(card: Card): String? =
+        card.state?.trim()?.lowercase(Locale.ROOT)?.takeIf { it != "unavailable" && it != "unknown" }
+
     fun of(card: Card): Controls {
-        val state = card.state?.trim()?.lowercase(Locale.ROOT)
-        if (state == null || state == "unavailable" || state == "unknown") return Controls()
+        val state = answer(card) ?: return Controls()
         return when (card.domain) {
             "light" -> light(card, state)
             "cover" -> cover(card)
@@ -109,14 +112,29 @@ object DeviceControls {
         return !dc.isNullOrEmpty() && dc !in SENSITIVE_COVER_CLASSES
     }
 
-    private fun cover(card: Card): Controls {
-        if (!coverFree(card)) return Controls()
-        val f = card.supportedFeatures ?: (COVER_OPEN or COVER_CLOSE or COVER_POSITION or COVER_STOP)
-        val buttons = listOf(
+    /** What HA says a cover can, all of them when it says nothing. */
+    private fun coverFeatures(card: Card) = card.supportedFeatures ?: (COVER_OPEN or COVER_CLOSE or COVER_POSITION or COVER_STOP)
+
+    /**
+     * A cover's Hoch, Stopp and Runter as HA says it can — a garage's and a
+     * gate's too (owner, 2026-11-04: the tile's ▲ ■ ▼): each is one call
+     * without data, so Homes' rule still asks before it opens one, in the one
+     * dialog. Empty for anything else and for a cover that does not answer.
+     */
+    fun coverButtons(card: Card): List<Button> {
+        if (card.domain != "cover" || answer(card) == null) return emptyList()
+        val f = coverFeatures(card)
+        return listOf(
             Triple(COVER_OPEN, "Hoch", "cover.open_cover"),
             Triple(COVER_STOP, "Stopp", "cover.stop_cover"),
             Triple(COVER_CLOSE, "Runter", "cover.close_cover"),
         ).filter { f and it.first != 0 }.map { Button(it.second, it.third) }
+    }
+
+    private fun cover(card: Card): Controls {
+        if (!coverFree(card)) return Controls()
+        val f = coverFeatures(card)
+        val buttons = coverButtons(card)
         val slider = card.position?.takeIf { f and COVER_POSITION != 0 }
             ?.let { Slider("Position", it.coerceIn(0, 100), "cover.set_cover_position", "position", steps = COVER_STEPS) }
         return Controls(buttons, slider)

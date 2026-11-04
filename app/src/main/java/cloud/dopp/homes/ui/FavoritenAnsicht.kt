@@ -1,0 +1,226 @@
+package cloud.dopp.homes.ui
+
+import android.content.Context
+import android.content.res.ColorStateList
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.ColorUtils
+import cloud.dopp.homes.R
+import cloud.dopp.homes.data.Card
+import cloud.dopp.homes.widget.DeviceLook
+
+/**
+ * „Deine Geräte“ as tiles (owner, 2026-11-04: „Ich glaube, das geht mit
+ * weniger Platz und gleicher Funktionalität“; variant A2, approved as
+ * rendered). Each tile keeps what a row did: a tap switches, a long press
+ * opens the device in Homes, the accented level or „aus“ opens
+ * [LevelSheet], a lock and a garage ask first (the receiver's one dialog), a
+ * device that does not answer says „nicht erreichbar“ and, while the box is
+ * not reached, every tile is greyed under the „Stand …“ line.
+ *
+ * The tiles wear the widgets' look: the picture and its colour from
+ * [DeviceLook] (amber on, green shut and locked, orange open, grey off), so
+ * the picture says the state and words are left only where it cannot; the
+ * name without the room HA appends ([DeviceLook.shortName]); no outlines.
+ *
+ * Two to a row, the level right of the picture, the name below. A cover
+ * takes the whole row: its ▲ ■ ▼ sit right of the picture, and three 40 dp
+ * buttons beside it do not fit half of a 360 dp phone; a tap on the tile or
+ * its level opens the sheet (Auf, ½, Zu, Stopp and the slider). A tile left
+ * without a neighbour takes the whole row as one line too.
+ */
+class FavoritenAnsicht(
+    private val ctx: Context,
+    /** The values are the last ones known (the box not reached): grey them, and a tap says no „schaltet …“. */
+    private val stale: () -> Boolean,
+    private val tap: (Card, switching: () -> Unit) -> Unit,
+    private val longPress: (Card) -> Unit,
+    private val openLevel: (Card, DeviceControls.Slider, List<DeviceControls.Button>, switching: () -> Unit) -> Unit,
+    private val send: (Card, DeviceControls.Button, switching: () -> Unit) -> Unit,
+) {
+    private val inflater = LayoutInflater.from(ctx)
+    private val grey = stale()
+    private val density = ctx.resources.displayMetrics.density
+    private fun dp(v: Int) = (v * density).toInt()
+
+    /** The favourites as tiles in their order, two to a row; a cover, and a tile left alone, across the row. */
+    fun kacheln(group: ViewGroup, cards: List<Card>) {
+        val gap = dp(GAP_DP)
+        var i = 0
+        var first = true
+        while (i < cards.size) {
+            val pair = cards[i].takeIf { !breit(it) }?.let { a -> cards.getOrNull(i + 1)?.takeIf { !breit(it) }?.let { b -> listOf(a, b) } }
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                isBaselineAligned = false
+            }
+            if (pair != null) {
+                pair.forEachIndexed { j, card ->
+                    row.addView(
+                        kachel(row, card, R.layout.item_device_tile),
+                        LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { if (j > 0) marginStart = gap },
+                    )
+                }
+                i += 2
+            } else {
+                row.addView(kachel(row, cards[i], R.layout.item_device_tile_wide), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                i += 1
+            }
+            group.addView(
+                row,
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (!first) topMargin = gap },
+            )
+            first = false
+        }
+    }
+
+    /** A cover with buttons takes a whole row: three 40 dp buttons and its picture do not fit half of a 360 dp phone. */
+    private fun breit(card: Card) = DeviceControls.coverButtons(card).isNotEmpty()
+
+    private fun kachel(parent: ViewGroup, card: Card, layout: Int): View {
+        val v = inflater.inflate(layout, parent, false)
+        v.tag = card.entityId
+        val name = DeviceLook.shortName(card.name)
+        val colour = if (grey) DeviceLook.OFF else DeviceLook.tint(card.domain, card.deviceClass, card)
+        val icon = v.findViewById<ImageView>(R.id.row_icon)
+        icon.setImageDrawable(bild(card))
+        icon.imageTintList = ColorStateList.valueOf(colour)
+        icon.backgroundTintList = ColorStateList.valueOf(ColorUtils.setAlphaComponent(colour, DOT_ALPHA))
+        v.findViewById<TextView>(R.id.row_name).text = name
+        val wordsView = v.findViewById<TextView>(R.id.row_room)
+        val levelView = v.findViewById<TextView>(R.id.row_level)
+        val words = worte(card)
+        wordsView.text = words
+        wordsView.visibility = if (words == null) View.GONE else View.VISIBLE
+        val switching = {
+            if (!stale()) {
+                wordsView.text = ctx.getString(R.string.home_device_switching)
+                wordsView.visibility = View.VISIBLE
+                levelView.visibility = View.GONE
+            }
+        }
+        val level = DeviceControls.of(card).slider
+        val stop = DeviceControls.coverButtons(card).filter { it.service == "cover.stop_cover" }
+        // the picture's words for a screen reader: „Küchenlicht, an · 60 %“
+        val said = listOf(name, StartDevices.stateText(card))
+        if (level != null) {
+            val says = level.says()
+            levelView.text = says
+            levelView.visibility = View.VISIBLE
+            levelView.contentDescription = ctx.getString(R.string.home_device_level, name, level.label, says)
+            levelView.setOnClickListener { openLevel(card, level, stop, switching) }
+            reachAtLeast48dp(v, levelView)
+        }
+        v.contentDescription = said.joinToString(", ")
+        v.isClickable = true
+        // a cover's tile opens its sheet (its ▲ ■ ▼ are on the tile); everything else switches as before
+        v.setOnClickListener {
+            if (card.domain == "cover" && level != null) openLevel(card, level, stop, switching) else tap(card, switching)
+        }
+        v.setOnLongClickListener {
+            longPress(card)
+            true
+        }
+        v.backgroundTintList = ColorStateList.valueOf(if (active(colour)) ColorUtils.blendARGB(TILE, colour, WASH) else TILE)
+        val buttons = DeviceControls.coverButtons(card).ifEmpty { DeviceControls.of(card).buttons }
+        if (buttons.isNotEmpty()) segment(v.findViewById(R.id.row_controls), card, buttons, switching)
+        if (grey) v.alpha = STALE_ALPHA
+        return v
+    }
+
+    /**
+     * The widgets' picture of [card] ([DeviceLook.icon]): a lamp lit or dark,
+     * a garage door open or shut, a blind up or down — and a blind part-way
+     * the same two pictures, the lowered one over the raised one down to its
+     * position, so the picture says „part-way“ too.
+     */
+    private fun bild(card: Card): android.graphics.drawable.Drawable {
+        val res = DeviceLook.icon(card.domain, card.deviceClass, card.state)
+        val pos = card.position
+        if (res != R.drawable.ic_blind_open || pos == null || pos !in 1..99) return AppCompatResources.getDrawable(ctx, res)!!
+        val shade = android.graphics.drawable.ClipDrawable(
+            AppCompatResources.getDrawable(ctx, R.drawable.ic_blind_closed),
+            android.view.Gravity.TOP,
+            android.graphics.drawable.ClipDrawable.VERTICAL,
+        ).apply { level = (100 - pos) * CLIP_PER_PERCENT }
+        return android.graphics.drawable.LayerDrawable(arrayOf(AppCompatResources.getDrawable(ctx, R.drawable.ic_blind_open)!!, shade))
+    }
+
+    /**
+     * The words a tile keeps: only what its picture and level cannot say — a
+     * thing that does not answer, one on its way („öffnet …“, „schließt ab …“),
+     * a jammed lock, and what has no picture of its state (a heating's
+     * reading, a player).
+     */
+    private fun worte(card: Card): String? {
+        val s = card.state?.trim()?.lowercase(java.util.Locale.ROOT)
+        return when {
+            s == null || s == "unavailable" || s == "unknown" -> StartDevices.stateText(card)
+            s in UNTERWEGS || s == "jammed" -> StartDevices.stateText(card)
+            card.domain in BILDLICH -> null
+            else -> StartDevices.stateText(card)
+        }
+    }
+
+    /** The fine buttons as pictures in one quiet pill: ▲ ■ ▼, − +, ❚❚ ▶; each 40 dp wide and 48 dp high. */
+    private fun segment(holder: LinearLayout, card: Card, buttons: List<DeviceControls.Button>, switching: () -> Unit) {
+        holder.visibility = View.VISIBLE
+        holder.background = AppCompatResources.getDrawable(ctx, R.drawable.seg_homes)
+        holder.setPadding(0, 0, 0, 0) // the pill's inset is not the buttons' padding: they stay 48 dp high
+        buttons.forEach { b ->
+            val btn = ImageButton(ctx)
+            btn.setImageResource(ICONS[b.label] ?: R.drawable.ic_device)
+            btn.imageTintList = ColorStateList.valueOf(ctx.getColor(R.color.homes_text))
+            btn.setBackgroundResource(R.drawable.btn_seg_homes)
+            btn.scaleType = ImageView.ScaleType.CENTER
+            btn.contentDescription = DeviceLook.shortName(card.name) + ": " + b.label
+            btn.setOnClickListener { send(card, b, switching) }
+            holder.addView(btn, LinearLayout.LayoutParams(dp(SEG_W_DP), dp(TOUCH_DP)))
+        }
+    }
+
+    /** The level's touch target, at least 48 dp each way, while its text stays the size of the line. */
+    private fun reachAtLeast48dp(row: View, level: View) {
+        val min = dp(TOUCH_DP)
+        row.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            if (level.visibility != View.VISIBLE || level.width == 0) return@addOnLayoutChangeListener
+            val r = android.graphics.Rect(0, 0, level.width, level.height)
+            (row as ViewGroup).offsetDescendantRectToMyCoords(level, r)
+            r.inset(-((min - r.width()) / 2).coerceAtLeast(0), -((min - r.height()) / 2).coerceAtLeast(0))
+            row.touchDelegate = android.view.TouchDelegate(r, level)
+        }
+    }
+
+    /** On, open or moving: the tile takes a wash of its colour; shut, locked and off stay quiet. */
+    private fun active(colour: Int) = !grey && colour != DeviceLook.OFF && colour != DeviceLook.UNKNOWN && colour != DeviceLook.SECURE
+
+    private companion object {
+        const val GAP_DP = 8
+        const val TOUCH_DP = 48
+        const val SEG_W_DP = 40
+        const val CLIP_PER_PERCENT = 100
+        val UNTERWEGS = setOf("opening", "closing", "locking", "unlocking")
+        val BILDLICH = setOf("light", "switch", "cover", "lock")
+        const val TILE = 0xFF141419.toInt()
+        const val WASH = 0.13f
+        const val DOT_ALPHA = 0x2E
+        const val STALE_ALPHA = 0.55f
+        val ICONS = mapOf(
+            "Hoch" to R.drawable.ic_ctl_up,
+            "Stopp" to R.drawable.ic_ctl_stop,
+            "Runter" to R.drawable.ic_ctl_down,
+            "Kälter" to R.drawable.ic_ctl_minus,
+            "Wärmer" to R.drawable.ic_ctl_plus,
+            "Leiser" to R.drawable.ic_ctl_minus,
+            "Lauter" to R.drawable.ic_ctl_plus,
+            "Pause" to R.drawable.ic_ctl_pause,
+            "Weiter" to R.drawable.ic_ctl_play,
+        )
+    }
+}

@@ -116,8 +116,10 @@ class HomeScreenTest {
         if (v is ViewGroup) (0 until v.childCount).flatMap { texts(v.getChildAt(it)) }
         else listOfNotNull((v as? TextView)?.takeIf { it.visibility == View.VISIBLE }?.text?.toString())
 
-    private fun deviceRows(a: HomeActivity): List<View> =
-        a.findViewById<ViewGroup>(R.id.devices_group).let { g -> (0 until g.childCount).map { g.getChildAt(it) } }
+    private fun deviceRows(a: HomeActivity): List<View> = Kacheln.of(a)
+
+    /** A tile's words under its name: only what its picture cannot say, and „schaltet …“ after a tap. */
+    private fun words(tile: View): String? = tile.findViewById<TextView>(R.id.row_room).takeIf { it.visibility == View.VISIBLE }?.text?.toString()
 
     @Test
     fun theFavoritesComeFirstThenAlleGeraete() {
@@ -129,11 +131,15 @@ class HomeScreenTest {
         val order = (0 until section.childCount).map { section.getChildAt(it) }
         assertTrue("the devices come before the widgets", order.indexOf(group) < order.indexOf(a.findViewById(R.id.widgets_card)))
         assertTrue("the devices come before the live switch", order.indexOf(group) < order.indexOf(a.findViewById(R.id.widgets_card)))
+        // the picture says on and locked; the level beside it, the name below; a sensor keeps its reading
         val rows = deviceRows(a).map { texts(it) }
-        assertEquals(
-            listOf(listOf("Küche", "an ·", "60 %"), listOf("Haustür", "abgeschlossen"), listOf("Bad", "21,5 °C"), listOf("Alle Geräte")),
-            rows,
-        )
+        assertEquals(listOf(listOf("60 %", "Küche"), listOf("Haustür"), listOf("Bad", "21,5 °C")), rows)
+        assertEquals(listOf("Küche, an · 60 %", "Haustür, abgeschlossen", "Bad, 21,5 °C"), deviceRows(a).map { it.contentDescription })
+        // „Alle Geräte“ is the head's „Alle →“, no row of its own
+        val all = a.findViewById<TextView>(R.id.devices_all)
+        assertEquals(View.VISIBLE, all.visibility)
+        assertEquals("Alle →", all.text.toString())
+        assertEquals("Alle Geräte", all.contentDescription)
     }
 
     /** A lamp's tap switches it, the way the device widget's did: through the device receiver. */
@@ -144,14 +150,14 @@ class HomeScreenTest {
         val a = open()
         boxNotReachable()
         deviceRows(a)[0].performClick()
-        assertNotEquals("no „schaltet …“ Homes cannot hear", ctx().getString(R.string.home_device_switching), texts(deviceRows(a)[0])[1])
+        assertNotEquals("no „schaltet …“ Homes cannot hear", ctx().getString(R.string.home_device_switching), words(deviceRows(a)[0]))
         Verbindung.ergebnis(ctx(), null, 200) // Homes answers again
         shadowOf(a.application).clearBroadcastIntents()
         deviceRows(a)[0].performClick()
         val tap = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
         assertEquals("light.kueche", tap.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
         assertEquals(WidgetActionReceiver.OP_TOGGLE, tap.getStringExtra(WidgetActionReceiver.EXTRA_OP))
-        assertEquals("the tap answers at once", ctx().getString(R.string.home_device_switching), texts(deviceRows(a)[0])[1])
+        assertEquals("the tap answers at once", ctx().getString(R.string.home_device_switching), words(deviceRows(a)[0]))
     }
 
     /** The start screen's read of the favorites goes to a port nothing listens on: wait until it told [Verbindung]. */
@@ -174,7 +180,7 @@ class HomeScreenTest {
         assertEquals(1, tap.getIntExtra(WidgetActionActivity.EXTRA_FEATURES, -1))
     }
 
-    /** A sensor cannot be switched: its tap opens its page on Homes; „Alle Geräte“ opens the devices page. */
+    /** A sensor cannot be switched: its tap opens its page on Homes; „Alle →“ opens the devices page; a long press the device. */
     @Test
     fun theRestOpensHomes() {
         paired()
@@ -182,17 +188,20 @@ class HomeScreenTest {
         val a = open()
         deviceRows(a)[2].performClick()
         assertEquals("https://127.0.0.1:1/raeume/sensor.bad", shadowOf(a).nextStartedActivity?.dataString)
-        deviceRows(a).last().performClick()
+        a.findViewById<View>(R.id.devices_all).performClick()
         assertEquals("https://127.0.0.1:1/raeume", shadowOf(a).nextStartedActivity?.dataString)
+        deviceRows(a)[0].performLongClick()
+        assertEquals("https://127.0.0.1:1/raeume/light.kueche", shadowOf(a).nextStartedActivity?.dataString)
     }
 
-    /** No favorites yet: one sentence how to get some, and „Alle Geräte“ all the same. */
+    /** No favorites yet: one sentence how to get some, and „Alle →“ all the same. */
     @Test
     fun noFavoritesSaysHow() {
         paired()
         StartDevices.save(ctx(), """{"ok":true,"favorites":[]}""")
-        val rows = deviceRows(open()).map { texts(it) }
-        assertEquals(listOf(listOf(ctx().getString(R.string.home_devices_none)), listOf("Alle Geräte")), rows)
+        val a = open()
+        assertEquals(listOf(ctx().getString(R.string.home_devices_none)), Kacheln.notes(a))
+        assertEquals(View.VISIBLE, a.findViewById<View>(R.id.devices_all).visibility)
     }
 
     /** Unpairing forgets the favorites with the rest. */
@@ -204,19 +213,18 @@ class HomeScreenTest {
         assertNull(StartDevices.load(ctx()))
     }
 
-    /** The favorites cannot be read (a Homes not yet updated): one sentence, and „Alle Geräte“ all the same. */
+    /** The favorites cannot be read (a Homes not yet updated): one sentence, and „Alle →“ all the same. */
     @Test
     fun alleGeraeteStaysWhenTheFavoritesFail() {
         paired() // 127.0.0.1:1 answers nothing
         val a = open()
         repeat(100) {
             org.robolectric.shadows.ShadowLooper.idleMainLooper()
-            if (deviceRows(a).any { texts(it).contains(ctx().getString(R.string.home_devices_unreadable)) }) return@repeat
+            if (Kacheln.notes(a).contains(ctx().getString(R.string.home_devices_unreadable))) return@repeat
             Thread.sleep(50)
         }
-        val rows = deviceRows(a).map { texts(it) }
-        assertEquals(listOf(listOf(ctx().getString(R.string.home_devices_unreadable)), listOf("Alle Geräte")), rows)
-        assertEquals(View.VISIBLE, deviceRows(a).last().visibility)
+        assertEquals(listOf(ctx().getString(R.string.home_devices_unreadable)), Kacheln.notes(a))
+        assertEquals(View.VISIBLE, a.findViewById<View>(R.id.devices_all).visibility)
     }
 
     // --- the screen's order and the favorites' fine controls (owner, 2026-11-03) ---
@@ -265,34 +273,62 @@ class HomeScreenTest {
         {"entity_id":"cover.garage","name":"Garage","domain":"cover","device_class":"garage","state":"closed","supported_features":3},
         {"entity_id":"climate.bad","name":"Bad","domain":"climate","state":"heat","current_temperature":21.5,"temperature":22,"target_temp_step":0.5}]}"""
 
-    private fun buttons(v: View): List<android.widget.Button> =
-        if (v is android.widget.Button) listOf(v) else if (v is ViewGroup) (0 until v.childCount).flatMap { buttons(v.getChildAt(it)) } else emptyList()
+    private fun button(tile: View, label: String) = Kacheln.buttons(tile).single { it.contentDescription.endsWith(": $label") }
 
-    /** A shutter offers Hoch, Stopp, Runter; Hoch sends cover.open_cover on that cover through the device receiver. */
+    /**
+     * A shutter's tile carries ▲ ■ ▼ (owner, 2026-11-04): ▲ sends
+     * cover.open_cover on that cover through the device receiver; a tap on
+     * the tile or its level opens the sheet with Auf, ½, Zu and Stopp. A
+     * garage has ▲ ▼ as HA says it can, each a call without data, so Homes'
+     * rule asks before it opens; its tap stays the tap that asks.
+     */
     @Test
     fun aShutterFavoriteHasHochStoppRunter() {
         paired()
         StartDevices.save(ctx(), shutter)
         val a = open()
         val rows = deviceRows(a)
-        assertEquals(listOf("Hoch", "Stopp", "Runter"), buttons(rows[0]).map { it.text.toString() })
-        assertTrue("a garage keeps its tap only", buttons(rows[1]).isEmpty())
+        assertEquals(listOf("Rollladen: Hoch", "Rollladen: Stopp", "Rollladen: Runter"), Kacheln.buttons(rows[0]).map { it.contentDescription })
+        assertEquals(listOf("Garage: Hoch", "Garage: Runter"), Kacheln.buttons(rows[1]).map { it.contentDescription })
+        val d = a.resources.displayMetrics.density
+        Kacheln.buttons(rows[0]).forEach { assertTrue("40 dp wide, 48 dp high", it.width >= 40 * d - 1 && it.height >= 48 * d - 1) }
         shadowOf(a.application).clearBroadcastIntents()
-        buttons(rows[0])[0].performClick()
+        button(rows[0], "Hoch").performClick()
         val call = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
         assertEquals("cover.wohnzimmer", call.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
         assertEquals(WidgetActionReceiver.OP_CALL, call.getStringExtra(WidgetActionReceiver.EXTRA_OP))
         assertEquals("cover.open_cover", call.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
         assertNull(call.getStringExtra(WidgetActionReceiver.EXTRA_DATA))
-        // its position is the level that opens the sheet, no slider on the row (owner, 2026-11-03)
+        shadowOf(a.application).clearBroadcastIntents()
+        button(rows[1], "Hoch").performClick()
+        val garage = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
+        assertEquals("cover.garage", garage.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
+        assertEquals("cover.open_cover", garage.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
+        assertNull("no data: Homes' rule asks", garage.getStringExtra(WidgetActionReceiver.EXTRA_DATA))
+        shadowOf(a.application).clearBroadcastIntents()
+        rows[1].performClick()
+        assertEquals(
+            WidgetActionReceiver.OP_TOGGLE,
+            shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }.getStringExtra(WidgetActionReceiver.EXTRA_OP),
+        )
+        // its position is the level that opens the sheet, no slider on the tile (owner, 2026-11-03)
         assertEquals("40 %", rows[0].findViewById<TextView>(R.id.row_level).text.toString())
         fun seekBars(v: View): List<View> =
             if (v is android.widget.SeekBar || v is com.google.android.material.slider.Slider) listOf(v)
             else if (v is ViewGroup) (0 until v.childCount).flatMap { seekBars(v.getChildAt(it)) } else emptyList()
-        assertTrue("no slider on a row", deviceRows(a).all { seekBars(it).isEmpty() })
+        assertTrue("no slider on a tile", deviceRows(a).all { seekBars(it).isEmpty() })
+        shadowOf(a.application).clearBroadcastIntents()
+        rows[0].performClick()
+        org.robolectric.shadows.ShadowLooper.idleMainLooper()
+        val sheet = org.robolectric.shadows.ShadowDialog.getLatestDialog() as com.google.android.material.bottomsheet.BottomSheetDialog
+        assertTrue("the tile opens the sheet", sheet.isShowing)
+        assertTrue("opening sends nothing", shadowOf(a.application).broadcastIntents.none { it.action == WidgetActionReceiver.ACTION_TAP })
+        fun labels(v: View): List<String> =
+            if (v is android.widget.Button) listOf(v.text.toString()) else if (v is ViewGroup) (0 until v.childCount).flatMap { labels(v.getChildAt(it)) } else emptyList()
+        assertEquals(listOf("Auf", "½", "Zu", "Stopp", "Fertig"), labels(sheet.window!!.decorView))
     }
 
-    /** A heating says its setpoint and goes wärmer by its step, the new setpoint in the call's data. */
+    /** A heating says its reading and setpoint and goes wärmer by its step, the new setpoint in the call's data. */
     @Test
     fun aHeatingFavoriteGoesWaermer() {
         paired()
@@ -300,9 +336,8 @@ class HomeScreenTest {
         val a = open()
         val row = deviceRows(a)[2]
         assertEquals(listOf("Bad", "21,5 °C · Soll 22,0 °C"), texts(row).take(2))
-        val warm = buttons(row).single { it.text.toString() == "Wärmer" }
         shadowOf(a.application).clearBroadcastIntents()
-        warm.performClick()
+        button(row, "Wärmer").performClick()
         val call = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
         assertEquals("climate.set_temperature", call.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
         assertEquals(22.5, org.json.JSONObject(call.getStringExtra(WidgetActionReceiver.EXTRA_DATA)!!).getDouble("temperature"), 0.0)

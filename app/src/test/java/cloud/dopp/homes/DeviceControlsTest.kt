@@ -51,6 +51,23 @@ class DeviceControlsTest {
         assertNull(two.slider)
     }
 
+    /**
+     * The tile's ▲ ■ ▼ (owner, 2026-11-04): every cover's, a garage's too, as
+     * HA says it can — calls without data, so Homes' rule still asks before a
+     * garage opens; none for a cover that does not answer, none for anything else.
+     */
+    @Test
+    fun everyCoverHasItsTileButtons() {
+        fun b(json: String) = DeviceControls.coverButtons(card(json)).map { it.label to it.data }
+        assertEquals(
+            listOf("Hoch" to null, "Runter" to null),
+            b("""{"entity_id":"cover.g","domain":"cover","device_class":"garage","state":"closed","supported_features":3}"""),
+        )
+        assertEquals(listOf("Hoch", "Stopp", "Runter"), b("""{"entity_id":"cover.w","domain":"cover","state":"open"}""").map { it.first })
+        assertTrue(b("""{"entity_id":"cover.w","domain":"cover","state":"unavailable","supported_features":15}""").isEmpty())
+        assertTrue(b("""{"entity_id":"light.k","domain":"light","state":"on"}""").isEmpty())
+    }
+
     /** A garage, a door, a gate, a cover HA does not name: no buttons; its tap and the one dialog stay. */
     @Test
     fun aGarageGetsNoControls() {

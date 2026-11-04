@@ -72,8 +72,7 @@ class LevelSheetPreviewTest {
         content.draw(canvas)
         canvas.restore()
         if (open != null) {
-            val group = a.findViewById<ViewGroup>(R.id.devices_group)
-            group.getChildAt(open).findViewById<TextView>(R.id.row_level).performClick()
+            Kacheln.of(a)[open].findViewById<TextView>(R.id.row_level).performClick()
             ShadowLooper.idleMainLooper()
             val sheet = (ShadowDialog.getLatestDialog() as BottomSheetDialog)
             assertTrue(sheet.isShowing)
