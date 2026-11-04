@@ -185,7 +185,7 @@ class Rueckholung(
         val unser = gedaechtnis.unser(e.quelle, e.ziel)
         var ab = if (ersetzen || unser == null) 0L else (ziel.groesse(e.ziel) ?: 0L).coerceAtMost(e.datei.groesse)
         if (unser?.first == Rueckgedaechtnis.Stand.FERTIG && ab == e.datei.groesse) return Holen.GEHOLT
-        for (versuch in 0..1) {
+        repeat(2) {
             val neuStart = client.holen(e.quelle, e.datei.pfad, ab) { strom ->
                 val etag = strom.etag.orEmpty()
                 if (ab > 0 && unser != null && unser.second.isNotEmpty() && etag.isNotEmpty() && etag != unser.second) {
