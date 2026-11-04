@@ -1,31 +1,20 @@
 package cloud.dopp.homes.widget
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
-import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
 import cloud.dopp.homes.data.Device
 import cloud.dopp.homes.data.DeviceSearch
-import cloud.dopp.homes.data.ServerStore
-import cloud.dopp.homes.data.TokenStore
-import cloud.dopp.homes.ui.HomeActivity
 import java.util.Locale
 import kotlin.concurrent.thread
 
@@ -39,76 +28,17 @@ import kotlin.concurrent.thread
  * an already bound instance — see [ConfigEntry] for why that path shows the
  * current device and answers a back-out differently.
  */
-class WidgetConfigActivity : AppCompatActivity() {
-
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+class WidgetConfigActivity : WidgetPickerActivity() {
 
     /** All addable devices, once loaded — the source the search filters against. */
     private var allDevices: List<Device> = emptyList()
 
     /** The device this instance is already bound to, if we were re-opened (#96). */
-    private var boundEntityId: String? = null
+    private val boundEntityId: String? by lazy { WidgetStore.entityId(this, appWidgetId) }
 
-    private var entry = ConfigEntry.FIRST_PLACEMENT
+    override fun bound() = boundEntityId
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // Default result: if the user backs out, the host drops the widget.
-        setResult(RESULT_CANCELED)
-        appWidgetId = intent?.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            finish()
-            return
-        }
-        boundEntityId = WidgetStore.entityId(this, appWidgetId)
-        entry = ConfigEntry.of(boundEntityId != null)
-        // Re-entered on a live widget: backing out must leave it bound, so the
-        // armed answer is a no-op RESULT_OK instead of "drop it" (#96).
-        setResult(entry.backOutResult, resultIntent())
-        setContentView(R.layout.activity_widget_config)
-        applyStatusBarInset()
-
-        if (!ServerStore.isConfigured(this) || !TokenStore.isPaired(this)) {
-            findViewById<TextView>(R.id.config_status).setText(R.string.widget_config_pair_first)
-            findViewById<Button>(R.id.config_pair).apply {
-                visibility = View.VISIBLE
-                setOnClickListener { startActivity(Intent(context, HomeActivity::class.java)) }
-            }
-            return
-        }
-        loadDevices()
-    }
-
-    /**
-     * Keep the heading below the system status bar on notch/punch-hole phones:
-     * add the status-bar top inset on top of the layout's base 20dp padding so
-     * "Geräte wählen:" never collides with the clock (#19).
-     */
-    private fun applyStatusBarInset() {
-        val root = findViewById<View>(R.id.config_root)
-        val basePad = root.paddingTop
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            v.updatePadding(top = basePad + top)
-            insets
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Coming back from pairing — retry if now connected.
-        if (ServerStore.isConfigured(this) && TokenStore.isPaired(this) &&
-            findViewById<ListView>(R.id.config_list).adapter == null
-        ) {
-            findViewById<Button>(R.id.config_pair).visibility = View.GONE
-            loadDevices()
-        }
-    }
-
-    private fun loadDevices() {
+    override fun load() {
         val status = findViewById<TextView>(R.id.config_status)
         val list = findViewById<ListView>(R.id.config_list)
         status.setText(R.string.widget_config_loading)
@@ -168,9 +98,6 @@ class WidgetConfigActivity : AppCompatActivity() {
     /** "Gerät wählen" on a fresh widget, "Gerät ändern" when re-configuring. */
     private fun pickPrompt() =
         if (entry.isReconfigure) R.string.widget_config_change else R.string.widget_config_pick
-
-    private fun resultIntent() =
-        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
     /**
      * Group devices by room (fallback: domain), rooms sorted alphabetically in

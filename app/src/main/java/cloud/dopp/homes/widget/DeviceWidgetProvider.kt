@@ -2,11 +2,9 @@ package cloud.dopp.homes.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import cloud.dopp.homes.R
@@ -14,7 +12,6 @@ import cloud.dopp.homes.data.ApiClient
 import cloud.dopp.homes.data.Card
 import cloud.dopp.homes.data.ScreenGate
 import cloud.dopp.homes.ui.StartDevices
-import kotlin.concurrent.thread
 
 /**
  * One device per widget (restored by the owner, 2026-11-03: the active and
@@ -26,15 +23,7 @@ import kotlin.concurrent.thread
  * Homes. The live stream keeps it current (`card_state`, [wakeEntity]); a
  * failed read draws the card read last ([WidgetCache]).
  */
-class DeviceWidgetProvider : AppWidgetProvider() {
-
-    override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
-        ids.forEach { refresh(context, it) }
-    }
-
-    override fun onAppWidgetOptionsChanged(context: Context, mgr: AppWidgetManager, appWidgetId: Int, newOptions: Bundle?) {
-        refresh(context, appWidgetId)
-    }
+class DeviceWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 900_000, tapStartsLive = false) {
 
     override fun onDeleted(context: Context, ids: IntArray) {
         ids.forEach {
@@ -46,15 +35,7 @@ class DeviceWidgetProvider : AppWidgetProvider() {
         cloud.dopp.homes.realtime.Live.recheck(context)
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        if (intent.action == ACTION_REFRESH) {
-            val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-            if (id != AppWidgetManager.INVALID_APPWIDGET_ID) refresh(context, id)
-        }
-    }
-
-    private fun refresh(context: Context, appWidgetId: Int) {
+    override fun refresh(context: Context, appWidgetId: Int) {
         val mgr = AppWidgetManager.getInstance(context)
         val entityId = WidgetStore.entityId(context, appWidgetId)
         if (entityId == null) {
@@ -65,18 +46,11 @@ class DeviceWidgetProvider : AppWidgetProvider() {
         val cached = WidgetCache.getCard(context, appWidgetId)
         runCatching { mgr.updateAppWidget(appWidgetId, build(context, appWidgetId, cached)) }
         if (!ScreenGate.open(context)) return // a widget nobody sees reads nothing
-        val pending = goAsync()
-        thread {
-            try {
-                val fresh = runCatching { ApiClient(context.applicationContext).getCard(entityId) }.getOrNull()
-                if (fresh != null) {
-                    WidgetCache.putCard(context, appWidgetId, fresh)
-                    mgr.updateAppWidget(appWidgetId, build(context, appWidgetId, fresh))
-                }
-            } catch (t: Throwable) {
-                WidgetFallback.show(context, appWidgetId, refreshPending(context, appWidgetId))
-            } finally {
-                pending?.finish()
+        async(context, appWidgetId) {
+            val fresh = runCatching { ApiClient(context.applicationContext).getCard(entityId) }.getOrNull()
+            if (fresh != null) {
+                WidgetCache.putCard(context, appWidgetId, fresh)
+                mgr.updateAppWidget(appWidgetId, build(context, appWidgetId, fresh))
             }
         }
     }
@@ -160,20 +134,9 @@ class DeviceWidgetProvider : AppWidgetProvider() {
             return v
         }
 
-        private fun refreshPending(ctx: Context, appWidgetId: Int): PendingIntent =
-            PendingIntent.getBroadcast(
-                ctx, 900_000 + appWidgetId,
-                Intent(ctx, DeviceWidgetProvider::class.java).setAction(ACTION_REFRESH)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-
         /** Ask a bound instance to read again. */
         fun requestRefresh(ctx: Context, appWidgetId: Int) {
-            ctx.sendBroadcast(
-                Intent(ctx, DeviceWidgetProvider::class.java).setAction(ACTION_REFRESH)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
-            )
+            ctx.sendBroadcast(refreshIntent(ctx, DeviceWidgetProvider::class.java, ACTION_REFRESH, appWidgetId))
         }
 
         private fun ids(ctx: Context): IntArray =
