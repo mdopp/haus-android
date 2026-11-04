@@ -94,6 +94,27 @@ Radien/Abstände/Typo aus den Tokens; runde Karten `card_homes`, alle mit
 demselben Innenabstand `card_padding`. Karten sagen in **einer** Zeile, was
 etwas tut.
 
+## Deine Geräte — Kacheln
+Die Favoriten auf dem Startbildschirm sind Kacheln (Besitzer, 2026-11-04,
+`ui/FavoritenAnsicht.kt`, `layout/item_device_tile*.xml`), im Bild der Widgets:
+- **Das Bild sagt den Zustand** (`DeviceLook.icon`): Lampe an/aus, Garagentor
+  auf/zu, Jalousie oben/unten — eine Jalousie dazwischen aus denselben zwei
+  Bildern, das geschlossene bis zur Position über das offene gelegt. Dazu ein
+  Kreis in der Zustandsfarbe (`DeviceLook.tint`), und was an oder offen ist,
+  bekommt einen leichten Farbschimmer der Kachel. **Worte nur, wo das Bild es
+  nicht kann:** „öffnet …“, „nicht erreichbar“, „klemmt“, die Temperatur.
+- **Zwei Kacheln je Reihe:** das Bild, rechts daneben der Wert („70 %“, ein
+  gedimmtes Licht aus: „aus“, Akzent, gepunktet, tippen öffnet das Blatt),
+  darunter der Name ohne angehängtes Raumwort (`DeviceLook.shortName`).
+- **Eine Abdeckung nimmt die ganze Reihe:** Bild, Name mit Position darunter,
+  rechts ▲ ■ ▼ als Bildknöpfe (40 × 48 dp) — drei davon passen auf einem
+  360-dp-Handy nicht in eine halbe Kachel. Kachel oder Position antippen öffnet
+  das Blatt (Auf, ½, Zu, Stopp, Regler). Eine Kachel ohne Nachbarn wird ebenso
+  eine ganze Zeile.
+- **Keine Ränder**, Kachelgrund `#141419`, Ecken 20 dp. „Alle →“ steht im Kopf
+  der Sektion. Ist die Box nicht erreichbar, sind alle Kacheln grau unter der
+  „Stand …“-Zeile.
+
 ## Spuren — was die Box nicht hat
 Was die Box nicht kann (homes ADR 0001 §10), bleibt als leise Spur stehen,
 nie versteckt und nie wie ein Fehler: Titel in `homes_text_muted`, darunter

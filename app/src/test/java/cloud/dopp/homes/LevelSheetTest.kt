@@ -64,8 +64,10 @@ class LevelSheetTest {
         ShadowLooper.idleMainLooper()
     }
 
-    private fun rows(a: HomeActivity): List<View> =
-        a.findViewById<ViewGroup>(R.id.devices_group).let { g -> (0 until g.childCount).map { g.getChildAt(it) } }
+    private fun rows(a: HomeActivity): List<View> = Kacheln.of(a)
+
+    /** A tile's words under its name, null when its picture says it all. */
+    private fun words(tile: View): String? = tile.findViewById<TextView>(R.id.row_room).takeIf { it.visibility == View.VISIBLE }?.text?.toString()
 
     private fun level(row: View) = row.findViewById<TextView>(R.id.row_level)
 
@@ -81,28 +83,30 @@ class LevelSheetTest {
         all(sheet()!!.window!!.decorView, Button::class.java).single { it.text.toString() == label }
 
     /**
-     * Each row's line: the words, then the level to tap. A lamp HA can dim
-     * that is off has „aus“ as its level (owner, 2026-11-04); a lamp that
-     * only switches says a plain „aus“; one out of reach has nothing to tap.
+     * Each tile: the picture says on or off, the level beside it to tap. A
+     * lamp HA can dim that is off has „aus“ as its level (owner,
+     * 2026-11-04); a lamp that only switches has no words and nothing to
+     * tap; one out of reach says so and has nothing to tap.
      */
     @Test
-    fun theRowSaysItsLevelAndAnOffDimmerAusToTap() {
+    fun theTileSaysItsLevelAndAnOffDimmerAusToTap() {
         val r = rows(open())
-        assertEquals("an ·", r[0].findViewById<TextView>(R.id.row_room).text.toString())
+        assertNull("the lit picture says „an“", words(r[0]))
         assertEquals("60 %", level(r[0]).text.toString())
         assertEquals("Küchenlicht Helligkeit 60 %, einstellen", level(r[0]).contentDescription)
-        // the dimmer that is off: „aus“ alone, and it is the level
-        assertEquals(View.GONE, r[1].findViewById<TextView>(R.id.row_room).visibility)
+        // the dimmer that is off: „aus“ is its level
+        assertNull(words(r[1]))
         assertEquals(View.VISIBLE, level(r[1]).visibility)
         assertEquals("aus", level(r[1]).text.toString())
         assertEquals("Flurlicht Helligkeit aus, einstellen", level(r[1]).contentDescription)
         assertEquals("Flurlicht, aus", r[1].contentDescription)
-        assertEquals("geschlossen ·", r[2].findViewById<TextView>(R.id.row_room).text.toString())
+        assertNull("the lowered blind says „zu“", words(r[2]))
         assertEquals("0 %", level(r[2]).text.toString())
-        // the lamp that only switches and the one out of reach: their state, nothing to tap
-        assertEquals("aus", r[3].findViewById<TextView>(R.id.row_room).text.toString())
+        // the lamp that only switches: its picture, nothing to tap; the one out of reach says so
+        assertNull(words(r[3]))
         assertEquals(View.GONE, level(r[3]).visibility)
-        assertEquals("nicht erreichbar", r[4].findViewById<TextView>(R.id.row_room).text.toString())
+        assertEquals("Stehlampe, aus", r[3].contentDescription)
+        assertEquals("nicht erreichbar", words(r[4]))
         assertEquals(View.GONE, level(r[4]).visibility)
     }
 
@@ -208,13 +212,17 @@ class LevelSheetTest {
         assertEquals("Fertig sends nothing", 2, calls(a).size)
     }
 
-    /** A closed cover's „0 %“ opens its sheet with Auf, ½, Zu; Auf sets the position 100. Back closes it. */
+    /** A closed cover's „0 %“ opens its sheet with Auf, ½, Zu and Stopp; Auf sets the position 100. Back closes it. */
     @Test
     fun aClosedCoversSheetGoesAuf() {
         val a = open()
         level(rows(a)[2]).performClick()
         ShadowLooper.idleMainLooper()
         assertEquals("Rollo", sheet()!!.window!!.decorView.findViewById<TextView>(R.id.sheet_title).text.toString())
+        assertEquals(listOf("Auf", "½", "Zu", "Stopp", "Fertig"), all(sheet()!!.window!!.decorView, Button::class.java).map { it.text.toString() })
+        shadowOf(a.application).clearBroadcastIntents()
+        step("Stopp").performClick()
+        assertEquals("cover.stop_cover", calls(a).single().getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
         shadowOf(a.application).clearBroadcastIntents()
         step("Auf").performClick()
         val one = calls(a).single()

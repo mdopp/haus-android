@@ -364,16 +364,6 @@
             column="9"/>
     </issue>
 
-    <issue
-        id="UseAppTint"
-        message="Must use `app:tint` instead of `android:tint`"
-        errorLine1="        android:tint=&quot;@color/homes_text_muted&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_device_row.xml"
-            line="21"
-            column="9"/>
-    </issue>
 
     <issue
         id="UseAppTint"
@@ -639,16 +629,6 @@
             column="5"/>
     </issue>
 
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `?android:attr/selectableItemBackground` with a theme that also paints a background (inferred theme is `@style/Theme.Homes`)"
-        errorLine1="    android:background=&quot;?android:attr/selectableItemBackground&quot;>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_device_row.xml"
-            line="14"
-            column="5"/>
-    </issue>
 
     <issue
         id="UnusedIds"
@@ -1486,16 +1466,6 @@
             column="64"/>
     </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
-        errorLine1="            state.text = &quot;$words ·&quot;"
-        errorLine2="                         ~~~~~~~~~~">
-        <location
-            file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="265"
-            column="26"/>
-    </issue>
 
     <issue
         id="HardcodedText"

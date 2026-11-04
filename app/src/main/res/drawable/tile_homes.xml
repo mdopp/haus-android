@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A favourite's tile (owner, 2026-11-04): a filled ground without an outline, as the widgets
+     dropped theirs, and the press ripple. FavoritenAnsicht tints the ground: #141419, or a wash
+     of the state's colour while the thing is on or open. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFFFF" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+</ripple>

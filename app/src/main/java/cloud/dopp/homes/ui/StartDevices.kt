@@ -9,7 +9,7 @@ import java.util.Locale
  * The start screen's devices (owner, 2026-11-02; one device per widget came
  * back 2026-11-03, [cloud.dopp.homes.widget.DeviceWidgetProvider]): the person's favorites from Homes (`/napi/portal/favorites`,
  * the things they pinned with ☆ on Homes), first on the screen, in their
- * order, then „Alle Geräte“, which opens Homes' devices page.
+ * order, as tiles ([FavoritenAnsicht]), „Alle →“ in their head opening Homes' devices page.
  *
  * A tap acts the way the device widget's did: a light or a switch toggles, a
  * cover opens or closes (a garage asks first, the server's 403), a lock opens

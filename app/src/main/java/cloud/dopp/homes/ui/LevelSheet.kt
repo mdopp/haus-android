@@ -8,6 +8,8 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import cloud.dopp.homes.R
+import androidx.core.view.isEmpty
+import androidx.core.view.isNotEmpty
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.slider.Slider
@@ -31,6 +33,8 @@ class LevelSheet(
     name: String,
     private var level: DeviceControls.Slider,
     private val send: (service: String, data: Map<String, Any>?) -> Unit,
+    /** Buttons beside the quick levels, each one call (owner, 2026-11-04: a cover's Stopp). */
+    extra: List<DeviceControls.Button> = emptyList(),
 ) {
     val dialog = BottomSheetDialog(context, R.style.Theme_Homes_Sheet)
 
@@ -78,7 +82,17 @@ class LevelSheet(
                 LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { if (i > 0) marginStart = gap },
             )
         }
-        if (level.steps.isEmpty()) steps.visibility = android.view.View.GONE
+        extra.forEach { e ->
+            val b = Button(ContextThemeWrapper(context, R.style.Widget_Homes_Button_Step), null, 0)
+            b.text = e.label
+            b.contentDescription = "$name ${e.label}"
+            b.setOnClickListener { send(e.service, e.data) }
+            steps.addView(
+                b,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { if (steps.isNotEmpty()) marginStart = gap },
+            )
+        }
+        if (steps.isEmpty()) steps.visibility = android.view.View.GONE
         v.findViewById<Button>(R.id.sheet_done).setOnClickListener { dialog.dismiss() }
         set(level.value)
         dialog.setContentView(v)

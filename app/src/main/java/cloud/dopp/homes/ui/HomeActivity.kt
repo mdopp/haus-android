@@ -13,9 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.view.ContextThemeWrapper
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,7 +46,7 @@ import cloud.dopp.homes.widget.ActionItem
 import cloud.dopp.homes.widget.ActionSheet
 import cloud.dopp.homes.widget.ActionTone
 import cloud.dopp.homes.widget.AppShortcuts
-import cloud.dopp.homes.widget.DeviceIcons
+import cloud.dopp.homes.widget.DeviceLook
 import cloud.dopp.homes.widget.DeviceTaps
 import cloud.dopp.homes.widget.HomesPages
 import cloud.dopp.homes.widget.ToolWidgetProvider
@@ -78,9 +76,10 @@ import kotlin.concurrent.thread
  *
  * **Paired.** The app's icon and the assistant's name (`/napi/assistent`,
  * „Homes“ until Homes names one) head the screen; first below them the person's
- * favorite devices, a tap switches one, each with the fine controls Homes'
- * devices page has ([DeviceControls], owner 2026-11-03), and „Alle Geräte“,
- * Homes' devices page ([StartDevices], owner 2026-11-02); then one list of
+ * favorite devices as tiles ([FavoritenAnsicht], owner 2026-11-04), a tap
+ * switches one, each with the fine controls Homes' devices page has
+ * ([DeviceControls], owner 2026-11-03), and „Alle →“ in the head, Homes'
+ * devices page ([StartDevices], owner 2026-11-02); then one list of
  * widgets to add, the live switch under its hint
  * (owner, 2026-11-03: no groups) — one device, the energy, the tools from
  * Homes' catalog —, each one tap from the home screen; under Mehr, Daten
@@ -217,24 +216,42 @@ class HomeActivity : AppCompatActivity() {
 
     // --- the devices (owner, 2026-11-02) --------------------------------------
 
-    /** The favorites, then „Alle Geräte“; the list read last draws at once. */
+    /** The favorites as tiles ([FavoritenAnsicht], owner 2026-11-04); „Alle →“ in the head. The list read last draws at once. */
     private fun renderDevices() {
         val shown = devices ?: StartDevices.load(this).also { devices = it }
         val group = findViewById<ViewGroup>(R.id.devices_group)
         group.removeAllViews()
+        findViewById<View>(R.id.devices_all).setOnClickListener { openHomes(HomesPages.RAEUME) }
+        val ansicht = FavoritenAnsicht(
+            this,
+            stale = { cloud.dopp.homes.verbindung.Verbindung.stand(this) != null },
+            tap = ::tapDevice,
+            longPress = { openHomes(HomesPages.item(it.page)) },
+            openLevel = { card, level, extra, switching -> openLevel(card, level, switching, extra) },
+            send = { card, b, switching ->
+                switching()
+                sendBroadcast(WidgetActionReceiver.call(this, card.entityId, card.name, b.service, b.data))
+            },
+        )
         when {
-            shown == null && devicesFailed -> group.addView(note(group, getString(R.string.home_devices_unreadable)))
-            shown == null -> group.addView(note(group, getString(R.string.home_devices_loading)))
-            shown.isEmpty() -> group.addView(note(group, getString(R.string.home_devices_none)))
-            else -> shown.forEach { group.addView(deviceRow(group, it)) }
+            shown == null && devicesFailed -> group.addView(note(getString(R.string.home_devices_unreadable)))
+            shown == null -> group.addView(note(getString(R.string.home_devices_loading)))
+            shown.isEmpty() -> group.addView(note(getString(R.string.home_devices_none)))
+            else -> ansicht.kacheln(group, shown)
         }
         // an open level sheet stays open across a fresh read and shows its level
         levelSheet?.let { sheet -> shown?.firstOrNull { it.entityId == sheet.entityId }?.let { sheet.refresh(DeviceControls.of(it).slider) } }
-        group.addView(
-            row(group, R.drawable.ic_device, getString(R.string.home_devices_all)) {
-                openHomes(HomesPages.RAEUME)
-            },
-        )
+    }
+
+    /** A favorite's tap: a light, a switch or a cover switches, a lock opens its chooser, anything else its page. */
+    private fun tapDevice(card: Card, switching: () -> Unit) {
+        if (StartDevices.acts(card)) {
+            // the tap answers at once; the fresh state comes with DeviceTaps.ACTION_DONE
+            if (card.domain != "lock") switching()
+            sendBroadcast(WidgetActionReceiver.tap(this, card.entityId, card.name, card.supportedFeatures))
+        } else {
+            openHomes(HomesPages.item(card.page))
+        }
     }
 
     /** Read the favorites from Homes, keep them, draw them; a failed read keeps what is shown. */
@@ -260,126 +277,29 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun deviceRow(group: ViewGroup, card: Card): View {
-        val v = layoutInflater.inflate(R.layout.item_device_row, group, false)
-        val icon = v.findViewById<ImageView>(R.id.row_icon)
-        icon.setImageResource(DeviceIcons.forState(card.domain, card.state, card.deviceClass))
-        icon.setColorFilter(getColor(if (card.isOn) R.color.homes_accent else R.color.homes_text_muted))
-        v.findViewById<TextView>(R.id.row_name).text = card.name
-        val state = v.findViewById<TextView>(R.id.row_room)
-        val levelView = v.findViewById<TextView>(R.id.row_level)
-        val line = StartDevices.levelLine(card)
-        fun switching() {
-            if (cloud.dopp.homes.verbindung.Verbindung.stand(this) != null) return // no „schaltet …“ Homes cannot hear
-            state.text = getString(R.string.home_device_switching)
-            state.visibility = View.VISIBLE
-            levelView.visibility = View.GONE
-        }
-        if (line == null) {
-            state.text = StartDevices.stateText(card)
-            v.contentDescription = card.name + ", " + state.text
-        } else {
-            val (words, level) = line
-            val says = level.says()
-            state.text = "$words ·"
-            state.visibility = if (words.isEmpty()) View.GONE else View.VISIBLE // a lamp that is off: „aus“ alone
-            levelView.text = says
-            levelView.visibility = View.VISIBLE
-            levelView.contentDescription = getString(R.string.home_device_level, card.name, level.label, says)
-            levelView.setOnClickListener { openLevel(card, level, ::switching) }
-            v.contentDescription = listOf(card.name, words, says).filter { it.isNotEmpty() }.joinToString(", ")
-            reachAtLeast48dp(v, levelView)
-        }
-        v.setOnClickListener {
-            if (StartDevices.acts(card)) {
-                // the tap answers at once; the fresh state comes with DeviceTaps.ACTION_DONE
-                if (card.domain != "lock") switching()
-                sendBroadcast(WidgetActionReceiver.tap(this, card.entityId, card.name, card.supportedFeatures))
-            } else {
-                openHomes(HomesPages.item(card.page))
-            }
-        }
-        v.setOnLongClickListener {
-            openHomes(HomesPages.item(card.page))
-            true
-        }
-        controls(v.findViewById(R.id.row_controls), card, ::switching)
-        return v
-    }
-
     /** The level sheet open now, so a fresh read updates it instead of closing it. */
     private var levelSheet: LevelSheet? = null
 
     /** The favorite's level in its sheet (owner, 2026-11-03): each pick is one call through the device receiver. */
-    private fun openLevel(card: Card, level: DeviceControls.Slider, switching: () -> Unit) {
+    private fun openLevel(card: Card, level: DeviceControls.Slider, switching: () -> Unit, extra: List<DeviceControls.Button>) {
         levelSheet?.dialog?.dismiss()
-        val sheet = LevelSheet(this, card.entityId, card.name, level) { service, data ->
+        val sheet = LevelSheet(this, card.entityId, DeviceLook.shortName(card.name), level, { service, data ->
             switching()
             sendBroadcast(WidgetActionReceiver.call(this, card.entityId, card.name, service, data))
-        }
+        }, extra)
         sheet.dialog.setOnDismissListener { if (levelSheet === sheet) levelSheet = null }
         levelSheet = sheet
         sheet.show()
     }
 
-    /**
-     * The level's touch target, at least 48 dp each way around it, while its
-     * text stays the size of the line: a delegate on the row, set once the
-     * row is laid out.
-     */
-    private fun reachAtLeast48dp(row: View, level: View) {
-        val min = (48 * resources.displayMetrics.density).toInt()
-        row.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            if (level.visibility != View.VISIBLE || level.width == 0) return@addOnLayoutChangeListener
-            val r = android.graphics.Rect(0, 0, level.width, level.height)
-            (row as ViewGroup).offsetDescendantRectToMyCoords(level, r)
-            val dy = ((min - r.height()) / 2).coerceAtLeast(0)
-            val dx = ((min - r.width()) / 2).coerceAtLeast(0)
-            r.inset(-dx, -dy)
-            row.touchDelegate = android.view.TouchDelegate(r, level)
-        }
-    }
-
-    /**
-     * The favorite's fine buttons ([DeviceControls], owner 2026-11-03). No
-     * slider on the row: its level opens [LevelSheet]. Each goes through the
-     * device receiver, so a sensitive call asks in the one dialog and the
-     * list reads again after.
-     */
-    private fun controls(holder: LinearLayout, card: Card, switching: () -> Unit) {
-        val c = DeviceControls.of(card)
-        if (c.buttons.isEmpty()) return
-        holder.visibility = View.VISIBLE
-        fun send(service: String, data: Map<String, Any>?) {
-            switching()
-            sendBroadcast(WidgetActionReceiver.call(this, card.entityId, card.name, service, data))
-        }
-        val bar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            isBaselineAligned = false // a label that wraps must not push its button down
-        }
-        c.buttons.forEachIndexed { i, b ->
-            val btn = Button(ContextThemeWrapper(this, R.style.Widget_Homes_Button_Control), null, 0)
-            btn.text = b.label
-            btn.contentDescription = card.name + ": " + b.label
-            btn.setOnClickListener { send(b.service, b.data) }
-            bar.addView(
-                btn,
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    if (i > 0) marginStart = resources.getDimensionPixelSize(R.dimen.space_xs)
-                },
-            )
-        }
-        holder.addView(bar)
-    }
-
-    private fun note(group: ViewGroup, text: String): View =
-        layoutInflater.inflate(R.layout.item_device_row, group, false).apply {
-            findViewById<ImageView>(R.id.row_icon).visibility = View.GONE
-            findViewById<TextView>(R.id.row_name).visibility = View.GONE
-            findViewById<TextView>(R.id.row_room).text = text
-            isClickable = false
-            background = null
+    /** A sentence where the tiles would be: loading, none yet, not readable. */
+    private fun note(text: String): View =
+        TextView(this, null, 0, R.style.Text_Homes_Body).apply {
+            this.text = text
+            setBackgroundResource(R.drawable.card_homes)
+            val pad = resources.getDimensionPixelSize(R.dimen.card_padding)
+            setPadding(pad, pad, pad, pad)
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
 
     /** [page] of the paired Homes in a Custom Tab. */

@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A favorite device on the start screen: its icon, name and state; a tap switches it.
-     Below them its fine controls (owner, 2026-11-03), filled by HomeActivity. -->
+<!-- A favourite as a tile across the row (owner, 2026-11-04, A2): a cover, whose ▲ ■ ▼
+     need the room, and a tile left without a neighbour. One line: the widgets' picture on
+     a round of its colour, the name over its level („32 %“, „aus“ — a tap opens the level
+     sheet), and at the end the cover's buttons. Words only where the picture cannot say
+     it. FavoritenAnsicht fills it. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/tile_homes"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:minHeight="60dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="12dp"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:minHeight="64dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
     <ImageView
         android:id="@+id/row_icon"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
-        android:layout_marginEnd="18dp"
-        android:tint="@color/homes_text_muted"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:padding="7dp"
+        android:background="@drawable/dot_homes"
         android:src="@drawable/ic_device"
         android:contentDescription="@null" />
 
@@ -26,6 +30,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:layout_marginStart="10dp"
         android:orientation="vertical">
 
         <TextView
@@ -34,14 +39,16 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:ellipsize="end"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="11sp"
+            app:autoSizeMaxTextSize="15sp"
             android:textColor="@color/homes_text"
-            android:textSize="16sp" />
+            android:textStyle="bold"
+            android:textSize="15sp" />
 
-        <!-- The state; with a level its words, then the level that opens the sheet (owner, 2026-11-03). -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
             android:orientation="horizontal"
             android:baselineAligned="true">
 
@@ -49,32 +56,34 @@
                 android:id="@+id/row_room"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:textColor="@color/homes_text_muted"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:visibility="gone" />
 
             <cloud.dopp.homes.ui.LevelText
                 android:id="@+id/row_level"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
+                android:paddingStart="0dp"
+                android:paddingEnd="4dp"
                 android:paddingBottom="3dp"
                 android:maxLines="1"
                 android:textColor="@color/homes_accent"
                 android:textSize="13sp"
                 android:textStyle="bold"
+                android:fontFeatureSettings="tnum"
                 android:visibility="gone" />
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/row_controls"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            android:visibility="gone" />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/row_controls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:orientation="horizontal"
+        android:visibility="gone" />
 </LinearLayout>
