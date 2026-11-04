@@ -417,12 +417,12 @@ class LiveService : Service() {
     private fun notification(): Notification {
         val nm = getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && nm?.getNotificationChannel(CHANNEL) == null) {
+            runCatching { nm?.deleteNotificationChannel("live_widgets") } // v1 showed a badge; a channel is fixed once made
             nm?.createNotificationChannel(
-                NotificationChannel(CHANNEL, getString(R.string.live_channel), NotificationManager.IMPORTANCE_LOW)
-                    .apply {
-                        description = getString(R.string.live_channel_desc)
-                        setShowBadge(false)
-                    },
+                NotificationChannel(CHANNEL, getString(R.string.live_channel), NotificationManager.IMPORTANCE_LOW).apply {
+                    description = getString(R.string.live_channel_desc)
+                    setShowBadge(false) // nothing to act on: no „1“ on the app's icon (owner, 2026-11-04)
+                },
             )
         }
         val tap = PendingIntent.getActivity(
@@ -442,7 +442,7 @@ class LiveService : Service() {
     }
 
     companion object {
-        private const val CHANNEL = "live_widgets"
+        private const val CHANNEL = "live_widgets_v2"
         private const val NOTIFICATION_ID = 4801
 
         /** Re-post the watch set well inside Homes' one-hour TTL. */

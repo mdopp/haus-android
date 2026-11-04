@@ -145,7 +145,22 @@ object Hochladen {
 
     /** The queue is done: no running notification is left behind. */
     fun leer(ctx: Context) {
+        Stand.leer(ctx)
         runCatching { kanal(ctx)?.cancel(ID_LAUF) }
+    }
+
+    /** The job stops before the queue is done: the notification and the app's row say [text]. */
+    fun pause(ctx: Context, text: String) {
+        Stand.pause(ctx, text)
+        sagen(ctx, ctx.getString(R.string.hochladen_spaeter), text)
+    }
+
+    /** The results were seen in the app: their notifications go (not the running or paused one). */
+    fun ergebnisseWeg(ctx: Context) {
+        runCatching {
+            val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+            nm.activeNotifications.filter { it.id > ID_ENDE && it.id <= ID_ENDE + 1 + 0xffff }.forEach { nm.cancel(it.id) }
+        }
     }
 
     /** Why the job stops before the queue is done, in the family's words. */
@@ -175,7 +190,7 @@ class HochladenWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
         val base = ServerStore.baseUrl(ctx)
         val token = TokenStore.get(ctx)
         if (base.isNullOrBlank() || token.isNullOrBlank()) {
-            Hochladen.sagen(ctx, ctx.getString(R.string.hochladen_spaeter), ctx.getString(R.string.share_not_paired))
+            Hochladen.pause(ctx, ctx.getString(R.string.share_not_paired))
             return Result.success() // the files wait; the next pairing's screen starts the job again
         }
         while (!isStopped) {
@@ -193,9 +208,12 @@ class HochladenWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
             } ?: break
             Auftraege.weg(ctx, a.id)
             datei.delete()
+            val inDerMusik = a.ziel == Ziel.MUSIK && ende.first == ctx.getString(R.string.musik_fertig)
+            val woher = ctx.getString(if (a.ziel == Ziel.MUSIK) R.string.musik_titel else R.string.standort_import_title)
+            Stand.fertig(ctx, inDerMusik, "$woher: ${ende.second}")
             Hochladen.sagen(ctx, ende.first, ende.second, a.id)
         }
-        Hochladen.sagen(ctx, ctx.getString(R.string.hochladen_spaeter), Hochladen.spaeter(ctx, grund()))
+        Hochladen.pause(ctx, Hochladen.spaeter(ctx, grund()))
         return Result.retry()
     }
 
@@ -213,6 +231,7 @@ class HochladenWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
     private fun zeige(name: String, prozent: Int, rest: Int, erst: Boolean = false) {
         if (!erst && prozent == zuletzt) return
         zuletzt = prozent
+        Stand.lauf(applicationContext, name, prozent)
         val n = Hochladen.lauf(applicationContext, name, prozent, rest)
         if (erst && !ausgebremst) {
             ausgebremst = try {
