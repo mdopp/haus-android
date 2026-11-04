@@ -11,7 +11,7 @@
     <!-- ── Homes palette ───────────────────────────────────────────────── -->
     <color name="homes_bg">#070709</color>            <!-- window background -->
     <color name="homes_bg_elevated">#0C0C0E</color>   <!-- status/nav bar -->
-    <color name="homes_card_edge">#1FFFFFFF</color>   <!-- hairline card border -->
+    <color name="homes_card_edge">#1FFFFFFF</color>   <!-- hairline edge of a field and a ghost button -->
 
     <!-- The window's two background tones, for the status and navigation bar. -->
     <color name="homes_surface_bg">#070709</color>    <!-- web background_color -->
