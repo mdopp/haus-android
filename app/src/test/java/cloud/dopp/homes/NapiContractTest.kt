@@ -307,6 +307,9 @@ class NapiContractTest {
         const val NAPI = "cloud.dopp.homes.data.Napi"
         const val NAPI_FILE = "app/src/main/java/cloud/dopp/homes/data/Napi.kt"
 
+        /** The one OkHttpClient, copied per caller's timeouts. */
+        const val HTTP_FILE = "app/src/main/java/cloud/dopp/homes/data/HomesHttp.kt"
+
         /** The one file that turns an endpoint into an HTTP request. */
         const val REQUEST_FILE = "app/src/main/java/cloud/dopp/homes/data/NapiRequest.kt"
 
@@ -564,7 +567,9 @@ class NapiContractTest {
         // NapiRequest holds one; the auth header's name and scheme live in Napi.
         val elsewhere = RepoFiles.mainKotlin().filter { RepoFiles.relative(it) != REQUEST_FILE }.flatMap { f ->
             val rel = RepoFiles.relative(f)
-            val banned = listOf(".newBuilder()", ".header(", ".addHeader(", ".method(") +
+            // HomesHttp copies the one OkHttpClient with newBuilder(), a client and no request
+            val banned = listOf(".header(", ".addHeader(", ".method(") +
+                (if (rel == HTTP_FILE) emptyList() else listOf(".newBuilder()")) +
                 (if (rel == NAPI_FILE) emptyList() else listOf("\"Bearer", "\"Authorization\""))
             // OkHttp's Request.Builder; WorkManager's WorkRequest.Builder (the backup job) is no HTTP request
             val builder = Regex("""(?<![A-Za-z])Request\.Builder""")

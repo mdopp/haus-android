@@ -36,13 +36,13 @@ import cloud.dopp.homes.ui.HomeActivity
 import cloud.dopp.homes.widget.DeviceWidgetProvider
 import cloud.dopp.homes.widget.EnergyWidgetProvider
 import cloud.dopp.homes.widget.ToolWidgetProvider
+import cloud.dopp.homes.data.HomesHttp
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
-import java.util.concurrent.TimeUnit
 
 /**
  * When the live widgets run, and how they are started (#176: the old app's
@@ -66,10 +66,7 @@ object Live {
      * reboot, a lost NAT entry) into a failure, and the service reconnects.
      */
     val client: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(240, TimeUnit.SECONDS)
-            .build()
+        HomesHttp.client(connect = 15, read = 240)
     }
 
     /** Opens the stream. Replaced in tests. */

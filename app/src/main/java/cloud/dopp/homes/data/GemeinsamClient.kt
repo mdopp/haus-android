@@ -4,7 +4,6 @@ import cloud.dopp.homes.data.Napi.GemeinsamJson
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 /**
  * The Homes account (#206): the household's shared contacts and calendars
@@ -58,10 +57,7 @@ class GemeinsamClient(
             runCatching { JSONObject(body.orEmpty()).optString(GemeinsamJson.FEHLER) }.getOrNull()?.trim()?.ifBlank { null }
 
         private val HTTP: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .build()
+            HomesHttp.client(connect = 15, read = 60)
         }
     }
 }
