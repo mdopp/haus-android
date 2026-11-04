@@ -186,6 +186,10 @@ class Import(
             "application/xml", "text/xml", "application/octet-stream",
         ) + ZIP
 
+        /** A Takeout ZIP, by its name or else its type: it goes to the Hochladen job (owner, 2026-11-04). */
+        fun istZip(name: String?, mime: String?): Boolean =
+            name?.trim()?.lowercase(Locale.ROOT)?.endsWith(".zip") ?: (mime?.substringBefore(';')?.trim()?.lowercase(Locale.ROOT) in ZIP)
+
         /** The name Homes gets: the file's own, else one its [mime] says (Homes tells the format by it). */
         fun dateiname(name: String?, mime: String?): String =
             name?.trim()?.ifEmpty { null } ?: if (mime?.substringBefore(';')?.trim()?.lowercase(Locale.ROOT) in ZIP) "Standortverlauf.zip" else "Standortverlauf.json"

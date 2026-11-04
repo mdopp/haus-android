@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hochladen, the app's second background job (owner, 2026-11-04; hochladen/):
+     songs and albums to the music, a Google Takeout to the Standortverlauf. -->
+<resources>
+    <string name="hochladen_kanal">Hochladen</string>
+    <string name="hochladen_kanal_text">Zeigt, wie weit geteilte Musik und Standortverläufe auf die Box geladen sind.</string>
+    <string name="hochladen_laeuft">Wird auf die Box geladen …</string>
+    <string name="hochladen_noch">Wird auf die Box geladen … danach noch %1$d</string>
+    <string name="hochladen_spaeter">Hochladen pausiert</string>
+    <string name="hochladen_spaeter_text">Das Hochladen geht später von selbst weiter, sobald das Handy wieder im Netz ist.</string>
+    <string name="hochladen_heute_nicht">Android lässt die App gerade nicht länger hochladen. Es geht später von selbst weiter – oder sofort, wenn du die Homes-App öffnest.</string>
+
+    <!-- Share → „Zur Musik hinzufügen“ (POST /napi/musik). -->
+    <string name="musik_label">Zur Musik hinzufügen</string>
+    <string name="musik_titel">Musik</string>
+    <plurals name="musik_im_hintergrund">
+        <item quantity="one">Die Datei wird im Hintergrund auf die Box geladen. Wie weit es ist, steht in der Benachrichtigung „Hochladen“.</item>
+        <item quantity="other">Die %1$d Dateien werden im Hintergrund auf die Box geladen. Wie weit es ist, steht in der Benachrichtigung „Hochladen“.</item>
+    </plurals>
+    <plurals name="musik_nicht_alle">
+        <item quantity="one">%1$d Datei ließ sich nicht lesen.</item>
+        <item quantity="other">%1$d Dateien ließen sich nicht lesen.</item>
+    </plurals>
+    <string name="musik_falsch">Das ist keine Musik, die Homes kennt. Es gehen MP3, FLAC, M4A, OGG, Opus, WAV und ein Album als ZIP.</string>
+    <string name="musik_fertig">Bei der Musik</string>
+    <string name="musik_fertig_text">„%1$s“ ist auf der Box; die Musik sortiert es gleich ein.</string>
+    <string name="musik_nicht">Nicht hinzugefügt</string>
+    <string name="musik_noch_nicht">Die Box kann das noch nicht – kommt mit dem nächsten Update.</string>
+    <string name="musik_abgelehnt">Homes hat die Datei nicht angenommen.</string>
+    <string name="standort_import_job">Die ZIP wird im Hintergrund auf die Box geladen, auch bei ausgeschaltetem Bildschirm. Wie weit es ist und was daraus wurde, steht in der Benachrichtigung „Hochladen“.</string>
+</resources>

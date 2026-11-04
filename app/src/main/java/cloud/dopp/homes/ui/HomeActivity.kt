@@ -158,6 +158,7 @@ class HomeActivity : AppCompatActivity() {
         render()
         if (paired()) refreshDevices()
         KannLeser.lesen(this) // what the box can do, at most once a minute
+        cloud.dopp.homes.hochladen.Hochladen.anstossen(applicationContext) // files wait: Android 15 gives the job new hours now
         // The app-icon long-press menu (#97): picks up a widget removed while away.
         if (paired()) AppShortcuts.refreshAsync(applicationContext)
         // The app's screen may start the live service (Android 12+): placed widgets, the switch, the pairing.
