@@ -3,7 +3,6 @@ package cloud.dopp.homes.data
 import android.content.Context
 import okhttp3.OkHttpClient
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 /**
  * Read-only client for the assistant's name (`/napi/assistent`). The Box
@@ -44,10 +43,7 @@ class BoxApiClient(private val ctx: Context) {
         const val MAX_REPLY_BYTES = 1L shl 20
 
         val http: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                .build()
+            HomesHttp.client(connect = 10, read = 15)
         }
     }
 }

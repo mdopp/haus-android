@@ -16,7 +16,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 /**
  * The widgets' client for Homes' `/napi`, with the device token (`homes_device_…`)
@@ -276,21 +275,13 @@ class ApiClient(private val ctx: Context) {
     companion object {
         /** One client per process: its connection pool and threads are shared by every call. */
         private val http: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                // Uploads (camera #36) can be a few MB; give the write side room.
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build()
+            // Uploads (camera #36) can be a few MB; give the write side room.
+            HomesHttp.client(connect = 10, read = 15, write = 30)
         }
 
         /** Share → Homes waits for a page and the house model: a longer read. */
         private val slow: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(90, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build()
+            HomesHttp.client(connect = 10, read = 90, write = 30)
         }
 
         /**

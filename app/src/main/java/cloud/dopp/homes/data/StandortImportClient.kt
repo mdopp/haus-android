@@ -7,7 +7,6 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 /**
  * Standortverlauf übernehmen (owner 2026-11-03): a location history shared
@@ -91,11 +90,7 @@ class StandortImportClient(
     companion object {
         /** A PATCH is up to 8 MiB, and Homes writes it to disk before it answers. */
         private val HTTP: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .build()
+            HomesHttp.client(connect = 15, read = 60, write = 60)
         }
 
         private val OFFSET_STREAM = Napi.OFFSET_STREAM.toMediaType()

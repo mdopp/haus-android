@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import java.util.concurrent.TimeUnit
 
 /**
  * Standortverlauf (owner 2026-11-02): the app's points to Homes, which passes
@@ -72,11 +71,7 @@ class StandortClient(
     companion object {
         /** Short: a batch goes while a location delivery holds the phone awake. */
         private val HTTP: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(25, TimeUnit.SECONDS)
-                .writeTimeout(15, TimeUnit.SECONDS)
-                .build()
+            HomesHttp.client(connect = 10, read = 25, write = 15)
         }
 
         /** [ms] as RFC 3339 in UTC, to the millisecond. */

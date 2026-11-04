@@ -20,7 +20,6 @@ import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.util.concurrent.TimeUnit
 
 /**
  * Daten sichern (#194, laib ADR 0029): the calls that bring the phone's
@@ -242,11 +241,7 @@ class SicherungClient(
 
         /** One client for the backups: a PATCH is up to 8 MiB, and Homes writes it to disk before it answers. */
         private val HTTP: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .build()
+            HomesHttp.client(connect = 15, read = 60, write = 60)
         }
 
         private val OFFSET_STREAM = Napi.OFFSET_STREAM.toMediaType()
