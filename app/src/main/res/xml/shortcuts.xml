@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The share target behind the assistant's sharing shortcut (#188, widget/ShareTarget.kt):
-     a shortcut of this category in the share sheet hands text/plain and images to
-     the share activity. No static shortcut here: the app icon's menu is dynamic (#97). -->
+<!-- The share targets behind the assistant's sharing shortcut (#188, widget/ShareTarget.kt):
+     a shortcut of the first category hands text/plain to the share activity's alias
+     `merken`, one of the second images to its alias `dokument`. The share sheet shows a
+     Direct Share target only beside the component it resolved, so each names its alias,
+     and goes with it while the box lacks it (homes ADR 0001 §3). No static shortcut here: the app icon's menu is dynamic (#97). -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
-    <share-target android:targetClass="cloud.dopp.homes.ui.ShareActivity">
+    <share-target android:targetClass="cloud.dopp.homes.ui.TeilenMerken">
         <data android:mimeType="text/plain" />
-        <data android:mimeType="image/*" />
         <category android:name="cloud.dopp.homes.category.SHARE_TO_HOMES" />
+    </share-target>
+    <share-target android:targetClass="cloud.dopp.homes.ui.TeilenDokument">
+        <data android:mimeType="image/*" />
+        <category android:name="cloud.dopp.homes.category.SHARE_DOKUMENT" />
     </share-target>
 </shortcuts>

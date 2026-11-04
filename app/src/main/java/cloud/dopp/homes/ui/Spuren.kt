@@ -9,8 +9,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.DrawableRes
 import cloud.dopp.homes.R
+import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.kann.Anfordern
 import cloud.dopp.homes.kann.Anfrage
+import cloud.dopp.homes.kann.Liste
 import cloud.dopp.homes.kann.Modul
 
 /**
@@ -34,6 +36,16 @@ object Spuren {
         }
         return res?.let(ctx::getString) ?: m?.spur ?: ctx.getString(R.string.spur_fehlt)
     }
+
+    /** What sharing to [m] would do, one line per share target it would bring; null when none. */
+    fun teilen(ctx: Context, m: Modul?): String? = m?.bietet?.get(Liste.TEILEN).orEmpty().mapNotNull { key ->
+        when (key) {
+            KannKey.MERKEN -> R.string.spur_teilen_merken
+            KannKey.DOKUMENT -> R.string.spur_teilen_dokument
+            KannKey.STANDORT_IMPORT -> R.string.spur_teilen_standort
+            else -> null
+        }?.let(ctx::getString)
+    }.joinToString("\n").ifEmpty { null }
 
     /** How a request ended when not as wished, in words; null while none did. */
     fun satz(ctx: Context, a: Anfrage): String? = when (a) {
@@ -59,6 +71,12 @@ object Spuren {
         val stand = stand(activity, m)
         v.findViewById<TextView>(R.id.spur_stand).text = stand
         v.contentDescription = "$titel, $stand"
+        teilen(activity, m)?.let { was ->
+            v.findViewById<TextView>(R.id.spur_teilen).apply {
+                text = was
+                visibility = View.VISIBLE
+            }
+        }
         val a = m?.let { Anfordern.stand(it.name) } ?: Anfrage.Bereit
         satz(activity, a)?.let { s ->
             v.findViewById<TextView>(R.id.spur_satz).apply {

@@ -38,6 +38,7 @@ import cloud.dopp.homes.kann.Anfordern
 import cloud.dopp.homes.kann.KannLeser
 import cloud.dopp.homes.kann.KannStore
 import cloud.dopp.homes.kann.Liste
+import cloud.dopp.homes.kann.Teilen
 import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.data.ToolDef
 import cloud.dopp.homes.realtime.Live
@@ -670,6 +671,7 @@ class HomeActivity : AppCompatActivity() {
         Pairing.cancel(this)
         HomesKonto.entfernen(applicationContext) // the household's contacts and calendars leave with the pairing (#206)
         KannStore.clear(this) // the next Homes says afresh what it can do
+        Teilen.schalten(this, null) // every share target as before
         Anfordern.clear()
         AppShortcuts.refreshAsync(applicationContext) // takes the share target away (#188)
         findViewById<EditText>(R.id.server_url).setText("")

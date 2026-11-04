@@ -36,11 +36,14 @@ class PhotoShareTest {
 
     @Test
     fun theShareSheetOffersHomesForImagesOneOrSeveral() {
-        val activity = manifest.substringAfter("""android:name=".ui.ShareActivity"""").substringBefore("</activity>")
-        val images = activity.split("<intent-filter>").single { it.contains("image/*") }
+        // one component per target (homes ADR 0001 §3): the images are the alias `dokument`
+        val images = manifest.substringAfter("""android:name=".ui.TeilenDokument"""").substringBefore("</activity-alias>")
+        assertTrue(images, images.contains("""android:targetActivity=".ui.ShareActivity""""))
         assertTrue(images, images.contains("android.intent.action.SEND\""))
         assertTrue(images, images.contains("android.intent.action.SEND_MULTIPLE"))
-        assertTrue("text stays", activity.contains("""android:mimeType="text/plain""""))
+        assertTrue(images, images.contains("""android:mimeType="image/*""""))
+        val text = manifest.substringAfter("""android:name=".ui.TeilenMerken"""").substringBefore("</activity-alias>")
+        assertTrue("text stays, in its own alias", text.contains("""android:mimeType="text/plain""""))
         val target = File(RepoFiles.main, "res/xml/shortcuts.xml").readText()
         assertTrue("the assistant's Direct Share takes images too", target.contains("""android:mimeType="image/*""""))
     }

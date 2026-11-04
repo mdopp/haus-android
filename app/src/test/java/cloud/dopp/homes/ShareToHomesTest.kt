@@ -52,10 +52,13 @@ class ShareToHomesTest {
     @Test
     fun theShareSheetOffersHomesForText() {
         val manifest = File(RepoFiles.main, "AndroidManifest.xml").readText()
-        val activity = manifest.substringAfter("""android:name=".ui.ShareActivity"""").substringBefore("</activity>")
-        assertTrue(activity, activity.contains("""android.intent.action.SEND"""))
-        assertTrue(activity, activity.contains("""android:mimeType="text/plain""""))
+        val activity = manifest.substringAfter("""android:name=".ui.ShareActivity"""").substringBefore("/>")
         assertTrue(activity, activity.contains("""android:taskAffinity="""""))
+        // the text target is its own component, the alias `merken` (homes ADR 0001 §3)
+        val alias = manifest.substringAfter("""android:name=".ui.TeilenMerken"""").substringBefore("</activity-alias>")
+        assertTrue(alias, alias.contains("""android:targetActivity=".ui.ShareActivity""""))
+        assertTrue(alias, alias.contains("""android.intent.action.SEND"""))
+        assertTrue(alias, alias.contains("""android:mimeType="text/plain""""))
     }
 
     /**

@@ -436,6 +436,15 @@ anfordern“ (`anfordern`).
   the `admins` ones), each with „Hier anfordern“ while `anfordern` is true.
   A placed widget whose type went shows the module's `grund`; a tap opens
   the app.
+- **Share targets** (`teilen`: `merken` text, `dokument` images,
+  `standort-import` history files): one component each — the share
+  activity's aliases `.ui.TeilenMerken` and `.ui.TeilenDokument`, and
+  `.ui.StandortImportActivity` — enabled while the key is there, disabled
+  while it is missing (`PackageManager.setComponentEnabledSetting`,
+  DONT_KILL_APP; `kann/Teilen.kt`), all enabled while unknown. The Direct
+  Share target names the category of each enabled one and is gone with
+  neither. Android's share sheet cannot show a disabled target: its trace is
+  its module's line in Mehr, which says what sharing to it would do.
 - **„Hier anfordern“:** `POST /napi/kann/anfordern {"modul": …}` → 200, the
   module's entry with its new state, which replaces the kept one. Pressed,
   the button says „Wird angefordert …“; it ends with the new state, Homes'
