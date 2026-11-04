@@ -149,9 +149,9 @@
 
         <!-- Share → Homes (homes#120): a link or a text from the share sheet, kept
              as a note on Homes, and photos into its document inbox; translucent
-             with its own task, like the widget action dialog (#114). Exported for
-             the Direct Share target (res/xml/shortcuts.xml); the share sheet's two
-             entries are the aliases below, one component per target, so each one
+             with its own task, like the widget action dialog (#114). Exported, as
+             it was, for an explicit start (e2e/live_e2e.sh); the share sheet's two
+             entries and their Direct Share targets (res/xml/shortcuts.xml) are the aliases below, one component per target, so each one
              follows what the box offers (homes ADR 0001 §3, kann/Teilen.kt). -->
         <activity
             android:name=".ui.ShareActivity"
