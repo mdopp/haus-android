@@ -183,7 +183,6 @@
     <ID>TooGenericExceptionCaught:WidgetConfigActivity.kt$WidgetConfigActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:WidgetFallback.kt$WidgetFallback$t: Throwable</ID>
     <ID>TooGenericExceptionCaught:ZurueckholenActivity.kt$ZurueckholenActivity$e: Exception</ID>
-    <ID>UnusedPrivateProperty:Rueckholung.kt$Rueckholung$versuch</ID>
     <ID>VariableNaming:EnergyWidgetPreviewTest.kt$EnergyWidgetPreviewTest$private val CHARGE = "\"charge\":{\"entity_id\":\"sensor.akku_soc\",\"label\":\"Akku-Füllstand\",\"state\":\"83\",\"unit\":\"%\"},"</ID>
   </CurrentIssues>
 </SmellBaseline>

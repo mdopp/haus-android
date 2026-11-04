@@ -43,16 +43,11 @@ class SicherungStore(ctx: Context) : Gedaechtnis, Marken, Kontaktgedaechtnis {
     }
 
     override fun melde(quelle: Quelle, meldung: Meldung) {
-        p.edit().putString(MELDUNG + quelle.wire, "${meldung.zeit}|${meldung.art.name}|${meldung.satz.orEmpty()}").apply()
+        p.edit().putString(MELDUNG + quelle.wire, meldung.text()).apply()
     }
 
     /** [quelle]'s last word, or null before the first run. */
-    fun meldung(quelle: Quelle): Meldung? {
-        val t = p.getString(MELDUNG + quelle.wire, null)?.split('|', limit = 3) ?: return null
-        if (t.size != 3) return null
-        val art = runCatching { Meldung.Art.valueOf(t[1]) }.getOrNull() ?: return null
-        return Meldung(t[0].toLongOrNull() ?: return null, art, t[2].ifBlank { null })
-    }
+    fun meldung(quelle: Quelle): Meldung? = Meldung.aus(p.getString(MELDUNG + quelle.wire, null))
 
     override fun upload(quelle: Quelle, pfad: String): String? = p.getString(upload(quelle.wire, pfad), null)
 
@@ -124,16 +119,11 @@ class SicherungStore(ctx: Context) : Gedaechtnis, Marken, Kontaktgedaechtnis {
     }
 
     override fun meldeKontakte(meldung: Meldung) {
-        p.edit().putString(KONTAKTE_MELDUNG, "${meldung.zeit}|${meldung.art.name}|${meldung.satz.orEmpty()}").apply()
+        p.edit().putString(KONTAKTE_MELDUNG, meldung.text()).apply()
     }
 
     /** The contacts' last word, or null before the first run. */
-    fun kontakteMeldung(): Meldung? {
-        val t = p.getString(KONTAKTE_MELDUNG, null)?.split('|', limit = 3) ?: return null
-        if (t.size != 3) return null
-        val art = runCatching { Meldung.Art.valueOf(t[1]) }.getOrNull() ?: return null
-        return Meldung(t[0].toLongOrNull() ?: return null, art, t[2].ifBlank { null })
-    }
+    fun kontakteMeldung(): Meldung? = Meldung.aus(p.getString(KONTAKTE_MELDUNG, null))
 
     override fun merkeKontakte(zeit: Long, ergebnis: SicherungClient.Kontakte) {
         val e = ergebnis

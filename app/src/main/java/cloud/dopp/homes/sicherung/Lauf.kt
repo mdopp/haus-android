@@ -38,6 +38,18 @@ data class Meldung(val zeit: Long, val art: Art, val satz: String? = null) {
         /** Homes said no: the box is full, has no archive, or the device is no longer paired. */
         HOMES,
     }
+
+    /** As the store keeps it: `zeit|ART|satz`. */
+    fun text() = "$zeit|${art.name}|${satz.orEmpty()}"
+
+    companion object {
+        /** A kept [text], or null when there is none or it does not read. */
+        fun aus(s: String?): Meldung? {
+            val t = s?.split('|', limit = 3)?.takeIf { it.size == 3 } ?: return null
+            val art = runCatching { Art.valueOf(t[1]) }.getOrNull() ?: return null
+            return Meldung(t[0].toLongOrNull() ?: return null, art, t[2].ifBlank { null })
+        }
+    }
 }
 
 /**
