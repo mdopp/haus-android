@@ -33,12 +33,10 @@ class DeviceControlsTest {
         assertEquals(60, s.value)
         assertEquals("light.turn_on" to mapOf<String, Any>("brightness_pct" to 40), s.call(40))
         assertEquals("light.turn_off" to null, s.call(0))
-        // off, though HA says it dims (homes#230): no level at all; its tap turns it on
-        val off = DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"off","supported_color_modes":["brightness"]}"""))
-        assertNull(off.slider)
-        assertTrue(off.none)
-        // an on/off lamp: its tap only
+        assertEquals("60 %", s.says())
+        // an on/off lamp: its tap only, on or off
         assertTrue(DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"on","supported_color_modes":["onoff"]}""")).none)
+        assertTrue(DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"off","supported_color_modes":["onoff"]}""")).none)
     }
 
     @Test
@@ -91,15 +89,36 @@ class DeviceControlsTest {
         assertTrue(DeviceControls.of(card("""{"entity_id":"light.k","domain":"light","state":"unavailable","brightness":10}""")).none)
     }
 
-    /** A lamp that is off says „aus“ and nothing to tap; one that is on its level after its words. */
+    /**
+     * Owner, 2026-11-04: a lamp that is off said „aus“ and nothing opened its
+     * sheet. A lamp HA can dim has „aus“ as its level, and a step turns it on
+     * at that level in one call; a lamp that only switches says a plain „aus“;
+     * one out of reach has nothing to tap.
+     */
     @Test
-    fun anOffLampHasNoLevelToTap() {
+    fun anOffDimmerSaysAusAsItsLevel() {
         val off = card("""{"entity_id":"light.k","domain":"light","state":"off","brightness":null,"supported_color_modes":["brightness"]}""")
-        assertNull(StartDevices.levelLine(off))
-        assertEquals("aus", StartDevices.stateText(off))
+        val (words, level) = StartDevices.levelLine(off)!!
+        assertEquals("", words)
+        assertEquals("aus", level.says())
+        assertEquals(0, level.value)
+        assertEquals("Helligkeit", level.label)
+        assertEquals(listOf("25 %", "50 %", "75 %", "100 %"), level.steps.map { it.label })
+        assertEquals("light.turn_on" to mapOf<String, Any>("brightness_pct" to 25), level.call(25))
+        assertEquals("25 %", level.says(25))
+        // a lamp that only switches: a plain „aus“
+        val plain = card("""{"entity_id":"light.k","domain":"light","state":"off","supported_color_modes":["onoff"]}""")
+        assertNull(StartDevices.levelLine(plain))
+        assertEquals("aus", StartDevices.stateText(plain))
+        // out of reach, though HA can dim it: never a level
+        val gone = card("""{"entity_id":"light.k","domain":"light","state":"unavailable","supported_color_modes":["brightness"]}""")
+        assertNull(StartDevices.levelLine(gone))
+        assertTrue(DeviceControls.of(gone).none)
+        assertEquals("nicht erreichbar", StartDevices.stateText(gone))
+        // on: its level after its words
         val on = StartDevices.levelLine(card("""{"entity_id":"light.k","domain":"light","state":"on","brightness":153}"""))!!
         assertEquals("an", on.first)
-        assertEquals("60 %", StartDevices.percent(on.second.value))
+        assertEquals("60 %", on.second.says())
     }
 
     /** A shutter all the way down says „geschlossen · 0 %“, so its level is there to tap. */

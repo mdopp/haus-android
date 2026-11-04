@@ -46,7 +46,9 @@ class LevelSheetTest {
     private val favorites = """{"ok":true,"favorites":[
         {"entity_id":"light.kueche","name":"Küchenlicht","domain":"light","state":"on","brightness":153,"supported_color_modes":["brightness"]},
         {"entity_id":"light.flur","name":"Flurlicht","domain":"light","state":"off","supported_color_modes":["brightness"]},
-        {"entity_id":"cover.wohnzimmer","name":"Rollo","domain":"cover","device_class":"shutter","state":"closed","current_position":0,"supported_features":15}]}"""
+        {"entity_id":"cover.wohnzimmer","name":"Rollo","domain":"cover","device_class":"shutter","state":"closed","current_position":0,"supported_features":15},
+        {"entity_id":"light.stehlampe","name":"Stehlampe","domain":"light","state":"off","supported_color_modes":["onoff"]},
+        {"entity_id":"light.keller","name":"Kellerlicht","domain":"light","state":"unavailable","supported_color_modes":["brightness"]}]}"""
 
     @Before
     fun paired() {
@@ -78,17 +80,53 @@ class LevelSheetTest {
     private fun step(label: String): Button =
         all(sheet()!!.window!!.decorView, Button::class.java).single { it.text.toString() == label }
 
-    /** Each row's line: the words, then the level to tap; a lamp that is off says „aus“ and has none. */
+    /**
+     * Each row's line: the words, then the level to tap. A lamp HA can dim
+     * that is off has „aus“ as its level (owner, 2026-11-04); a lamp that
+     * only switches says a plain „aus“; one out of reach has nothing to tap.
+     */
     @Test
-    fun theRowSaysItsLevelAndAnOffLampOnlyAus() {
+    fun theRowSaysItsLevelAndAnOffDimmerAusToTap() {
         val r = rows(open())
         assertEquals("an ·", r[0].findViewById<TextView>(R.id.row_room).text.toString())
         assertEquals("60 %", level(r[0]).text.toString())
         assertEquals("Küchenlicht Helligkeit 60 %, einstellen", level(r[0]).contentDescription)
-        assertEquals("aus", r[1].findViewById<TextView>(R.id.row_room).text.toString())
-        assertEquals(View.GONE, level(r[1]).visibility)
+        // the dimmer that is off: „aus“ alone, and it is the level
+        assertEquals(View.GONE, r[1].findViewById<TextView>(R.id.row_room).visibility)
+        assertEquals(View.VISIBLE, level(r[1]).visibility)
+        assertEquals("aus", level(r[1]).text.toString())
+        assertEquals("Flurlicht Helligkeit aus, einstellen", level(r[1]).contentDescription)
+        assertEquals("Flurlicht, aus", r[1].contentDescription)
         assertEquals("geschlossen ·", r[2].findViewById<TextView>(R.id.row_room).text.toString())
         assertEquals("0 %", level(r[2]).text.toString())
+        // the lamp that only switches and the one out of reach: their state, nothing to tap
+        assertEquals("aus", r[3].findViewById<TextView>(R.id.row_room).text.toString())
+        assertEquals(View.GONE, level(r[3]).visibility)
+        assertEquals("nicht erreichbar", r[4].findViewById<TextView>(R.id.row_room).text.toString())
+        assertEquals(View.GONE, level(r[4]).visibility)
+    }
+
+    /** The off dimmer's „aus“ opens its sheet saying „aus“; a step turns it on at that level in one call, the sheet staying open. */
+    @Test
+    fun anOffDimmersAusOpensTheSheetAndAStepTurnsItOn() {
+        val a = open()
+        shadowOf(a.application).clearBroadcastIntents()
+        level(rows(a)[1]).performClick()
+        ShadowLooper.idleMainLooper()
+        val v = sheet()!!.window!!.decorView
+        assertTrue(sheet()!!.isShowing)
+        assertEquals("Flurlicht", v.findViewById<TextView>(R.id.sheet_title).text.toString())
+        assertEquals("aus", v.findViewById<TextView>(R.id.sheet_value).text.toString())
+        assertEquals(0f, v.findViewById<Slider>(R.id.sheet_slider).value)
+        assertTrue("opening sends nothing", calls(a).isEmpty())
+        step("25 %").performClick()
+        ShadowLooper.idleMainLooper()
+        val one = calls(a).single()
+        assertEquals("light.flur", one.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
+        assertEquals("light.turn_on", one.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
+        assertEquals(25, JSONObject(one.getStringExtra(WidgetActionReceiver.EXTRA_DATA)!!).getInt("brightness_pct"))
+        assertTrue("the sheet stays open", sheet()!!.isShowing)
+        assertEquals("25 %", v.findViewById<TextView>(R.id.sheet_value).text.toString())
     }
 
     /** A vertical swipe across the favorites, through the level, sends nothing and opens nothing. */

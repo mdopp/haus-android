@@ -27,7 +27,7 @@ import java.io.File
 
 /**
  * The favorites' levels and their sheet drawn (owner, 2026-11-03): the rows
- * with their level to tap, a lamp's sheet, a cover's sheet. Into
+ * with their level to tap, a lamp's sheet, an off lamp's („aus“), a cover's sheet. Into
  * `build/widget-preview/regler-<name>.png` (and `$WIDGET_PREVIEW_DIR`), to be
  * looked at.
  */
@@ -46,6 +46,9 @@ class LevelSheetPreviewTest {
 
     @Test
     fun drawTheCoversSheet() = draw("blatt-rollo", 2)
+
+    @Test
+    fun drawTheOffLampsSheet() = draw("blatt-aus", 1)
 
     private fun draw(name: String, open: Int?) {
         ServerStore.setBaseUrl(ctx(), "https://homes.example")

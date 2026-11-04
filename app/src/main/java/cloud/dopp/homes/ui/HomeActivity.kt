@@ -253,6 +253,7 @@ class HomeActivity : AppCompatActivity() {
         val line = StartDevices.levelLine(card)
         fun switching() {
             state.text = getString(R.string.home_device_switching)
+            state.visibility = View.VISIBLE
             levelView.visibility = View.GONE
         }
         if (line == null) {
@@ -260,13 +261,14 @@ class HomeActivity : AppCompatActivity() {
             v.contentDescription = card.name + ", " + state.text
         } else {
             val (words, level) = line
-            val percent = StartDevices.percent(level.value)
+            val says = level.says()
             state.text = "$words ·"
-            levelView.text = percent
+            state.visibility = if (words.isEmpty()) View.GONE else View.VISIBLE // a lamp that is off: „aus“ alone
+            levelView.text = says
             levelView.visibility = View.VISIBLE
-            levelView.contentDescription = getString(R.string.home_device_level, card.name, level.label, percent)
+            levelView.contentDescription = getString(R.string.home_device_level, card.name, level.label, says)
             levelView.setOnClickListener { openLevel(card, level, ::switching) }
-            v.contentDescription = "${card.name}, $words, $percent"
+            v.contentDescription = listOf(card.name, words, says).filter { it.isNotEmpty() }.joinToString(", ")
             reachAtLeast48dp(v, levelView)
         }
         v.setOnClickListener {
