@@ -17,7 +17,8 @@ import com.google.android.material.slider.Slider
  * page since homes#230): a slider on the row moved when the list was
  * scrolled, so the row only says its level and a tap on it opens this.
  *
- * The thing's name as the title, the level large, a full-width slider that
+ * The thing's name as the title, the level large („aus“ for a lamp that is
+ * off, owner 2026-11-04: a step turns it on at that level), a full-width slider that
  * sends when the finger lets go, the quick [DeviceControls.Slider.steps] —
  * each one call, the sheet stays open — and „Fertig“. Fertig, back and a tap
  * outside close it. Every call goes through [send], the device receiver's
@@ -44,7 +45,7 @@ class LevelSheet(
         value = v.findViewById(R.id.sheet_value)
         slider = v.findViewById(R.id.sheet_slider)
         slider.contentDescription = "$name ${level.label}"
-        slider.setLabelFormatter { StartDevices.percent(it.toInt()) }
+        slider.setLabelFormatter { level.says(it.toInt()) }
         slider.addOnChangeListener { _, at, fromUser ->
             show(at.toInt())
             // a screen reader or a key moves it without a touch: send at once
@@ -90,7 +91,7 @@ class LevelSheet(
 
     fun show() = dialog.show()
 
-    /** Homes' fresh level for this thing; kept while the finger is on the slider, and when the thing has none now (a lamp just turned off). */
+    /** Homes' fresh level for this thing; kept while the finger is on the slider, and when the thing has none now (a lamp out of reach). */
     fun refresh(fresh: DeviceControls.Slider?) {
         if (fresh == null || tracking) return
         level = fresh
@@ -103,7 +104,7 @@ class LevelSheet(
     }
 
     private fun show(v: Int) {
-        value.text = StartDevices.percent(v)
+        value.text = level.says(v)
     }
 
     private fun pick(v: Int) {

@@ -79,14 +79,15 @@ object StartDevices {
      * The row's line for a favorite with a level (owner, 2026-11-03,
      * homes#230): the words before it and the level, which the row shows as
      * the button that opens [LevelSheet] — „an · 60 %“, „offen · 60 %“, and
-     * „geschlossen · 0 %“, so a closed cover has something to tap. Null
-     * without a level: the row says [stateText].
+     * „geschlossen · 0 %“, so a closed cover has something to tap; a lamp
+     * that is off no words and „aus“ (owner, 2026-11-04). Null without a
+     * level: the row says [stateText].
      */
     fun levelLine(card: Card): Pair<String, DeviceControls.Slider>? {
         val level = DeviceControls.of(card).slider ?: return null
         val state = card.state?.trim()?.lowercase(Locale.ROOT)
         val words = when (card.domain) {
-            "light" -> "an"
+            "light" -> if (state == "on") "an" else ""
             "cover" -> when (state) {
                 "open" -> "offen"
                 "closed" -> "geschlossen"

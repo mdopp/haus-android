@@ -15,7 +15,9 @@ import kotlin.math.roundToInt
  *
  * A level ([Slider]) is never a slider on the row (owner, 2026-11-03: a
  * scroll moved them, homes#230): the row says it („an · 60 %“), the „60 %“
- * opens [LevelSheet] with the large slider and its [Slider.steps].
+ * opens [LevelSheet] with the large slider and its [Slider.steps]. A lamp
+ * that is off says „aus“ as its level ([Slider.off], owner 2026-11-04), so
+ * its sheet opens too.
  *
  * Every control is one `/napi/ha/call` on the card's own entity; Homes' rule
  * (`schalter.Do`) still decides each. Like the page, a cover offers its
@@ -34,6 +36,7 @@ object DeviceControls {
     /**
      * A 0–100 level at [value]; a pick of `v` calls [service] with [key] = v,
      * 0 calls [zero] when set. [steps] are the sheet's quick levels, each one call.
+     * [off] is what the row and the sheet say at 0 („aus“), instead of „0 %“.
      */
     data class Slider(
         val label: String,
@@ -42,7 +45,11 @@ object DeviceControls {
         val key: String,
         val zero: String? = null,
         val steps: List<Step> = emptyList(),
+        val off: String? = null,
     ) {
+        /** The level [v] as the row and the sheet say it: „60 %“, or [off] at 0. */
+        fun says(v: Int = value): String = if (v <= 0 && off != null) off else StartDevices.percent(v)
+
         /** The call a pick of [v] makes: (service, data). */
         fun call(v: Int): Pair<String, Map<String, Any>?> {
             val at = v.coerceIn(0, 100)
@@ -83,16 +90,17 @@ object DeviceControls {
     private val COVER_STEPS = listOf(Step("Auf", 100), Step("½", 50), Step("Zu", 0))
 
     /**
-     * A lamp that is on and HA can dim (a brightness, or a colour mode other
-     * than on/off): its brightness, 0 turns it off. A lamp that is off has
-     * none (owner, 2026-11-03, homes#230): its tap turns it on, and the level
-     * comes with the fresh state.
+     * A lamp HA can dim (a brightness, or a colour mode other than on/off):
+     * its brightness, 0 turns it off. Off, its level says „aus“ (owner,
+     * 2026-11-04: at 0 % there was nothing to open the sheet with), and a
+     * pick turns it on at that level in one call.
      */
     private fun light(card: Card, state: String): Controls {
         val dims = card.brightness != null || card.colorModes.any { it != "onoff" && it != "unknown" }
-        if (!dims || state != "on") return Controls()
-        val value = card.brightnessPct ?: 0
-        return Controls(slider = Slider("Helligkeit", value, "light.turn_on", "brightness_pct", zero = "light.turn_off", steps = LIGHT_STEPS))
+        if (!dims || state != "on" && state != "off") return Controls()
+        val value = if (state == "on") card.brightnessPct ?: 0 else 0
+        val off = "aus".takeIf { state == "off" }
+        return Controls(slider = Slider("Helligkeit", value, "light.turn_on", "brightness_pct", zero = "light.turn_off", steps = LIGHT_STEPS, off = off))
     }
 
     /** A cover Homes opens freely: what HA says it can, and its position when it reports one. */
