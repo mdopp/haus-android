@@ -16,24 +16,16 @@ import cloud.dopp.homes.data.Card
 import cloud.dopp.homes.widget.DeviceLook
 
 /**
- * „Deine Geräte“ as tiles (owner, 2026-11-04: „Ich glaube, das geht mit
- * weniger Platz und gleicher Funktionalität“; variant A2, approved as
- * rendered). Each tile keeps what a row did: a tap switches, a long press
- * opens the device in Homes, the accented level or „aus“ opens
- * [LevelSheet], a lock and a garage ask first (the receiver's one dialog), a
- * device that does not answer says „nicht erreichbar“ and, while the box is
- * not reached, every tile is greyed under the „Stand …“ line.
- *
- * The tiles wear the widgets' look: the picture and its colour from
- * [DeviceLook] (amber on, green shut and locked, orange open, grey off), so
- * the picture says the state and words are left only where it cannot; the
- * name without the room HA appends ([DeviceLook.shortName]); no outlines.
- *
- * Two to a row, the level right of the picture, the name below. A cover
- * takes the whole row: its ▲ ■ ▼ sit right of the picture, and three 40 dp
- * buttons beside it do not fit half of a 360 dp phone; a tap on the tile or
- * its level opens the sheet (Auf, ½, Zu, Stopp and the slider). A tile left
- * without a neighbour takes the whole row as one line too.
+ * „Deine Geräte“ as tiles (owner, 2026-11-04, variant A2 as rendered). Each
+ * keeps what a row did: a tap switches, a long press opens the device in
+ * Homes, the accented level or „aus“ opens [LevelSheet], a lock and a garage
+ * ask first, one that does not answer says so, and offline all are greyed.
+ * The widgets' look ([DeviceLook]): the picture in its state's colour says
+ * the state, words only where it cannot; the name without the room; no outlines.
+ * A phone: two to a row, the level right of the picture, the name below; a
+ * cover across the row with ▲ ■ ▼ (three 40 dp buttons do not fit half of a
+ * 360 dp phone), its tap opening the sheet, and so a tile left alone. Wider
+ * (a foldable, a tablet): a grid of equal cells, each tile one line.
  */
 class FavoritenAnsicht(
     private val ctx: Context,
@@ -49,39 +41,35 @@ class FavoritenAnsicht(
     private val density = ctx.resources.displayMetrics.density
     private fun dp(v: Int) = (v * density).toInt()
 
-    /** The favourites as tiles in their order, two to a row; a cover, and a tile left alone, across the row. */
+    /** The favourites as tiles in their order: a phone's rows ([paare]), or wider a grid of equal one-line cells. */
     fun kacheln(group: ViewGroup, cards: List<Card>) {
         val gap = dp(GAP_DP)
-        var i = 0
-        var first = true
-        while (i < cards.size) {
-            val pair = cards[i].takeIf { !breit(it) }?.let { a -> cards.getOrNull(i + 1)?.takeIf { !breit(it) }?.let { b -> listOf(a, b) } }
+        // the window's width: a fold opened or a tablet turned makes the screen anew; slots keep the cells in line
+        val n = spalten(ctx.resources.configuration.screenWidthDp - 2 * GUTTER_DP)
+        val rows = if (n < 2) paare(cards) { DeviceControls.coverButtons(it).isNotEmpty() } else cards.chunked(n)
+        rows.forEachIndexed { i, reihe ->
+            val zeile = n >= 2 || reihe.size == 1
             val row = LinearLayout(ctx).apply {
                 orientation = LinearLayout.HORIZONTAL
                 isBaselineAligned = false
+                weightSum = maxOf(n, reihe.size).toFloat()
             }
-            if (pair != null) {
-                pair.forEachIndexed { j, card ->
-                    row.addView(
-                        kachel(row, card, R.layout.item_device_tile),
-                        LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { if (j > 0) marginStart = gap },
-                    )
-                }
-                i += 2
-            } else {
-                row.addView(kachel(row, cards[i], R.layout.item_device_tile_wide), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-                i += 1
+            reihe.forEach { card ->
+                val slot = android.widget.FrameLayout(ctx).apply { setPadding(gap / 2, 0, gap / 2, 0) }
+                val layout = if (zeile) R.layout.item_device_tile_wide else R.layout.item_device_tile
+                slot.addView(kachel(slot, card, layout), ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                row.addView(slot, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
             }
             group.addView(
                 row,
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (!first) topMargin = gap },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    marginStart = -gap / 2
+                    marginEnd = -gap / 2
+                    if (i > 0) topMargin = gap
+                },
             )
-            first = false
         }
     }
-
-    /** A cover with buttons takes a whole row: three 40 dp buttons and its picture do not fit half of a 360 dp phone. */
-    private fun breit(card: Card) = DeviceControls.coverButtons(card).isNotEmpty()
 
     private fun kachel(parent: ViewGroup, card: Card, layout: Int): View {
         val v = inflater.inflate(layout, parent, false)
@@ -200,18 +188,36 @@ class FavoritenAnsicht(
     /** On, open or moving: the tile takes a wash of its colour; shut, locked and off stay quiet. */
     private fun active(colour: Int) = !grey && colour != DeviceLook.OFF && colour != DeviceLook.UNKNOWN && colour != DeviceLook.SECURE
 
-    private companion object {
-        const val GAP_DP = 8
-        const val TOUCH_DP = 48
-        const val SEG_W_DP = 40
-        const val CLIP_PER_PERCENT = 100
-        val UNTERWEGS = setOf("opening", "closing", "locking", "unlocking")
-        val BILDLICH = setOf("light", "switch", "cover", "lock")
-        const val TILE = 0xFF141419.toInt()
-        const val WASH = 0.13f
-        const val DOT_ALPHA = 0x2E
-        const val STALE_ALPHA = 0.55f
-        val ICONS = mapOf(
+    companion object {
+        private const val GAP_DP = 8
+        private const val GUTTER_DP = 24
+
+        /** A cell's least width: a cover's one line with ▲ ■ ▼, measured whole at 312 dp (the 360 dp phone's). */
+        private const val ZELLE_DP = 312
+
+        /** Cells of at least [ZELLE_DP] in [breiteDp] of room; fewer than two is a phone. */
+        fun spalten(breiteDp: Int) = maxOf(1, (breiteDp + GAP_DP) / (ZELLE_DP + GAP_DP))
+
+        /** A phone's rows (as approved 2026-11-04): two to a row in their order, a [breit] one or one left alone by itself. Pure. */
+        fun paare(cards: List<Card>, breit: (Card) -> Boolean): List<List<Card>> = buildList {
+            var i = 0
+            while (i < cards.size) {
+                val neben = cards.getOrNull(i + 1)?.takeIf { !breit(cards[i]) && !breit(it) }
+                add(listOfNotNull(cards[i], neben))
+                i += if (neben == null) 1 else 2
+            }
+        }
+
+        private const val TOUCH_DP = 48
+        private const val SEG_W_DP = 40
+        private const val CLIP_PER_PERCENT = 100
+        private val UNTERWEGS = setOf("opening", "closing", "locking", "unlocking")
+        private val BILDLICH = setOf("light", "switch", "cover", "lock")
+        private const val TILE = 0xFF141419.toInt()
+        private const val WASH = 0.13f
+        private const val DOT_ALPHA = 0x2E
+        private const val STALE_ALPHA = 0.55f
+        private val ICONS = mapOf(
             "Hoch" to R.drawable.ic_ctl_up,
             "Stopp" to R.drawable.ic_ctl_stop,
             "Runter" to R.drawable.ic_ctl_down,

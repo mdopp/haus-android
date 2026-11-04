@@ -58,6 +58,21 @@ class FavoritenPreviewTest {
     @Config(qualifiers = "w360dp-h780dp-xxhdpi")
     fun drawTheTilesNarrow() = draw("schmal", null)
 
+    /** A small tablet: still a phone's rows, two cells of a cover's line do not fit (owner, 2026-11-04: larger screens). */
+    @Test
+    @Config(qualifiers = "w600dp-h960dp-xhdpi")
+    fun drawTheTilesAt600() = draw("600", null)
+
+    /** A foldable's inner screen: a grid of two equal cells, each tile one line. */
+    @Test
+    @Config(qualifiers = "w900dp-h1000dp-xhdpi")
+    fun drawTheTilesAt900() = draw("900", null)
+
+    /** A tablet across: three equal cells, the owner's six favourites in two rows, in their order. */
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun drawTheTilesAt1280() = draw("1280", null)
+
     private fun draw(name: String, open: String?, offline: Boolean = false) {
         ServerStore.setBaseUrl(ctx(), "https://homes.example")
         TokenStore.backend = ctx().getSharedPreferences("test_tokens", Context.MODE_PRIVATE)
