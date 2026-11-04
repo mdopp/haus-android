@@ -414,7 +414,7 @@ class ApiClient(private val ctx: Context) {
          * confirm dialog for an action we can't name. Pure → JVM-testable.
          */
         fun merkenOutcome(code: Int, body: String?): Merken {
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            val o = HomesHttp.json(body)
             if (code in 200..299 && o != null) {
                 val note = o.optString(MerkenJson.NOTE).takeIf { it.startsWith("https://") }
                 return Merken.Kept(o.optString(MerkenJson.SAID), note, o.optBoolean(MerkenJson.ALREADY))
@@ -444,7 +444,7 @@ class ApiClient(private val ctx: Context) {
          * from the status.
          */
         fun uploadOutcome(code: Int, body: String?): Upload {
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            val o = HomesHttp.json(body)
             if (code in 200..299 && o != null && o.optBoolean(Napi.PhotoJson.OK)) {
                 return Upload.Stored(o.optString(Napi.PhotoJson.ID))
             }

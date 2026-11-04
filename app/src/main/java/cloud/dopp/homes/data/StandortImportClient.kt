@@ -5,7 +5,6 @@ import cloud.dopp.homes.data.Napi.ImportStandJson
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import java.io.IOException
 
 /**
@@ -45,7 +44,7 @@ class StandortImportClient(
         return http.newCall(req).execute().use { resp ->
             val text = resp.body?.string()
             if (!resp.isSuccessful) throw abgelehnt(resp.code, text)
-            val o = runCatching { JSONObject(text.orEmpty()) }.getOrNull() ?: throw Abgelehnt(resp.code, null, null)
+            val o = HomesHttp.json(text) ?: throw Abgelehnt(resp.code, null, null)
             val id = o.optString(ImportJson.ID)
             val offset = o.optLong(ImportJson.OFFSET, -1)
             if (id.isBlank() || offset < 0) throw Abgelehnt(resp.code, null, null)
@@ -97,21 +96,17 @@ class StandortImportClient(
 
         /** A refusal with Homes' sentence and word, `{fehler, grund}`, when it sent them. */
         fun abgelehnt(code: Int, body: String?): Abgelehnt {
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
-            return Abgelehnt(
-                code,
-                o?.optString(ImportJson.FEHLER)?.trim()?.ifBlank { null },
-                o?.optString(ImportJson.GRUND)?.trim()?.ifBlank { null },
-            )
+            val o = HomesHttp.json(body)
+            return Abgelehnt(code, HomesHttp.text(o, ImportJson.FEHLER), HomesHttp.text(o, ImportJson.GRUND))
         }
 
         /** A `GET …/import/{id}` reply; a refusal is [Abgelehnt]. */
         fun standAus(code: Int, body: String?): Stand {
             if (code !in 200..299) throw abgelehnt(code, body)
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull() ?: throw Abgelehnt(code, null, null)
+            val o = HomesHttp.json(body) ?: throw Abgelehnt(code, null, null)
             val stand = o.optString(ImportStandJson.STAND)
             if (stand.isBlank()) throw Abgelehnt(code, null, null)
-            fun text(key: String) = if (o.isNull(key)) null else o.optString(key).trim().ifBlank { null }
+            fun text(key: String) = HomesHttp.text(o, key)
             return Stand(
                 stand = stand,
                 gelesen = o.optLong(ImportStandJson.GELESEN),

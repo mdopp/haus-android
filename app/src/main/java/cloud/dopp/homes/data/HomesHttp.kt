@@ -1,6 +1,7 @@
 package cloud.dopp.homes.data
 
 import okhttp3.OkHttpClient
+import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 /**
@@ -20,4 +21,17 @@ object HomesHttp {
             .readTimeout(read, TimeUnit.SECONDS)
             .writeTimeout(write, TimeUnit.SECONDS)
             .build()
+
+    /** A reply body as a JSON object, or null when it is none. */
+    fun json(body: String?): JSONObject? = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+
+    /**
+     * [key] of [o] as Homes writes a sentence or a word (`fehler`, `grund`):
+     * trimmed; null when [o] is none, or the key is absent, JSON null or blank.
+     */
+    fun text(o: JSONObject?, key: String): String? =
+        if (o == null || o.isNull(key)) null else o.optString(key).trim().ifBlank { null }
+
+    /** Homes' sentence under [key] in a reply [body]: its `{"fehler": …}`. */
+    fun satz(body: String?, key: String): String? = text(json(body), key)
 }

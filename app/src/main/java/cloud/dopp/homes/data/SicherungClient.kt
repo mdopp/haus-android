@@ -141,7 +141,7 @@ class SicherungClient(
         return rufe(json(Napi.SICHERUNG_FEHLEND, Napi.SICHERUNG_FEHLEND.json(quelle.wire, liste))) { resp ->
             val body = resp.body?.string()
             if (!resp.isSuccessful) throw Abgelehnt(resp.code, satzAus(body))
-            val arr = runCatching { JSONObject(body.orEmpty()).optJSONArray(FehlendJson.FEHLEND) }.getOrNull()
+            val arr = HomesHttp.json(body)?.optJSONArray(FehlendJson.FEHLEND)
                 ?: throw Abgelehnt(resp.code, null)
             (0 until arr.length()).map { arr.optString(it) }.filter { it in gefragt }.toSet()
         }
@@ -153,7 +153,7 @@ class SicherungClient(
         return rufe(json(Napi.SICHERUNG_UPLOADS, body)) { resp ->
             val text = resp.body?.string()
             if (!resp.isSuccessful) throw Abgelehnt(resp.code, satzAus(text))
-            val o = runCatching { JSONObject(text.orEmpty()) }.getOrNull() ?: throw Abgelehnt(resp.code, null)
+            val o = HomesHttp.json(text) ?: throw Abgelehnt(resp.code, null)
             val id = o.optString(UploadJson.ID)
             val offset = o.optLong(UploadJson.OFFSET, -1)
             if (id.isBlank() || offset < 0) throw Abgelehnt(resp.code, null)
@@ -187,7 +187,7 @@ class SicherungClient(
     fun schluessel(): String = rufe(Napi.SICHERUNG_SCHLUESSEL.request(base, token)) { resp ->
         val text = resp.body?.string()
         if (!resp.isSuccessful) throw Abgelehnt(resp.code, satzAus(text))
-        runCatching { JSONObject(text.orEmpty()).optString(SchluesselJson.EMPFAENGER) }.getOrNull()?.trim()?.ifBlank { null }
+        HomesHttp.text(HomesHttp.json(text), SchluesselJson.EMPFAENGER)
             ?: throw Abgelehnt(resp.code, null)
     }
 
@@ -229,7 +229,7 @@ class SicherungClient(
         /** A `kontakte` reply: the counts, or [Abgelehnt] with Homes' sentence. */
         fun kontakteAus(code: Int, body: String?): Kontakte {
             if (code !in 200..299) throw Abgelehnt(code, satzAus(body))
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull() ?: throw Abgelehnt(code, null)
+            val o = HomesHttp.json(body) ?: throw Abgelehnt(code, null)
             if (!o.has(KontakteJson.KONTAKTE)) throw Abgelehnt(code, null)
             return Kontakte(
                 o.optInt(KontakteJson.KONTAKTE),
@@ -248,7 +248,7 @@ class SicherungClient(
 
         /** Homes' sentence in an error body, `{"fehler": …}`, or null. */
         fun satzAus(body: String?): String? =
-            runCatching { JSONObject(body.orEmpty()).optString(UploadJson.FEHLER) }.getOrNull()?.trim()?.ifBlank { null }
+            HomesHttp.satz(body, UploadJson.FEHLER)
 
         /** Where a 206's `Content-Range: bytes <start>-<end>/<total>` starts, or null. */
         fun startAus(contentRange: String?): Long? =
@@ -260,7 +260,7 @@ class SicherungClient(
             if (code !in 200..299) {
                 return Letzte.Fehler(satzAus(body) ?: "Homes hat nicht gesagt, was zum Zurückholen bereitliegt ($code).")
             }
-            val quellen = runCatching { JSONObject(body.orEmpty()).optJSONObject(LetzteJson.QUELLEN) }.getOrNull()
+            val quellen = HomesHttp.json(body)?.optJSONObject(LetzteJson.QUELLEN)
                 ?: return Letzte.Fehler("Homes hat nicht lesbar gesagt, was zum Zurückholen bereitliegt.")
             val out = LinkedHashMap<Napi.Quelle, List<LetzteDatei>>()
             Napi.Quelle.entries.forEach { q ->
@@ -281,7 +281,7 @@ class SicherungClient(
             if (code !in 200..299) {
                 return Stand.Fehler(satzAus(body) ?: "Homes hat den Stand der Sicherungen nicht gemeldet ($code).")
             }
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            val o = HomesHttp.json(body)
                 ?: return Stand.Fehler("Homes hat den Stand der Sicherungen nicht lesbar gemeldet.")
             val quellen = o.optJSONObject(StandJson.QUELLEN)
             val stand = LinkedHashMap<Napi.Quelle, QuelleStand>()
@@ -304,7 +304,7 @@ class SicherungClient(
          * there. 507 stops; anything else is [Abgelehnt].
          */
         fun teilAus(code: Int, body: String?): Teil {
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            val o = HomesHttp.json(body)
             val offset = o?.optLong(TeilJson.OFFSET, -1) ?: -1
             return when (code) {
                 200 -> {

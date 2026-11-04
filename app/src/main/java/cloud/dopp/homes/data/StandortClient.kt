@@ -91,22 +91,19 @@ class StandortClient(
         /** A `POST /napi/standort` reply. Only a 2xx with `angenommen` lets the batch go. */
         fun ergebnisAus(code: Int, body: String?): Ergebnis {
             if (code == 401) return Ergebnis.NichtGekoppelt
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            val o = HomesHttp.json(body)
             if (code in 200..299 && o != null && o.has(StandortJson.ANGENOMMEN)) {
                 return Ergebnis.Angenommen(o.optInt(StandortJson.ANGENOMMEN), o.optInt(StandortJson.VERWORFEN))
             }
-            val grund = o?.optString(StandortJson.GRUND)?.ifBlank { null }
-            val satz = o?.optString(StandortJson.FEHLER)?.trim()?.ifBlank { null }
-            return Ergebnis.Behalten(code, grund, satz)
+            return Ergebnis.Behalten(code, HomesHttp.text(o, StandortJson.GRUND), HomesHttp.text(o, StandortJson.FEHLER))
         }
 
         /** A `GET /napi/standort` reply. */
         fun verbindungAus(code: Int, body: String?): Verbindung {
             if (code == 401) return Verbindung.NichtGekoppelt
-            val o = runCatching { JSONObject(body.orEmpty()) }.getOrNull()
+            val o = HomesHttp.json(body)
             if (code !in 200..299) {
-                val satz = o?.optString(StandortStandJson.FEHLER)?.trim()?.ifBlank { null }
-                return Verbindung.Fehler(satz ?: "Homes hat nicht gesagt, ob Reitti verbunden ist ($code).")
+                return Verbindung.Fehler(HomesHttp.text(o, StandortStandJson.FEHLER) ?: "Homes hat nicht gesagt, ob Reitti verbunden ist ($code).")
             }
             if (o == null || !o.has(StandortStandJson.VERBUNDEN)) {
                 return Verbindung.Fehler("Homes hat nicht lesbar gesagt, ob Reitti verbunden ist.")

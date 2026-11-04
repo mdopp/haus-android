@@ -2,7 +2,6 @@ package cloud.dopp.homes.data
 
 import cloud.dopp.homes.data.Napi.GemeinsamJson
 import okhttp3.OkHttpClient
-import org.json.JSONObject
 import java.io.IOException
 
 /**
@@ -44,7 +43,7 @@ class GemeinsamClient(
             when {
                 resp.code == 304 -> Antwort.Gleich
                 resp.code in 200..299 -> Antwort.Neu(resp.body?.string().orEmpty(), resp.replyHeader(endpoint, Napi.ETAG))
-                else -> Antwort.Abgelehnt(resp.code, satzAus(resp.body?.string()))
+                else -> Antwort.Abgelehnt(resp.code, HomesHttp.satz(resp.body?.string(), GemeinsamJson.FEHLER))
             }
         }
     } catch (e: IOException) {
@@ -52,10 +51,6 @@ class GemeinsamClient(
     }
 
     companion object {
-        /** Homes' sentence in a refusal, `{"fehler": …}`, or null. */
-        fun satzAus(body: String?): String? =
-            runCatching { JSONObject(body.orEmpty()).optString(GemeinsamJson.FEHLER) }.getOrNull()?.trim()?.ifBlank { null }
-
         private val HTTP: OkHttpClient by lazy {
             HomesHttp.client(connect = 15, read = 60)
         }
