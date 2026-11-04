@@ -221,6 +221,7 @@ class StandortImportTest {
         assertTrue(Import.nimmt("Takeout.ZIP", "application/octet-stream"))
         assertTrue(Import.nimmt(null, "application/zip"))
         assertTrue(Import.nimmt(null, "application/x-zip-compressed"))
+        assertTrue(Import.nimmt(null, "application/x-zip"))
         assertFalse(Import.nimmt("musik.mp3", "application/octet-stream"))
         assertEquals("takeout.zip", Import.dateiname("takeout.zip", "application/zip"))
         assertEquals("a ZIP without a name keeps its kind", "Standortverlauf.zip", Import.dateiname(null, "application/zip"))
@@ -235,6 +236,19 @@ class StandortImportTest {
         assertEquals(Ausgang.Fertig(FERTIG), a)
         assertEquals("takeout.zip", homes.name)
         assertArrayEquals(inhalt, homes.daten.toByteArray())
+    }
+
+    /** A Takeout part is large and the line drops: after a cut the ZIP goes on where Homes stands (homes#274). */
+    @Test
+    fun aZipGoesOnAfterTheLineDropped() {
+        val inhalt = datei(3500)
+        var cut = 0
+        val a = import().uebernehmen("takeout-001.zip", inhalt.size.toLong(), { ab -> ByteArrayInputStream(inhalt, ab.toInt(), inhalt.size) }, {
+            if (it is Import.Fortschritt.Hochladen && it.gesendet == 1000L && cut++ == 0) homes.schneide = true
+        })
+        assertEquals(Ausgang.Fertig(FERTIG), a)
+        assertArrayEquals(inhalt, homes.daten.toByteArray())
+        assertTrue(homes.anfragen.toString(), homes.anfragen.any { it.startsWith("HEAD /napi/standort/import/") })
     }
 
     /** An older Homes refuses the ZIP: its sentence is what the person reads, as for any refusal. */

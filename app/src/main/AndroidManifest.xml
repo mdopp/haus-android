@@ -215,6 +215,7 @@
                 <data android:mimeType="application/octet-stream" />
                 <data android:mimeType="application/zip" />
                 <data android:mimeType="application/x-zip-compressed" />
+                <data android:mimeType="application/x-zip" />
             </intent-filter>
         </activity>
 

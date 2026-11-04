@@ -178,7 +178,7 @@ class Import(
         private val ENDUNGEN = listOf(".json", ".geojson", ".gpx", ".zip")
 
         /** A Google Takeout as it comes: a ZIP, sent as it is; Homes unpacks it (an older one says it cannot). */
-        private val ZIP = listOf("application/zip", "application/x-zip-compressed")
+        private val ZIP = listOf("application/zip", "application/x-zip-compressed", "application/x-zip")
 
         /** The types a share may come as with any of those names. */
         val TYPEN = listOf(
