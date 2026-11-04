@@ -489,11 +489,15 @@ zeitleiste, scannen}}`, the device's person's modules that are on.
   (`einrichtung/EinrichtungStore.kt`) and used offline. An older Homes
   answers 404: the app forgets what it kept, and „Öffnen“, „Deine
   Aufgaben“ and the shortcuts that need it are gone, quietly.
-- **„Öffnen“** below „Deine Geräte“: the modules without an `app` of their
-  own (`nur_web`), each opening its `web` in a Custom Tab, where the
-  person's login is. A module with its own app is never there: while the
-  app is missing it is a task, and then the phone's own app icon is the
-  way in. Pictures by `icon` (`einrichtung/Abschnitte.kt`, `Bilder`),
+- **„Öffnen“** below „Deine Geräte“: four modules only (owner, 2026-11-04:
+  the whole list was too long, most modules live in the Homes app, the
+  phone's apps or their own apps) — `dokumente`, `standort` (Zeitleiste),
+  `gesundheit`, `musik` (Musik verwalten), in that order, each when the box
+  sends it with a `web` (`Einrichtung.OEFFNEN`), opening it in a Custom Tab,
+  where the person's login is; below them „Homes“, Homes' own start page
+  (`/start` of the paired address), whenever the box answered. A module
+  with its own app is a task while the app is missing, and then the
+  phone's own app icon is the way in. Pictures by `icon` (`einrichtung/Abschnitte.kt`, `Bilder`),
   any other key the default one.
 - **„Deine Aufgaben“** with `offen` beside its title: the tasks with
   `erledigt: false`. A tap opens the app's `store` page while the app is

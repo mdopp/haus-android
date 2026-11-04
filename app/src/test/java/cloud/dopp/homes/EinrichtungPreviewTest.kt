@@ -31,6 +31,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowLooper
 import java.io.File
 import java.net.ConnectException
@@ -144,7 +145,14 @@ class EinrichtungPreviewTest {
         content.layout(0, 0, content.measuredWidth, content.measuredHeight)
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.oeffnen_section).visibility)
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.aufgaben_section).visibility)
-        assertEquals(4, a.findViewById<ViewGroup>(R.id.oeffnen_group).childCount)
+        val oeffnen = a.findViewById<ViewGroup>(R.id.oeffnen_group)
+        assertEquals("the four, then Homes", 5, oeffnen.childCount)
+        val titel = (0 until oeffnen.childCount).map { oeffnen.getChildAt(it).findViewById<TextView>(R.id.einr_titel).text.toString() }
+        assertEquals(listOf("Dokumente", "Zeitleiste", "Gesundheit", "Musik verwalten", "Homes"), titel)
+        if (!offline) {
+            oeffnen.getChildAt(4).performClick()
+            assertEquals("Homes' start page", "https://homes.example/start", shadowOf(a).nextStartedActivity?.dataString)
+        }
         assertEquals(2, a.findViewById<ViewGroup>(R.id.aufgaben_group).childCount)
         assertEquals("2", a.findViewById<TextView>(R.id.aufgaben_zahl).text.toString())
         // from the line about the box (offline) or „Deine Geräte“ down to the end of the tasks
@@ -190,7 +198,7 @@ class EinrichtungPreviewTest {
             {"entity_id":"cover.garage","name":"Garagentor Garage","domain":"cover","device_class":"garage","state":"closed","supported_features":3,"page":"/raeume/cover.garage"},
             {"entity_id":"lock.haustuer","name":"Haustür","domain":"lock","state":"locked","supported_features":1,"page":"/raeume/lock.haustuer"}]}"""
 
-        /** A household's answer: four modules only on the web, two apps still to set up, one done. */
+        /** A household's answer: Einkauf and the four of „Öffnen“ on the web, two apps still to set up, one done. */
         private const val ANTWORT = """{"version":1,"offen":2,"module":[
             {"name":"fotos","titel":"Fotos","icon":"fotos","web":"https://photos.example",
              "app":{"name":"Immich","paket":"app.alextran.immich","store":"https://play.google.com/store/apps/details?id=app.alextran.immich"},
@@ -204,7 +212,8 @@ class EinrichtungPreviewTest {
             {"name":"einkauf","titel":"Einkauf","icon":"einkauf","web":"https://homes.example/einkauf","nur_web":true},
             {"name":"dokumente","titel":"Dokumente","icon":"dokumente","web":"https://homes.example/dokumente","nur_web":true},
             {"name":"standort","titel":"Zeitleiste","icon":"standort","web":"https://reitti.example","nur_web":true},
-            {"name":"gesundheit","titel":"Gesundheit","icon":"gesundheit","web":"https://gesundheit.example","nur_web":true}],
+            {"name":"gesundheit","titel":"Gesundheit","icon":"gesundheit","web":"https://gesundheit.example","nur_web":true},
+            {"name":"musik","titel":"Musik verwalten","icon":"musik","web":"https://homes.example/musik","nur_web":true}],
            "ziele":{"einkauf":"https://homes.example/einkauf","zeitleiste":"https://reitti.example","scannen":"https://homes.example/napi/upload"}}"""
     }
 }

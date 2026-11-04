@@ -19,17 +19,20 @@ import androidx.core.net.toUri
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import cloud.dopp.homes.R
+import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.verbindung.Verbindung
+import cloud.dopp.homes.widget.HomesPages
 import java.util.Locale
 
 /**
  * The start screen's „Öffnen“ and „Deine Aufgaben“ (owner, 2026-11-04), from
  * the kept answer of `/napi/einrichtung` ([EinrichtungStore]).
  *
- * **Öffnen** lists the modules without a phone app of their own, each opening
- * its address in a Custom Tab, where the person's login is. A module with its
- * own app is never here: while the app is missing it is a task, and once it
- * is set up the phone's own app icon is the way in.
+ * **Öffnen** lists four modules ([Einrichtung.OEFFNEN], owner 2026-11-04),
+ * each the box sends, opening its address in a Custom Tab, where the person's
+ * login is, and below them „Homes“, Homes' own start page. A module with its
+ * own app is a task while the app is missing, and then the phone's own app
+ * icon is the way in.
  *
  * **Deine Aufgaben** lists the open tasks with the number open beside the
  * title, as Homes' pages show it: a tap gets the app from its store while it
@@ -64,9 +67,11 @@ object Abschnitte {
         val e = EinrichtungStore.einrichtung(a)
         val grau = Verbindung.stand(a) != null
         val oeffnen = e?.oeffnen.orEmpty()
+        // below the four, Homes' own start page (owner, 2026-11-04), whenever the box answered
+        val homes = ServerStore.baseUrl(a)?.takeIf { e != null }?.let { HomesPages.url(it, HomesPages.START) }
         fuellen(a, R.id.oeffnen_section, R.id.oeffnen_group, grau, oeffnen.map { m ->
             zeile(a, Bilder.fuer(m.icon), m.titel, null) { m.web?.let { oeffnen(a, it.toUri()) } }
-        })
+        } + listOfNotNull(homes?.let { zeile(a, R.drawable.ic_stat_homes, a.getString(R.string.oeffnen_homes), null) { oeffnen(a, it.toUri()) } }))
         val aufgaben = e?.aufgaben.orEmpty()
         val offen = if (e != null && e.offen > 0) e.offen else aufgaben.size
         a.findViewById<TextView>(R.id.aufgaben_zahl)?.apply {
