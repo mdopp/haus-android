@@ -34,8 +34,9 @@ budget ui        3500  # 3,026: the activities: start screen, pairing, settings 
                        #   (+12 of it is #237's level sheet, merged meanwhile);
                        # 3320 -> 3500: „Deine Geräte“ as tiles (owner, 2026-11-04): ui/FavoritenAnsicht.kt, the
                        #   widgets' pictures, ▲ ■ ▼ on a cover's tile, the part-way blind; today's rows removed (net +178)
-budget data      2940  # 2,780: Homes' calls (Napi), clients, models, the token store;
-                       # 2919 -> 2940 (owner-approved, homes ADR 0001 plan): /napi/kann and its client, homes-android#231
+budget data      2950  # 2,780: Homes' calls (Napi), clients, models, the token store;
+                       # 2919 -> 2940 (owner-approved, homes ADR 0001 plan): /napi/kann and its client, homes-android#231;
+                       # 2940 -> 2950 (owner, 2026-11-04: the Hochladen job): POST /napi/musik and the musik share key
 budget konto     1304  # 1,242: das Homes-Konto, the sync adapters for contacts and calendars
 budget standort  1098  # 1,046: Standortverlauf — recording, batching, import
 budget kann      460  #   340 on 2026-11-04: what the box can do, /napi/kann kept and read, „Hier anfordern“ (homes ADR 0001);
@@ -43,6 +44,7 @@ budget kann      460  #   340 on 2026-11-04: what the box can do, /napi/kann kep
                        # 420 -> 460: the widget providers switched by widgets, homes-android#233
 budget einrichtung 603 #   574 on 2026-11-04, a new package (owner): /napi/einrichtung kept and read, „Öffnen“ and „Deine Aufgaben“
                        # on the start screen, the launcher's four shortcuts and their trampoline
+budget hochladen  583  #   555 on 2026-11-04, a new package (owner): the Hochladen job — music and Takeout ZIPs, with the screen off
 budget realtime   667  #   635: the live stream and its foreground service
 budget verbindung 247  #   235 on 2026-11-04: what the app says about its line to Homes, one answer for the
                        # notification, the start screen and the widgets (box not reachable, no network, paused)

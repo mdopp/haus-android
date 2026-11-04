@@ -21,6 +21,7 @@ object Teilen {
         KannKey.MERKEN to "cloud.dopp.homes.ui.TeilenMerken",
         KannKey.DOKUMENT to "cloud.dopp.homes.ui.TeilenDokument",
         KannKey.STANDORT_IMPORT to "cloud.dopp.homes.ui.StandortImportActivity",
+        KannKey.MUSIK to "cloud.dopp.homes.hochladen.MusikTeilenActivity",
     )
 
     /** Switch every target to what [kann] offers; true when one changed. */

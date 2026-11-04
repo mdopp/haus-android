@@ -12,6 +12,8 @@
          its notification (shown on Android 13+ only with the permission), its restart after boot. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Hochladen (owner, 2026-11-04): WorkManager's foreground service while an upload runs. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Exempt from battery optimization, the restart of the live service after its
@@ -326,12 +328,38 @@
             android:name=".standort.StandortEmpfaenger"
             android:exported="false" />
 
-        <!-- WorkManager (the backup job, #194) brings a foreground service of its
-             own; the job never goes foreground and posts no notification, so it
-             is taken out: LiveService stays the app's one foreground service. -->
+        <!-- WorkManager's foreground service: the Hochladen job (owner, 2026-11-04,
+             hochladen/Hochladen.kt) runs in it while it uploads, and only then, as a
+             data sync — Android 15 allows that six hours a day; then the job says so
+             and goes on later. The backup job never goes foreground. The live widgets'
+             LiveService is the other foreground service, the one that is always there. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
-            tools:node="remove" />
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <!-- Share → „Zur Musik hinzufügen“ (owner, 2026-11-04): songs and album ZIPs to
+             Homes' music, by the Hochladen job. A file manager's octet-stream is checked
+             by its name (hochladen/Auftraege.kt, MusikDatei). Translucent with its own
+             task, like the other share targets; switched by the box's `teilen` (kann/Teilen.kt). -->
+        <activity
+            android:name=".hochladen.MusikTeilenActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/musik_label"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+                <data android:mimeType="application/x-zip" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
 
         <!-- Generic schema-driven .tool widget (#70): ONE provider that renders any
              tool from the catalog's tool-cell-schema — a new .tool plugin becomes a

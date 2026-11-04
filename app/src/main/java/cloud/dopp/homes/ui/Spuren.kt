@@ -45,6 +45,7 @@ object Spuren {
             KannKey.MERKEN -> R.string.spur_teilen_merken
             KannKey.DOKUMENT -> R.string.spur_teilen_dokument
             KannKey.STANDORT_IMPORT -> R.string.spur_teilen_standort
+            KannKey.MUSIK -> R.string.spur_teilen_musik
             else -> null
         }?.let(ctx::getString)
     }.joinToString("\n").ifEmpty { null }

@@ -67,6 +67,23 @@ class TeilenTest {
         assertTrue(ziele("text/plain").isNotEmpty())
         assertTrue(ziele("image/jpeg").isNotEmpty())
         assertTrue(ziele("application/gpx+xml").isNotEmpty())
+        assertTrue(Teilen.an(ctx(), KannKey.MUSIK))
+        assertEquals(listOf("cloud.dopp.homes.hochladen.MusikTeilenActivity"), ziele("audio/mpeg"))
+    }
+
+    /** „Zur Musik hinzufügen“ follows the box's `musik` (owner, 2026-11-04); a ZIP offers it beside the history import. */
+    @Test
+    fun theMusicTargetFollowsTheBox() {
+        Teilen.schalten(ctx(), kann("\"musik\""))
+        assertEquals(listOf("cloud.dopp.homes.hochladen.MusikTeilenActivity"), ziele("audio/flac", Intent.ACTION_SEND_MULTIPLE))
+        assertEquals(listOf("cloud.dopp.homes.hochladen.MusikTeilenActivity"), ziele("application/zip"))
+        Teilen.schalten(ctx(), kann("\"standort-import\""))
+        assertTrue("no music: ${ziele("audio/mpeg")}", ziele("audio/mpeg").isEmpty())
+        Teilen.schalten(ctx(), null)
+        assertEquals(
+            setOf("cloud.dopp.homes.hochladen.MusikTeilenActivity", "cloud.dopp.homes.ui.StandortImportActivity"),
+            ziele("application/zip").toSet(),
+        )
     }
 
     @Test

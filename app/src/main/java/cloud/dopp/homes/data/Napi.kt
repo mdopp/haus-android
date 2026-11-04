@@ -542,6 +542,13 @@ object Napi {
         const val EINRICHTEN = "einrichten"
     }
 
+    /** `POST /napi/musik` (owner 2026-11-04): `{ok, dateien}`, or `{ok: false, error, dateien}` with a German sentence. */
+    object MusikJson {
+        const val OK = PhotoJson.OK
+        const val DATEIEN = StandJson.DATEIEN
+        const val ERROR = MerkenJson.ERROR
+    }
+
     /** A refused `POST /napi/kann/anfordern`: `{error}`, a German sentence (401 says `unauthorized`). */
     object AnfordernJson {
         const val ERROR = MerkenJson.ERROR
@@ -558,6 +565,7 @@ object Napi {
         const val MERKEN = "merken"
         const val DOKUMENT = "dokument"
         const val STANDORT_IMPORT = "standort-import"
+        const val MUSIK = "musik"
         const val DATEN_SICHERN = "daten-sichern"
         const val STANDORTVERLAUF = "standortverlauf"
     }
@@ -743,6 +751,9 @@ object Napi {
         Method.POST, "/napi/kann/anfordern", body = listOf("modul"),
         reply = listOf(ModulJson, AngebotJson, AnfordernJson),
     )
+
+    /** Songs and ZIPs shared to Homes' music, one `file` part each (the Hochladen job); up to 4 GB a file. */
+    val MUSIK = Endpoint(Method.POST, "/napi/musik", body = listOf("file"), reply = listOf(MusikJson))
 
     /** The person's modules and setup tasks (owner 2026-11-04); `/apps` ticks those whose app the phone has. */
     val EINRICHTUNG = Endpoint(Method.GET, "/napi/einrichtung", reply = listOf(KannJson, EinrichtungJson, EinrichtungModulJson))

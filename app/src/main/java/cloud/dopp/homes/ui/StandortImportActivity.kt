@@ -15,6 +15,7 @@ import cloud.dopp.homes.data.Napi
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.StandortImportClient
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.hochladen.Uebergabe
 import cloud.dopp.homes.standort.Import
 import cloud.dopp.homes.widget.ActionDialog
 import cloud.dopp.homes.widget.ActionItem
@@ -71,6 +72,10 @@ class StandortImportActivity : Activity() {
         val typ = contentResolver.getType(uri) ?: intent.type
         if (!Import.nimmt(name, typ)) {
             said(getString(R.string.standort_import_nicht), getString(R.string.standort_import_falsch))
+            return
+        }
+        if (Import.istZip(name, typ)) { // a Takeout ZIP keeps going with the screen off (owner, 2026-11-04)
+            Uebergabe.standort(this, uri, Import.dateiname(name, typ))
             return
         }
         dialog = ActionDialog.show(

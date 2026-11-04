@@ -22,8 +22,10 @@ stream only while the screen is on. The one thing beyond the widgets is
 Daten sichern (#194, laib ADR 0029; renamed 2026-11-03): it picks up the phone's WhatsApp
 and Signal backups and uploads them to Homes, and, each behind its own switch
 and permission, mirrors the contacts and sends the SMS and call log
-age-encrypted. The seam with Homes is
-`docs/CONTRACT.md`.
+age-encrypted. And Hochladen (the owner's call, 2026-11-04): songs and
+albums shared „Zur Musik hinzufügen“ and Google Takeout ZIPs for the
+Standortverlauf go up in a job of their own, also with the screen off.
+The seam with Homes is `docs/CONTRACT.md`.
 
 These rules apply to every session, human or agent.
 
@@ -43,12 +45,19 @@ These rules apply to every session, human or agent.
   calendars. „Haus“ stays where it is the ordinary word: the energy flow's
   „Haus“ (the building), „Haus-Energie“, „Kontakte des Hauses“, Haushalt.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
-  app. The live service's quiet notification is the only one; do not add
-  another, a second service, a poll (widget update periods stay 0), an
+  app. Two notifications, and only these: the live service's quiet one, and
+  the Hochladen job's while it uploads and for what came of it. Two
+  foreground services, and only these: the live widgets' (`specialUse`),
+  always there while wanted, and WorkManager's for the Hochladen job
+  (`dataSync`), only while it uploads. Why the second: the owner decided on
+  2026-11-04 that a large upload keeps going with the screen off, with its
+  own notification; Android 15 allows `dataSync` six hours a day, and when
+  they run out the job says in German that it goes on later — never a
+  silent stop. Do not add a third, a poll (widget update periods stay 0), an
   alarm, a wakelock or a rescue worker. Recovery after a killed process rests
   on the battery-optimization exemption the person grants. `ManifestTest`
   holds this; `e2e/` proves it on emulators (`.github/workflows/live-e2e.yml`).
-- One job, and only this one (the owner's call in #194): the backup pick-up,
+- Two jobs, and only these. The backup pick-up (the owner's call in #194):
   `sicherung/SicherungWorker.kt`, a WorkManager worker — daily on an unmetered
   network while charging, and once on „Jetzt sichern“. It never goes
   foreground, posts nothing, reads the granted folders only (storage access
@@ -56,8 +65,15 @@ These rules apply to every session, human or agent.
   phone, `sicherung/SafZiel.kt`, run from its screen, not from this job) and, with their switches on, the
   contacts, SMS and call log (read permissions only), and is the one caller
   that does not pass `ScreenGate`. Without a granted folder or a switch on it
-  makes no request. `ManifestTest`
-  holds it to its one file; do not add a second job or reuse this one.
+  makes no request. And Hochladen (the owner's call, 2026-11-04,
+  `hochladen/Hochladen.kt`): the files shared to it, copied into the app's
+  own storage first, uploaded one after the other — a song or a ZIP to
+  `POST /napi/musik` in one streamed request, a Takeout ZIP to the
+  Standortverlauf's import in resumable pieces — in the foreground while it
+  runs, its notification saying how far it got and what came of each. A
+  stop (no network, the six hours used up) is said and retried; the app's
+  screen starts it again. `ManifestTest` holds each job to its one file; do
+  not add a third job, and do not reuse either for something else.
 - Standortverlauf (the owner's call, 2026-11-02; docs/CONTRACT.md (f)):
   behind its own switch and the background-location permission,
   Android's own LocationManager delivers by PendingIntent to
@@ -179,13 +195,14 @@ app/src/main/java/cloud/dopp/homes/
                publishing the shortcuts, and the widget picker
   ui/          the app's screens: start (favourites, LevelSheet), share,
                Daten sichern, Zurückholen, Standortverlauf, Homes-Konto
-  realtime/    LiveService, the one foreground service, and the stream protocol
+  realtime/    LiveService, the live widgets' foreground service, and the stream protocol
   verbindung/  the one answer about the line to Homes (live, paused, box not
                reachable, no network, not paired) for notification, start, widgets
   sicherung/   the backup job (SicherungWorker), restore, age, SMS/vCard
   standort/    location recording (Plan, Ruhe, Puffer) and the history import
   konto/       the Homes account: two sync adapters, vCard and iCal readers
   kann/        what the box can do (/napi/kann, homes ADR 0001): kept, read, „Hier anfordern“
+  hochladen/   the Hochladen job (WorkManager, dataSync while it uploads): music, Takeout ZIPs
   einrichtung/ the person's modules and tasks (/napi/einrichtung): „Öffnen“, „Deine Aufgaben“,
                the installed-apps report, the launcher's four shortcuts and their trampoline
 app/src/test/  JVM tests with Robolectric, including the preview renders

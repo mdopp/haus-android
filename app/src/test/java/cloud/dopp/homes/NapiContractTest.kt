@@ -289,6 +289,12 @@ class NapiContractTest {
                 body = setOf("modul"), required = setOf("modul"),
                 sends = KANN_MODUL + setOf("ok", "reason", "error"),
             ),
+            // Teilen → Musik (owner 2026-11-04): mdopp/homes main at e46de44 (the merge of homes#270);
+            // registered with the musik module, 404 without it.
+            Route(
+                "POST", "/napi/musik", "internal/napi/napi.go:317, the handler internal/musik/musik.go:96-148",
+                body = setOf("file"), required = setOf("file"), sends = setOf("ok", "dateien", "error", "reason"),
+            ),
             // The person's modules and setup tasks (owner 2026-11-04): mdopp/homes main at cc8a5ea (the merge of homes#269);
             // registered napi.go:243-244, not_found napi.go:334.
             Route(
@@ -339,7 +345,7 @@ class NapiContractTest {
             "PATCH /napi/standort/import/{id}", "GET /napi/standort/import/{id}",
             "GET /napi/gemeinsam/kontakte", "GET /napi/gemeinsam/kalender",
             "GET /napi/kann", "POST /napi/kann/anfordern",
-            "GET /napi/einrichtung", "POST /napi/einrichtung/apps",
+            "GET /napi/einrichtung", "POST /napi/einrichtung/apps", "POST /napi/musik",
         )
 
         const val NAPI = "cloud.dopp.homes.data.Napi"
@@ -367,6 +373,7 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/homes/kann/KannStore.kt",
             "app/src/main/java/cloud/dopp/homes/einrichtung/Einrichtung.kt",
             "app/src/main/java/cloud/dopp/homes/einrichtung/EinrichtungLeser.kt",
+            "app/src/main/java/cloud/dopp/homes/hochladen/MusikClient.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")

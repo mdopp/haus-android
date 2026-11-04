@@ -28,6 +28,7 @@
     <string name="spur_teilen_merken">Teilen: Links und Texte als Notiz merken</string>
     <string name="spur_teilen_dokument">Teilen: Fotos zu deinen Dokumenten</string>
     <string name="spur_teilen_standort">Teilen: GPX- und GeoJSON-Dateien in deinen Standortverlauf</string>
+    <string name="spur_teilen_musik">Teilen: Lieder und Alben zur Musik</string>
     <!-- A placed widget whose type the box no longer offers, when Homes names no reason. -->
     <string name="spur_widget_weg">Das gibt es auf dieser Box gerade nicht.</string>
 

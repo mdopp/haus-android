@@ -68,6 +68,7 @@ each row naming the Homes file and lines it came from.
 | Homes-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
 | what the box can do | `GET /napi/kann`, `POST /napi/kann/anfordern`: see (h) |
 | Öffnen, Deine Aufgaben | `GET /napi/einrichtung`, `POST /napi/einrichtung/apps`: see (i) |
+| Share → Musik, Hochladen | `POST /napi/musik`, multipart, one `file` part a request, streamed from the app's copy: see (j) |
 | Share → Homes, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Homes' refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Homes | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Homes keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (homes#120); the share sheet's Direct Share target carries the assistant's name (#188) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{documents,notes}`; Homes also lists `contacts` and `task`, which the app no longer offers as a widget, owner 2026-11-02 and 2026-11-03), `POST /napi/action-callback` |
@@ -358,9 +359,11 @@ mdopp/homes#274) goes as it is, streamed like any other file in the same
 resumable pieces: the app neither unpacks nor holds it, Homes stages it on
 its disk and reads it member by member. A Takeout comes in parts of up to
 50 GB, each its own share and its own import; a part without a history
-ends `fertig` with Homes' gentle sentence to share the other part too. An
-older Homes refuses a ZIP with its sentence, which the dialog shows as any
-refusal.
+ends `fertig` with Homes' gentle sentence to share the other part too. A
+ZIP goes to the Hochladen job (owner, 2026-11-04; see (j)), so it keeps
+going with the screen off; its notification says how far it got and Homes'
+sentence at the end. An older Homes refuses a ZIP with its sentence, which
+the notification says as any refusal.
 
 - The upload is the backups' (e): `POST /napi/standort/import {name,
   groesse}` → `{id, offset}` (the same name and size resume; 409 `{fehler,
@@ -521,3 +524,33 @@ zeitleiste, scannen}}`, the device's person's modules that are on.
   the app's cache through the one file provider (`cache/scan/`); Android
   wants the camera permission first, as the QR scanner declares it. The
   share target of (b) stays last.
+
+## (j) Hochladen: music and Takeout ZIPs
+
+(The owner's call, 2026-11-04: a large upload keeps going with the screen
+off, with its own notification.) The share target „Zur Musik hinzufügen“
+(`hochladen/MusikTeilenActivity`) takes `ACTION_SEND` and `SEND_MULTIPLE`
+of `audio/*`, `application/zip`, `application/x-zip-compressed`,
+`application/x-zip` and `application/octet-stream`; the name decides
+(`.mp3`, `.flac`, `.m4a`, `.ogg`, `.opus`, `.wav`, `.zip`), a file without
+one is named by its type. It is switched by the box's `teilen` key `musik`.
+
+- Each shared file is copied into the app's own storage first — streamed,
+  never held in memory — because a share's files are readable only while
+  it is open; then the job „Hochladen“ (`hochladen/Hochladen.kt`, a
+  WorkManager worker) takes the queue in order.
+- Music: `POST /napi/musik`, multipart, one `file` part with the file's
+  name, streamed in pieces → `{ok, dateien}`; a refusal `{ok: false, error}`
+  is said as Homes words it; 404 (a box without music, or an older Homes):
+  „Die Box kann das noch nicht – kommt mit dem nächsten Update.“ A cut
+  starts the file again from the beginning (Homes takes it in one request,
+  up to 4 GB, within an hour).
+- A Takeout ZIP for the Standortverlauf: the import of (f), in its resumable
+  pieces, from where Homes stands.
+- While it uploads the job runs in WorkManager's foreground service as a
+  `dataSync`; its notification (channel „Hochladen“) shows the file and the
+  per cent, then what came of each file. Android 15 allows `dataSync` six
+  hours a day: when they run out, or Android does not let it start, or the
+  line is gone, the notification says „Hochladen pausiert“ and that it goes
+  on later — by itself, or at once when the app is opened — and WorkManager
+  runs it again. Never a silent stop.

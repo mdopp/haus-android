@@ -12,12 +12,17 @@ import java.io.File
  * type `specialUse` that holds the stream while the screen is on, restarts
  * after boot, and shows one quiet notification for it. It is not a poll: no
  * widget update period, no alarm, no wakelock of its own. Not `dataSync`
- * either — Android 15 caps that at 6 hours a day. No web shell, no voice, no
- * other notification.
+ * either — Android 15 caps that at 6 hours a day. No web shell, no voice.
  *
- * One job, and only one (the owner's call in #194, laib ADR 0029): the daily
- * pick-up of the phone's WhatsApp and Signal backups, a WorkManager worker
- * that never goes foreground and posts nothing. The folders come through the
+ * Two jobs, and only these two. The backup (the owner's call in #194, laib
+ * ADR 0029): the daily pick-up of the phone's WhatsApp and Signal backups, a
+ * WorkManager worker that never goes foreground and posts nothing. And
+ * Hochladen (the owner's call of 2026-11-04: a large upload keeps going with
+ * the screen off, with its own notification): the files shared to the music
+ * and the Takeout ZIPs for the Standortverlauf. It runs in WorkManager's
+ * foreground service, `dataSync`, only while it uploads, and its progress is
+ * that service's notification — the app's second foreground service and its
+ * second notification, beside the live widgets', and no other. The folders come through the
  * system picker: no storage permission. Beside it, optional and each behind
  * its own switch and permission (laib ADR 0029): the contacts (READ_CONTACTS),
  * the SMS and the call log (READ_SMS, READ_CALL_LOG). Read only: never a
@@ -54,6 +59,9 @@ class ManifestTest {
     /** The one file that may name WorkManager: the backup job (#194). */
     private val workerFile = "app/src/main/java/cloud/dopp/homes/sicherung/SicherungWorker.kt"
 
+    /** The Hochladen job (owner, 2026-11-04): its worker, its foreground and its notification, in one file. */
+    private val hochladenFile = "app/src/main/java/cloud/dopp/homes/hochladen/Hochladen.kt"
+
     /** The source manifest's entries that take a library's entry out of the merged one. */
     private val removed = Regex("""<(service|receiver|provider|uses-permission)\b[^>]*tools:node="remove"[^>]*/>""")
 
@@ -77,6 +85,7 @@ class ManifestTest {
     private val ours = setOf(
         "INTERNET",
         "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", // the live service
+        "FOREGROUND_SERVICE_DATA_SYNC", // the Hochladen job while it uploads (owner, 2026-11-04)
         "RECEIVE_BOOT_COMPLETED", // its restart after boot
         "POST_NOTIFICATIONS", // its notification, shown on Android 13+
         // its restart after the process died: on the exemption list a restart may go foreground
@@ -120,18 +129,26 @@ class ManifestTest {
             assertFalse("a storage permission: $word", permissions(merged).any { it.contains(word) })
         }
         val foreground = Regex("""android:foregroundServiceType="([^"]+)"""").findAll(merged).map { it.groupValues[1] }.toList()
-        assertEquals("one foreground service, the live one", listOf("specialUse"), foreground)
-        assertFalse("WorkManager's foreground service is taken out", merged.contains("androidx.work.impl.foreground.SystemForegroundService"))
+        assertEquals("two foreground services, the live one and the uploads'", 2, foreground.size)
+        assertEquals(setOf("specialUse", "dataSync"), foreground.toSet())
+        val wm = merged.substringAfter("androidx.work.impl.foreground.SystemForegroundService").substringBefore("/>")
+        assertTrue("WorkManager's foreground service runs the uploads as a data sync: $wm", wm.contains("""android:foregroundServiceType="dataSync""""))
         assertTrue("the job runs through JobScheduler", merged.contains("androidx.work.impl.background.systemjob.SystemJobService"))
     }
 
-    /** Exactly one foreground service, `specialUse` only, with the reason Play asks for. */
+    /**
+     * Two foreground services: the live widgets', `specialUse`, with the reason
+     * Play asks for, always there; and WorkManager's, `dataSync`, for the
+     * Hochladen job only while it uploads (owner, 2026-11-04).
+     */
     @Test
-    fun oneSpecialUseForegroundServiceAndTheWidgetLists() {
+    fun theLiveForegroundServiceAndTheUploadsAndTheWidgetLists() {
         val services = Regex("""<service\b[^>]*>""").findAll(manifest.replace(removed, "")).map { it.value }.toList()
         val foreground = services.filter { it.contains("foregroundServiceType") }
-        assertEquals("foreground services: $foreground", 1, foreground.size)
-        val fgs = foreground.single()
+        assertEquals("foreground services: $foreground", 2, foreground.size)
+        val upload = foreground.single { it.contains("androidx.work.impl.foreground.SystemForegroundService") }
+        assertTrue(upload, upload.contains("""android:foregroundServiceType="dataSync""""))
+        val fgs = foreground.single { it != upload }
         assertTrue(fgs, fgs.contains("""android:name=".realtime.LiveService""""))
         assertTrue(fgs, fgs.contains("""android:foregroundServiceType="specialUse""""))
         assertTrue(fgs, fgs.contains("""android:exported="false""""))
@@ -144,8 +161,9 @@ class ManifestTest {
             listOf(".konto.KontoDienst", ".konto.KontakteSyncDienst", ".konto.KalenderSyncDienst"),
             konto.map { Regex("""android:name="([^"]+)"""").find(it)!!.groupValues[1] },
         )
-        (services - fgs - konto.toSet()).forEach { assertTrue("$it is not a widget list", it.contains("RemoteViewsService\"")) }
-        assertFalse("dataSync is capped at 6 h a day", manifest.contains("dataSync"))
+        (services - fgs - upload - konto.toSet()).forEach { assertTrue("$it is not a widget list", it.contains("RemoteViewsService\"")) }
+        // dataSync is capped at 6 h a day (Android 15): never the live widgets', only the uploads' (the job says when it runs out)
+        assertEquals("dataSync only for the uploads", 1, Regex("""foregroundServiceType="dataSync"""").findAll(manifest).count())
     }
 
     /**
@@ -242,29 +260,32 @@ class ManifestTest {
     @Test
     fun oneWorkerLibraryAndNoWebShellInTheBuild() {
         val work = Regex("""implementation\s+'(androidx\.work:[^:']+)""").findAll(gradle).map { it.groupValues[1] }.toList()
-        assertEquals("WorkManager for the backup job only (#194)", listOf("androidx.work:work-runtime"), work)
+        assertEquals("WorkManager for the backup and the Hochladen job only (#194, owner 2026-11-04)", listOf("androidx.work:work-runtime"), work)
         assertFalse("the Bubblewrap TWA block", gradle.contains("twaManifest"))
         assertFalse("android-browser-helper", gradle.contains("androidbrowserhelper"))
     }
 
-    /** The live service's notification is the only one, and only it goes foreground. */
+    /**
+     * Two notifications: the live service's, and the Hochladen job's
+     * (owner, 2026-11-04); each in its one file, and only those two go foreground.
+     */
     @Test
     fun noOtherNotificationNoWebShellNoVoiceInTheSources() {
         val hits = noneSay(
-            "NotificationCompat", "NotificationManager", "NotificationChannel", "startForeground",
-            except = setOf(serviceFile),
-        ) + noneSay(
+            "NotificationCompat", "NotificationManager", "NotificationChannel",
+            except = setOf(serviceFile, hochladenFile),
+        ) + noneSay("startForeground", except = setOf(serviceFile)) + noneSay(
             "TrustedWebActivity", "androidx.browser.trusted", "RecognizerIntent", "SpeechRecognizer",
-            "DATA_SYNC", "dataSync",
-        )
+        ) + noneSay("DATA_SYNC", "dataSync", except = setOf(hochladenFile))
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
         assertTrue("the live service has no notification", sources[serviceFile]?.contains("startForeground") == true)
     }
 
     /**
      * Nothing that runs the app later or keeps the CPU up — no job (JobScheduler),
-     * no alarm (AlarmManager), no wakelock (PowerManager) — but the one worker of
-     * the backup (#194), in its one file, which never goes foreground. Asking
+     * no alarm (AlarmManager), no wakelock (PowerManager) — but two workers, each
+     * in its one file: the backup (#194), which never goes foreground, and
+     * Hochladen (owner, 2026-11-04), in front only while it uploads. Asking
      * PowerManager whether the screen is on is fine; holding it awake is not.
      */
     @Test
@@ -273,12 +294,15 @@ class ManifestTest {
             "JobScheduler", "JobService", "JobInfo", "JOB_SCHEDULER_SERVICE",
             "AlarmManager", "ALARM_SERVICE", "setExactAndAllowWhileIdle", "setAndAllowWhileIdle", "setAlarmClock",
             "newWakeLock", "WakeLock", "PARTIAL_WAKE_LOCK", "acquire(",
-            "setForeground", "ForegroundInfo", "CoroutineWorker",
-        ) + noneSay("androidx.work", "WorkManager", "WorkRequest", except = setOf(workerFile))
+            "CoroutineWorker",
+        ) + noneSay("setForeground", "ForegroundInfo", except = setOf(hochladenFile)) +
+            noneSay("androidx.work", "WorkManager", "WorkRequest", except = setOf(workerFile, hochladenFile))
         assertTrue("left in the sources:\n" + hits.joinToString("\n"), hits.isEmpty())
         val worker = sources.getValue(workerFile)
-        assertEquals("one worker", 1, Regex(""": Worker\(""").findAll(sources.values.joinToString("\n")).count())
+        assertEquals("two workers", 2, Regex(""": Worker\(""").findAll(sources.values.joinToString("\n")).count())
         assertTrue(worker.contains("class SicherungWorker(") && worker.contains(": Worker("))
+        assertTrue(sources.getValue(hochladenFile).contains("class HochladenWorker("))
+        assertFalse("the backup never goes foreground", worker.contains("setForeground"))
     }
 
     /**
@@ -320,13 +344,14 @@ class ManifestTest {
 
     @Test
     fun noJobServiceOrAlarmReceiverInTheManifest() {
-        val own = manifest.replace(removed, "")
+        // WorkManager's foreground service is named once, given its data-sync type for the Hochladen job (owner, 2026-11-04)
+        val wm = Regex("""<service\s+android:name="androidx\.work\.impl\.foreground\.SystemForegroundService"[^>]*/>""")
+        assertEquals(1, wm.findAll(manifest).count())
+        val own = manifest.replace(removed, "").replace(wm, "")
         listOf("BIND_JOB_SERVICE", "SCHEDULE_EXACT_ALARM", "USE_EXACT_ALARM", "androidx.work", "WAKE_LOCK").forEach {
             assertFalse("manifest names $it", own.contains(it))
         }
-        val taken = removed.findAll(manifest).map { it.value }.toList()
-        assertEquals(1, taken.size)
-        assertTrue(taken.single(), taken.single().contains("androidx.work.impl.foreground.SystemForegroundService"))
+        assertTrue("nothing a library brings is taken out any more", removed.findAll(manifest).toList().isEmpty())
     }
 
     /**
