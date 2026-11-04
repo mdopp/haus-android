@@ -9,6 +9,7 @@ import cloud.dopp.homes.data.Napi.FavoritesJson
 import cloud.dopp.homes.data.Napi.MerkenJson
 import cloud.dopp.homes.data.Napi.StateJson
 import cloud.dopp.homes.data.Napi.WhoamiJson
+import cloud.dopp.homes.verbindung.Verbindung
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -24,6 +25,9 @@ import org.json.JSONObject
  * blocking and must run off the main thread (a widget provider's goAsync thread).
  */
 class ApiClient(private val ctx: Context) {
+
+    /** Each answer, and each request that got none, tells [Verbindung] about the line. */
+    private val http = Verbindung.gemeldet(ctx, HTTP)
 
     /** No server configured yet — the app must be connected first. */
     class NotConfiguredException : Exception("no server configured")
@@ -172,14 +176,8 @@ class ApiClient(private val ctx: Context) {
         Upload.Unreachable
     }
 
-    /** The house energy picture via `/napi/portal/energy`: the flow legs and the lifetime totals. */
-    fun getEnergy(): Energy? {
-        http.newCall(authed(Napi.ENERGY)).execute().use { resp ->
-            if (!resp.isSuccessful) return null
-            val body = resp.body?.string() ?: return null
-            return parseEnergy(JSONObject(body))
-        }
-    }
+    /** The house energy picture via `/napi/portal/energy`, raw for the widget to keep ([parseEnergy]); null on any failure. */
+    fun energyBody(): String? = getBody(Napi.ENERGY, Napi.ENERGY.path)
 
     /**
      * The person's favorite devices via `GET /napi/portal/favorites`: the
@@ -274,7 +272,7 @@ class ApiClient(private val ctx: Context) {
 
     companion object {
         /** One client per process: its connection pool and threads are shared by every call. */
-        private val http: OkHttpClient by lazy {
+        private val HTTP: OkHttpClient by lazy {
             // Uploads (camera #36) can be a few MB; give the write side room.
             HomesHttp.client(connect = 10, read = 15, write = 30)
         }
@@ -291,7 +289,7 @@ class ApiClient(private val ctx: Context) {
          */
         fun whoami(server: String, token: String): Int {
             return try {
-                http.newCall(Napi.WHOAMI.request(server, token)).execute().use { resp ->
+                HTTP.newCall(Napi.WHOAMI.request(server, token)).execute().use { resp ->
                     val uid = if (resp.isSuccessful) {
                         runCatching { JSONObject(resp.body?.string().orEmpty()).optString(WhoamiJson.UID) }.getOrNull()
                     } else {

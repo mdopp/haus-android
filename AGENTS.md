@@ -180,6 +180,8 @@ app/src/main/java/cloud/dopp/homes/
   ui/          the app's screens: start (favourites, LevelSheet), share,
                Daten sichern, Zurückholen, Standortverlauf, Homes-Konto
   realtime/    LiveService, the one foreground service, and the stream protocol
+  verbindung/  the one answer about the line to Homes (live, paused, box not
+               reachable, no network, not paired) for notification, start, widgets
   sicherung/   the backup job (SicherungWorker), restore, age, SMS/vCard
   standort/    location recording (Plan, Ruhe, Puffer) and the history import
   konto/       the Homes account: two sync adapters, vCard and iCal readers

@@ -10,10 +10,13 @@ import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.ui.HomeActivity
 import cloud.dopp.homes.ui.StartDevices
+import cloud.dopp.homes.verbindung.Verbindung
+import cloud.dopp.homes.verbindung.Zustand
 import cloud.dopp.homes.widget.WidgetActionActivity
 import cloud.dopp.homes.widget.WidgetActionReceiver
 import cloud.dopp.homes.widget.WidgetTypes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -139,12 +142,23 @@ class HomeScreenTest {
         paired()
         StartDevices.save(ctx(), favorites)
         val a = open()
+        boxNotReachable()
+        deviceRows(a)[0].performClick()
+        assertNotEquals("no „schaltet …“ Homes cannot hear", ctx().getString(R.string.home_device_switching), texts(deviceRows(a)[0])[1])
+        Verbindung.ergebnis(ctx(), null, 200) // Homes answers again
         shadowOf(a.application).clearBroadcastIntents()
         deviceRows(a)[0].performClick()
         val tap = shadowOf(a.application).broadcastIntents.single { it.action == WidgetActionReceiver.ACTION_TAP }
         assertEquals("light.kueche", tap.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
         assertEquals(WidgetActionReceiver.OP_TOGGLE, tap.getStringExtra(WidgetActionReceiver.EXTRA_OP))
         assertEquals("the tap answers at once", ctx().getString(R.string.home_device_switching), texts(deviceRows(a)[0])[1])
+    }
+
+    /** The start screen's read of the favorites goes to a port nothing listens on: wait until it told [Verbindung]. */
+    private fun boxNotReachable() {
+        val until = System.currentTimeMillis() + 10_000
+        while (Verbindung.zustand(ctx()) != Zustand.BOX_WEG && System.currentTimeMillis() < until) Thread.sleep(20)
+        assertEquals(Zustand.BOX_WEG, Verbindung.zustand(ctx()))
     }
 
     /** A lock never switches on a tap: it opens its chooser, with the latch only when the card says it has one (#92). */

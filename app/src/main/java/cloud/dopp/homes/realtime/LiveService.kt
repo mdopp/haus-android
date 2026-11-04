@@ -13,6 +13,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Build
 import android.os.Handler
 import androidx.core.os.HandlerCompat
@@ -38,6 +40,8 @@ import cloud.dopp.homes.widget.DeviceWidgetProvider
 import cloud.dopp.homes.widget.EnergyWidgetProvider
 import cloud.dopp.homes.widget.ToolWidgetProvider
 import cloud.dopp.homes.data.HomesHttp
+import cloud.dopp.homes.verbindung.Verbindung
+import cloud.dopp.homes.verbindung.Zustand
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -150,6 +154,9 @@ object Live {
  *   energy sensor has the energy widget read again, coalesced.
  * - A 401 stops the service (the device was removed in Homes); any other loss
  *   reconnects with backoff, reset only after a healthy session.
+ * - What happened goes to [Verbindung], and the notification says its answer:
+ *   „Pausiert, Bildschirm aus“ only while the screen is off, „Box nicht
+ *   erreichbar“ while a connect fails with the network up.
  * - After its process died, Android restarts it (`START_STICKY`). That restart
  *   is a background start, which Android 12+ allows documentedly only while
  *   the app is exempt from battery optimization ([Live.exempt]); the app asks
@@ -170,7 +177,7 @@ class LiveService : Service() {
     private var source: EventSource? = null
     private var attempt = 0
     private var connectedAtMs = 0L
-    private var status = R.string.live_connecting
+    private var status: Zustand? = null
     private var inForeground = false
     private var energyQueued = false
 
@@ -181,7 +188,19 @@ class LiveService : Service() {
                     attempt = 0
                     connect()
                 }
-                Intent.ACTION_SCREEN_OFF -> drop(R.string.live_paused)
+                Intent.ACTION_SCREEN_OFF -> drop()
+            }
+            show()
+        }
+    }
+
+    /** A network came (back): with the screen on and no stream, connect now, not after the backoff. */
+    private val netz = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            main.post {
+                if (source != null || !interactive() || !Live.wanted(this@LiveService)) return@post
+                attempt = 0
+                connect()
             }
         }
     }
@@ -190,6 +209,7 @@ class LiveService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Verbindung.live(this, false) // a stream of a killed process is gone
         if (!foreground()) {
             stopSelf() // refused: nothing to undo, nothing shown
             return
@@ -198,8 +218,12 @@ class LiveService : Service() {
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Verbindung.GEAENDERT)
         }
         ContextCompat.registerReceiver(this, screen, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            runCatching { getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(netz) }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -211,15 +235,18 @@ class LiveService : Service() {
             stop()
             return START_NOT_STICKY
         }
-        if (interactive()) connect() else drop(R.string.live_paused)
+        if (interactive()) connect() else drop()
+        show()
         return START_STICKY
     }
 
     override fun onDestroy() {
         main.removeCallbacksAndMessages(null)
         runCatching { unregisterReceiver(screen) }
+        runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(netz) }
         runCatching { source?.cancel() }
         source = null
+        Verbindung.live(this, false)
         super.onDestroy()
     }
 
@@ -238,19 +265,19 @@ class LiveService : Service() {
         source = Live.open(Napi.EVENTS.request(base, token), listener)
     }
 
-    private fun drop(text: Int) {
+    private fun drop() {
         main.removeCallbacksAndMessages(null)
         anstoss.vergiss()
         runCatching { source?.cancel() }
         source = null
         connectedAtMs = 0L
         energyQueued = false
-        show(text)
+        Verbindung.live(this, false)
     }
 
     private fun stop() {
         inForeground = false
-        drop(R.string.live_paused)
+        drop()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         runCatching { getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID) }
         stopSelf()
@@ -293,7 +320,8 @@ class LiveService : Service() {
             main.post {
                 if (eventSource !== source) return@post
                 connectedAtMs = SystemClock.elapsedRealtime()
-                show(R.string.live_on)
+                Verbindung.live(this@LiveService, true)
+                show()
                 resync()
                 // a restarted Homes may offer something else (homes ADR 0001 §3): a 304 when not
                 KannLeser.lesen(this@LiveService, immer = true)
@@ -325,6 +353,8 @@ class LiveService : Service() {
         override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
             main.post {
                 if (eventSource !== source) return@post
+                // a stream that was open and broke says nothing yet: the next connect tells
+                if (connectedAtMs == 0L || response?.code == 401) Verbindung.ergebnis(this@LiveService, t, response?.code)
                 if (response?.code == 401) stop() else gone(eventSource)
             }
         }
@@ -353,8 +383,9 @@ class LiveService : Service() {
         main.removeCallbacks(watchRepost)
         if (RealtimeProtocol.healthySession(connectedAtMs, SystemClock.elapsedRealtime())) attempt = 0
         connectedAtMs = 0L
+        Verbindung.live(this, false)
+        show()
         if (!interactive()) return
-        if (attempt >= 2) show(R.string.live_reconnecting)
         main.removeCallbacks(reconnect)
         main.postDelayed(reconnect, RealtimeProtocol.backoffMillis(attempt++))
     }
@@ -374,10 +405,11 @@ class LiveService : Service() {
         false
     }
 
-    /** Show [text] as the connection state, re-posting only on a change and only while in the foreground. */
-    private fun show(text: Int) {
-        if (text == status) return
-        status = text
+    /** Show [Verbindung]'s answer, re-posting only on a change and only while in the foreground. */
+    private fun show() {
+        val now = Verbindung.zustand(this)
+        if (now == status) return
+        status = now
         if (!inForeground) return
         runCatching { getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, notification()) }
     }
@@ -400,7 +432,7 @@ class LiveService : Service() {
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_homes)
             .setContentTitle(Assistent.name(this))
-            .setContentText(getString(status))
+            .setContentText(getString((status ?: Verbindung.zustand(this)).text))
             .setContentIntent(tap)
             .setOngoing(true)
             .setSilent(true)

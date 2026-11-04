@@ -40,6 +40,8 @@ budget kann      460  #   340 on 2026-11-04: what the box can do, /napi/kann kep
                        # 360 -> 420 (owner-approved, homes ADR 0001 plan): the share targets switched by teilen, homes-android#232;
                        # 420 -> 460: the widget providers switched by widgets, homes-android#233
 budget realtime   667  #   635: the live stream and its foreground service
+budget verbindung 247  #   235 on 2026-11-04: what the app says about its line to Homes, one answer for the
+                       # notification, the start screen and the widgets (box not reachable, no network, paused)
 budget .           35  #    33: HomesConfig.kt
 for d in "$src"/*/; do
   p=$(basename "$d")
