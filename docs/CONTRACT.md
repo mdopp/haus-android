@@ -445,6 +445,14 @@ anfordern“ (`anfordern`).
   Share target names the category of each enabled one and is gone with
   neither. Android's share sheet cannot show a disabled target: its trace is
   its module's line in Mehr, which says what sharing to it would do.
+- **Account, backup, widget providers** (`konto`, `sicherung`, `widgets`):
+  a part the box lacks is a switch off and disabled on its screen, its
+  trace below. A Homes-Konto part that was on stops syncing
+  (`setIsSyncable(…, 0)`, no periodic sync) and its entries stay on the
+  phone; it syncs again when the box offers it again (`HomesKonto.folgen`).
+  The backup job skips a part the box lacks. The device and energy widget
+  providers are disabled only while their key is missing and none of their
+  widgets is placed (`kann/Anbieter.kt`).
 - **„Hier anfordern“:** `POST /napi/kann/anfordern {"modul": …}` → 200, the
   module's entry with its new state, which replaces the kept one. Pressed,
   the button says „Wird angefordert …“; it ends with the new state, Homes'

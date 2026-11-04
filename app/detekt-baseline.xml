@@ -12,7 +12,6 @@
     <ID>CyclomaticComplexMethod:Handy.kt$HandyKontakte$override fun exportieren(datei: File): Int</ID>
     <ID>CyclomaticComplexMethod:Handy.kt$HandyKontakte$private fun dazu(k: Kontakt, c: Cursor): Kontakt</ID>
     <ID>CyclomaticComplexMethod:Handy.kt$HandyTelefon$override fun nachrichten(datei: File, seitSms: Long, seitMms: Long): Auszug?</ID>
-    <ID>CyclomaticComplexMethod:HomesKontoActivity.kt$HomesKontoActivity$private fun render()</ID>
     <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$fun lies(text: String): List&lt;Kalender&gt;</ID>
     <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$private fun termin(e: List&lt;VcardLeser.Zeile&gt;, alarm: List&lt;VcardLeser.Zeile&gt;?): Termin?</ID>
     <ID>CyclomaticComplexMethod:KontakteLauf.kt$KontakteLauf$fun laufen(): Lauf.Ergebnis</ID>

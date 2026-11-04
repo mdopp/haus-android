@@ -1,6 +1,7 @@
 package cloud.dopp.homes.konto
 
 import android.content.Context
+import androidx.core.content.edit
 
 /**
  * What the Homes account's two syncs remember (#206): the ETag of the last
@@ -40,7 +41,14 @@ class KontoStore(ctx: Context) {
     /** The part is off: next time it starts from nothing. */
     fun vergiss(teil: HomesKonto.Teil) {
         p.edit().remove(key(teil, "etag")).remove(key(teil, "zeit")).remove(key(teil, "anzahl"))
-            .remove(key(teil, "meldung")).apply()
+            .remove(key(teil, "meldung")).remove(key(teil, ANGEHALTEN)).apply()
+    }
+
+    /** The part syncs no more because the box lacks it (homes ADR 0001 §3): it comes back on with the box. */
+    fun angehalten(teil: HomesKonto.Teil): Boolean = p.getBoolean(key(teil, ANGEHALTEN), false)
+
+    fun setzeAngehalten(teil: HomesKonto.Teil, an: Boolean) {
+        p.edit { putBoolean(key(teil, ANGEHALTEN), an) }
     }
 
     /** The ETag only: the phone's entries were changed from outside, the next run writes them all again. */
@@ -52,5 +60,6 @@ class KontoStore(ctx: Context) {
 
     private companion object {
         const val PREFS = "homes_konto"
+        const val ANGEHALTEN = "angehalten"
     }
 }

@@ -102,6 +102,14 @@
                 android:background="?android:attr/selectableItemBackground"
                 android:textColor="@color/homes_accent"
                 android:visibility="gone" />
+            <!-- What the box lacks here (homes ADR 0001 §10): the part's trace, below its disabled switch. -->
+            <LinearLayout
+                android:id="@+id/handy_kontakte_spur"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:orientation="vertical"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- SMS und Anrufe (laib ADR 0029): a card like WhatsApp's and Signal's, the switch
@@ -158,6 +166,14 @@
                 android:layout_marginTop="@dimen/space_xs"
                 android:background="?android:attr/selectableItemBackground"
                 android:textColor="@color/homes_accent"
+                android:visibility="gone" />
+            <!-- What the box lacks here (homes ADR 0001 §10): the part's trace, below its disabled switch. -->
+            <LinearLayout
+                android:id="@+id/handy_sms_spur"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:orientation="vertical"
                 android:visibility="gone" />
         </LinearLayout>
 
