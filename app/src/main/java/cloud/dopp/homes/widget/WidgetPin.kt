@@ -39,7 +39,7 @@ import android.os.Build
  */
 object WidgetPin {
 
-    const val ACTION_PINNED = "cloud.dopp.homes.widget.PINNED"
+    private const val ACTION_PINNED = "cloud.dopp.homes.widget.PINNED"
     const val EXTRA_TOOL_ID = "cloud.dopp.homes.widget.PIN_TOOL_ID"
     const val EXTRA_TOOL_LABEL = "cloud.dopp.homes.widget.PIN_TOOL_LABEL"
     const val EXTRA_PROVIDER = "cloud.dopp.homes.widget.PIN_PROVIDER"

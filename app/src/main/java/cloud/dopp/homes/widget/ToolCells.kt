@@ -76,7 +76,7 @@ object ToolCells {
     const val META_MAX = 3
 
     /** A list-valued field renders at most this many entries. */
-    const val LIST_MAX = 4
+    private const val LIST_MAX = 4
 
     /** Map every item through [map], dropping the ones that yield no title. */
     fun mapAll(def: ToolDef, rows: List<JSONObject>): List<ToolCell> =

@@ -72,7 +72,7 @@ data class ShortcutEntry(
 object DeviceShortcuts {
 
     /** The domains where a mistapped shortcut is harmless, so it may act. */
-    val DIRECT_DOMAINS = setOf("light", "switch")
+    private val DIRECT_DOMAINS = setOf("light", "switch")
 
     /** Shortcut-id prefix, so a published entry is recognisable and stable. */
     const val ID_PREFIX = "dev:"
@@ -97,7 +97,7 @@ object DeviceShortcuts {
      * The one rule table. Locks come first: [isSensitiveDevice] would catch them
      * too, but a lock is the one device with a chooser to send the user to.
      */
-    fun actionFor(domain: String?, deviceClass: String? = null): ShortcutAction = when {
+    private fun actionFor(domain: String?, deviceClass: String? = null): ShortcutAction = when {
         domain == "lock" -> ShortcutAction.CHOOSE
         isSensitiveDevice(domain, deviceClass) -> ShortcutAction.OPEN
         domain in DIRECT_DOMAINS -> ShortcutAction.TOGGLE

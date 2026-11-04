@@ -11,8 +11,10 @@ e2e/ and the workflows — for the name as a word.
 A declaration no other file names is reported as one of:
   dead     its own file does not use it either: delete it;
   private  only its own file uses it: make it private (then detekt's
-           unused-private rules see it from there on).
-A name is a word, so a second declaration of the same name elsewhere hides
+           unused-private rules see it from there on). An object's member
+           counts only when no line of its file outside the object names it.
+A type nested in an object is left out: code that uses it by inference
+never names it. A name is a word, so a second declaration of the same name elsewhere hides
 a dead one: the script misses some, and never reports a used one as dead.
 
 The ratchet (CLAUDE.md "Code gates"): scripts/deadcode-baseline.txt lists
@@ -49,19 +51,27 @@ def files(dirs, exts):
 
 
 def declarations(path, lines):
-    """(name, line) of the declarations the gate looks at."""
-    in_object = False
+    """(name, line, span) of the declarations the gate looks at; span is the
+    lines of the enclosing top-level object, or None at the top level."""
+    obj = None
     for i, line in enumerate(lines, 1):
-        if line and not line[0].isspace() and not line.startswith('}'):
-            in_object = bool(TOP_OBJECT.match(line))
+        if line and not line[0].isspace():
+            if line.startswith('}'):
+                if obj:
+                    obj[1] = i
+            else:
+                obj = [i, len(lines)] if TOP_OBJECT.match(line) else None
         m = DECL.match(line)
         if not m or line.lstrip().startswith(('private', 'override', 'protected')):
             continue
-        if m.group('ind') and not in_object:
-            continue
         if m.group('name') == 'companion':
             continue
-        yield m.group('name'), i
+        if not m.group('ind'):
+            yield m.group('name'), i, None
+        # an object's member, not a type: a nested type is named where it is
+        # used through inference, which a word search cannot see
+        elif obj and m.group('kind') not in ('class', 'object', 'interface', 'fun interface'):
+            yield m.group('name'), i, obj
 
 
 def findings():
@@ -71,10 +81,15 @@ def findings():
     for path in sorted(p for p in texts if p.startswith(PROD) and p.endswith('.kt')):
         own = texts[path]
         lines = own.split('\n')
-        for name, line in declarations(path, lines):
+        for name, line, span in list(declarations(path, lines)):  # spans close as the walk ends
             word = re.compile(r'(?<![\w])' + re.escape(name) + r'(?![\w])')
             if any(word.search(t) for p, t in texts.items() if p != path):
                 continue
+            if span:
+                # used in its file outside its object: private would not compile
+                outside = lines[:span[0] - 1] + lines[span[1]:]
+                if any(word.search(l) for l in outside):
+                    continue
             uses = len(word.findall(own)) - 1
             out.append(('private' if uses > 0 else 'dead', path[len(PROD) + 1:], name, line))
     return out

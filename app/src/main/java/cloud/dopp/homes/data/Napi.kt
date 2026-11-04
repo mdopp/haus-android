@@ -55,9 +55,6 @@ object Napi {
     /** The body of `POST /napi/kontakte`: the contacts as concatenated vCards. */
     const val VCARD = "text/vcard"
 
-    /** What `GET /napi/gemeinsam/kalender` answers: iCalendar, one VCALENDAR per shared calendar. */
-    const val ICALENDAR = "text/calendar"
-
     /** The Homes account's request header: the state the phone has, Homes' last [ETAG] (#206). */
     const val IF_NONE_MATCH = "If-None-Match"
 
@@ -376,7 +373,7 @@ object Napi {
     }
 
     /** A restore's download refused: `{fehler}`, e.g. 423 while the archive is closed (a medium). */
-    object LetzteDateiJson {
+    private object LetzteDateiJson {
         const val FEHLER = "fehler"
     }
 
@@ -465,7 +462,7 @@ object Napi {
 
     /**
      * `GET /napi/standort/import/{id}`: how far the import got. [STAND] is one
-     * of [IMPORT_HOCHLADEN], [IMPORT_LAEUFT], [IMPORT_FERTIG], [IMPORT_FEHLER];
+     * of `hochladen` (the file still arriving), [IMPORT_LAEUFT], [IMPORT_FERTIG], [IMPORT_FEHLER];
      * [GELESEN] of [GROESSE] bytes Homes has read, [PUNKTE] Reitti took;
      * at the end [TEXT] (done) or [FEHLER] with [GRUND], each one German sentence.
      */
@@ -478,9 +475,6 @@ object Napi {
         const val FEHLER = "fehler"
         const val GRUND = "grund"
     }
-
-    /** An import's [ImportStandJson.STAND]: the file still arriving. */
-    const val IMPORT_HOCHLADEN = "hochladen"
 
     /** Homes reads the file and hands it to Reitti. */
     const val IMPORT_LAEUFT = "laeuft"
@@ -611,7 +605,7 @@ object Napi {
 
     /**
      * The Homes account: the household's shared calendars and the reminders,
-     * as [ICALENDAR] ([FeedIcal]); series expanded by Homes, a month back and
+     * as iCalendar, `text/calendar`, one VCALENDAR per calendar ([FeedIcal]); series expanded by Homes, a month back and
      * a year ahead.
      */
     val GEMEINSAM_KALENDER = Endpoint(

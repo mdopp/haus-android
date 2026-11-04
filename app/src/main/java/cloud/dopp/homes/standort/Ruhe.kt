@@ -19,13 +19,13 @@ data class Anker(val zeit: Long, val breite: Double, val laenge: Double, val gen
  */
 object Ruhe {
     /** Less than this apart is the same place, however exact the fixes claim to be. */
-    const val MIN_TOLERANZ_M = 30f
+    private const val MIN_TOLERANZ_M = 30f
 
     /** A fix less exact than this says nothing about moving or resting. */
-    const val UNBRAUCHBAR_M = 500f
+    private const val UNBRAUCHBAR_M = 500f
 
     /** How long fixes must stay put before the phone counts as resting. Chosen, not measured. */
-    fun ruheNach(modus: Modus): Long = when (modus) {
+    private fun ruheNach(modus: Modus): Long = when (modus) {
         Modus.DETAILLIERT -> 3 * Plan.MINUTE // some 12 fixes at 15 s
         Modus.SPARSAM -> 10 * Plan.MINUTE // some 5 fixes at 2 min
     }
@@ -54,7 +54,7 @@ object Ruhe {
     private fun anker(p: Punkt) = Anker(p.zeit, p.breite, p.laenge, p.genauigkeit)
 
     /** Metres between two places on earth (haversine). */
-    fun abstand(b1: Double, l1: Double, b2: Double, l2: Double): Double {
+    private fun abstand(b1: Double, l1: Double, b2: Double, l2: Double): Double {
         val r = 6_371_000.0
         val db = Math.toRadians(b2 - b1)
         val dl = Math.toRadians(l2 - l1)

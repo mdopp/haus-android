@@ -133,7 +133,7 @@ object Senden {
     const val GENUG = 200
 
     /** How long the oldest point may wait in [modus] before the batch goes. */
-    fun hoechstensWarten(modus: Modus): Long = when (modus) {
+    private fun hoechstensWarten(modus: Modus): Long = when (modus) {
         Modus.DETAILLIERT -> 15 * Plan.MINUTE
         Modus.SPARSAM -> 30 * Plan.MINUTE
     }

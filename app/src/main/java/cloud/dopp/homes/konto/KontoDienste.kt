@@ -26,7 +26,7 @@ import cloud.dopp.homes.ui.HomesKontoActivity
  * TokenStore. Adding the account from Android's settings opens the app's
  * screen, where the switches are.
  */
-class KontoAuthenticator(private val ctx: Context) : AbstractAccountAuthenticator(ctx) {
+private class KontoAuthenticator(private val ctx: Context) : AbstractAccountAuthenticator(ctx) {
 
     override fun addAccount(
         response: AccountAuthenticatorResponse?, accountType: String?, authTokenType: String?,
@@ -68,7 +68,7 @@ class KontoDienst : Service() {
 }
 
 /** One part's sync adapter: the device token's client, the part's writer, run once per sync Android asks for. */
-class KontoSyncAdapter(ctx: Context, private val teil: HomesKonto.Teil) : AbstractThreadedSyncAdapter(ctx, true, false) {
+private class KontoSyncAdapter(ctx: Context, private val teil: HomesKonto.Teil) : AbstractThreadedSyncAdapter(ctx, true, false) {
 
     override fun onPerformSync(account: Account, extras: Bundle?, authority: String, provider: ContentProviderClient, result: SyncResult) {
         if (account.type != HomesKonto.TYP) return

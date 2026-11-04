@@ -69,7 +69,7 @@ val SENSITIVE_COVER_CLASSES = setOf("garage", "door", "gate")
  * service is sensitive there, `lock.lock` as much as `lock.unlock`, so a bare
  * tap gets `403 sensitive_action` and only the re-sent `confirmed=true` runs.
  */
-val SENSITIVE_DOMAINS = setOf("lock", "alarm_control_panel")
+private val SENSITIVE_DOMAINS = setOf("lock", "alarm_control_panel")
 
 /**
  * Is a device (by [domain] + [deviceClass]) safety-gated — i.e. its action needs

@@ -39,7 +39,7 @@ object RealtimeProtocol {
     }
 
     /** A `gemeinsam` payload: which part changed; anything else is null. Never throws. */
-    fun parseGemeinsam(data: String?): GemeinsamEvent? = try {
+    private fun parseGemeinsam(data: String?): GemeinsamEvent? = try {
         when (JSONObject(data.orEmpty()).optString(GemeinsamFrameJson.TEIL)) {
             Napi.TEIL_KONTAKTE -> GemeinsamEvent(HomesKonto.Teil.KONTAKTE)
             Napi.TEIL_KALENDER -> GemeinsamEvent(HomesKonto.Teil.KALENDER)
@@ -95,7 +95,7 @@ object RealtimeProtocol {
         connectedAtMs != 0L && nowMs - connectedAtMs >= STABLE_SESSION_MS
 
     /** How often a refused watch post is tried again before the 20-minute re-post takes over. */
-    const val WATCH_RETRIES = 6
+    private const val WATCH_RETRIES = 6
 
     /**
      * After the [attempt]-th watch post in a row was answered [code]: how long to

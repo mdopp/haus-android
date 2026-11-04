@@ -143,7 +143,7 @@ object VcardLeser {
     }
 
     /** A structured value's components (N, ADR, ORG), each unescaped; an empty one is null. */
-    fun komponenten(wert: String): List<String?> =
+    private fun komponenten(wert: String): List<String?> =
         teile(wert, ';', quoted = false, escaped = true).map { text(it).trim().ifEmpty { null } }
 
     /** A text value unescaped: `\n` a line break, `\,` `\;` `\\` the character. */
