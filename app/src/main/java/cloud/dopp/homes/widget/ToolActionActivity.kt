@@ -13,8 +13,7 @@ import org.json.JSONObject
 import kotlin.concurrent.thread
 
 /**
- * What a tap on a collection row does: a tool widget's row (#70/#90) and an
- * active-devices row (#178).
+ * What a tap on a collection row does: a tool widget's row (#70/#90).
  *
  * A collection has exactly one `PendingIntentTemplate`, so every row tap arrives
  * here and the row's fill-in says what this particular row can offer. The row has

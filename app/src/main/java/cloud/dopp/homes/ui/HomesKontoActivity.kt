@@ -16,8 +16,6 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.konto.HomesKonto
@@ -61,7 +59,7 @@ class HomesKontoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_homes_konto)
         store = KontoStore(this)
-        applySystemBarInsets()
+        padForSystemBars(findViewById(R.id.konto_root))
         Teil.values().forEach { teil ->
             schalter(teil).setOnCheckedChangeListener { _, an -> if (!setzt) schalte(teil, an) }
             stand(teil).setOnClickListener { if (hinweise[teil]?.appInfo == true) appInfo() }
@@ -87,17 +85,6 @@ class HomesKontoActivity : AppCompatActivity() {
         beobachter = null
         haupt.removeCallbacksAndMessages(null)
         super.onPause()
-    }
-
-    private fun applySystemBarInsets() {
-        val root = findViewById<View>(R.id.konto_root)
-        val top = root.paddingTop
-        val bottom = root.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, top + bars.top, v.paddingRight, bottom + bars.bottom)
-            insets
-        }
     }
 
     private fun schalter(teil: Teil): SwitchCompat =

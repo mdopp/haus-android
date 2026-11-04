@@ -7,8 +7,8 @@ import android.os.Bundle
 import cloud.dopp.homes.realtime.Live
 
 /**
- * The configure step of the fed widgets that need no choice (energy, its
- * statistics and totals, active devices, the Box widgets): no UI, it starts
+ * The configure step of the fed widget that needs no choice, the energy
+ * widget: no UI, it starts
  * the live service and confirms at once. It exists because placing a widget
  * from the launcher tray is otherwise no allowed start for a foreground
  * service on Android 12+; a visible activity, even a translucent one, is.

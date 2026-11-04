@@ -204,8 +204,11 @@ object Aufzeichnung {
      * rate comes back. One-shot: armed again at the next rest. It lives
      * with the process only.
      */
+    // only ever the application context: no activity to leak
+    @SuppressLint("StaticFieldLeak")
     private object Bewegung : TriggerEventListener() {
         @Volatile
+        @SuppressLint("StaticFieldLeak")
         private var app: Context? = null
 
         @Volatile

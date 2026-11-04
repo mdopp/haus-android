@@ -27,9 +27,6 @@ object HomesPages {
     /** The house's power, jetzt and heute: the energy widget's tap. */
     const val ENERGIE = "/energie"
 
-    /** The Box, for admins. */
-    const val BOX = "/box"
-
     /** Standortverlauf: where the person connects their Reitti once. */
     const val STANDORT = "/standort"
 

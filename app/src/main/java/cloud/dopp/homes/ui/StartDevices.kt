@@ -6,8 +6,8 @@ import cloud.dopp.homes.data.Card
 import java.util.Locale
 
 /**
- * The start screen's devices (owner, 2026-11-02: devices only in the app, no
- * device widgets): the person's favorites from Homes (`/napi/portal/favorites`,
+ * The start screen's devices (owner, 2026-11-02; one device per widget came
+ * back 2026-11-03, [cloud.dopp.homes.widget.DeviceWidgetProvider]): the person's favorites from Homes (`/napi/portal/favorites`,
  * the things they pinned with ☆ on Homes), first on the screen, in their
  * order, then „Alle Geräte“, which opens Homes' devices page.
  *
