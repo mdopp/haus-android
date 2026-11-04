@@ -1,6 +1,8 @@
 package cloud.dopp.homes
 
+import cloud.dopp.homes.data.Card
 import cloud.dopp.homes.widget.DeviceIcons
+import cloud.dopp.homes.widget.DeviceLook
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -30,6 +32,19 @@ class CoverIconTest {
             assertEquals("$dc open", R.drawable.ic_garage_open, DeviceIcons.forState("cover", "open", dc))
             assertEquals("$dc closed", R.drawable.ic_garage_closed, DeviceIcons.forState("cover", "closed", dc))
         }
+    }
+
+    /** The widget draws a cover as the start screen does (owner, 2026-11-04): a door is a shutter on both. */
+    @Test
+    fun theWidgetDrawsACoverAsTheStartScreenDoes() {
+        for (dc in listOf("garage", "gate", "Garage", "door", "shutter", null)) {
+            for (state in listOf("open", "opening", "closed", null)) {
+                assertEquals("$dc $state", DeviceIcons.forState("cover", state, dc), DeviceLook.icon("cover", dc, state))
+            }
+        }
+        val door = Card(entityId = "cover.tuer", name = "Tür", domain = "cover", deviceClass = "door", state = "open", unit = null)
+        assertEquals("an open door is coloured as an open shutter", DeviceLook.ON, DeviceLook.tint("cover", "door", door))
+        assertEquals(DeviceLook.OPEN, DeviceLook.tint("cover", "Garage", door.copy(deviceClass = "Garage")))
     }
 
     @Test

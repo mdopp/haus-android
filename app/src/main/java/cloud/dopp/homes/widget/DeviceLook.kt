@@ -3,7 +3,6 @@ package cloud.dopp.homes.widget
 import androidx.annotation.DrawableRes
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.Card
-import cloud.dopp.homes.data.SENSITIVE_COVER_CLASSES
 
 /**
  * How the device widget shows its device: a picture first (owner,
@@ -29,8 +28,8 @@ object DeviceLook {
     const val OFF = 0xFF9AA0AE.toInt()      // Homes --muted: off, shut shutter
     const val UNKNOWN = 0xFF6B7280.toInt()  // Homes --faint: nothing known, or not reachable
 
-    /** A garage, a gate, a door: a cover whose open is worth noticing. */
-    private fun isGarage(domain: String?, deviceClass: String?): Boolean = domain == "cover" && deviceClass in SENSITIVE_COVER_CLASSES
+    /** A garage or a gate ([DeviceIcons.isGarage]): a cover whose open is worth noticing. */
+    private fun isGarage(domain: String?, deviceClass: String?): Boolean = domain == "cover" && DeviceIcons.isGarage(deviceClass)
 
     private fun norm(state: String?) = state?.trim()?.lowercase()
 
@@ -40,14 +39,11 @@ object DeviceLook {
         val s = norm(state)
         return when {
             domain == "lock" -> DeviceIcons.forLockState(s)
-            isGarage(domain, deviceClass) -> if (s in OPENISH) R.drawable.ic_garage_open else R.drawable.ic_garage_closed
-            domain == "cover" -> if (s in OPENISH) R.drawable.ic_blind_open else R.drawable.ic_blind_closed
+            domain == "cover" -> DeviceIcons.forCover(deviceClass, s)
             domain == "light" -> if (s == "on") R.drawable.ic_light_on else R.drawable.ic_light_off
             else -> DeviceIcons.forDomain(domain)
         }
     }
-
-    private val OPENISH = setOf("open", "opening")
 
     /** The picture's colour: [card] null is nothing known yet. */
     fun tint(domain: String?, deviceClass: String?, card: Card?): Int {

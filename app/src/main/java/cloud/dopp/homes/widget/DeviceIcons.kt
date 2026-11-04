@@ -59,14 +59,20 @@ object DeviceIcons {
 
     /** A cover's picture: garage/gate as a garage, every other class as a shutter; open or opening is up. */
     @DrawableRes
-    private fun forCover(deviceClass: String?, state: String?): Int {
+    fun forCover(deviceClass: String?, state: String?): Int {
         val offen = state?.trim()?.lowercase() in setOf("open", "opening")
-        return if (deviceClass?.trim()?.lowercase() in GARAGE_CLASSES) {
+        return if (isGarage(deviceClass)) {
             if (offen) R.drawable.ic_garage_open else R.drawable.ic_garage_closed
         } else {
             if (offen) R.drawable.ic_blind_open else R.drawable.ic_blind_closed
         }
     }
+
+    /**
+     * The one rule for a cover drawn as a garage, on the start screen and the
+     * widget alike: class garage or gate. A door is a shutter (owner, 2026-11-04).
+     */
+    fun isGarage(deviceClass: String?): Boolean = deviceClass?.trim()?.lowercase() in GARAGE_CLASSES
 
     private val GARAGE_CLASSES = setOf("garage", "gate")
 
