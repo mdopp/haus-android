@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Daten sichern (#194, laib ADR 0029; renamed by the owner, 2026-11-03). The
-     guide is the same as Homes' page „Daten sichern“ (homes#207): change both together. -->
+     guide lives only here, in the app: Homes' web pages no longer carry it (homes#273). -->
 <resources>
     <string name="home_mehr">Mehr</string>
     <string name="sicherung_title">Daten sichern</string>

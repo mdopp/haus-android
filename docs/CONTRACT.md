@@ -346,11 +346,20 @@ The owner's call, 2026-11-03: an old location history goes into Reitti by
 sharing the file to the app — no browser, no Reitti login. The share
 target „In den Standortverlauf übernehmen“ (`ui/StandortImportActivity`)
 takes `ACTION_SEND` of `application/json`, `application/geo+json`,
-`application/gpx+xml`, `application/gpx`, `application/xml`, `text/xml` and
-`application/octet-stream`; the name decides (`.json`, `.geojson`, `.gpx`).
-Homes reads Google Maps' Timeline.json (Android and iPhone), Takeout's
-Records.json, GPX and GeoJSON, and hands the points to the person's Reitti
-with their own token (mdopp/homes#234).
+`application/gpx+xml`, `application/gpx`, `application/xml`, `text/xml`,
+`application/octet-stream`, `application/zip`,
+`application/x-zip-compressed` and `application/x-zip`; the name decides (`.json`, `.geojson`,
+`.gpx`, `.zip`), and a file without one is named by its type. Homes reads
+Google Maps' Timeline.json (Android and iPhone), Takeout's Records.json,
+GPX and GeoJSON, and hands the points to the person's Reitti with their own
+token (mdopp/homes#234). A Google Takeout ZIP (owner, 2026-11-04,
+mdopp/homes#274) goes as it is, streamed like any other file in the same
+resumable pieces: the app neither unpacks nor holds it, Homes stages it on
+its disk and reads it member by member. A Takeout comes in parts of up to
+50 GB, each its own share and its own import; a part without a history
+ends `fertig` with Homes' gentle sentence to share the other part too. An
+older Homes refuses a ZIP with its sentence, which the dialog shows as any
+refusal.
 
 - The upload is the backups' (e): `POST /napi/standort/import {name,
   groesse}` → `{id, offset}` (the same name and size resume; 409 `{fehler,
@@ -359,7 +368,8 @@ with their own token (mdopp/homes#234).
   /napi/standort/import/{id}` → `Upload-Offset`, `PATCH
   /napi/standort/import/{id}` in pieces of 8 MiB (`standort/Import.kt`).
   After a cut the app asks HEAD and goes on; „Abbrechen“ stops, and the
-  file shared again goes on where it stopped. At most 5 GB.
+  file shared again goes on where it stopped. At most 50 GB (5 GB on a Homes
+  before homes#274); a piece is at most 16 MB on Homes' side.
 - Then `GET /napi/standort/import/{id}` every 2 s: `{stand: hochladen |
   laeuft | fertig | fehler, gelesen, groesse, punkte, text?, fehler?,
   grund?}`. The dialog shows the per cent read and the places so far, and

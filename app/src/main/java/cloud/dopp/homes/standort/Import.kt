@@ -174,14 +174,21 @@ class Import(
         const val UNLESBAR = "Die Datei ließ sich auf dem Handy nicht lesen."
         const val FERTIG = "Reitti hat den Standortverlauf übernommen."
 
-        /** The names a history file has: Google's Timeline.json and Records.json, GPX, GeoJSON. */
-        private val ENDUNGEN = listOf(".json", ".geojson", ".gpx")
+        /** The names a history file has: Google's Timeline.json and Records.json, GPX, GeoJSON, a Takeout ZIP. */
+        private val ENDUNGEN = listOf(".json", ".geojson", ".gpx", ".zip")
+
+        /** A Google Takeout as it comes: a ZIP, sent as it is; Homes unpacks it (an older one says it cannot). */
+        private val ZIP = listOf("application/zip", "application/x-zip-compressed", "application/x-zip")
 
         /** The types a share may come as with any of those names. */
         val TYPEN = listOf(
             "application/json", "application/geo+json", "application/gpx+xml", "application/gpx",
             "application/xml", "text/xml", "application/octet-stream",
-        )
+        ) + ZIP
+
+        /** The name Homes gets: the file's own, else one its [mime] says (Homes tells the format by it). */
+        fun dateiname(name: String?, mime: String?): String =
+            name?.trim()?.ifEmpty { null } ?: if (mime?.substringBefore(';')?.trim()?.lowercase(Locale.ROOT) in ZIP) "Standortverlauf.zip" else "Standortverlauf.json"
 
         /** Does a file of [name] and [mime] look like a history Homes reads? The name decides when there is one. */
         fun nimmt(name: String?, mime: String?): Boolean {
