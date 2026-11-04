@@ -59,7 +59,6 @@
     <ID>StringLiteralDuplication:DeviceIcons.kt$DeviceIcons$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"light"</ID>
-    <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"opening"</ID>
     <ID>StringLiteralDuplication:EnergyFluss.kt$EnergyFluss$"solar"</ID>
     <ID>StringLiteralDuplication:EnergyPicture.kt$EnergyPicture$"solar"</ID>
     <ID>StringLiteralDuplication:EnergyStyle.kt$EnergyStyle$"battery"</ID>
