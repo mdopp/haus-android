@@ -2,7 +2,6 @@ package cloud.dopp.homes.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -14,7 +13,6 @@ import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.data.ToolDef
 import cloud.dopp.homes.data.ToolDefs
-import kotlin.concurrent.thread
 
 /**
  * The **generic schema-driven tool widget** (#70, archetype A of #69): ONE
@@ -34,11 +32,7 @@ import kotlin.concurrent.thread
  * werden". A row tap offers the row's actions, wired from the catalog's
  * `tool-action-params` (#90).
  */
-class ToolWidgetProvider : AppWidgetProvider() {
-
-    override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
-        ids.forEach { refresh(context, it) }
-    }
+class ToolWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 400_000, tapStartsLive = true) {
 
     override fun onDeleted(context: Context, ids: IntArray) {
         ids.forEach { WidgetStore.unbindTool(context, it) }
@@ -46,18 +40,7 @@ class ToolWidgetProvider : AppWidgetProvider() {
         cloud.dopp.homes.realtime.Live.recheck(context)
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        if (intent.action == ACTION_REFRESH) {
-            cloud.dopp.homes.realtime.Live.ensure(context) // a widget tap: an allowed start
-            val id = intent.getIntExtra(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
-            )
-            if (id != AppWidgetManager.INVALID_APPWIDGET_ID) refresh(context, id)
-        }
-    }
-
-    private fun refresh(context: Context, appWidgetId: Int) {
+    override fun refresh(context: Context, appWidgetId: Int) {
         val mgr = AppWidgetManager.getInstance(context)
         val cached = ToolCells.decode(WidgetStore.toolCellsJson(context, appWidgetId))
         val label = WidgetStore.toolLabel(context, appWidgetId)
@@ -74,37 +57,20 @@ class ToolWidgetProvider : AppWidgetProvider() {
         val paired = ServerStore.isConfigured(context) && TokenStore.isPaired(context)
         if (toolId == null || !paired) return
 
-        val pending = goAsync()
-        thread {
-            try {
-                val api = ApiClient(context.applicationContext)
-                val def = resolveDef(context, api, toolId)
-                val cells = if (def == null) {
-                    null
-                } else {
-                    ToolCells.mapAll(def, api.fetchToolRows(def))
-                }
-                // Only a successful fetch replaces the cache — a hiccup leaves the
-                // previous rows on screen instead of blanking the widget (#46).
-                val shown = if (cells != null) {
-                    WidgetStore.setToolCellsJson(context, appWidgetId, ToolCells.encode(cells))
-                    cells
-                } else {
-                    cached
-                }
-                // Follow a renamed tool: the catalog's label wins over the one the
-                // config screen stored when the widget was placed.
-                val header = def?.label?.ifBlank { null } ?: label
-                if (header != label) WidgetStore.setToolLabel(context, appWidgetId, header)
-                mgr.updateAppWidget(
-                    appWidgetId, scaffold(context, appWidgetId, header, shown.size),
-                )
-                mgr.notifyAppWidgetViewDataChanged(appWidgetId, R.id.tw_list)
-            } catch (t: Throwable) {
-                WidgetFallback.show(context, appWidgetId, refreshPending(context, appWidgetId))
-            } finally {
-                pending?.finish()
-            }
+        async(context, appWidgetId) {
+            val api = ApiClient(context.applicationContext)
+            val def = resolveDef(context, api, toolId)
+            val cells = def?.let { ToolCells.mapAll(it, api.fetchToolRows(it)) }
+            // Only a successful fetch replaces the cache — a hiccup leaves the
+            // previous rows on screen instead of blanking the widget (#46).
+            cells?.let { WidgetStore.setToolCellsJson(context, appWidgetId, ToolCells.encode(it)) }
+            val shown = cells ?: cached
+            // Follow a renamed tool: the catalog's label wins over the one the
+            // config screen stored when the widget was placed.
+            val header = def?.label?.ifBlank { null } ?: label
+            if (header != label) WidgetStore.setToolLabel(context, appWidgetId, header)
+            mgr.updateAppWidget(appWidgetId, scaffold(context, appWidgetId, header, shown.size))
+            mgr.notifyAppWidgetViewDataChanged(appWidgetId, R.id.tw_list)
         }
     }
 
@@ -182,16 +148,6 @@ class ToolWidgetProvider : AppWidgetProvider() {
         )
     }
 
-    private fun refreshPending(context: Context, appWidgetId: Int): PendingIntent {
-        val i = Intent(context, ToolWidgetProvider::class.java)
-            .setAction(ACTION_REFRESH)
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        return PendingIntent.getBroadcast(
-            context, 400_000 + appWidgetId, i,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-    }
-
     companion object {
         const val ACTION_REFRESH = "cloud.dopp.homes.widget.TOOL_REFRESH"
 
@@ -204,11 +160,7 @@ class ToolWidgetProvider : AppWidgetProvider() {
 
         /** Re-run one instance (used by the config screen after binding). */
         fun requestRefresh(context: Context, appWidgetId: Int) {
-            context.sendBroadcast(
-                Intent(context, ToolWidgetProvider::class.java)
-                    .setAction(ACTION_REFRESH)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
-            )
+            context.sendBroadcast(refreshIntent(context, ToolWidgetProvider::class.java, ACTION_REFRESH, appWidgetId))
         }
     }
 }

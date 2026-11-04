@@ -1,28 +1,17 @@
 package cloud.dopp.homes.widget
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
-import cloud.dopp.homes.data.ServerStore
-import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.data.ToolDef
 import cloud.dopp.homes.data.ToolDefs
-import cloud.dopp.homes.ui.HomeActivity
 import kotlin.concurrent.thread
 
 /**
@@ -41,69 +30,17 @@ import kotlin.concurrent.thread
  * parked ([WidgetStore.consumePendingToolId]) and this screen binds and closes
  * without asking again.
  *
- * Re-entered from the launcher's *Einrichten* entry the instance is already bound
- * (#96): the list then shows the current tool and a back-out leaves the widget
- * alone — see [ConfigEntry].
+ * Re-entered from the launcher's *Einrichten* entry the list shows the current
+ * tool ([WidgetPickerActivity]).
  */
-class ToolWidgetConfigActivity : AppCompatActivity() {
-
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+class ToolWidgetConfigActivity : WidgetPickerActivity() {
 
     /** The tool this instance already shows, if we were re-opened (#96). */
-    private var boundToolId: String? = null
+    private val boundToolId: String? by lazy { WidgetStore.toolId(this, appWidgetId) }
 
-    private var entry = ConfigEntry.FIRST_PLACEMENT
+    override fun bound() = boundToolId
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setResult(RESULT_CANCELED)
-        appWidgetId = intent?.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            finish()
-            return
-        }
-        boundToolId = WidgetStore.toolId(this, appWidgetId)
-        entry = ConfigEntry.of(boundToolId != null)
-        // Backing out of a reconfigure must not cost the user the widget (#96).
-        setResult(entry.backOutResult, resultIntent())
-        setContentView(R.layout.activity_widget_config)
-        applyStatusBarInset()
-
-        if (!ServerStore.isConfigured(this) || !TokenStore.isPaired(this)) {
-            findViewById<TextView>(R.id.config_status).setText(R.string.widget_config_pair_first)
-            findViewById<Button>(R.id.config_pair).apply {
-                visibility = View.VISIBLE
-                setOnClickListener { startActivity(Intent(context, HomeActivity::class.java)) }
-            }
-            return
-        }
-        loadTools()
-    }
-
-    private fun applyStatusBarInset() {
-        val root = findViewById<View>(R.id.config_root)
-        val basePad = root.paddingTop
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            v.updatePadding(top = basePad + top)
-            insets
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (ServerStore.isConfigured(this) && TokenStore.isPaired(this) &&
-            findViewById<ListView>(R.id.config_list).adapter == null
-        ) {
-            findViewById<Button>(R.id.config_pair).visibility = View.GONE
-            loadTools()
-        }
-    }
-
-    private fun loadTools() {
+    override fun load() {
         val status = findViewById<TextView>(R.id.config_status)
         val list = findViewById<ListView>(R.id.config_list)
         status.setText(R.string.tool_config_loading)
@@ -187,7 +124,4 @@ class ToolWidgetConfigActivity : AppCompatActivity() {
         setResult(RESULT_OK, resultIntent())
         finish()
     }
-
-    private fun resultIntent() =
-        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 }

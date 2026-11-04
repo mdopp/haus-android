@@ -652,7 +652,7 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme_Homes_Config`)"
+        message="Possible overdraw: Root element paints background `@color/homes_bg` with a theme that also paints a background (inferred theme is `@style/Theme.Homes`)"
         errorLine1="    android:background=&quot;@color/homes_bg&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -1339,7 +1339,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/widget/ToolWidgetProvider.kt"
-            line="149"
+            line="115"
             column="22"/>
     </issue>
 
