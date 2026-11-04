@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Clean fallback shown when a widget's data/render throws (#32), instead of
      letting the exception bubble up into Android's "Widget kann nicht geladen
-     werden". A tap re-triggers the provider's refresh. RemoteViews-safe. -->
+     werden". A tap re-triggers the provider's refresh. RemoteViews-safe.
+     Also a widget whose type the box no longer offers (homes ADR 0001 §3):
+     the module's reason, without the refresh icon. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/we_root"
     android:layout_width="match_parent"
@@ -12,6 +14,7 @@
     android:padding="12dp">
 
     <ImageView
+        android:id="@+id/we_icon"
         android:layout_width="26dp"
         android:layout_height="26dp"
         android:layout_marginBottom="6dp"
@@ -20,10 +23,11 @@
         android:contentDescription="@null" />
 
     <TextView
+        android:id="@+id/we_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:maxLines="2"
+        android:maxLines="3"
         android:ellipsize="end"
         android:text="@string/widget_load_error"
         android:textColor="#FFB0BEC5"

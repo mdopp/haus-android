@@ -66,6 +66,7 @@ each row naming the Homes file and lines it came from.
 | Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`, `…/standort/import…`: see (f) |
 | Homes-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
+| what the box can do | `GET /napi/kann`, `POST /napi/kann/anfordern`: see (h) |
 | Share → Homes, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Homes' refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Homes | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Homes keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (homes#120); the share sheet's Direct Share target carries the assistant's name (#188) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{documents,notes}`; Homes also lists `contacts` and `task`, which the app no longer offers as a widget, owner 2026-11-02 and 2026-11-03), `POST /napi/action-callback` |
@@ -407,3 +408,36 @@ switch under Mehr → Homes auf dem Handy and its own permission.
   person's own data and the UID it had before the join (the shared raw
   contact's part taken out of the lookup key); one with nothing of the
   person's but a name (a messenger's rows) does not go.
+
+## (h) What the box can do
+
+(homes ADR 0001 §2, §3, §10; homes-android#231; Homes' side is homes#242
+and homes#251.) `GET /napi/kann` → `{version: 1, module: [...], app:
+{widgets, teilen, konto, sicherung, mehr}}`: `app` is what the box offers
+the app, in the app's keys; `module` is every module, on or off, with its
+title, why it is off (`grund`), what it would bring (`bietet`), its trace
+(`spur_id`: `fehlt`, `aus`, `angefordert`, `wartet`, `abgelehnt`,
+`eingerichtet`; `spur` the German words) and whether it offers „Hier
+anfordern“ (`anfordern`).
+
+- **When the app reads:** at start and resume, at most once a minute; when
+  the live stream connects (a restarted Homes may offer something else);
+  never with the screen off. Always with the kept ETag as `If-None-Match`,
+  so an unchanged answer is a 304. The last answer is kept
+  (`kann/KannStore.kt`) and used offline.
+- **How it reads it:** an unknown key or field is ignored; a known key
+  missing from a list Homes sent means the box lacks that feature; a list
+  Homes did not send says nothing. A 404 (an older Homes) forgets what was
+  kept, and with nothing kept the app offers everything, as before.
+- **Nothing is hidden (§10):** a feature the box lacks leaves a quiet trace
+  — grey, no red, no warning sign. The widget list shows a missing type as
+  a muted entry that cannot be placed; Mehr shows its own rows by `mehr`
+  and ends with „Gibt es hier noch nicht“, one trace per off module (not
+  the `admins` ones), each with „Hier anfordern“ while `anfordern` is true.
+  A placed widget whose type went shows the module's `grund`; a tap opens
+  the app.
+- **„Hier anfordern“:** `POST /napi/kann/anfordern {"modul": …}` → 200, the
+  module's entry with its new state, which replaces the kept one. Pressed,
+  the button says „Wird angefordert …“; it ends with the new state, Homes'
+  sentence (`{"error"}`; 404, 502, 503, 504), „pair again“ on a 401, or the
+  app's own words when Homes did not answer in time or cannot be reached.

@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.RemoteViews
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
+import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.data.ToolDef
@@ -41,6 +42,8 @@ class ToolWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 400_000, tapStartsL
     }
 
     override fun refresh(context: Context, appWidgetId: Int) {
+        val toolId = WidgetStore.toolId(context, appWidgetId)
+        if (toolId != null && WidgetFallback.weg(context, appWidgetId, KannKey.TOOL + toolId)) return // the box lost the tool
         val mgr = AppWidgetManager.getInstance(context)
         val cached = ToolCells.decode(WidgetStore.toolCellsJson(context, appWidgetId))
         val label = WidgetStore.toolLabel(context, appWidgetId)
@@ -53,7 +56,6 @@ class ToolWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 400_000, tapStartsL
             return
         }
 
-        val toolId = WidgetStore.toolId(context, appWidgetId)
         val paired = ServerStore.isConfigured(context) && TokenStore.isPaired(context)
         if (toolId == null || !paired) return
 

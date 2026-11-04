@@ -61,6 +61,12 @@ class NapiContractTest {
         /** One energy meter: internal/napi/energy.go:87-100, labelled at :145, :155, :183, :192. */
         val METER = setOf("entity_id", "name", "state", "device_class", "unit", "label", "sense")
 
+        /** One module of `/napi/kann`: `modul.KannEins`, internal/modul/modul.go:234-248, `Angebot` :41-47, `Wunsch` :181-184. */
+        val KANN_MODUL = setOf(
+            "name", "titel", "an", "backend", "standard", "warum", "grund", "bietet", "admins", "spur_id", "spur",
+            "wunsch", "stand", "seit", "anfordern", "widgets", "teilen", "konto", "sicherung", "mehr",
+        )
+
         /** Every /napi route Homes serves, as its handler reads and answers it. */
         val HOMES = listOf(
             Route("GET", "/napi/assistent", "internal/napi/napi.go:104-106", sends = setOf("name")),
@@ -264,6 +270,19 @@ class NapiContractTest {
                     "text", "fehler", "grund", "geaendert",
                 ),
             ),
+            // What the box can do (homes ADR 0001 §2, §10): GET mdopp/homes main at 572fb33 (the merge of homes#254),
+            // with bietet, spur_id, spur, wunsch, anfordern and the POST from mdopp/homes#256 at 4936cb1, not merged yet;
+            // registered napi.go:226-227, the entry internal/modul/modul.go:222-248, a refused device napi.go:236.
+            Route(
+                "GET", "/napi/kann", "internal/napi/kann.go:30-62 (ETag :43-49), not_found without modules :31-34 and napi.go:275-277",
+                sends = setOf("version", "module", "app") + KANN_MODUL + setOf("ok", "reason"),
+                headers = setOf("If-None-Match", "ETag"),
+            ),
+            Route(
+                "POST", "/napi/kann/anfordern", "internal/napi/kann.go:85-127, the reply the module's entry :122-126",
+                body = setOf("modul"), required = setOf("modul"),
+                sends = KANN_MODUL + setOf("ok", "reason", "error"),
+            ),
         )
 
         /** Where Homes reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
@@ -302,6 +321,7 @@ class NapiContractTest {
             "POST /napi/standort/import", "HEAD /napi/standort/import/{id}",
             "PATCH /napi/standort/import/{id}", "GET /napi/standort/import/{id}",
             "GET /napi/gemeinsam/kontakte", "GET /napi/gemeinsam/kalender",
+            "GET /napi/kann", "POST /napi/kann/anfordern",
         )
 
         const val NAPI = "cloud.dopp.homes.data.Napi"
@@ -324,6 +344,9 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/homes/data/StandortClient.kt",
             "app/src/main/java/cloud/dopp/homes/data/StandortImportClient.kt",
             "app/src/main/java/cloud/dopp/homes/data/GemeinsamClient.kt",
+            "app/src/main/java/cloud/dopp/homes/data/KannClient.kt",
+            "app/src/main/java/cloud/dopp/homes/kann/Kann.kt",
+            "app/src/main/java/cloud/dopp/homes/kann/KannStore.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")

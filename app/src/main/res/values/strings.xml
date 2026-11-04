@@ -4,4 +4,26 @@
     <string name="appName">Homes</string>
     <!-- The household assistant's name until Homes names the box's own (/napi/assistent). -->
     <string name="assistent_name" translatable="false">Homes</string>
+
+    <!-- What the box can do (homes ADR 0001 §10): a quiet trace where the box
+         lacks something, never an error. The trace's words by its key
+         (`spur_id`); an unknown key shows Homes' own words. -->
+    <string name="spur_fehlt">auf dieser Box nicht eingerichtet</string>
+    <string name="spur_aus">ausgeschaltet</string>
+    <string name="spur_angefordert">angefordert</string>
+    <string name="spur_wartet">wartet auf Freigabe</string>
+    <string name="spur_abgelehnt">abgelehnt</string>
+    <string name="spur_eingerichtet">wird eingerichtet</string>
+    <string name="anfordern">Hier anfordern</string>
+    <string name="anfordern_laeuft">Wird angefordert …</string>
+    <string name="anfordern_beschreibung">%1$s hier anfordern</string>
+    <string name="anfordern_nicht">Der Wunsch ließ sich gerade nicht aufschreiben. Versuch es später noch einmal.</string>
+    <string name="anfordern_zeit">Die Box hat nicht rechtzeitig geantwortet. Schau gleich nach, ob der Wunsch angekommen ist, bevor du es noch einmal versuchst.</string>
+    <string name="anfordern_offline">Keine Verbindung zu Homes. Versuch es noch einmal, wenn das Handy online ist.</string>
+    <string name="anfordern_gekoppelt">Dieses Handy ist nicht mehr mit Homes gekoppelt. Kopple es neu, dann geht der Wunsch.</string>
+    <!-- Mehr's quiet section: one trace per module the box lacks. -->
+    <string name="spuren_titel">Gibt es hier noch nicht</string>
+    <string name="spuren_hinweis">Das kann Homes, auf dieser Box aber noch nicht. Wünsch es dir, dann sieht es der Admin.</string>
+    <!-- A placed widget whose type the box no longer offers, when Homes names no reason. -->
+    <string name="spur_widget_weg">Das gibt es auf dieser Box gerade nicht.</string>
 </resources>

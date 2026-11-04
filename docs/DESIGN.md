@@ -94,3 +94,9 @@ Radien/Abstände/Typo aus den Tokens; runde Karten `card_homes`, alle mit
 demselben Innenabstand `card_padding`. Karten sagen in **einer** Zeile, was
 etwas tut.
 
+## Spuren — was die Box nicht hat
+Was die Box nicht kann (homes ADR 0001 §10), bleibt als leise Spur stehen,
+nie versteckt und nie wie ein Fehler: Titel in `homes_text_muted`, darunter
+der Stand in `homes_text_faint`, Icon in `homes_text_faint`, „Hier
+anfordern“ als Geister-Knopf (`Widget.Homes.Button.Control`). Kein Rot,
+kein Warnzeichen, keine Fehlerwörter (`layout/item_spur.xml`, `ui/Spuren.kt`).
