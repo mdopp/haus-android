@@ -9,9 +9,7 @@ import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import cloud.dopp.homes.R
-import cloud.dopp.homes.data.ApiClient
 import cloud.dopp.homes.data.ToolDef
-import cloud.dopp.homes.data.ToolDefs
 import kotlin.concurrent.thread
 
 /**
@@ -61,19 +59,8 @@ class ToolWidgetConfigActivity : WidgetPickerActivity() {
     }
 
     /** Fresh catalog when reachable (and remembered), else the last-seen one. */
-    private fun loadCatalog(): List<ToolDef> {
-        val body = try {
-            ApiClient(applicationContext).toolCatalogBody()
-        } catch (e: Exception) {
-            null
-        }
-        if (body != null) {
-            WidgetStore.setToolCatalogJson(applicationContext, body)
-            val fresh = ToolDefs.parseCatalog(body)
-            if (fresh.isNotEmpty()) return fresh
-        }
-        return ToolDefs.parseCatalog(WidgetStore.toolCatalogJson(applicationContext))
-    }
+    private fun loadCatalog(): List<ToolDef> =
+        WidgetStore.freshToolCatalog(applicationContext).orEmpty().ifEmpty { WidgetStore.keptToolCatalog(applicationContext) }
 
     private fun showTools(list: ListView, status: TextView, defs: List<ToolDef>) {
         if (defs.isEmpty()) {

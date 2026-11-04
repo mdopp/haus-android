@@ -79,15 +79,9 @@ class ToolWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 400_000, tapStartsL
      * changed schema takes effect without a rebuild), else from the cached catalog
      * body so an offline widget still renders its rows.
      */
-    private fun resolveDef(context: Context, api: ApiClient, toolId: String): ToolDef? {
-        val body = api.toolCatalogBody()
-        if (body != null) {
-            WidgetStore.setToolCatalogJson(context, body)
-            ToolDefs.parseCatalog(body).firstOrNull { it.id == toolId }?.let { return it }
-        }
-        return ToolDefs.parseCatalog(WidgetStore.toolCatalogJson(context))
-            .firstOrNull { it.id == toolId }
-    }
+    private fun resolveDef(context: Context, api: ApiClient, toolId: String): ToolDef? =
+        WidgetStore.freshToolCatalog(context, api)?.firstOrNull { it.id == toolId }
+            ?: WidgetStore.keptToolCatalog(context).firstOrNull { it.id == toolId }
 
     /**
      * Header + the collection wiring. The ListView is bound to

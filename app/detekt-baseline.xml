@@ -139,7 +139,6 @@
     <ID>SwallowedException:ToolActionActivity.kt$ToolActionActivity$e: Exception</ID>
     <ID>SwallowedException:ToolCells.kt$ToolCells$e: Exception</ID>
     <ID>SwallowedException:ToolDefs.kt$ToolDefs$e: Exception</ID>
-    <ID>SwallowedException:ToolWidgetConfigActivity.kt$ToolWidgetConfigActivity$e: Exception</ID>
     <ID>SwallowedException:ToolWidgetProvider.kt$ToolWidgetProvider$t: Throwable</ID>
     <ID>SwallowedException:Uploader.kt$Uploader$e: IOException</ID>
     <ID>SwallowedException:WidgetActionReceiver.kt$WidgetActionReceiver$e: ApiClient.NotConfiguredException</ID>
@@ -172,7 +171,6 @@
     <ID>TooGenericExceptionCaught:ToolActionActivity.kt$ToolActionActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ToolCells.kt$ToolCells$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ToolDefs.kt$ToolDefs$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:ToolWidgetConfigActivity.kt$ToolWidgetConfigActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ToolWidgetProvider.kt$ToolWidgetProvider$t: Throwable</ID>
     <ID>TooGenericExceptionCaught:WidgetActionReceiver.kt$WidgetActionReceiver$e: Exception</ID>
     <ID>TooGenericExceptionCaught:WidgetConfigActivity.kt$WidgetConfigActivity$e: Exception</ID>
