@@ -27,10 +27,11 @@ known=""
 # package    cap     size on 2026-11-03, and what it is
 budget widget    4938  # 4,703: the home-screen widgets, their rendering and pinning
 budget sicherung 3183  # 3,031: Daten sichern — backups, contacts, SMS and calls, age
-budget ui        3300  # 3,026: the activities: start screen, pairing, settings screens;
+budget ui        3320  # 3,026: the activities: start screen, pairing, settings screens;
                        # 3177 -> 3200 (owner-approved, homes ADR 0001 plan): the traces and „Hier anfordern“ on the start screen, homes-android#231;
                        # 3200 -> 3220: a trace says what sharing to it would do, homes-android#232;
-                       # 3220 -> 3300: the account's and the backup's missing parts as disabled switches with their trace, homes-android#233
+                       # 3220 -> 3320: the account's and the backup's missing parts as disabled switches with their trace, homes-android#233
+                       #   (+12 of it is #237's level sheet, merged meanwhile)
 budget data      2940  # 2,780: Homes' calls (Napi), clients, models, the token store;
                        # 2919 -> 2940 (owner-approved, homes ADR 0001 plan): /napi/kann and its client, homes-android#231
 budget konto     1304  # 1,242: das Homes-Konto, the sync adapters for contacts and calendars
