@@ -148,30 +148,46 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Share → Homes (homes#120): a link or a text from the share sheet, kept
-             as a note on Homes, and photos into its document inbox. Exported for
-             ACTION_SEND text and ACTION_SEND(_MULTIPLE) images only; translucent
-             with its own task, like the widget action dialog (#114). -->
+             as a note on Homes, and photos into its document inbox; translucent
+             with its own task, like the widget action dialog (#114). Exported for
+             the Direct Share target (res/xml/shortcuts.xml); the share sheet's two
+             entries are the aliases below, one component per target, so each one
+             follows what the box offers (homes ADR 0001 §3, kann/Teilen.kt). -->
         <activity
             android:name=".ui.ShareActivity"
             android:exported="true"
             android:label="@string/share_label"
             android:excludeFromRecents="true"
             android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- `merken`: a link or a text, kept as a note. -->
+        <activity-alias
+            android:name=".ui.TeilenMerken"
+            android:targetActivity=".ui.ShareActivity"
+            android:exported="true"
+            android:label="@string/share_label">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-            <!-- A photo or several from the camera app, into Homes' document inbox
-                 (owner, 2026-11-02). -->
+        </activity-alias>
+
+        <!-- `dokument`: a photo or several from the camera app, into Homes'
+             document inbox (owner, 2026-11-02). -->
+        <activity-alias
+            android:name=".ui.TeilenDokument"
+            android:targetActivity=".ui.ShareActivity"
+            android:exported="true"
+            android:label="@string/share_label">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- Share → „In den Standortverlauf übernehmen“ (owner 2026-11-03): an old
              location history file (Google Maps' Timeline.json, Takeout's

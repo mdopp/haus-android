@@ -57,7 +57,7 @@ class ShareTargetTest {
         assertEquals(ShareTarget.ID, info.id)
         assertEquals("share_assistent", info.id)
         assertEquals("Homes", info.shortLabel.toString())
-        assertEquals(setOf(ShareTarget.CATEGORY), info.categories)
+        assertEquals("both while what the box can do is unknown", setOf(ShareTarget.CATEGORY, ShareTarget.CATEGORY_DOKUMENT), info.categories)
         // Android 13+ keeps no shortcut excluded from the launcher, so the share sheet never saw it
         assertFalse("kept out of the launcher", info.isExcludedFromSurfaces(ShortcutInfoCompat.SURFACE_LAUNCHER))
     }
@@ -75,6 +75,7 @@ class ShareTargetTest {
         assertTrue(xml, xml.contains("""android:targetClass="cloud.dopp.homes.ui.ShareActivity""""))
         assertTrue(xml, xml.contains("""android:mimeType="text/plain""""))
         assertTrue(xml, xml.contains("""<category android:name="${ShareTarget.CATEGORY}" />"""))
+        assertTrue(xml, xml.contains("""<category android:name="${ShareTarget.CATEGORY_DOKUMENT}" />"""))
         assertTrue("no static shortcut", !xml.contains("<shortcut "))
 
         val manifest = File(RepoFiles.main, "AndroidManifest.xml").readText()

@@ -9,6 +9,7 @@ import cloud.dopp.homes.data.ScreenGate
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.realtime.Live
+import cloud.dopp.homes.widget.AppShortcuts
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -16,7 +17,8 @@ import kotlin.concurrent.thread
  * When the app asks Homes what the box can do (homes ADR 0001 §3): at start
  * and resume, at most once a minute, and when the live stream connects (a
  * restarted Homes may have another list) — always with the kept ETag, so an
- * unchanged answer is a 304; never while the screen is off ([ScreenGate]). A changed answer is said with [ACTION_GEAENDERT]
+ * unchanged answer is a 304; never while the screen is off ([ScreenGate]).
+ * Each answer switches the share targets ([Teilen]). A changed answer is said with [ACTION_GEAENDERT]
  * to the app's screens, and the placed widgets draw again.
  */
 object KannLeser {
@@ -44,16 +46,24 @@ object KannLeser {
     /** One read, blocking; true when the kept answer changed. */
     fun einmal(ctx: Context, client: KannClient? = null): Boolean {
         val c = client ?: KannClient(ServerStore.baseUrl(ctx) ?: return false, TokenStore.get(ctx) ?: return false)
-        return when (val a = c.lesen(KannStore.etag(ctx))) {
+        val changed = when (val a = c.lesen(KannStore.etag(ctx))) {
             is KannClient.Antwort.Neu -> KannStore.neu(ctx, a.body, a.etag)
             KannClient.Antwort.Fehlt -> KannStore.fehlt(ctx)
-            else -> false
+            else -> return false
         }
+        // the share targets follow every answer, so a state lost elsewhere comes back
+        val teilen = Teilen.schalten(ctx, KannStore.kann(ctx))
+        return changed || teilen
     }
 
-    /** Say it: the screens draw again, and so does every placed widget (one whose type went says why). */
+    /**
+     * Say it: the screens draw again, the share sheet's Direct Share target
+     * follows the share targets, and every placed widget draws again (one
+     * whose type went says why).
+     */
     fun geaendert(ctx: Context) {
         runCatching { ctx.sendBroadcast(Intent(ACTION_GEAENDERT).setPackage(ctx.packageName)) }
+        AppShortcuts.refreshAsync(ctx)
         val mgr = AppWidgetManager.getInstance(ctx) ?: return
         Live.FED.forEach { provider ->
             val ids = runCatching { mgr.getAppWidgetIds(ComponentName(ctx, provider)) }.getOrNull()

@@ -24,6 +24,10 @@
     <!-- Mehr's quiet section: one trace per module the box lacks. -->
     <string name="spuren_titel">Gibt es hier noch nicht</string>
     <string name="spuren_hinweis">Das kann Homes, auf dieser Box aber noch nicht. Wünsch es dir, dann sieht es der Admin.</string>
+    <!-- Under a trace: what sharing to it would do, while its share target is off. -->
+    <string name="spur_teilen_merken">Teilen: Links und Texte als Notiz merken</string>
+    <string name="spur_teilen_dokument">Teilen: Fotos zu deinen Dokumenten</string>
+    <string name="spur_teilen_standort">Teilen: GPX- und GeoJSON-Dateien in deinen Standortverlauf</string>
     <!-- A placed widget whose type the box no longer offers, when Homes names no reason. -->
     <string name="spur_widget_weg">Das gibt es auf dieser Box gerade nicht.</string>
 </resources>

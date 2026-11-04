@@ -526,12 +526,15 @@ object Napi {
 
     /**
      * The app's keys in `/napi/kann`'s lists (homes ADR 0001 §2): the widget
-     * types (`tool:` and a tool def's id), the Mehr rows.
+     * types (`tool:` and a tool def's id), the share targets, the Mehr rows.
      */
     object KannKey {
         const val GERAET = "geraet"
         const val ENERGIE = "energie"
         const val TOOL = "tool:"
+        const val MERKEN = "merken"
+        const val DOKUMENT = "dokument"
+        const val STANDORT_IMPORT = "standort-import"
         const val DATEN_SICHERN = "daten-sichern"
         const val STANDORTVERLAUF = "standortverlauf"
     }
