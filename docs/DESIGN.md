@@ -111,6 +111,11 @@ Die Favoriten auf dem Startbildschirm sind Kacheln (Besitzer, 2026-11-04,
   360-dp-Handy nicht in eine halbe Kachel. Kachel oder Position antippen öffnet
   das Blatt (Auf, ½, Zu, Stopp, Regler). Eine Kachel ohne Nachbarn wird ebenso
   eine ganze Zeile.
+- **Breitere Bildschirme** (Besitzer, 2026-11-04: Foldable, Tablet; gemischt
+  „zu unruhig“): ab zwei Zellen von 312 dp — so breit braucht eine Abdeckung
+  ihre eine Zeile — ein Raster gleich breiter Zellen, jede Kachel einzeilig in
+  einer Zelle, in der Reihenfolge der Favoriten. Darunter (Handy, auch 600 dp)
+  bleibt es wie oben.
 - **Keine Ränder**, Kachelgrund `#141419`, Ecken 20 dp. „Alle →“ steht im Kopf
   der Sektion. Ist die Box nicht erreichbar, sind alle Kacheln grau unter der
   „Stand …“-Zeile.
