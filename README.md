@@ -84,10 +84,6 @@ straight from GitHub:
 3. Install, open the app, enter your Homes address and confirm the
    pairing on the page that opens.
 
-**Coming from the Haus app?** Homes is a new app beside it (its own package,
-`cloud.dopp.homes`): add it in Obtainium as above, pair it, place the
-widgets again, then remove Haus and its Obtainium entry.
-
 ## Contributing / Mitmachen
 
 Ideas, bugs and wishes are welcome as
