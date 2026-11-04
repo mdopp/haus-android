@@ -1359,17 +1359,6 @@
     <issue
         id="UseKtx"
         message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        p(ctx).edit().putString(KEY_SHORTCUT_RECENT, ShortcutUsage.encode(next)).apply()"
-        errorLine2="        ~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/cloud/dopp/homes/widget/WidgetStore.kt"
-            line="82"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
         errorLine1="        p(ctx).edit()"
         errorLine2="        ~~~~~~~~~~~~~">
         <location

@@ -4,7 +4,6 @@ import android.content.Intent
 import cloud.dopp.homes.widget.DeviceShortcuts
 import cloud.dopp.homes.widget.ShortcutCatalog
 import cloud.dopp.homes.widget.ShortcutDevice
-import cloud.dopp.homes.widget.ShortcutUsage
 import cloud.dopp.homes.widget.WidgetActionActivity
 import cloud.dopp.homes.widget.WidgetActionReceiver
 import cloud.dopp.homes.widget.WidgetStore
@@ -20,9 +19,8 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * The two sources behind the app-icon menu (#100): the capped **usage history**
- * that orders it, and the cached **device catalogue** it is drawn from — plus the
- * path that makes a widget-less entry actually work.
+ * The cached **device catalogue** the garage shortcut is looked for in (#100,
+ * owner 2026-11-04) — plus the path that makes a widget-less entry actually work.
  *
  * That path is the substance of the change. `EXTRA_APPWIDGET_ID` used to be the
  * only handle a shortcut had, and a device that is not on the home screen has no
@@ -32,54 +30,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class ShortcutSourcesTest {
-
-    // --- the usage history ------------------------------------------------------
-
-    @Test fun theMostRecentSwitchComesFirst() {
-        var h = ShortcutUsage.record(emptyList(), "light.flur")
-        h = ShortcutUsage.record(h, "switch.pumpe")
-        assertEquals(listOf("switch.pumpe", "light.flur"), h)
-    }
-
-    /** Switching the same device again moves it up; it never appears twice. */
-    @Test fun repeatingADeviceDoesNotDuplicateIt() {
-        val h = ShortcutUsage.record(listOf("a.1", "b.2", "c.3"), "c.3")
-        assertEquals(listOf("c.3", "a.1", "b.2"), h)
-    }
-
-    /** A capped list, not a log — the oldest falls off the end. */
-    @Test fun theHistoryIsCapped() {
-        var h = emptyList<String>()
-        for (i in 1..40) h = ShortcutUsage.record(h, "light.l$i", cap = 5)
-        assertEquals(5, h.size)
-        assertEquals(listOf("light.l40", "light.l39", "light.l38", "light.l37", "light.l36"), h)
-    }
-
-    @Test fun nothingUsableIsNotRecorded() {
-        assertEquals(listOf("a.1"), ShortcutUsage.record(listOf("a.1"), ""))
-    }
-
-    @Test fun theHistorySurvivesARoundTrip() {
-        val h = listOf("light.flur", "lock.haustuer")
-        assertEquals(h, ShortcutUsage.decode(ShortcutUsage.encode(h)))
-    }
-
-    /** A corrupt or absent history reads as "nothing switched yet", never a crash. */
-    @Test fun anUnreadableHistoryIsNoHistory() {
-        for (junk in listOf(null, "", "   ", "{", "not json")) {
-            assertTrue("junk $junk", ShortcutUsage.decode(junk).isEmpty())
-        }
-    }
-
-    /** The store is what the receiver writes into and the publisher reads back. */
-    @Test fun theStoreRemembersWhatWasSwitched() {
-        val ctx = RuntimeEnvironment.getApplication()
-        assertTrue(WidgetStore.recentEntities(ctx).isEmpty())
-        WidgetStore.noteEntityUsed(ctx, "light.flur")
-        WidgetStore.noteEntityUsed(ctx, "switch.pumpe")
-        WidgetStore.noteEntityUsed(ctx, "light.flur")
-        assertEquals(listOf("light.flur", "switch.pumpe"), WidgetStore.recentEntities(ctx))
-    }
 
     // --- the cached catalogue ---------------------------------------------------
 
@@ -130,6 +80,14 @@ class ShortcutSourcesTest {
         assertEquals(WidgetActionReceiver.OP_TOGGLE, taps[0].getStringExtra(WidgetActionReceiver.EXTRA_OP))
     }
 
+    /** The garage's shortcut is the garage tile's tap: the receiver asks Homes, whose 403 brings the confirm. */
+    @Test fun theGarageIsTappedAsOnTheStartScreen() {
+        val taps = tapsFrom(shortcutTap("cover.garage"))
+        assertEquals(1, taps.size)
+        assertEquals(WidgetActionReceiver.OP_TOGGLE, taps[0].getStringExtra(WidgetActionReceiver.EXTRA_OP))
+        assertEquals(null, taps[0].getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
+    }
+
     /** The guard that must not have loosened: a `lock` entity reaches the receiver from nowhere. */
     @Test fun aLockIsNeverSwitched() {
         assertTrue(tapsFrom(shortcutTap("lock.haustuer")).isEmpty())
@@ -150,5 +108,6 @@ class ShortcutSourcesTest {
         assertFalse(DeviceShortcuts.actsDirectly(DeviceShortcuts.domainOf("lock.haustuer")))
         assertTrue(DeviceShortcuts.actsDirectly(DeviceShortcuts.domainOf("light.keller")))
         assertTrue(DeviceShortcuts.actsDirectly(DeviceShortcuts.domainOf("switch.pumpe")))
+        assertTrue(DeviceShortcuts.actsDirectly(DeviceShortcuts.domainOf("cover.garage")))
     }
 }

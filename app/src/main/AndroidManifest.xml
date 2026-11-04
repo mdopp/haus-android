@@ -45,11 +45,20 @@
          on the button, v3.0.2-dev.269). A normal permission, granted at install. -->
     <uses-permission android:name="android.permission.READ_SYNC_STATS" />
 
-    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing. -->
+    <!-- Android 11+ package visibility: the Custom Tabs provider for pairing, and
+         the apps of Homes' modules (cmd/homes/module.go), so the app can tell Homes
+         which of them the phone has (POST /napi/einrichtung/apps, owner 2026-11-04).
+         Named one by one: never QUERY_ALL_PACKAGES. -->
     <queries>
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
+        <package android:name="app.alextran.immich" />
+        <package android:name="org.jellyfin.mobile" />
+        <package android:name="com.x8bit.bitwarden" />
+        <package android:name="com.audiobookshelf.app" />
+        <package android:name="org.thoughtcrime.securesms" />
+        <package android:name="io.homeassistant.companion.android" />
     </queries>
     <application
         android:allowBackup="false"
@@ -146,6 +155,27 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- The launcher shortcuts that are no device (owner, 2026-11-04): Einkaufsliste and
+             Zeitleiste in a Custom Tab, Dokument scannen with the camera app into Homes'
+             document inbox. No screen of its own; not exported, only the app's shortcuts start it. -->
+        <activity
+            android:name=".einrichtung.VerknuepfungActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Dokument scannen: the camera app writes the photo into cache/scan/ (res/xml/scan_pfade.xml),
+             the one place this provider shares, each time by a grant for that one photo. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.scan"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/scan_pfade" />
+        </provider>
 
         <!-- Share → Homes (homes#120): a link or a text from the share sheet, kept
              as a note on Homes, and photos into its document inbox; translucent

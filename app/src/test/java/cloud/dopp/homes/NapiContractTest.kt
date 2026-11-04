@@ -67,6 +67,12 @@ class NapiContractTest {
             "wunsch", "stand", "seit", "anfordern", "widgets", "teilen", "konto", "sicherung", "mehr",
         )
 
+        /** `/napi/einrichtung`'s answer: `einrichten.Antwort`, `NapiModul`, `NapiApp`, `NapiAufgabe` and the ziele's keys. */
+        val EINRICHTUNG = setOf(
+            "version", "offen", "module", "ziele", "name", "titel", "icon", "web", "app", "nur_web", "aufgabe",
+            "paket", "store", "erledigt", "am", "wie", "einrichten", "einkauf", "zeitleiste", "scannen",
+        )
+
         /** Every /napi route Homes serves, as its handler reads and answers it. */
         val HOMES = listOf(
             Route("GET", "/napi/assistent", "internal/napi/napi.go:104-106", sends = setOf("name")),
@@ -283,6 +289,17 @@ class NapiContractTest {
                 body = setOf("modul"), required = setOf("modul"),
                 sends = KANN_MODUL + setOf("ok", "reason", "error"),
             ),
+            // The person's modules and setup tasks (owner 2026-11-04): mdopp/homes main at cc8a5ea (the merge of homes#269);
+            // registered napi.go:243-244, not_found napi.go:334.
+            Route(
+                "GET", "/napi/einrichtung",
+                "internal/napi/einrichtung.go:18-45, the answer internal/einrichten/einrichten.go:207-239, ziele cmd/homes/module.go:307-313",
+                sends = EINRICHTUNG + setOf("ok", "reason"),
+            ),
+            Route(
+                "POST", "/napi/einrichtung/apps", "internal/napi/einrichtung.go:28-44, the GET's answer :44",
+                body = setOf("pakete"), sends = EINRICHTUNG + setOf("ok", "reason", "error"),
+            ),
         )
 
         /** Where Homes reads the token: `bearerOf`, internal/napi/napi.go:208-211. */
@@ -322,6 +339,7 @@ class NapiContractTest {
             "PATCH /napi/standort/import/{id}", "GET /napi/standort/import/{id}",
             "GET /napi/gemeinsam/kontakte", "GET /napi/gemeinsam/kalender",
             "GET /napi/kann", "POST /napi/kann/anfordern",
+            "GET /napi/einrichtung", "POST /napi/einrichtung/apps",
         )
 
         const val NAPI = "cloud.dopp.homes.data.Napi"
@@ -347,6 +365,8 @@ class NapiContractTest {
             "app/src/main/java/cloud/dopp/homes/data/KannClient.kt",
             "app/src/main/java/cloud/dopp/homes/kann/Kann.kt",
             "app/src/main/java/cloud/dopp/homes/kann/KannStore.kt",
+            "app/src/main/java/cloud/dopp/homes/einrichtung/Einrichtung.kt",
+            "app/src/main/java/cloud/dopp/homes/einrichtung/EinrichtungLeser.kt",
         )
 
         private val literal = Regex(""""((?:[^"\\]|\\.)*)"""")

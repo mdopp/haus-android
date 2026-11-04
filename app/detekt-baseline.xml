@@ -50,7 +50,6 @@
     <ID>NestedBlockDepth:KontakteLauf.kt$KontakteLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>NestedBlockDepth:KontoLauf.kt$KontoLauf$fun laufen(result: SyncResult)</ID>
     <ID>NestedBlockDepth:NachrichtenLauf.kt$NachrichtenLauf$fun laufen(): Lauf.Ergebnis</ID>
-    <ID>StringLiteralDuplication:DeviceIcons.kt$DeviceIcons$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"light"</ID>
     <ID>StringLiteralDuplication:EnergyFluss.kt$EnergyFluss$"solar"</ID>
@@ -94,7 +93,6 @@
     <ID>SwallowedException:Aufzeichnung.kt$StandortEmpfaenger$e: Exception</ID>
     <ID>SwallowedException:BoxApiClient.kt$BoxApiClient$e: Exception</ID>
     <ID>SwallowedException:GemeinsamClient.kt$GemeinsamClient$e: IOException</ID>
-    <ID>SwallowedException:HomeActivity.kt$HomeActivity$e2: Exception</ID>
     <ID>SwallowedException:HomeActivity.kt$HomeActivity$e: Exception</ID>
     <ID>SwallowedException:HomesKontoActivity.kt$HomesKontoActivity$e: Exception</ID>
     <ID>SwallowedException:Import.kt$Import$e: IOException</ID>
@@ -121,7 +119,6 @@
     <ID>SwallowedException:SafZiel.kt$SafZiel$e: Exception</ID>
     <ID>SwallowedException:Sender.kt$Sender$e: IOException</ID>
     <ID>SwallowedException:ShortcutSources.kt$ShortcutCatalog$e: Exception</ID>
-    <ID>SwallowedException:ShortcutSources.kt$ShortcutUsage$e: Exception</ID>
     <ID>SwallowedException:SicherungActivity.kt$SicherungActivity$e: Exception</ID>
     <ID>SwallowedException:SicherungClient.kt$SicherungClient$e: IOException</ID>
     <ID>SwallowedException:SicherungWorker.kt$SicherungWorker$e: Exception</ID>
@@ -146,7 +143,6 @@
     <ID>TooGenericExceptionCaught:Aufzeichnung.kt$Aufzeichnung$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Aufzeichnung.kt$StandortEmpfaenger$e: Exception</ID>
     <ID>TooGenericExceptionCaught:BoxApiClient.kt$BoxApiClient$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:HomeActivity.kt$HomeActivity$e2: Exception</ID>
     <ID>TooGenericExceptionCaught:HomeActivity.kt$HomeActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:HomesKontoActivity.kt$HomesKontoActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:KontoLauf.kt$KontoLauf$e: Exception</ID>
@@ -155,7 +151,6 @@
     <ID>TooGenericExceptionCaught:Rueckholer.kt$Rueckholer$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SafZiel.kt$SafZiel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ShortcutSources.kt$ShortcutCatalog$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:ShortcutSources.kt$ShortcutUsage$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SicherungActivity.kt$SicherungActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SicherungWorker.kt$SicherungWorker$e: Exception</ID>
     <ID>TooGenericExceptionCaught:StandortActivity.kt$StandortActivity$e: Exception</ID>

@@ -1,12 +1,22 @@
 package cloud.dopp.homes
 
+import android.content.Context
 import android.content.Intent
+import androidx.core.content.pm.ShortcutManagerCompat
+import cloud.dopp.homes.data.ServerStore
+import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.einrichtung.EinrichtungStore
+import cloud.dopp.homes.einrichtung.Kurz
+import cloud.dopp.homes.einrichtung.Verknuepfung
+import cloud.dopp.homes.einrichtung.VerknuepfungActivity
+import cloud.dopp.homes.einrichtung.Verknuepfungen
+import cloud.dopp.homes.ui.StartDevices
 import cloud.dopp.homes.widget.AppShortcuts
-import cloud.dopp.homes.widget.DeviceShortcuts
-import cloud.dopp.homes.widget.ShortcutAction
 import cloud.dopp.homes.widget.ShortcutDevice
 import cloud.dopp.homes.widget.WidgetActionActivity
 import cloud.dopp.homes.widget.WidgetActionReceiver
+import cloud.dopp.homes.widget.WidgetStore
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -18,229 +28,125 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * The app-icon long-press menu (#97).
- *
- * A long-press menu on the *widget* is the launcher's, not ours (#96), so the
- * device entries live on the app icon. Three things must hold and all are pure
- * JVM logic: **how many** entries appear (the cap is the launcher's answer, not
- * a guessed four), **which ones and in what order** (the household catalogue by
- * last use, #100), and **what a lock's entry does** (open the #92 chooser,
- * never switch, never reach `lock.open`).
+ * The app-icon long-press menu (owner, 2026-11-04): exactly Garagentor,
+ * Einkaufsliste, Zeitleiste and Dokument scannen, in this order, each only
+ * where the box has it. The garage's entry taps the garage as its tile on the
+ * start screen does — Homes' 403 puts the confirm dialog before an open — and
+ * carries no service, so nothing published can reach a lock.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class AppShortcutsTest {
 
-    /** A device of the household catalogue (#100). */
-    private fun dev(entity: String, name: String, domain: String, cls: String? = null) =
-        ShortcutDevice(entity, name, domain, cls)
+    private val ctx: Context get() = RuntimeEnvironment.getApplication()
 
-    private fun lamps(n: Int) = (1..n).map { dev("light.l$it", "Lampe $it", "light") }
+    private val alle = mapOf(
+        "einkauf" to "https://homes.example/einkauf",
+        "zeitleiste" to "https://reitti.example",
+        "scannen" to "https://homes.example/napi/upload",
+    )
 
-    // --- the count: empty, at the cap, over it ---------------------------------
+    private val garage = ShortcutDevice("cover.garage", "Garagentor Garage", "cover", "garage")
 
-    @Test fun noDevicesMeansNoEntries() {
-        assertTrue(DeviceShortcuts.entries(emptyList(), 4).isEmpty())
+    @After
+    fun weg() {
+        ServerStore.clear(ctx)
+        TokenStore.clear(ctx)
+        EinrichtungStore.clear(ctx)
+        StartDevices.clear(ctx)
     }
 
-    @Test fun everyDeviceFitsBelowTheCap() {
-        assertEquals(3, DeviceShortcuts.entries(lamps(3), 4).size)
+    // --- which, and in what order ----------------------------------------------
+
+    @Test fun theFourInTheirOrder() {
+        val l = Verknuepfungen.liste(alle, garage)
+        assertEquals(listOf(Kurz.GARAGE, Kurz.EINKAUF, Kurz.ZEITLEISTE, Kurz.SCANNEN), l.map { it.art })
+        assertEquals("cover.garage", l[0].ziel)
+        assertEquals("https://reitti.example", l[2].ziel)
     }
 
-    @Test fun exactlyAtTheCapNothingIsDropped() {
-        val e = DeviceShortcuts.entries(lamps(4), 4)
-        assertEquals(4, e.size)
-        assertEquals(setOf("light.l1", "light.l2", "light.l3", "light.l4"), e.map { it.device.entityId }.toSet())
+    @Test fun noGarageNoGarageShortcut() {
+        val l = Verknuepfungen.liste(alle, null)
+        assertEquals(listOf(Kurz.EINKAUF, Kurz.ZEITLEISTE, Kurz.SCANNEN), l.map { it.art })
     }
 
-    /** Over the cap without a history: the catalogue's own order, cut at the cap. */
-    @Test fun overTheCapTheCatalogueOrderStands() {
-        val e = DeviceShortcuts.entries(lamps(7), 3)
-        assertEquals(listOf("light.l1", "light.l2", "light.l3"), e.map { it.device.entityId })
+    @Test fun aMissingTargetHidesItsShortcut() {
+        assertEquals(listOf(Kurz.GARAGE, Kurz.SCANNEN), Verknuepfungen.liste(mapOf("scannen" to "https://h.example/x"), garage).map { it.art })
+        assertTrue("an older Homes and no garage: nothing", Verknuepfungen.liste(emptyMap(), null).isEmpty())
     }
 
-    /** A launcher that allows nothing (or an API < 25 phone, where the compat cap is 0). */
-    @Test fun aZeroCapPublishesNothing() {
-        for (cap in listOf(0, -1)) assertTrue(DeviceShortcuts.entries(lamps(5), cap).isEmpty())
-    }
-
-    @Test fun theSameDeviceListedTwiceIsOneEntry() {
-        val e = DeviceShortcuts.entries(
-            listOf(dev("light.flur", "Flur", "light"), dev("light.flur", "Flur", "light")),
-            4,
-        )
-        assertEquals(1, e.size)
-    }
-
-    @Test fun aRowWithoutAnEntityIsNotADevice() {
-        assertTrue(DeviceShortcuts.entries(listOf(dev("", "—", "")), 4).isEmpty())
-    }
-
-    @Test fun anUnnamedDeviceStillGetsAReadableEntry() {
-        val e = DeviceShortcuts.entries(listOf(dev("switch.x", "", "switch")), 4)
-        assertEquals("switch.x", e[0].label)
-    }
-
-    // --- catalogue + history + cap → entries (#100) -----------------------------
-
-    /** The rule proper: last switched wins, over the catalogue's order. */
-    @Test fun theHistoryOutranksTheCatalogue() {
+    @Test fun theGarageIsACoverDrawnAsAGarage() {
         val devices = listOf(
-            dev("light.flur", "Flur", "light"),
-            dev("switch.pumpe", "Pumpe", "switch"),
-            dev("light.keller", "Keller", "light"),
+            ShortcutDevice("light.garage", "Garagenlicht", "light"),
+            ShortcutDevice("cover.wohnzimmer", "Rollo", "cover", "shutter"),
+            ShortcutDevice("cover.haustuer", "Tür", "cover", "door"),
+            ShortcutDevice("cover.tor", "Hoftor", "cover", "gate"),
+            garage,
         )
-        val e = DeviceShortcuts.entries(devices, 3, listOf("light.keller", "switch.pumpe"))
-        assertEquals(
-            listOf("light.keller", "switch.pumpe", "light.flur"),
-            e.map { it.device.entityId },
-        )
+        assertEquals("cover.tor", Verknuepfungen.garage(devices)?.entityId)
+        assertNull(Verknuepfungen.garage(devices.take(3)))
+        // the domain is the id's own: a lock named as a garage cover is none
+        assertNull(Verknuepfungen.garage(listOf(ShortcutDevice("lock.tor", "Tor", "cover", "garage"))))
     }
 
-    /** More devices than slots: the cap cuts the tail, not the recently used. */
-    @Test fun overTheCapTheRecentlyUsedSurvive() {
-        val devices = (1..9).map { dev("light.l$it", "Lampe $it", "light") }
-        val e = DeviceShortcuts.entries(devices, 3, listOf("light.l8", "light.l3"))
-        assertEquals(listOf("light.l8", "light.l3", "light.l1"), e.map { it.device.entityId })
-    }
+    // --- what the intents carry ------------------------------------------------
 
-    /** A device switched once and later removed from the household is simply gone. */
-    @Test fun aHistoryEntryMissingFromTheCatalogueTakesNoSlot() {
-        val devices = listOf(
-            dev("light.flur", "Flur", "light"),
-            dev("switch.pumpe", "Pumpe", "switch"),
-        )
-        val e = DeviceShortcuts.entries(devices, 4, listOf("light.abgebaut", "switch.pumpe"))
-        assertEquals(listOf("switch.pumpe", "light.flur"), e.map { it.device.entityId })
-    }
-
-    /** An entity id names its own domain — the only handle a device has here. */
-    @Test fun theDomainComesOutOfTheEntityId() {
-        assertEquals("lock", DeviceShortcuts.domainOf("lock.haustuer"))
-        assertEquals("light", DeviceShortcuts.domainOf("light.flur"))
-        // Nothing usable → a domain that acts on nothing.
-        for (junk in listOf(null, "", "   ", "haustuer")) {
-            assertFalse("junk $junk", DeviceShortcuts.actsDirectly(DeviceShortcuts.domainOf(junk)))
-        }
-    }
-
-    // --- the security rules ----------------------------------------------------
-
-    /** The core guard: a lock never gets an entry that switches anything. */
-    @Test fun aLockNeverActsDirectly() {
-        val e = DeviceShortcuts.entries(listOf(dev("lock.haustuer", "Haustür", "lock")), 4)
-        assertEquals(1, e.size)
-        assertEquals(ShortcutAction.CHOOSE, e[0].action)
-        assertFalse(e[0].actsDirectly)
-        assertFalse(DeviceShortcuts.actsDirectly("lock"))
-    }
-
-    /** Neither does any other safety-gated device — a garage door opens its card. */
-    @Test fun sensitiveDevicesDoNotActEither() {
-        val devices = listOf(
-            dev("cover.garage", "Garage", "cover", "garage"),
-            dev("alarm_control_panel.homes", "Alarm", "alarm_control_panel"),
-        )
-        for (e in DeviceShortcuts.entries(devices, 4)) {
-            assertFalse("${e.device.entityId} acts", e.actsDirectly)
-            assertEquals(ShortcutAction.OPEN, e.action)
-        }
-    }
-
-    /** Light and switch may act — a mistap there is harmless, which is the point. */
-    @Test fun harmlessDevicesMayAct() {
-        val devices = listOf(dev("light.a", "Licht", "light"), dev("switch.b", "Schalter", "switch"))
-        for (e in DeviceShortcuts.entries(devices, 4)) assertTrue(e.actsDirectly)
-    }
-
-    /** Mixed household, cap exceeded: whatever survives, no lock is an actor. */
-    @Test fun noLockActsWhateverTheMix() {
-        val devices = listOf(
-            dev("light.a", "Licht", "light"),
-            dev("lock.haustuer", "Haustür", "lock"),
-            dev("lock.keller", "Keller", "lock"),
-            dev("switch.b", "Schalter", "switch"),
-            dev("cover.tor", "Tor", "cover", "gate"),
-        )
-        for (cap in 1..6) {
-            for (e in DeviceShortcuts.entries(devices, cap)) {
-                if (e.device.domain == "lock") assertFalse("cap $cap", e.actsDirectly)
-            }
-        }
-    }
-
-    // --- what the intents actually carry ---------------------------------------
-
-    /** A lock's entry opens the chooser activity, carries no service, and says so. */
-    @Test fun theLockEntryOpensTheChooserAndNothingElse() {
-        val ctx = RuntimeEnvironment.getApplication()
-        val entry = DeviceShortcuts.entries(listOf(dev("lock.haustuer", "Haustür", "lock")), 4)[0]
-        val i = AppShortcuts.intentFor(ctx, entry)
-
-        assertEquals(WidgetActionActivity::class.java.name, i.component?.className)
-        assertTrue(i.getBooleanExtra(WidgetActionActivity.EXTRA_LOCK_CHOOSE, false))
-        assertFalse(i.getBooleanExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, false))
-        // No service rides along — the pick in the chooser names it.
-        assertNull(i.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
-        assertEquals("lock.haustuer", i.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
-    }
-
-    /** No entry, for any device, may name the latch. */
-    @Test fun nothingPublishedCanReachLockOpen() {
-        val ctx = RuntimeEnvironment.getApplication()
-        val devices = listOf(
-            dev("lock.haustuer", "Haustür", "lock"),
-            dev("cover.garage", "Garage", "cover", "garage"),
-            dev("light.a", "Licht", "light"),
-            dev("lock.keller", "Keller", "lock"),
-            dev("cover.tor", "Tor", "cover", "gate"),
-        )
-        for (e in DeviceShortcuts.entries(devices, 8)) {
-            val i = AppShortcuts.intentFor(ctx, e)
-            assertNull(i.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
-            assertFalse(i.toUri(Intent.URI_INTENT_SCHEME).contains("lock.open"))
-        }
-    }
-
-    /** A non-sensitive entry lands on the trampoline that asks for the device's toggle. */
-    @Test fun aLampEntryAsksForTheOrdinaryToggle() {
-        val ctx = RuntimeEnvironment.getApplication()
-        val entry = DeviceShortcuts.entries(listOf(dev("light.flur", "Flur", "light")), 4)[0]
-        val i = AppShortcuts.intentFor(ctx, entry)
-
+    @Test fun theGarageEntryTapsTheGarageAndCarriesNoService() {
+        val i = AppShortcuts.intentFor(ctx, Verknuepfung(Kurz.GARAGE, "cover.garage", "Garagentor Garage"))
         assertEquals(WidgetActionActivity::class.java.name, i.component?.className)
         assertTrue(i.getBooleanExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, false))
         assertFalse(i.getBooleanExtra(WidgetActionActivity.EXTRA_LOCK_CHOOSE, false))
+        assertEquals("cover.garage", i.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
+        assertEquals("Garagentor Garage", i.getStringExtra(WidgetActionActivity.EXTRA_NAME))
+        assertNull(i.getStringExtra(WidgetActionReceiver.EXTRA_SERVICE))
+        assertFalse(i.toUri(Intent.URI_INTENT_SCHEME).contains("lock.open"))
     }
 
-    /** A sensitive non-lock entry only opens a page: Homes' devices page, in the browser. */
-    @Test fun aGarageEntryOnlyOpensThePage() {
-        val ctx = RuntimeEnvironment.getApplication()
-        cloud.dopp.homes.data.ServerStore.setBaseUrl(ctx, "https://homes.example")
-        val entry = DeviceShortcuts.entries(listOf(dev("cover.garage", "Garage", "cover", "garage")), 4)[0]
-        val i = AppShortcuts.intentFor(ctx, entry)
-
-        assertEquals(android.content.Intent.ACTION_VIEW, i.action)
-        assertEquals("https://homes.example/raeume", i.data?.toString())
-        assertNull("no component of ours runs anything", i.component)
-        assertFalse(i.getBooleanExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, false))
-        cloud.dopp.homes.data.ServerStore.clear(ctx)
+    @Test fun theListAndTheTimelineOpenTheirAddress() {
+        for (k in listOf(Kurz.EINKAUF, Kurz.ZEITLEISTE)) {
+            val i = AppShortcuts.intentFor(ctx, Verknuepfung(k, alle.getValue(k.id)))
+            assertEquals(VerknuepfungActivity::class.java.name, i.component?.className)
+            assertEquals(Intent.ACTION_VIEW, i.action)
+            assertEquals(alle.getValue(k.id), i.dataString)
+        }
     }
 
-    /** An entry identifies its device by **entity id and nothing else** (#100). */
-    @Test fun anEntryCarriesTheEntity() {
-        val ctx = RuntimeEnvironment.getApplication()
-        val entry = DeviceShortcuts.entries(listOf(dev("light.keller", "Keller", "light")), 4)[0]
-        val i = AppShortcuts.intentFor(ctx, entry)
-        assertEquals("light.keller", i.getStringExtra(WidgetActionReceiver.EXTRA_ENTITY))
-        assertTrue(i.getBooleanExtra(WidgetActionActivity.EXTRA_SHORTCUT_TOGGLE, false))
+    @Test fun scanningStartsTheCamerasWay() {
+        val i = AppShortcuts.intentFor(ctx, Verknuepfung(Kurz.SCANNEN, alle.getValue("scannen")))
+        assertEquals(VerknuepfungActivity::class.java.name, i.component?.className)
+        assertEquals(VerknuepfungActivity.SCANNEN, i.action)
+        assertNull("the upload is the app's own call, not an address", i.data)
     }
 
-    /** Shortcut ids are stable per entity, so a refresh updates instead of churning. */
-    @Test fun idsAreStablePerEntity() {
-        val once = DeviceShortcuts.entries(lamps(3), 4).map { it.id }
-        val again = DeviceShortcuts.entries(lamps(3), 4).map { it.id }
-        assertEquals(once, again)
-        assertTrue(once.all { it.startsWith(DeviceShortcuts.ID_PREFIX) })
+    // --- what is published -----------------------------------------------------
+
+    private fun koppeln(einrichtung: String?) {
+        ServerStore.setBaseUrl(ctx, "https://homes.example")
+        TokenStore.backend = ctx.getSharedPreferences("test_tokens", Context.MODE_PRIVATE)
+        TokenStore.save(ctx, "homes_device_TESTTOKEN123")
+        einrichtung?.let { EinrichtungStore.neu(ctx, it) }
+    }
+
+    private fun published(): List<String> =
+        ShortcutManagerCompat.getDynamicShortcuts(ctx).sortedBy { it.rank }.map { it.id }.filter { it.startsWith(Verknuepfungen.PREFIX) }
+
+    @Test fun publishedFromHomesAnswerAndTheFavourites() {
+        koppeln(EinrichtungTest.ANTWORT)
+        StartDevices.save(ctx, """{"ok":true,"favorites":[{"entity_id":"cover.garage","name":"Garagentor Garage","domain":"cover","device_class":"garage","state":"closed"}]}""")
+        AppShortcuts.refresh(ctx)
+        assertEquals(listOf("kurz:garage", "kurz:einkauf", "kurz:zeitleiste", "kurz:scannen"), published())
+    }
+
+    @Test fun anOlderHomesWithoutAGarageLeavesTheMenuEmpty() {
+        koppeln(null)
+        WidgetStore.setShortcutCatalog(ctx, listOf(ShortcutDevice("light.flur", "Flur", "light")))
+        AppShortcuts.refresh(ctx)
+        assertTrue(published().isEmpty())
+    }
+
+    @Test fun unpairedNothingIsPublished() {
+        WidgetStore.setShortcutCatalog(ctx, listOf(garage))
+        AppShortcuts.refresh(ctx)
+        assertTrue(published().isEmpty())
     }
 }

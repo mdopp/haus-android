@@ -78,10 +78,6 @@ class WidgetActionReceiver : BroadcastReceiver() {
                     domain == "lock" -> callOrConfirm(api, app, entityId, name, lockToggleService(api.getCard(entityId)?.state))
                     else -> Tap.DONE
                 }
-                if (outcome != Tap.CONFIRMING) {
-                    // Ordering fuel for the app-icon menu (#100): the device was used.
-                    WidgetStore.noteEntityUsed(app, entityId)
-                }
                 if (outcome == Tap.FAILED) reportFailure(app, name)
                 if (outcome != Tap.CONFIRMING) DeviceTaps.done(app, entityId)
             } catch (e: ApiClient.NotConfiguredException) {

@@ -8,6 +8,7 @@ import cloud.dopp.homes.data.KannClient
 import cloud.dopp.homes.data.ScreenGate
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.einrichtung.EinrichtungLeser
 import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.realtime.Live
 import cloud.dopp.homes.widget.AppShortcuts
@@ -69,6 +70,7 @@ object KannLeser {
     fun geaendert(ctx: Context) {
         runCatching { ctx.sendBroadcast(Intent(ACTION_GEAENDERT).setPackage(ctx.packageName)) }
         AppShortcuts.refreshAsync(ctx)
+        EinrichtungLeser.lesen(ctx) // the modules changed, or the app was just paired: the start screen's and the launcher's too
         val mgr = AppWidgetManager.getInstance(ctx) ?: return
         Live.FED.forEach { provider ->
             val ids = runCatching { mgr.getAppWidgetIds(ComponentName(ctx, provider)) }.getOrNull()

@@ -43,9 +43,9 @@ object WidgetStore {
      */
     fun isBound(ctx: Context, id: Int): Boolean = entityId(ctx, id) != null || toolId(ctx, id) != null
 
-    // --- app-icon shortcut menu (#97/#100) -----------------------------------
+    // --- the garage shortcut's devices (#100) --------------------------------
 
-    /** Last-seen household catalogue for the app-icon menu — see [ShortcutCatalog]. */
+    /** Last-seen household catalogue, where the garage shortcut looks — see [ShortcutCatalog]. */
     fun shortcutCatalog(ctx: Context): List<ShortcutDevice> =
         ShortcutCatalog.decode(p(ctx).getString(KEY_SHORTCUT_CATALOG, null))
 
@@ -68,26 +68,8 @@ object WidgetStore {
         return System.currentTimeMillis() - at in 0..SHORTCUT_CATALOG_TTL_MS
     }
 
-    /** Entity ids by last switched, most recent first — see [ShortcutUsage]. */
-    fun recentEntities(ctx: Context): List<String> =
-        ShortcutUsage.decode(p(ctx).getString(KEY_SHORTCUT_RECENT, null))
-
-    /**
-     * Remember that [entityId] was just switched, so the app-icon menu can order
-     * by last use (#100). Called from every path that actually runs a service —
-     * [WidgetActionReceiver] and [WidgetActionActivity] — whether the tap came
-     * from the start screen or a shortcut: "zuletzt benutzt" means the device,
-     * not the surface.
-     */
-    fun noteEntityUsed(ctx: Context, entityId: String) {
-        if (entityId.isBlank()) return
-        val next = ShortcutUsage.record(recentEntities(ctx), entityId)
-        p(ctx).edit().putString(KEY_SHORTCUT_RECENT, ShortcutUsage.encode(next)).apply()
-    }
-
     private const val KEY_SHORTCUT_CATALOG = "shortcut_catalog_json"
     private const val KEY_SHORTCUT_CATALOG_AT = "shortcut_catalog_at"
-    private const val KEY_SHORTCUT_RECENT = "shortcut_recent_json"
 
     /** How long a cached catalogue is published from before it is refetched. */
     private const val SHORTCUT_CATALOG_TTL_MS = 6 * 60 * 60 * 1000L

@@ -61,12 +61,13 @@ each row naming the Homes file and lines it came from.
 | pairing | `GET /napi/whoami`, `GET /napi/assistent` |
 | the start screen's devices | `GET /napi/portal/favorites` (the person's ☆ things on Homes, as cards in their order; homes#213), `POST /napi/ha/call`, `GET /napi/portal/state` (a cover's or a lock's state before its toggle) |
 | one device (widget, restored 2026-11-03) | `GET /napi/portal/state`, `POST /napi/ha/call`; its picker `GET /napi/portal/start/addable` |
-| app-icon shortcuts | `GET /napi/portal/start/addable` (without cameras: Homes draws no card for one), `POST /napi/ha/call` |
+| app-icon shortcuts | Garagentor, Einkaufsliste, Zeitleiste, Dokument scannen: see (i); the garage among the favourites, else `GET /napi/portal/start/addable` (without cameras: Homes draws no card for one), `POST /napi/ha/call` |
 | energy | `GET /napi/portal/energy`: the flow now, per total `today` (kWh since the house's midnight; homes#213), and `charge`, how full the battery is (mdopp/homes#228) |
 | Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`, `…/standort/import…`: see (f) |
 | Homes-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
 | what the box can do | `GET /napi/kann`, `POST /napi/kann/anfordern`: see (h) |
+| Öffnen, Deine Aufgaben | `GET /napi/einrichtung`, `POST /napi/einrichtung/apps`: see (i) |
 | Share → Homes, photos | `POST /napi/upload`, multipart `filename` then `file`, one photo a request → `{ok, id}`: the camera app's photos (one or several, `image/*`) into the folder Paperless consumes (owner, 2026-11-02). JPEG, PNG, WebP and GIF of at most 25 MB go as they are; HEIC/HEIF or anything larger is made a JPEG on the phone (long edge ≤ 4096). At most 20 a share. Homes' refusals are codes; the app says them in German by status (404 no folder, 413, 415, 429 busy, 503, 507 full) |
 | Share → Homes | `POST /napi/merken` `{text}`: what the share sheet sent (title and link); Homes keeps the page as a note and answers `{kurz, notiz, schon, …}` or `{error}` with a German sentence (homes#120); the share sheet's Direct Share target carries the assistant's name (#188) |
 | tools | `GET /napi/defs/tool`, the catalog's `tool-api-path` rows (`/napi/portal/{documents,notes}`; Homes also lists `contacts` and `task`, which the app no longer offers as a widget, owner 2026-11-02 and 2026-11-03), `POST /napi/action-callback` |
@@ -473,3 +474,46 @@ anfordern“ (`anfordern`).
   the button says „Wird angefordert …“; it ends with the new state, Homes'
   sentence (`{"error"}`; 404, 502, 503, 504), „pair again“ on a 401, or the
   app's own words when Homes did not answer in time or cannot be reached.
+
+## (i) Öffnen, Deine Aufgaben, the launcher's shortcuts
+
+(The owner's call, 2026-11-04; Homes' side is mdopp/homes#269,
+docs/REFERENCE.md there.) `GET /napi/einrichtung` → `{version: 1, offen,
+module: [{name, titel, icon, web, app: {name, paket, store}, nur_web,
+aufgabe: {titel, erledigt, am, wie, einrichten}}], ziele: {einkauf,
+zeitleiste, scannen}}`, the device's person's modules that are on.
+
+- **When the app reads:** at start and resume, at most every five minutes,
+  and when the answer of `/napi/kann` changed (so also right after the
+  pairing); never while the screen is off. The answer is kept
+  (`einrichtung/EinrichtungStore.kt`) and used offline. An older Homes
+  answers 404: the app forgets what it kept, and „Öffnen“, „Deine
+  Aufgaben“ and the shortcuts that need it are gone, quietly.
+- **„Öffnen“** below „Deine Geräte“: the modules without an `app` of their
+  own (`nur_web`), each opening its `web` in a Custom Tab, where the
+  person's login is. A module with its own app is never there: while the
+  app is missing it is a task, and then the phone's own app icon is the
+  way in. Pictures by `icon` (`einrichtung/Abschnitte.kt`, `Bilder`),
+  any other key the default one.
+- **„Deine Aufgaben“** with `offen` beside its title: the tasks with
+  `erledigt: false`. A tap opens the app's `store` page while the app is
+  not on the phone, else `einrichten` in a Custom Tab.
+- **The apps the phone has:** after a read, when the app of an open task
+  is installed, `POST /napi/einrichtung/apps {"pakete": [...]}` with every
+  module app installed; Homes ticks those tasks and answers as the GET.
+  Android 11+ answers only for the packages the manifest's `<queries>`
+  names, one by one (never QUERY_ALL_PACKAGES): Immich, Jellyfin,
+  Bitwarden, Audiobookshelf, Signal, Home Assistant.
+- **Offline** (Verbindung): both sections show the answer read last,
+  greyed, and say nothing of their own.
+- **The app icon's long-press menu**, exactly these, in this order, each
+  only where the box has it, built anew from each answer: **Garagentor**
+  (the first cover of class garage or gate among the favourites, else the
+  household's devices; its tap is the tile's tap, Homes' 403 puts the
+  confirm before an open), **Einkaufsliste** (`ziele.einkauf`) and
+  **Zeitleiste** (`ziele.zeitleiste`) in a Custom Tab, **Dokument
+  scannen** (`ziele.scannen`): the camera app, then the photo goes the
+  way a shared photo goes, `POST /napi/upload`. The camera app writes into
+  the app's cache through the one file provider (`cache/scan/`); Android
+  wants the camera permission first, as the QR scanner declares it. The
+  share target of (b) stays last.

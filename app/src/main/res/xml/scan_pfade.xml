@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dokument scannen (einrichtung/VerknuepfungActivity): the only folder the scan's
+     file provider shares, in the app's cache. -->
+<paths>
+    <cache-path name="scan" path="scan/" />
+</paths>

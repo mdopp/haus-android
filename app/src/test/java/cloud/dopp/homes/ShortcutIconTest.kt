@@ -1,9 +1,8 @@
 package cloud.dopp.homes
 
-import cloud.dopp.homes.widget.DeviceIcons
+import cloud.dopp.homes.einrichtung.Kurz
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -18,9 +17,9 @@ import java.io.File
  * ate the colour, here the icon had no field of its own at all.
  *
  * Nothing about that fails to compile and no emulator run catches it, so the two
- * rules are asserted here: the shortcut mapping is its own (never [DeviceIcons
- * .forDomain]), and each `ic_shortcut_*` really does carry an opaque field with
- * the glyph held inside the mask's safe zone.
+ * rules are asserted here for the four shortcuts (owner, 2026-11-04): each has a
+ * badge of its own, never the bare glyph, and each `ic_shortcut_*` really does
+ * carry an opaque field with the glyph held inside the mask's safe zone.
  */
 class ShortcutIconTest {
 
@@ -28,48 +27,18 @@ class ShortcutIconTest {
 
     // --- the mapping -----------------------------------------------------------
 
-    @Test fun everySupportedDomainHasItsOwnBadge() {
-        assertEquals(R.drawable.ic_shortcut_light, DeviceIcons.forShortcut("light"))
-        assertEquals(R.drawable.ic_shortcut_switch, DeviceIcons.forShortcut("switch"))
-        assertEquals(R.drawable.ic_shortcut_cover, DeviceIcons.forShortcut("cover"))
-        assertEquals(R.drawable.ic_shortcut_climate, DeviceIcons.forShortcut("climate"))
-        assertEquals(R.drawable.ic_shortcut_lock, DeviceIcons.forShortcut("lock"))
-    }
-
-    /** An unknown domain still gets a badge — never 0, and never the widget glyph. */
-    @Test fun anUnknownDomainFallsBackToTheGenericBadge() {
-        for (domain in listOf(null, "", "vacuum", "media_player", "Light")) {
-            val res = DeviceIcons.forShortcut(domain)
-            assertEquals("domain $domain", R.drawable.ic_shortcut_device, res)
-            assertNotEquals("domain $domain must not be resource 0", 0, res)
-        }
-    }
-
-    /** The whole point: a shortcut icon is never one of the widget's glyphs. */
-    @Test fun noShortcutBadgeIsAWidgetGlyph() {
-        val widgetGlyphs = setOf(
-            R.drawable.ic_light, R.drawable.ic_switch, R.drawable.ic_cover,
-            R.drawable.ic_climate, R.drawable.ic_door_lock, R.drawable.ic_device,
-        )
-        for (domain in listOf("light", "switch", "cover", "climate", "lock", "sensor", null)) {
-            assertFalse(
-                "the widget glyph is white on transparency (#99): $domain",
-                DeviceIcons.forShortcut(domain) in widgetGlyphs,
-            )
-        }
-    }
-
-    /** Widget rendering is untouched — forDomain still answers with the glyphs. */
-    @Test fun theWidgetMappingIsLeftAlone() {
-        assertEquals(R.drawable.ic_light, DeviceIcons.forDomain("light"))
-        assertEquals(R.drawable.ic_door_lock, DeviceIcons.forDomain("lock"))
-        assertEquals(R.drawable.ic_device, DeviceIcons.forDomain("nonsense"))
+    /** Each of the four shortcuts has its own badge, and none is a white glyph the launcher turns into a disc. */
+    @Test fun everyShortcutHasItsOwnBadge() {
+        val badges = Kurz.values().map { it.bild }
+        assertEquals(Kurz.values().size, badges.toSet().size)
+        val glyphs = setOf(R.drawable.ic_garage_closed, R.drawable.ic_modul_einkauf, R.drawable.ic_standort, R.drawable.ic_modul_scannen)
+        badges.forEach { assertFalse("the glyph is white on transparency (#99): $it", it in glyphs) }
+        assertEquals(R.drawable.ic_shortcut_garage, Kurz.GARAGE.bild)
     }
 
     // --- the drawables themselves ----------------------------------------------
 
-    private val badges =
-        listOf("light", "switch", "cover", "climate", "lock", "device")
+    private val badges = Kurz.values().map { it.id }
 
     /** On API 26+ the launcher masks it: an opaque field, glyph inside the safe zone. */
     @Test fun everyBadgeIsAnAdaptiveIconWithAnOpaqueField() {
@@ -106,11 +75,11 @@ class ShortcutIconTest {
         }
     }
 
-    /** Both variants draw the widget's glyph — one shape, not a second drawing of it. */
+    /** Both variants draw the app's own glyph — one shape, not a second drawing of it. */
     @Test fun everyBadgeReusesTheOneGlyph() {
         val glyphs = mapOf(
-            "light" to "ic_light", "switch" to "ic_switch", "cover" to "ic_cover",
-            "climate" to "ic_climate", "lock" to "ic_door_lock", "device" to "ic_device",
+            "garage" to "ic_garage_closed", "einkauf" to "ic_modul_einkauf",
+            "zeitleiste" to "ic_standort", "scannen" to "ic_modul_scannen",
         )
         for ((name, glyph) in glyphs) {
             for (dir in listOf("drawable", "drawable-v26")) {
