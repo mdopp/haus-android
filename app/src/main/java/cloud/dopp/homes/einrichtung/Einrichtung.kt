@@ -33,8 +33,8 @@ data class Modul(
  */
 class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String, String>) {
 
-    /** „Öffnen“: the modules without a phone app of their own, each with an address. */
-    val oeffnen: List<Modul> get() = module.filter { it.app == null && it.web != null }
+    /** „Öffnen“: of [OEFFNEN], in that order, each one the box sends with an address. */
+    val oeffnen: List<Modul> get() = OEFFNEN.mapNotNull { n -> module.firstOrNull { it.name == n && it.web != null } }
 
     /** The open setup tasks: a done one leaves the list, and then the phone's own app icon is the way in. */
     val aufgaben: List<Modul> get() = module.filter { it.aufgabe?.erledigt == false }
@@ -52,6 +52,14 @@ class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String
     }
 
     companion object {
+        /**
+         * What „Öffnen“ shows (owner, 2026-11-04): the whole list was too long — on a box
+         * some fifteen modules, most of them in the Homes app itself, among the phone's
+         * apps, or in their own apps. These four only: Dokumente, the Zeitleiste
+         * (standort), Gesundheit and Musik verwalten.
+         */
+        val OEFFNEN = listOf("dokumente", "standort", "gesundheit", "musik")
+
         /** The launcher's targets the app knows: Einkaufsliste, Zeitleiste, Dokument scannen. */
         private val ZIELE = listOf(EinrichtungJson.EINKAUF, EinrichtungJson.ZEITLEISTE, EinrichtungJson.SCANNEN)
 
