@@ -23,8 +23,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.homes.HomesConfig
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
@@ -126,7 +124,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<View>(R.id.live_row).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.live_battery).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
-        applySystemBarInsets()
+        padForSystemBars(findViewById(R.id.home_root))
         handleDeepLink(intent)
         render()
     }
@@ -157,16 +155,6 @@ class HomeActivity : AppCompatActivity() {
     private fun paired() = ServerStore.isConfigured(this) && TokenStore.isPaired(this)
 
     /** targetSdk 35 is edge-to-edge: keep the content below the status bar and above the navigation bar. */
-    private fun applySystemBarInsets() {
-        val root = findViewById<View>(R.id.home_root)
-        val top = root.paddingTop
-        val bottom = root.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, top + bars.top, v.paddingRight, bottom + bars.bottom)
-            insets
-        }
-    }
 
     private fun render() {
         val connected = paired()

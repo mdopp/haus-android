@@ -77,7 +77,7 @@ class WidgetVonTest {
     /** Not from a widget (a launcher shortcut, the app), the page is as it was. */
     @Test
     fun noKindNoParameter() {
-        assertEquals("https://homes.example/box", HomesPages.url("https://homes.example", HomesPages.BOX, null))
+        assertEquals("https://homes.example/energie", HomesPages.url("https://homes.example", HomesPages.ENERGIE, null))
     }
 
     /** Every kind, through the PendingIntent a widget hands the launcher. */

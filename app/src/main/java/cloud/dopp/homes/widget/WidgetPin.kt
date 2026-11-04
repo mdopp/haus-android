@@ -68,6 +68,7 @@ object WidgetPin {
         toolId: String? = null,
         toolLabel: String? = null,
     ): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false // pinning came with Android 8
         val component = ComponentName(ctx, provider)
         if (toolId != null) WidgetStore.setPendingToolId(ctx, toolId)
         return mgr.requestPinAppWidget(component, null, callback(ctx, component, toolId, toolLabel))

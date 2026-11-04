@@ -15,8 +15,6 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.Napi.Quelle
 import cloud.dopp.homes.data.ServerStore
@@ -99,7 +97,7 @@ class SicherungActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sicherung)
         store = SicherungStore(this)
-        applySystemBarInsets()
+        padForSystemBars(findViewById(R.id.sicherung_root))
         karte(Quelle.WHATSAPP).findViewById<TextView>(R.id.quelle_name).setText(R.string.sicherung_whatsapp)
         karte(Quelle.SIGNAL).findViewById<TextView>(R.id.quelle_name).setText(R.string.sicherung_signal)
         Lauf.QUELLEN.forEach { q ->
@@ -158,17 +156,6 @@ class SicherungActivity : AppCompatActivity() {
 
     private fun karte(q: Quelle): View =
         findViewById(if (q == Quelle.SIGNAL) R.id.sicherung_signal else R.id.sicherung_whatsapp)
-
-    private fun applySystemBarInsets() {
-        val root = findViewById<View>(R.id.sicherung_root)
-        val top = root.paddingTop
-        val bottom = root.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, top + bars.top, v.paddingRight, bottom + bars.bottom)
-            insets
-        }
-    }
 
     // --- the folders ----------------------------------------------------------
 

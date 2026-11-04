@@ -12,8 +12,6 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.StandortClient
@@ -62,7 +60,7 @@ class StandortActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_standort)
         store = StandortStore(this)
-        applySystemBarInsets()
+        padForSystemBars(findViewById(R.id.standort_root))
         findViewById<SwitchCompat>(R.id.standort_an).setOnCheckedChangeListener { _, an -> if (!setzt) schalte(an) }
         findViewById<RadioGroup>(R.id.standort_modus).setOnCheckedChangeListener { _, id ->
             if (setzt) return@setOnCheckedChangeListener
@@ -87,17 +85,6 @@ class StandortActivity : AppCompatActivity() {
         render()
         ladeVerbindung()
         if (store.an()) senden(sagen = false) // the screen open: what waits goes, the pause does not hold
-    }
-
-    private fun applySystemBarInsets() {
-        val root = findViewById<View>(R.id.standort_root)
-        val top = root.paddingTop
-        val bottom = root.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, top + bars.top, v.paddingRight, bottom + bars.bottom)
-            insets
-        }
     }
 
     private fun an(): Boolean = store.an() && StandortErlaubnis.genug(this)

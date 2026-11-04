@@ -26,7 +26,7 @@ import cloud.dopp.homes.R
  * and the scroll puts it at the **top**, [scrollTo].
  *
  * The index itself is the one piece of logic worth pinning on the JVM, so it lives
- * here rather than inline in three activities: [markedIndex] is the whole rule —
+ * here rather than inline in the two pickers: [markedIndex] is the whole rule —
  * a reconfigure marks the row carrying the current binding, a first placement
  * marks **nothing**, whatever the store happens to hold.
  */

@@ -27,9 +27,8 @@ class DevicesRouteTest {
     fun unpair() = ServerStore.clear(ctx)
 
     @Test
-    fun `the pages are Homes' start and box`() {
+    fun `the start page is Homes' start`() {
         assertEquals("/start", HomesPages.START)
-        assertEquals("/box", HomesPages.BOX)
     }
 
     @Test
@@ -40,9 +39,9 @@ class DevicesRouteTest {
     @Test
     fun `paired, a tap opens the page in the browser`() {
         ServerStore.setBaseUrl(ctx, "https://homes.example")
-        val i = HomesPages.intent(ctx, HomesPages.BOX)
+        val i = HomesPages.intent(ctx, HomesPages.ENERGIE)
         assertEquals(Intent.ACTION_VIEW, i.action)
-        assertEquals("https://homes.example/box", i.data.toString())
+        assertEquals("https://homes.example/energie", i.data.toString())
     }
 
     @Test

@@ -11,8 +11,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.Napi.Quelle
 import cloud.dopp.homes.data.ServerStore
@@ -82,7 +80,7 @@ class ZurueckholenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_zurueckholen)
         store = RueckStore(this)
-        applySystemBarInsets()
+        padForSystemBars(findViewById(R.id.zurueck_root))
         findViewById<Button>(R.id.signal_waehlen).setOnClickListener { waehle(Quelle.SIGNAL) }
         findViewById<Button>(R.id.whatsapp_waehlen).setOnClickListener { waehle(Quelle.WHATSAPP) }
         findViewById<Button>(R.id.signal_holen).setOnClickListener { holen(Quelle.SIGNAL) }
@@ -105,17 +103,6 @@ class ZurueckholenActivity : AppCompatActivity() {
         super.onResume()
         render()
         ladeLetzte()
-    }
-
-    private fun applySystemBarInsets() {
-        val root = findViewById<View>(R.id.zurueck_root)
-        val top = root.paddingTop
-        val bottom = root.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, top + bars.top, v.paddingRight, bottom + bars.bottom)
-            insets
-        }
     }
 
     private fun client(): SicherungClient? {

@@ -96,7 +96,7 @@
         errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/realtime/LiveService.kt"
-            line="137"
+            line="134"
             column="57"/>
     </issue>
 
@@ -109,17 +109,6 @@
             file="src/main/java/cloud/dopp/homes/standort/Aufzeichnung.kt"
             line="32"
             column="24"/>
-    </issue>
-
-    <issue
-        id="NewApi"
-        message="Call requires API level 26 (current min is 23): `android.appwidget.AppWidgetManager#requestPinAppWidget`"
-        errorLine1="        return mgr.requestPinAppWidget(component, null, callback(ctx, component, toolId, toolLabel))"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/cloud/dopp/homes/widget/WidgetPin.kt"
-            line="73"
-            column="20"/>
     </issue>
 
     <issue
@@ -316,7 +305,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="633"
+            line="621"
             column="33"/>
     </issue>
 
@@ -538,28 +527,6 @@
             file="src/main/AndroidManifest.xml"
             line="55"
             column="30"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        message="Do not place Android context classes in static fields (static reference to `Bewegung` which has field `app` pointing to `Context`); this is a memory leak"
-        errorLine1="    /**"
-        errorLine2="    ^">
-        <location
-            file="src/main/java/cloud/dopp/homes/standort/Aufzeichnung.kt"
-            line="201"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        message="Do not place Android context classes in static fields; this is a memory leak"
-        errorLine1="        @Volatile"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/cloud/dopp/homes/standort/Aufzeichnung.kt"
-            line="208"
-            column="9"/>
     </issue>
 
     <issue
@@ -844,7 +811,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="380"
+            line="368"
             column="14"/>
     </issue>
 
@@ -855,7 +822,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="496"
+            line="484"
             column="14"/>
     </issue>
 
@@ -866,7 +833,7 @@
         errorLine2="        ~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="613"
+            line="601"
             column="9"/>
     </issue>
 
@@ -877,7 +844,7 @@
         errorLine2="                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="633"
+            line="621"
             column="78"/>
     </issue>
 
@@ -888,7 +855,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/widget/HomesPages.kt"
-            line="66"
+            line="63"
             column="40"/>
     </issue>
 
@@ -943,7 +910,7 @@
         errorLine2="        ~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/realtime/LiveService.kt"
-            line="96"
+            line="93"
             column="9"/>
     </issue>
 
@@ -1515,7 +1482,7 @@
         errorLine2="                                                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/ZurueckholenActivity.kt"
-            line="371"
+            line="358"
             column="64"/>
     </issue>
 
@@ -1526,7 +1493,7 @@
         errorLine2="                         ~~~~~~~~~~">
         <location
             file="src/main/java/cloud/dopp/homes/ui/HomeActivity.kt"
-            line="277"
+            line="265"
             column="26"/>
     </issue>
 
