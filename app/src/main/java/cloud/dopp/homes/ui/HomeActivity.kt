@@ -37,7 +37,6 @@ import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
 import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.data.ToolDef
-import cloud.dopp.homes.data.ToolDefs
 import cloud.dopp.homes.realtime.Live
 import cloud.dopp.homes.widget.ActionDialog
 import cloud.dopp.homes.widget.ActionItem
@@ -384,7 +383,7 @@ class HomeActivity : AppCompatActivity() {
 
     /** One list, no groups (owner, 2026-11-03): one device, the energy, then the tools. */
     private fun renderWidgetTypes() {
-        showTools(listable(WidgetStore.toolCatalogJson(this)))
+        showTools(WidgetStore.keptToolCatalog(this).filter { it.isOffered })
         renderMehr()
     }
 
@@ -426,16 +425,13 @@ class HomeActivity : AppCompatActivity() {
         if (toolsLoading) return
         toolsLoading = true
         thread {
-            val body = runCatching { ApiClient(applicationContext).toolCatalogBody() }.getOrNull()
-            if (body != null) WidgetStore.setToolCatalogJson(applicationContext, body)
+            val fresh = WidgetStore.freshToolCatalog(applicationContext)
             runOnUiThread {
                 toolsLoading = false
-                if (body != null && !isFinishing) showTools(listable(body))
+                if (fresh != null && !isFinishing) showTools(fresh.filter { it.isOffered })
             }
         }
     }
-
-    private fun listable(json: String?): List<ToolDef> = ToolDefs.parseCatalog(json).filter { it.isOffered }
 
     /** The widget list: the fixed types first, then a row per tool. */
     private fun showTools(defs: List<ToolDef>) {

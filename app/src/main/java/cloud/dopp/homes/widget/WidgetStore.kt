@@ -1,6 +1,9 @@
 package cloud.dopp.homes.widget
 
 import android.content.Context
+import cloud.dopp.homes.data.ApiClient
+import cloud.dopp.homes.data.ToolDef
+import cloud.dopp.homes.data.ToolDefs
 
 /**
  * What the widgets keep per instance (the device widget's device, the tool
@@ -138,6 +141,16 @@ object WidgetStore {
     fun setToolCatalogJson(ctx: Context, json: String) {
         p(ctx).edit().putString(KEY_TOOL_CATALOG, json).apply()
     }
+
+    /** Homes' tool catalog, kept here when Homes answered; null when it did not. One fetch for the start screen, picker and widget. */
+    fun freshToolCatalog(ctx: Context, api: ApiClient = ApiClient(ctx.applicationContext)): List<ToolDef>? =
+        runCatching { api.toolCatalogBody() }.getOrNull()?.let { body ->
+            setToolCatalogJson(ctx, body)
+            ToolDefs.parseCatalog(body)
+        }
+
+    /** The tool catalog kept last: what a picker or widget falls back on without Homes. */
+    fun keptToolCatalog(ctx: Context): List<ToolDef> = ToolDefs.parseCatalog(toolCatalogJson(ctx))
 
     /**
      * One-shot hand-off from the in-app tool picker to the widget's config screen:
