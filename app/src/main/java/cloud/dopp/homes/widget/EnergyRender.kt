@@ -8,6 +8,7 @@ import android.widget.RemoteViews
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.Energy
 import cloud.dopp.homes.data.EnergyFlow
+import cloud.dopp.homes.verbindung.Verbindung
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -28,7 +29,9 @@ import kotlin.math.max
  *   Heute.
  *
  * The body opens Homes' Energie page ([HomesPages.ENERGIE]). No arrows to read
- * again (owner, 2026-11-03): the live stream keeps it current.
+ * again (owner, 2026-11-03): the live stream keeps it current. While Homes
+ * cannot be reached ([Verbindung.stand]) it shows the values read last,
+ * greyed, and since when.
  */
 object EnergyRender {
 
@@ -46,9 +49,34 @@ object EnergyRender {
         val maxH = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
         val w = if (minW > 0) minW else DEFAULT_W
         val h = max(maxH, minH).takeIf { it > 0 } ?: DEFAULT_H
-        return if (full(minW, minH)) buildFull(ctx, energy, paired, onTap, w, h)
+        val stand = if (paired && energy != null) Verbindung.stand(ctx) else null
+        val v = if (full(minW, minH)) buildFull(ctx, energy, paired, onTap, w, if (stand != null) h - STAND_DP else h)
         else buildSmall(ctx, energy, paired, onTap, h, showSub(minH), showToday(minH), todayBeside(w))
+        if (stand != null) alt(ctx, v, stand, full(minW, minH))
+        return v
     }
+
+    /** The values read last, greyed, and since when: under the picture, or instead of the small tier's title. */
+    private fun alt(ctx: Context, v: RemoteViews, stand: String, full: Boolean) {
+        v.setInt(if (full) R.id.e_flow else R.id.e_ring, "setImageAlpha", ALT_ALPHA)
+        if (full) {
+            val px = { dp: Int -> (dp * density(ctx)).toInt() }
+            v.setViewPadding(R.id.e_root, px(10), px(8), px(14), px(8 + STAND_DP))
+            v.setViewVisibility(R.id.e_stand, View.VISIBLE)
+            v.setTextViewText(R.id.e_stand, stand)
+            TODAY_VALUES.forEach { v.setTextColor(it, EnergyStyle.MUTED) }
+            v.setTextColor(R.id.e_autarkie_v, EnergyStyle.MUTED)
+        } else {
+            v.setTextViewText(R.id.e_title, stand)
+            v.setTextColor(R.id.e_main, EnergyStyle.MUTED)
+        }
+    }
+
+    /** The picture's alpha while it shows the values read last. */
+    private const val ALT_ALPHA = 96
+
+    /** The height the line „Stand …“ takes under the picture, dp. */
+    private const val STAND_DP = 16
 
     /** The placed default, 4×2, when the launcher does not tell the size. */
     private const val DEFAULT_W = 300

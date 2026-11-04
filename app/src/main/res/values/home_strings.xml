@@ -67,5 +67,4 @@
     <string name="live_battery_why">Damit die Widgets von selbst aktuell bleiben, tippe auf „Erlauben“ und dann im nächsten Fenster auf „Zulassen“.</string>
     <string name="live_battery_yes">Erlauben</string>
     <string name="live_battery_no">Später</string>
-    <string name="live_reconnecting">Keine Verbindung zu Homes, neuer Versuch …</string>
 </resources>

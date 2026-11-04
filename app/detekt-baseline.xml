@@ -94,7 +94,6 @@
     <ID>SwallowedException:Aufzeichnung.kt$Aufzeichnung$e: Exception</ID>
     <ID>SwallowedException:Aufzeichnung.kt$StandortEmpfaenger$e: Exception</ID>
     <ID>SwallowedException:BoxApiClient.kt$BoxApiClient$e: Exception</ID>
-    <ID>SwallowedException:EnergyWidgetProvider.kt$EnergyWidgetProvider$e: Exception</ID>
     <ID>SwallowedException:GemeinsamClient.kt$GemeinsamClient$e: IOException</ID>
     <ID>SwallowedException:HomeActivity.kt$HomeActivity$e2: Exception</ID>
     <ID>SwallowedException:HomeActivity.kt$HomeActivity$e: Exception</ID>
@@ -148,7 +147,6 @@
     <ID>TooGenericExceptionCaught:Aufzeichnung.kt$Aufzeichnung$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Aufzeichnung.kt$StandortEmpfaenger$e: Exception</ID>
     <ID>TooGenericExceptionCaught:BoxApiClient.kt$BoxApiClient$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:EnergyWidgetProvider.kt$EnergyWidgetProvider$e: Exception</ID>
     <ID>TooGenericExceptionCaught:HomeActivity.kt$HomeActivity$e2: Exception</ID>
     <ID>TooGenericExceptionCaught:HomeActivity.kt$HomeActivity$e: Exception</ID>
     <ID>TooGenericExceptionCaught:HomesKontoActivity.kt$HomesKontoActivity$e: Exception</ID>

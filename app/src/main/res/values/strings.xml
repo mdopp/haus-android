@@ -30,4 +30,19 @@
     <string name="spur_teilen_standort">Teilen: GPX- und GeoJSON-Dateien in deinen Standortverlauf</string>
     <!-- A placed widget whose type the box no longer offers, when Homes names no reason. -->
     <string name="spur_widget_weg">Das gibt es auf dieser Box gerade nicht.</string>
+
+    <!-- The line to Homes (Verbindung, owner 2026-11-04): one answer for the live
+         notification, the start screen and the widgets. „Pausiert, Bildschirm aus“
+         (live_paused) only while the screen is off. -->
+    <string name="verbindung_pause_aus">Pausiert, kein Live-Widget</string>
+    <string name="verbindung_box_weg">Box nicht erreichbar – versucht es wieder …</string>
+    <string name="verbindung_kein_netz">Kein Netz</string>
+    <string name="verbindung_nicht_gekoppelt">Homes kennt dieses Handy nicht mehr. Tippen, um neu zu koppeln.</string>
+    <!-- Under values that are not current: since when they are („Stand 08:14“), or, never read, that they are not. -->
+    <string name="verbindung_stand">Stand %1$s</string>
+    <string name="verbindung_offline">offline</string>
+    <!-- A device tap that did not reach Homes, and why. -->
+    <string name="widget_action_box_weg">Box nicht erreichbar – %1$s nicht geschaltet</string>
+    <string name="widget_action_kein_netz">Kein Netz – %1$s nicht geschaltet</string>
+    <string name="widget_action_nicht_gekoppelt">%1$s nicht geschaltet – Homes kennt dieses Handy nicht mehr</string>
 </resources>

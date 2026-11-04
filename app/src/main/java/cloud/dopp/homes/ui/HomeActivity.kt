@@ -136,6 +136,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<View>(R.id.live_row).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.live_battery).setOnClickListener(onLiveRow)
         findViewById<TextView>(R.id.app_version).text = getString(R.string.app_version_fmt, appVersionName())
+        cloud.dopp.homes.verbindung.Verbindung.zeigen(this, findViewById(R.id.verbindung)) { unpair() }
         padForSystemBars(findViewById(R.id.home_root))
         handleDeepLink(intent)
         render()
@@ -268,6 +269,7 @@ class HomeActivity : AppCompatActivity() {
         val levelView = v.findViewById<TextView>(R.id.row_level)
         val line = StartDevices.levelLine(card)
         fun switching() {
+            if (cloud.dopp.homes.verbindung.Verbindung.stand(this) != null) return // no „schaltet …“ Homes cannot hear
             state.text = getString(R.string.home_device_switching)
             state.visibility = View.VISIBLE
             levelView.visibility = View.GONE

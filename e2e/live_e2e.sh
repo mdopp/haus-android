@@ -19,6 +19,9 @@
 #     read only, the reminder rings; „Kontakte übertragen“ sends none of it
 #   9 push (#209): a gemeinsam frame on the open stream syncs the calendar part at
 #     once, and the new entry is in the phone's calendar
+#  10 the box gone (the owner, 2026-11-04: it read „Pausiert, Bildschirm aus“): the fake
+#     Homes stopped, the notification says „Box nicht erreichbar“ and not „Pausiert“;
+#     the screen off and Homes back: no request; the screen on: the stream opens, „Widgets live“
 set -uo pipefail
 LOG=${HOMES_LOG:-homes.log}
 OUT=${E2E_OUT:-e2e-out}
@@ -246,6 +249,45 @@ wait_for "$m" "GEMEINSAM kalender 200" 1 45 && pass "9 the frame syncs the calen
 on am instrument -w -r -e class 'cloud.dopp.homes.e2e.LiveE2EKontoPush#danach' $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/push-danach.txt"
 grep -q "OK (1 test)" "$OUT/push-danach.txt" && pass "9 the new entry is in the phone's calendar" \
   || { grep -m3 -E 'AssertionError|Exception' "$OUT/push-danach.txt"; fail "9 the new entry is not on the phone"; }
+
+# 10 -------------------------------------------------------------------------
+homes_up() {
+  nohup python3 e2e/fake_homes.py --port 8443 --cert e2e/out/server.pem --key e2e/out/server.key --log "$LOG" >> fake_homes.out 2>&1 &
+  for i in $(seq 1 20); do curl -sk https://127.0.0.1:8443/ctl/streams >/dev/null && return 0; sleep 0.5; done
+  return 1
+}
+# the notification's state in $OUT/notification-10<tag>.txt; true when it says $2, within $3 seconds
+says() {
+  local i
+  for i in $(seq 1 "$3"); do
+    on dumpsys notification --noredact > "$OUT/notification-10$1.txt"
+    grep -q "$2" "$OUT/notification-10$1.txt" && return 0
+    sleep 1
+  done
+  return 1
+}
+wake
+on am start -W -n $PKG/.ui.HomeActivity >/dev/null
+on input keyevent KEYCODE_HOME
+for i in $(seq 1 30); do curl -sk https://127.0.0.1:8443/ctl/streams | grep -q '"streams": [1-9]' && break; sleep 1; done
+pkill -f 'e2e/fake_homes.py' || true
+sleep 1
+if says a "Box nicht erreichbar" 40; then
+  pass "10 the box gone: the notification says „Box nicht erreichbar“"
+else
+  fail "10 the box gone: no „Box nicht erreichbar“ ($(grep -m1 -o 'android.text=[^)]*' "$OUT/notification-10a.txt"))"
+fi
+grep -q "Pausiert" "$OUT/notification-10a.txt" && fail "10 the box gone reads „Pausiert“" || pass "10 the box gone does not read „Pausiert“"
+on input keyevent KEYCODE_SLEEP
+sleep 3
+homes_up || fail "10 the fake Homes did not come back"
+m=$(mark)
+sleep 20
+[ "$(since "$m" OPEN)" -eq 0 ] && [ "$(since "$m" WATCH)" -eq 0 ] && [ "$(since "$m" "GET /napi/portal")" -eq 0 ] \
+  && pass "10 the screen off, Homes back: no request" || fail "10 a request with the screen off"
+wake
+wait_for "$m" OPEN 1 30 && pass "10 the screen on: the stream opens again" || fail "10 no OPEN after the box came back"
+says b "Widgets live" 20 && pass "10 the notification says „Widgets live“ again" || fail "10 not live again ($(grep -m1 -o 'android.text=[^)]*' "$OUT/notification-10b.txt"))"
 
 adb logcat -d > "$OUT/logcat.txt"
 cp "$LOG" "$OUT/" 2>/dev/null

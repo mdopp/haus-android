@@ -110,6 +110,19 @@
             android:orientation="vertical"
             android:visibility="gone">
 
+            <!-- While the values are not current (Verbindung): the box not reachable,
+                 no network, the pairing refused (a tap then pairs again). -->
+            <TextView
+                android:id="@+id/verbindung"
+                style="@style/Text.Homes.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_md"
+                android:background="@drawable/card_homes"
+                android:padding="@dimen/card_padding"
+                android:textColor="@color/homes_text"
+                android:visibility="gone" />
+
             <TextView
                 style="@style/Text.Homes.Title"
                 android:layout_width="match_parent"

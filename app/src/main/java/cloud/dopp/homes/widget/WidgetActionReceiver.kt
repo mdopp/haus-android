@@ -9,6 +9,8 @@ import android.widget.Toast
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
 import cloud.dopp.homes.ui.HomeActivity
+import cloud.dopp.homes.verbindung.Verbindung
+import cloud.dopp.homes.verbindung.Zustand
 import org.json.JSONObject
 import kotlin.concurrent.thread
 
@@ -167,11 +169,19 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
         /**
          * Say out loud that a tap did **not** land (#111): a text toast, not a
-         * dialog. Best-effort — a failure to complain never breaks the tap path.
+         * dialog, and why, as [Verbindung] knows it — the box not reachable,
+         * no network, the pairing gone. Best-effort — a failure to complain
+         * never breaks the tap path.
          */
         fun reportFailure(ctx: Context, deviceLabel: String) {
             val app = ctx.applicationContext
-            val text = app.getString(R.string.widget_action_failed, deviceLabel.ifBlank { "Gerät" })
+            val why = when (Verbindung.zustand(app)) {
+                Zustand.BOX_WEG -> R.string.widget_action_box_weg
+                Zustand.KEIN_NETZ -> R.string.widget_action_kein_netz
+                Zustand.NICHT_GEKOPPELT -> R.string.widget_action_nicht_gekoppelt
+                else -> R.string.widget_action_failed
+            }
+            val text = app.getString(why, deviceLabel.ifBlank { "Gerät" })
             Handler(Looper.getMainLooper()).post {
                 runCatching { Toast.makeText(app, text, Toast.LENGTH_LONG).show() }
             }

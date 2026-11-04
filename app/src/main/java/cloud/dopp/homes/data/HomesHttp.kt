@@ -1,5 +1,6 @@
 package cloud.dopp.homes.data
 
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
@@ -21,6 +22,9 @@ object HomesHttp {
             .readTimeout(read, TimeUnit.SECONDS)
             .writeTimeout(write, TimeUnit.SECONDS)
             .build()
+
+    /** [client] with [interceptor] before each of its calls: [cloud.dopp.homes.verbindung.Verbindung] hears how they end. */
+    fun mit(client: OkHttpClient, interceptor: Interceptor): OkHttpClient = client.newBuilder().addInterceptor(interceptor).build()
 
     /** A reply body as a JSON object, or null when it is none. */
     fun json(body: String?): JSONObject? = runCatching { JSONObject(body.orEmpty()) }.getOrNull()

@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import cloud.dopp.homes.R
@@ -13,6 +14,7 @@ import cloud.dopp.homes.data.Card
 import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.data.ScreenGate
 import cloud.dopp.homes.ui.StartDevices
+import cloud.dopp.homes.verbindung.Verbindung
 
 /**
  * One device per widget (restored by the owner, 2026-11-03: the active and
@@ -22,7 +24,8 @@ import cloud.dopp.homes.ui.StartDevices
  * switch, a cover toggles and a lock opens its chooser, through the same
  * [WidgetActionReceiver] as the start screen; anything else opens its page on
  * Homes. The live stream keeps it current (`card_state`, [wakeEntity]); a
- * failed read draws the card read last ([WidgetCache]).
+ * failed read draws the card read last ([WidgetCache]), and while Homes
+ * cannot be reached greyed, with since when ([Verbindung.stand]).
  */
 class DeviceWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 900_000, tapStartsLive = false) {
 
@@ -37,28 +40,36 @@ class DeviceWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 900_000, tapStart
     }
 
     override fun refresh(context: Context, appWidgetId: Int) {
-        val mgr = AppWidgetManager.getInstance(context)
-        val entityId = WidgetStore.entityId(context, appWidgetId)
-        if (entityId == null) {
-            runCatching { mgr.updateAppWidget(appWidgetId, unbound(context, appWidgetId)) }
-            return
-        }
-        if (WidgetFallback.weg(context, appWidgetId, KannKey.GERAET)) return // the box lost its devices
         // the card read last at once, then the fresh one
-        val cached = WidgetCache.getCard(context, appWidgetId)
-        runCatching { mgr.updateAppWidget(appWidgetId, build(context, appWidgetId, cached)) }
+        val entityId = zeichne(context, appWidgetId) ?: return
         if (!ScreenGate.open(context)) return // a widget nobody sees reads nothing
         async(context, appWidgetId) {
             val fresh = runCatching { ApiClient(context.applicationContext).getCard(entityId) }.getOrNull()
             if (fresh != null) {
                 WidgetCache.putCard(context, appWidgetId, fresh)
-                mgr.updateAppWidget(appWidgetId, build(context, appWidgetId, fresh))
+                AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, build(context, appWidgetId, fresh))
             }
         }
     }
 
     companion object {
         const val ACTION_REFRESH = "cloud.dopp.homes.widget.DEVICE_REFRESH"
+
+        /** Every placed device widget draws its card read last, no read: the line to Homes changed. */
+        fun zeichnen(ctx: Context) = ids(ctx).forEach { zeichne(ctx, it) }
+
+        /** The card read last of [appWidgetId], no read; its entity, or null with none to read (unbound, gone from the box). */
+        private fun zeichne(ctx: Context, appWidgetId: Int): String? {
+            val mgr = AppWidgetManager.getInstance(ctx)
+            val entityId = WidgetStore.entityId(ctx, appWidgetId)
+            if (entityId == null) {
+                runCatching { mgr.updateAppWidget(appWidgetId, unbound(ctx, appWidgetId)) }
+                return null
+            }
+            if (WidgetFallback.weg(ctx, appWidgetId, KannKey.GERAET)) return null // the box lost its devices
+            runCatching { mgr.updateAppWidget(appWidgetId, build(ctx, appWidgetId, WidgetCache.getCard(ctx, appWidgetId))) }
+            return entityId
+        }
 
         /**
          * The tile of [appWidgetId], drawn from [card] — the read one, or none
@@ -75,28 +86,45 @@ class DeviceWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 900_000, tapStart
             val domain = card?.domain ?: WidgetStore.domain(ctx, appWidgetId)
             val deviceClass = card?.deviceClass ?: WidgetStore.deviceClass(ctx, appWidgetId)
             val name = DeviceLook.shortName(WidgetStore.name(ctx, appWidgetId).ifBlank { card?.name.orEmpty() })
-            val tint = DeviceLook.tint(domain, deviceClass, card)
+            // Homes cannot be reached: the card read last, greyed, and since when instead of its words
+            val stand = card?.let { Verbindung.stand(ctx) }
+            val tint = if (stand != null) DeviceLook.OFF else DeviceLook.tint(domain, deviceClass, card)
             v.setImageViewResource(R.id.d_icon, DeviceLook.icon(domain, deviceClass, card?.state))
             v.setInt(R.id.d_icon, "setColorFilter", tint)
             v.setTextViewText(R.id.d_name, name)
             val words = card?.let { StartDevices.stateText(it) } ?: "…"
             val roomy = wide || minH >= TALL
-            v.setTextViewText(R.id.d_state, if (roomy || card == null) words else DeviceLook.compactWords(card, words))
-            val showWords = roomy || DeviceLook.needsWords(card)
-            v.setViewVisibility(R.id.d_state, if (showWords) View.VISIBLE else View.GONE)
-            val level = DeviceLook.level(card)
+            val (line, shown) = stateLine(card, words, roomy, stand)
+            v.setTextViewText(R.id.d_state, line)
+            // „Stand 08:14“ in one small cell: a little smaller than the state's words
+            if (stand != null && !roomy) v.setTextViewTextSize(R.id.d_state, TypedValue.COMPLEX_UNIT_SP, STAND_SP)
+            v.setViewVisibility(R.id.d_state, if (shown) View.VISIBLE else View.GONE)
+            val level = DeviceLook.level(card)?.takeIf { stand == null }
             v.setViewVisibility(R.id.d_bar, if (level != null) View.VISIBLE else View.GONE)
             if (level != null) v.setProgressBar(R.id.d_bar, 100, level, false)
             // the words the picture stands for, for a screen reader
-            v.setContentDescription(R.id.d_body, "$name, $words")
+            v.setContentDescription(R.id.d_body, listOfNotNull(name, words, stand).joinToString(", "))
             val tap = tapFor(ctx, appWidgetId, card)
             v.setOnClickPendingIntent(R.id.d_root, tap)
             v.setOnClickPendingIntent(R.id.d_body, tap)
             return v
         }
 
+        /**
+         * The words under the name, and whether they show: since when ([stand])
+         * while Homes cannot be reached, else the state — short in a small cell —,
+         * hidden where the picture says it alone.
+         */
+        private fun stateLine(card: Card?, words: String, roomy: Boolean, stand: String?): Pair<String, Boolean> = when {
+            stand != null -> stand to true
+            roomy || card == null -> words to (roomy || DeviceLook.needsWords(card))
+            else -> DeviceLook.compactWords(card, words) to DeviceLook.needsWords(card)
+        }
+
         /** Two cells wide and no more than about one high: the picture beside the words. Pure. */
         fun wide(minW: Int, minH: Int): Boolean = minW >= 130 && minW >= minH * 3 / 2
+
+        private const val STAND_SP = 9f
 
         /** From this height on the state is in words below the picture too. */
         const val TALL = 110

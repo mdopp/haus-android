@@ -195,6 +195,21 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- While Homes cannot be reached (Verbindung): since when the values are, under the
+         greyed picture; e_root then leaves room for it (EnergyRender). -->
+    <TextView
+        android:id="@+id/e_stand"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:paddingBottom="6dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="#FF9AA0AE"
+        android:textSize="11sp"
+        android:visibility="gone" />
+
     <!-- Instead of the picture while there is nothing to draw: not paired. -->
     <TextView
         android:id="@+id/e_note"
