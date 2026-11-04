@@ -1,8 +1,11 @@
 package cloud.dopp.homes.ui
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SyncStatusObserver
 import android.net.Uri
 import android.os.Bundle
@@ -11,13 +14,19 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.kann.KannLeser
+import cloud.dopp.homes.kann.KannStore
+import cloud.dopp.homes.kann.Liste
+import cloud.dopp.homes.kann.hat
 import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.konto.HomesKonto.Teil
 import cloud.dopp.homes.konto.KontoStore
@@ -33,6 +42,9 @@ import kotlin.concurrent.thread
  * good run or what went wrong; „Jetzt abgleichen“ asks Android to sync now
  * and the line under it follows the run until it ends. Read only, it says so
  * at the top; the last line says which way the person's own data goes.
+ * A part the box lacks (homes ADR 0001 §10) is a switch off and disabled,
+ * its trace below with „Hier anfordern“; it syncs no more, and what it
+ * wrote stays ([HomesKonto.folgen]).
  */
 class HomesKontoActivity : AppCompatActivity() {
 
@@ -52,6 +64,13 @@ class HomesKontoActivity : AppCompatActivity() {
     private var laeuftSeit = 0L
     private var beobachter: Any? = null
     private val haupt = Handler(Looper.getMainLooper())
+
+    /** What the box can do changed: the parts draw again. */
+    private val kannNeu = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            render()
+        }
+    }
 
     private val erlaube = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { beantwortet() }
 
@@ -76,6 +95,8 @@ class HomesKontoActivity : AppCompatActivity() {
                 SyncStatusObserver { haupt.post { if (!isFinishing) folge() } },
             )
         }.getOrNull()
+        ContextCompat.registerReceiver(this, kannNeu, IntentFilter(KannLeser.ACTION_GEAENDERT), ContextCompat.RECEIVER_NOT_EXPORTED)
+        KannLeser.lesen(this)
         render()
         folge()
     }
@@ -83,6 +104,7 @@ class HomesKontoActivity : AppCompatActivity() {
     override fun onPause() {
         beobachter?.let { runCatching { ContentResolver.removeStatusChangeListener(it) } }
         beobachter = null
+        runCatching { unregisterReceiver(kannNeu) }
         haupt.removeCallbacksAndMessages(null)
         super.onPause()
     }
@@ -92,6 +114,12 @@ class HomesKontoActivity : AppCompatActivity() {
 
     private fun stand(teil: Teil): TextView =
         findViewById(if (teil == Teil.KONTAKTE) R.id.konto_kontakte_stand else R.id.konto_kalender_stand)
+
+    private fun spur(teil: Teil): ViewGroup =
+        findViewById(if (teil == Teil.KONTAKTE) R.id.konto_kontakte_spur else R.id.konto_kalender_spur)
+
+    /** The box lacks [teil] (homes ADR 0001 §3): its switch stays off. */
+    private fun fehlt(teil: Teil): Boolean = !KannStore.kann(this).hat(Liste.KONTO, teil.key)
 
     private fun rechte(teil: Teil): Array<String> = when (teil) {
         Teil.KONTAKTE -> arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
@@ -104,6 +132,10 @@ class HomesKontoActivity : AppCompatActivity() {
 
     private fun schalte(teil: Teil, an: Boolean) {
         hinweise.remove(teil)
+        if (an && fehlt(teil)) {
+            render()
+            return
+        }
         if (!an) {
             val app = applicationContext
             thread { // its entries leave the provider: not on the main thread
@@ -224,24 +256,16 @@ class HomesKontoActivity : AppCompatActivity() {
 
     private fun render() {
         val gekoppelt = TokenStore.isPaired(this)
+        val kann = KannStore.kann(this)
         setzt = true
         Teil.values().forEach { teil ->
-            schalter(teil).isChecked = an(teil)
-            schalter(teil).isEnabled = gekoppelt
+            val fehlt = Spuren.teil(this, spur(teil), kann, Liste.KONTO, teil.key, ::render)
+            schalter(teil).isChecked = an(teil) && !fehlt
+            schalter(teil).isEnabled = gekoppelt && !fehlt
         }
         setzt = false
         Teil.values().forEach { teil ->
-            val satz = hinweise[teil]?.satz ?: when {
-                HomesKonto.an(this, teil) && !Erlaubnis.hat(this, rechte(teil)) -> getString(R.string.konto_einstellungen)
-                !an(teil) -> null
-                store.meldung(teil) != null -> store.meldung(teil)
-                else -> store.stand(teil)?.let { s ->
-                    getString(
-                        if (teil == Teil.KONTAKTE) R.string.konto_kontakte_stand else R.string.konto_kalender_stand,
-                        Anzeige.zeit(s.zeit), s.anzahl,
-                    )
-                } ?: getString(R.string.konto_noch_nie)
-            }
+            val satz = satz(teil)
             if (HomesKonto.an(this, teil) && !Erlaubnis.hat(this, rechte(teil))) {
                 hinweise[teil] = Hinweis(getString(R.string.konto_einstellungen), appInfo = true)
             }
@@ -252,6 +276,19 @@ class HomesKontoActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.konto_jetzt).isEnabled = gekoppelt && laeuftSeit == 0L
         if (laeuftSeit == 0L) zustand(grundsatz())
+    }
+
+    /** The line under [teil]'s switch: why it stayed off, what went wrong, or its last good run; none for a part the box lacks. */
+    private fun satz(teil: Teil): String? = if (fehlt(teil)) null else hinweise[teil]?.satz ?: when {
+        HomesKonto.an(this, teil) && !Erlaubnis.hat(this, rechte(teil)) -> getString(R.string.konto_einstellungen)
+        !an(teil) -> null
+        store.meldung(teil) != null -> store.meldung(teil)
+        else -> store.stand(teil)?.let { s ->
+            getString(
+                if (teil == Teil.KONTAKTE) R.string.konto_kontakte_stand else R.string.konto_kalender_stand,
+                Anzeige.zeit(s.zeit), s.anzahl,
+            )
+        } ?: getString(R.string.konto_noch_nie)
     }
 
     private fun zustand(text: String) {

@@ -14,10 +14,14 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import cloud.dopp.homes.data.Napi
 import cloud.dopp.homes.data.Napi.Quelle
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.SicherungClient
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.kann.KannStore
+import cloud.dopp.homes.kann.Liste
+import cloud.dopp.homes.kann.hat
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -45,9 +49,13 @@ class SicherungWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
         try {
             val ctx = applicationContext
             val store = SicherungStore(ctx)
-            val ordner = Lauf.QUELLEN.associateWith { q -> store.ordner(q)?.let { SafOrdner(ctx, it) } }
-            val kontakte = store.kontakteAn()
-            val sms = store.smsAn()
+            // a part the box lacks (homes ADR 0001 §3) is skipped: no request for it
+            val kann = KannStore.kann(ctx)
+            val ordner = Lauf.QUELLEN.associateWith { q ->
+                store.ordner(q)?.takeIf { kann.hat(Liste.SICHERUNG, q.wire) }?.let { SafOrdner(ctx, it) }
+            }
+            val kontakte = store.kontakteAn() && kann.hat(Liste.SICHERUNG, Napi.TEIL_KONTAKTE)
+            val sms = store.smsAn() && kann.hat(Liste.SICHERUNG, Quelle.SMS.wire)
             // Nothing granted, nothing switched on: no request at all.
             if (ordner.values.all { it == null } && !kontakte && !sms) return Result.success()
             val base = ServerStore.baseUrl(ctx)

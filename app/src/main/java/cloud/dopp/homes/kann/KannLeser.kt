@@ -8,6 +8,7 @@ import cloud.dopp.homes.data.KannClient
 import cloud.dopp.homes.data.ScreenGate
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.realtime.Live
 import cloud.dopp.homes.widget.AppShortcuts
 import java.util.concurrent.atomic.AtomicBoolean
@@ -18,7 +19,8 @@ import kotlin.concurrent.thread
  * and resume, at most once a minute, and when the live stream connects (a
  * restarted Homes may have another list) — always with the kept ETag, so an
  * unchanged answer is a 304; never while the screen is off ([ScreenGate]).
- * Each answer switches the share targets ([Teilen]). A changed answer is said with [ACTION_GEAENDERT]
+ * Each answer switches the share targets ([Teilen]), the account's parts
+ * ([HomesKonto.folgen]) and the widget providers ([Anbieter]). A changed answer is said with [ACTION_GEAENDERT]
  * to the app's screens, and the placed widgets draw again.
  */
 object KannLeser {
@@ -51,9 +53,12 @@ object KannLeser {
             KannClient.Antwort.Fehlt -> KannStore.fehlt(ctx)
             else -> return false
         }
-        // the share targets follow every answer, so a state lost elsewhere comes back
-        val teilen = Teilen.schalten(ctx, KannStore.kann(ctx))
-        return changed || teilen
+        // the share targets, the account's parts and the widget providers follow every answer
+        val kann = KannStore.kann(ctx)
+        val teilen = Teilen.schalten(ctx, kann)
+        HomesKonto.folgen(ctx, kann)
+        val widgets = Anbieter.schalten(ctx, kann)
+        return changed || teilen || widgets
     }
 
     /**

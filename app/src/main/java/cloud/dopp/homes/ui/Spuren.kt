@@ -12,6 +12,8 @@ import cloud.dopp.homes.R
 import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.kann.Anfordern
 import cloud.dopp.homes.kann.Anfrage
+import cloud.dopp.homes.kann.Kann
+import cloud.dopp.homes.kann.hat
 import cloud.dopp.homes.kann.Liste
 import cloud.dopp.homes.kann.Modul
 
@@ -97,5 +99,28 @@ object Spuren {
             }
         }
         return v
+    }
+
+    /**
+     * An account or backup part the box lacks (§10), in [holder] below its disabled switch: the module's
+     * title, state and reason, „Hier anfordern“; [holder] gone while offered. True when the box lacks it.
+     */
+    fun teil(activity: Activity, holder: ViewGroup, kann: Kann?, liste: Liste, key: String, neu: () -> Unit): Boolean {
+        holder.removeAllViews()
+        val fehlt = !kann.hat(liste, key)
+        holder.visibility = if (fehlt) View.VISIBLE else View.GONE
+        if (!fehlt) return false
+        val m = kann?.spurVon(liste, key)
+        val v = zeile(activity, holder, m?.titel ?: activity.getString(R.string.spuren_titel), R.drawable.ic_services, m, neu)
+        v.findViewById<View>(R.id.spur_icon).visibility = View.GONE
+        v.setPaddingRelative(0, 0, 0, 0)
+        m?.grund?.let { g ->
+            v.findViewById<TextView>(R.id.spur_grund).apply {
+                text = g
+                visibility = View.VISIBLE
+            }
+        }
+        holder.addView(v)
+        return true
     }
 }

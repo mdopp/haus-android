@@ -9,6 +9,7 @@ import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.provider.Settings
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -16,10 +17,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import cloud.dopp.homes.R
+import cloud.dopp.homes.data.Napi
 import cloud.dopp.homes.data.Napi.Quelle
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.SicherungClient
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.kann.KannLeser
+import cloud.dopp.homes.kann.KannStore
+import cloud.dopp.homes.kann.Liste
+import cloud.dopp.homes.kann.hat
 import cloud.dopp.homes.sicherung.Anzeige
 import cloud.dopp.homes.sicherung.Auswahl
 import cloud.dopp.homes.sicherung.Erlaubnis
@@ -72,7 +78,11 @@ class SicherungActivity : AppCompatActivity() {
     }
 
     /** The two switches: their permissions, and how each is kept. */
-    private enum class Schalter(val rechte: Array<String>) { KONTAKTE(Erlaubnis.KONTAKTE), SMS(Erlaubnis.SMS) }
+    /** A switch: its permissions, and its key in `/napi/kann`'s `sicherung` (homes ADR 0001 §2). */
+    private enum class Schalter(val rechte: Array<String>, val key: String) {
+        KONTAKTE(Erlaubnis.KONTAKTE, Napi.TEIL_KONTAKTE),
+        SMS(Erlaubnis.SMS, Quelle.SMS.wire),
+    }
 
     /** Why a switch stayed off, until the next try; [appInfo]: a tap opens the app's settings. */
     private class Hinweis(val satz: String, val appInfo: Boolean)
@@ -117,6 +127,7 @@ class SicherungActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        KannLeser.lesen(this) // what the box can do: a part it lacks is a trace (homes ADR 0001 §10)
         render()
         ladeStand()
         Lauf.QUELLEN.forEach(::schaueNach)
@@ -165,7 +176,11 @@ class SicherungActivity : AppCompatActivity() {
     private fun ordnerFehlt(q: Quelle): Boolean =
         (store.ordner(q) != null && !freigegeben(q)) || store.meldung(q)?.art == Meldung.Art.ORDNER
 
+    /** The box lacks [key] in its backup (homes ADR 0001 §3): the part cannot be switched on here. */
+    private fun fehlt(key: String): Boolean = !KannStore.kann(this).hat(Liste.SICHERUNG, key)
+
     private fun waehle(q: Quelle) {
+        if (fehlt(q.wire)) return
         try {
             if (q == Quelle.WHATSAPP) waehleWhatsapp.launch(SafOrdner.WHATSAPP_START) else waehleSignal.launch(store.ordner(q))
         } catch (e: Exception) {
@@ -221,6 +236,8 @@ class SicherungActivity : AppCompatActivity() {
 
     private fun renderQuelle(q: Quelle) {
         val k = karte(q)
+        val fehlt = Spuren.teil(this, k.findViewById(R.id.quelle_spur), KannStore.kann(this), Liste.SICHERUNG, q.wire, ::render)
+        k.findViewById<Button>(R.id.quelle_waehlen).isEnabled = !fehlt
         val frei = freigegeben(q)
         k.findViewById<TextView>(R.id.quelle_ordner).text = ordnerZeile(q)
         k.findViewById<Button>(R.id.quelle_waehlen).setText(
@@ -365,6 +382,10 @@ class SicherungActivity : AppCompatActivity() {
     /** A tap on a switch: off is off; on asks Android first, unless the permission is there. */
     private fun schalte(art: Schalter, an: Boolean) {
         hinweise.remove(art)
+        if (an && fehlt(art.key)) {
+            renderSchalter(art)
+            return
+        }
         if (!an) {
             merke(art, false)
             renderSchalter(art)
@@ -440,8 +461,11 @@ class SicherungActivity : AppCompatActivity() {
     }
 
     private fun renderSchalter(art: Schalter) {
+        val spur: ViewGroup = findViewById(if (art == Schalter.KONTAKTE) R.id.handy_kontakte_spur else R.id.handy_sms_spur)
+        val fehlt = Spuren.teil(this, spur, KannStore.kann(this), Liste.SICHERUNG, art.key, ::render)
         setzt = true
-        schalterView(art).isChecked = an(art)
+        schalterView(art).isChecked = an(art) && !fehlt
+        schalterView(art).isEnabled = !fehlt
         setzt = false
 
         // Off: the card says what goes where, and nothing else.
@@ -450,8 +474,17 @@ class SicherungActivity : AppCompatActivity() {
         stand.text = standText.orEmpty()
         stand.visibility = if (standText == null) View.GONE else View.VISIBLE
 
+        val satz = meldungSatz(art)
+        val meldung = meldungView(art)
+        meldung.text = satz.orEmpty()
+        // a part the box lacks says only its trace, never an orange line (homes ADR 0001 §10)
+        meldung.visibility = if (satz == null || fehlt) View.GONE else View.VISIBLE
+    }
+
+    /** The line under [art]'s switch: why it stayed off, or its last word when that was not good. */
+    private fun meldungSatz(art: Schalter): String? {
         val m = if (art == Schalter.KONTAKTE) store.kontakteMeldung() else store.meldung(Quelle.SMS)
-        val satz = hinweise[art]?.satz
+        return hinweise[art]?.satz
             ?: if (gewollt(art) && !Erlaubnis.hat(this, art.rechte)) {
                 if (art == Schalter.KONTAKTE) KontakteLauf.KEINE_ERLAUBNIS else NachrichtenLauf.KEINE_ERLAUBNIS
             } else if (gewollt(art) && m != null && m.art != Meldung.Art.OK) {
@@ -459,9 +492,6 @@ class SicherungActivity : AppCompatActivity() {
             } else {
                 null
             }
-        val meldung = meldungView(art)
-        meldung.text = satz.orEmpty()
-        meldung.visibility = if (satz == null) View.GONE else View.VISIBLE
     }
 
     /** „Letzte Übertragung: <date> – <what>“, the same scheme on both cards; the same words before the first. */

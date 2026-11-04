@@ -7,6 +7,10 @@ import android.content.Context
 import android.os.Bundle
 import android.provider.CalendarContract
 import android.provider.ContactsContract
+import cloud.dopp.homes.data.Napi
+import cloud.dopp.homes.kann.Kann
+import cloud.dopp.homes.kann.Liste
+import cloud.dopp.homes.kann.hat
 import java.security.MessageDigest
 
 /**
@@ -40,9 +44,10 @@ object HomesKonto {
     /** How often Android syncs the account by itself, in seconds. */
     const val STUNDE = 60L * 60L
 
-    enum class Teil(val authority: String) {
-        KONTAKTE(ContactsContract.AUTHORITY),
-        KALENDER(CalendarContract.AUTHORITY),
+    /** A part: its provider, and its key in `/napi/kann`'s `konto` (homes ADR 0001 §2). */
+    enum class Teil(val authority: String, val key: String) {
+        KONTAKTE(ContactsContract.AUTHORITY, Napi.TEIL_KONTAKTE),
+        KALENDER(CalendarContract.AUTHORITY, Napi.TEIL_KALENDER),
     }
 
     val konto = Account(NAME, TYP)
@@ -72,16 +77,48 @@ object HomesKonto {
      */
     fun ausschalten(ctx: Context, teil: Teil) {
         if (!da(ctx)) return
-        ContentResolver.removePeriodicSync(konto, teil.authority, Bundle.EMPTY)
-        ContentResolver.setSyncAutomatically(konto, teil.authority, false)
-        ContentResolver.cancelSync(konto, teil.authority)
-        ContentResolver.setIsSyncable(konto, teil.authority, 0)
+        anhalten(teil)
         KontoStore(ctx).vergiss(teil)
-        if (Teil.values().none { it != teil && an(ctx, it) }) {
+        // a part held while the box lacks it keeps the account: its entries are not the person's to lose here
+        if (Teil.values().none { it != teil && (an(ctx, it) || KontoStore(ctx).angehalten(it)) }) {
             AccountManager.get(ctx).removeAccountExplicitly(konto)
             return
         }
         runCatching { leeren(ctx, teil) } // without the permission any more: the entries stay until the account goes
+    }
+
+    /**
+     * The parts follow the box (homes ADR 0001 §3): a part on whose key [kann]
+     * lacks stops syncing — its entries stay on the phone, nothing is deleted
+     * without asking — and syncs again once the box offers it again. Unknown:
+     * nothing changes.
+     */
+    fun folgen(ctx: Context, kann: Kann?) {
+        val store = KontoStore(ctx)
+        Teil.values().forEach { teil ->
+            val bietet = kann.hat(Liste.KONTO, teil.key)
+            when {
+                bietet && store.angehalten(teil) -> fortsetzen(ctx, teil, store)
+                !bietet && an(ctx, teil) -> {
+                    anhalten(teil)
+                    store.setzeAngehalten(teil, true)
+                }
+            }
+        }
+    }
+
+    /** A held part the box offers again: it syncs as before, where the account still is. */
+    private fun fortsetzen(ctx: Context, teil: Teil, store: KontoStore) {
+        store.setzeAngehalten(teil, false)
+        if (da(ctx)) einschalten(ctx, teil)
+    }
+
+    /** [teil] syncs no more, by Android or by the app; what it wrote stays. */
+    private fun anhalten(teil: Teil) {
+        ContentResolver.removePeriodicSync(konto, teil.authority, Bundle.EMPTY)
+        ContentResolver.setSyncAutomatically(konto, teil.authority, false)
+        ContentResolver.cancelSync(konto, teil.authority)
+        ContentResolver.setIsSyncable(konto, teil.authority, 0)
     }
 
     /** The account and everything in it off the phone: on unpairing. */

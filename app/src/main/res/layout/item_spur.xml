@@ -46,6 +46,16 @@
             android:textColor="@color/homes_text_faint"
             android:textSize="13sp" />
 
+        <!-- Inside a screen (an account or backup part): the module's reason. -->
+        <TextView
+            android:id="@+id/spur_grund"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/homes_text_faint"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
         <!-- What sharing to it would do: a share target the box lacks is off in
              Android's share sheet, and this is its trace (homes ADR 0001 §10). -->
         <TextView
