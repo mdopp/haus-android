@@ -27,30 +27,6 @@
     <dimen name="text_title">17sp</dimen>
     <dimen name="text_body">15sp</dimen>
     <dimen name="text_label">13sp</dimen>
-    <dimen name="text_tile">12sp</dimen>
-
-    <!-- Misc -->
-    <dimen name="hero_glow_size">190dp</dimen>
-
-    <!-- ── Brand lockup, two sizes (#130) ───────────────────────────────────
-         The wordmark in its glow is the header of BOTH home states, but a paired
-         install has content to show underneath it, so it is presented smaller
-         there: no claim line, a tighter lockup, roughly two thirds the height.
-         The plain tokens are the first-run presentation, the `_compact` ones the
-         paired one; `OnboardingHomeActivity.renderBrand` swaps between them.
-
-         Only the halo and the two paddings have a compact token. The wordmark
-         does NOT (#132): it used to carry its own 26sp/25dp pair, shrunk by a
-         different factor than the halo, so the mark filled the small circle more
-         than the large one and looked crammed. `renderBrand` now derives it from
-         `hero_glow_size_compact / hero_glow_size` — what carries over is the
-         ratio of mark to halo, not a second set of hand-picked sizes. -->
-    <dimen name="brand_lockup_top">32dp</dimen>
-    <dimen name="brand_lockup_top_compact">4dp</dimen>
-    <dimen name="brand_figure_height">39dp</dimen>
-    <dimen name="brand_rule_bottom">14dp</dimen>
-    <dimen name="brand_rule_bottom_compact">18dp</dimen>
-    <dimen name="hero_glow_size_compact">112dp</dimen>
 
     <!-- The energy widget's Heute column beside the flow picture. -->
     <dimen name="energy_today_width">110dp</dimen>

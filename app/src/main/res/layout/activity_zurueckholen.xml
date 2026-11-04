@@ -44,7 +44,6 @@
 
         <!-- Signal -->
         <LinearLayout
-            android:id="@+id/zurueck_signal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"
@@ -112,7 +111,6 @@
 
         <!-- WhatsApp -->
         <LinearLayout
-            android:id="@+id/zurueck_whatsapp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_md"

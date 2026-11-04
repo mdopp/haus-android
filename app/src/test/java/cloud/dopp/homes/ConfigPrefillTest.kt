@@ -11,7 +11,6 @@ import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
-import cloud.dopp.homes.data.ToolDefs
 import cloud.dopp.homes.widget.ConfigEntry
 import cloud.dopp.homes.widget.ConfigPrefill
 import cloud.dopp.homes.widget.ToolWidgetConfigActivity

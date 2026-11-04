@@ -21,7 +21,6 @@
 
         <!-- The app's icon, the assistant's name (/napi/assistent), a rule in the fixed accent. -->
         <LinearLayout
-            android:id="@+id/assistent_block"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xl"
@@ -45,7 +44,6 @@
                 android:text="@string/assistent_name" />
 
             <View
-                android:id="@+id/assistent_rule"
                 android:layout_width="52dp"
                 android:layout_height="3dp"
                 android:layout_marginTop="10dp"

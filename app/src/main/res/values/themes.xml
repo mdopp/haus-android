@@ -171,12 +171,6 @@
         <item name="android:textSize">@dimen/text_label</item>
     </style>
 
-    <style name="Text.Homes.Tile">
-        <item name="android:textColor">@color/homes_text</item>
-        <item name="android:textSize">@dimen/text_tile</item>
-        <item name="android:textStyle">bold</item>
-    </style>
-
     <!-- Dark, rounded input field. -->
     <style name="Widget.Homes.EditText" parent="Widget.AppCompat.EditText">
         <item name="android:background">@drawable/field_homes</item>
