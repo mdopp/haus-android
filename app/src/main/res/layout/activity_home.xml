@@ -232,6 +232,39 @@
                 android:background="@drawable/card_homes"
                 android:orientation="vertical" />
 
+            <!-- What the box lacks (homes ADR 0001 §10): quiet, one trace per module,
+                 each with „Hier anfordern“; gone while the box lacks nothing or
+                 what it can do is unknown. -->
+            <LinearLayout
+                android:id="@+id/spuren_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/Text.Homes.Title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_lg"
+                    android:textColor="@color/homes_text_muted"
+                    android:text="@string/spuren_titel" />
+
+                <TextView
+                    style="@style/Text.Homes.Label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_xs"
+                    android:text="@string/spuren_hinweis" />
+
+                <LinearLayout
+                    android:id="@+id/spuren_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_homes"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
             <!-- Where the app is paired, beside the way to unpair (owner, 2026-11-03). -->
             <TextView
                 android:id="@+id/status"

@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import cloud.dopp.homes.data.ApiClient
+import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.data.TokenStore
 
 /**
@@ -21,6 +22,7 @@ class EnergyWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 730_000, tapStart
     }
 
     override fun refresh(context: Context, appWidgetId: Int) {
+        if (WidgetFallback.weg(context, appWidgetId, KannKey.ENERGIE)) return // the box lost its energy
         val mgr = AppWidgetManager.getInstance(context)
         val paired = TokenStore.isPaired(context)
         val tap = tapPending(context, appWidgetId)

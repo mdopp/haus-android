@@ -193,6 +193,7 @@ app/src/main/java/cloud/dopp/homes/
   sicherung/   the backup job (SicherungWorker), restore, age, SMS/vCard
   standort/    location recording (Plan, Ruhe, Puffer) and the history import
   konto/       the Homes account: two sync adapters, vCard and iCal readers
+  kann/        what the box can do (/napi/kann, homes ADR 0001): kept, read, „Hier anfordern“
 app/src/test/  JVM tests with Robolectric, including the preview renders
 e2e/           emulator runs (.github/workflows/live-e2e.yml)
 art/icon.svg   the one icon master; scripts/icons renders every PNG

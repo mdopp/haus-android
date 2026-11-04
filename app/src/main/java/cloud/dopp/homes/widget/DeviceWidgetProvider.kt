@@ -10,6 +10,7 @@ import android.widget.RemoteViews
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
 import cloud.dopp.homes.data.Card
+import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.data.ScreenGate
 import cloud.dopp.homes.ui.StartDevices
 
@@ -42,6 +43,7 @@ class DeviceWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 900_000, tapStart
             runCatching { mgr.updateAppWidget(appWidgetId, unbound(context, appWidgetId)) }
             return
         }
+        if (WidgetFallback.weg(context, appWidgetId, KannKey.GERAET)) return // the box lost its devices
         // the card read last at once, then the fresh one
         val cached = WidgetCache.getCard(context, appWidgetId)
         runCatching { mgr.updateAppWidget(appWidgetId, build(context, appWidgetId, cached)) }

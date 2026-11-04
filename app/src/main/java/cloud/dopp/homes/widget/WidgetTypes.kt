@@ -3,6 +3,7 @@ package cloud.dopp.homes.widget
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import cloud.dopp.homes.R
+import cloud.dopp.homes.data.Napi.KannKey
 
 /**
  * The typed table of pinnable widget types (#34): one entry per home-screen
@@ -18,13 +19,15 @@ object WidgetTypes {
 
     data class Entry(
         val provider: Class<*>,
+        /** Its key in `/napi/kann`'s `widgets` (homes ADR 0001 §2). */
+        val key: String,
         @StringRes val label: Int,
         @DrawableRes val icon: Int,
     )
 
     /** Ordered as shown. */
     val ALL: List<Entry> = listOf(
-        Entry(DeviceWidgetProvider::class.java, R.string.widget_type_device, R.drawable.ic_device),
-        Entry(EnergyWidgetProvider::class.java, R.string.widget_type_energy, R.drawable.ic_bolt),
+        Entry(DeviceWidgetProvider::class.java, KannKey.GERAET, R.string.widget_type_device, R.drawable.ic_device),
+        Entry(EnergyWidgetProvider::class.java, KannKey.ENERGIE, R.string.widget_type_energy, R.drawable.ic_bolt),
     )
 }

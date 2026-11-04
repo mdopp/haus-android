@@ -27,6 +27,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import cloud.dopp.homes.R
+import cloud.dopp.homes.kann.KannLeser
 import cloud.dopp.homes.data.Assistent
 import cloud.dopp.homes.data.Napi
 import cloud.dopp.homes.data.ServerStore
@@ -294,6 +295,8 @@ class LiveService : Service() {
                 connectedAtMs = SystemClock.elapsedRealtime()
                 show(R.string.live_on)
                 resync()
+                // a restarted Homes may offer something else (homes ADR 0001 §3): a 304 when not
+                KannLeser.lesen(this@LiveService, immer = true)
             }
         }
 

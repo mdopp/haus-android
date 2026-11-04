@@ -481,6 +481,61 @@ object Napi {
     const val IMPORT_FERTIG = "fertig"
     const val IMPORT_FEHLER = "fehler"
 
+    /**
+     * `GET /napi/kann` (homes ADR 0001 §2, §10): what this box can do,
+     * `{version, module: [ModulJson], app: AngebotJson}`. Fields are only ever
+     * added (version 1); a Homes without the path answers 404 `not_found`.
+     */
+    object KannJson {
+        const val VERSION = "version"
+        const val MODULE = "module"
+        const val APP = "app"
+    }
+
+    /**
+     * One module of `/napi/kann`, and the answer of `POST /napi/kann/anfordern`:
+     * on or off, why not ([GRUND], German), what it would bring ([BIETET]),
+     * and its trace ([SPUR_ID]: fehlt, aus, or its wish's state; [SPUR] the
+     * German words beside it) and whether it offers „Hier anfordern“ ([ANFORDERN]).
+     */
+    object ModulJson {
+        const val NAME = "name"
+        const val TITEL = "titel"
+        const val AN = "an"
+        const val GRUND = "grund"
+        const val BIETET = "bietet"
+        const val ADMINS = "admins"
+        const val SPUR_ID = "spur_id"
+        const val SPUR = "spur"
+        const val ANFORDERN = "anfordern"
+    }
+
+    /** What a module offers the app, and `app`, the union of those on: the app's own keys per list. */
+    object AngebotJson {
+        const val WIDGETS = "widgets"
+        const val TEILEN = "teilen"
+        const val KONTO = "konto"
+        const val SICHERUNG = "sicherung"
+        const val MEHR = "mehr"
+    }
+
+    /** A refused `POST /napi/kann/anfordern`: `{error}`, a German sentence (401 says `unauthorized`). */
+    object AnfordernJson {
+        const val ERROR = MerkenJson.ERROR
+    }
+
+    /**
+     * The app's keys in `/napi/kann`'s lists (homes ADR 0001 §2): the widget
+     * types (`tool:` and a tool def's id), the Mehr rows.
+     */
+    object KannKey {
+        const val GERAET = "geraet"
+        const val ENERGIE = "energie"
+        const val TOOL = "tool:"
+        const val DATEN_SICHERN = "daten-sichern"
+        const val STANDORTVERLAUF = "standortverlauf"
+    }
+
     // --- the calls -------------------------------------------------------------
 
     /** The household assistant's name („Homes“ when the box sets none). */
@@ -645,4 +700,21 @@ object Napi {
 
     /** How far the import got, and at the end what came over or why not. */
     val STANDORT_IMPORT_STAND = Endpoint(Method.GET, "/napi/standort/import/{id}", reply = listOf(ImportStandJson))
+
+    // --- what the box can do (homes ADR 0001) ---
+
+    /**
+     * The box's modules and what the app may offer; [ETAG] for next time,
+     * 304 when [IF_NONE_MATCH] names it.
+     */
+    val KANN = Endpoint(
+        Method.GET, "/napi/kann", reply = listOf(KannJson, ModulJson, AngebotJson),
+        headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+    )
+
+    /** A wish for an off module, for the device's person: the module's entry with its new state. */
+    val KANN_ANFORDERN = Endpoint(
+        Method.POST, "/napi/kann/anfordern", body = listOf("modul"),
+        reply = listOf(ModulJson, AngebotJson, AnfordernJson),
+    )
 }

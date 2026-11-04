@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import cloud.dopp.homes.HomesConfig
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ApiClient
+import cloud.dopp.homes.data.Napi.KannKey
 import cloud.dopp.homes.data.Assistent
 import cloud.dopp.homes.data.BoxApiClient
 import cloud.dopp.homes.data.Card
@@ -33,6 +34,10 @@ import cloud.dopp.homes.data.PairLinks
 import cloud.dopp.homes.data.Pairing
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.kann.Anfordern
+import cloud.dopp.homes.kann.KannLeser
+import cloud.dopp.homes.kann.KannStore
+import cloud.dopp.homes.kann.Liste
 import cloud.dopp.homes.konto.HomesKonto
 import cloud.dopp.homes.data.ToolDef
 import cloud.dopp.homes.realtime.Live
@@ -107,6 +112,13 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /** What the box can do changed (homes ADR 0001): the widget list and Mehr draw again. */
+    private val kannNeu = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (paired()) renderWidgetTypes()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
@@ -138,8 +150,10 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         ContextCompat.registerReceiver(this, tapDone, IntentFilter(DeviceTaps.ACTION_DONE), ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(this, kannNeu, IntentFilter(KannLeser.ACTION_GEAENDERT), ContextCompat.RECEIVER_NOT_EXPORTED)
         render()
         if (paired()) refreshDevices()
+        KannLeser.lesen(this) // what the box can do, at most once a minute
         // The app-icon long-press menu (#97): picks up a widget removed while away.
         if (paired()) AppShortcuts.refreshAsync(applicationContext)
         // The app's screen may start the live service (Android 12+): placed widgets, the switch, the pairing.
@@ -148,6 +162,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onPause() {
         runCatching { unregisterReceiver(tapDone) }
+        runCatching { unregisterReceiver(kannNeu) }
         super.onPause()
     }
 
@@ -375,25 +390,32 @@ class HomeActivity : AppCompatActivity() {
         renderMehr()
     }
 
-    /** Mehr: Daten sichern (#194), Standortverlauf (owner 2026-11-02), Homes auf dem Handy (#206). */
+    /**
+     * Mehr: Daten sichern (#194) and Standortverlauf (owner 2026-11-02) as the
+     * box offers them, Homes auf dem Handy (#206); below, quiet, what the box
+     * lacks, each with „Hier anfordern“ (homes ADR 0001 §10).
+     */
     private fun renderMehr() {
         val group = findViewById<ViewGroup>(R.id.mehr_group)
         group.removeAllViews()
-        group.addView(
-            row(group, R.drawable.ic_backup, getString(R.string.sicherung_title)) {
+        val kann = KannStore.kann(this)
+        val zeilen = listOf(
+            StartAngebot.Zeile(KannKey.DATEN_SICHERN, R.drawable.ic_backup, getString(R.string.sicherung_title)) {
                 startActivity(Intent(this, SicherungActivity::class.java))
             },
-        )
-        group.addView(
-            row(group, R.drawable.ic_standort, getString(R.string.standort_title)) {
+            StartAngebot.Zeile(KannKey.STANDORTVERLAUF, R.drawable.ic_standort, getString(R.string.standort_title)) {
                 startActivity(Intent(this, StandortActivity::class.java))
             },
         )
+        val angebot = StartAngebot(this, kann, ::renderWidgetTypes)
+        angebot.fuellen(group, Liste.MEHR, zeilen, { row(group, it.icon, it.label, it.tap) }, inSpuren = true)
         group.addView(
             row(group, R.drawable.ic_konto, getString(R.string.konto_title)) {
                 startActivity(Intent(this, HomesKontoActivity::class.java))
             },
         )
+        val spuren = angebot.spuren(findViewById(R.id.spuren_group))
+        findViewById<View>(R.id.spuren_section).visibility = if (spuren) View.VISIBLE else View.GONE
     }
 
     private fun row(group: ViewGroup, icon: Int, label: String, onTap: () -> Unit): View {
@@ -421,15 +443,23 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    /** The widget list: the fixed types first, then a row per tool. */
+    /**
+     * The widget list: the fixed types first, then a row per tool; a type the
+     * box lacks is a quiet trace that cannot be placed (homes ADR 0001 §10).
+     */
     private fun showTools(defs: List<ToolDef>) {
         val group = findViewById<ViewGroup>(R.id.widgets_group)
         group.removeAllViews()
-        WidgetTypes.ALL.forEach { entry ->
-            group.addView(row(group, entry.icon, getString(entry.label)) { pin(entry.provider) })
+        val zeilen = WidgetTypes.ALL.map { e ->
+            StartAngebot.Zeile(e.key, e.icon, getString(e.label)) { pin(e.provider) }
+        } + defs.map { def ->
+            StartAngebot.Zeile(KannKey.TOOL + def.id, R.drawable.ic_services, def.label) { pinTool(def) }
         }
-        defs.forEach { def ->
-            group.addView(row(group, R.drawable.ic_services, def.label) { pinTool(def) })
+        val kept = WidgetStore.keptToolCatalog(this)
+        StartAngebot(this, KannStore.kann(this), ::renderWidgetTypes).fuellen(
+            group, Liste.WIDGETS, zeilen, { row(group, it.icon, it.label, it.tap) },
+        ) { key, m ->
+            if (!StartAngebot.widget(key)) null else kept.firstOrNull { KannKey.TOOL + it.id == key }?.label ?: m.titel
         }
     }
 
@@ -637,6 +667,8 @@ class HomeActivity : AppCompatActivity() {
         Assistent.clear(this)
         Pairing.cancel(this)
         HomesKonto.entfernen(applicationContext) // the household's contacts and calendars leave with the pairing (#206)
+        KannStore.clear(this) // the next Homes says afresh what it can do
+        Anfordern.clear()
         AppShortcuts.refreshAsync(applicationContext) // takes the share target away (#188)
         findViewById<EditText>(R.id.server_url).setText("")
         Live.ensure(applicationContext)
