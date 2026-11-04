@@ -29,12 +29,17 @@ APK=app/build/outputs/apk/debug/app-debug.apk
 TEST_APK=app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 PKG=cloud.dopp.homes
 SVC=$PKG/.realtime.LiveService
+ADB=$(type -P adb)
 mkdir -p "$OUT"
 failed=()
 
 say() { echo "[$(date +%T)] $*"; }
 pass() { say "PASS $1"; }
 fail() { say "FAIL $1"; failed+=("$1"); }
+# Every adb call is bounded: with the emulator gone, `adb logcat`, `adb install` and
+# `adb wait-for-device` wait for it without end (API 35, 2026-11-04: half an hour until
+# the job's timeout). 180 s is far over the longest call (an instrumented step, ~30 s).
+adb() { timeout 180 "$ADB" "$@"; }
 on() { adb shell "$@" | tr -d '\r'; }
 mark() { wc -l < "$LOG" | tr -d ' '; }
 # lines after mark $1 whose event is $2 (the text after the timestamp starts with it)
@@ -60,7 +65,7 @@ booted() {
 
 API=$(on getprop ro.build.version.sdk)
 say "API $API"
-adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
+adb root >/dev/null 2>&1; sleep 3; timeout 120 "$ADB" wait-for-device || { fail "the emulator is not there"; exit 1; }
 on svc power stayon true
 on settings put system screen_off_timeout 1800000
 on locksettings set-disabled true >/dev/null 2>&1 || true
@@ -173,7 +178,7 @@ wait_for "$m" OPEN 1 30 && pass "4 an app update starts it again" || fail "4 not
 # 5 --------------------------------------------------------------------------
 adb logcat -d > "$OUT/logcat-before-reboot.txt"
 m=$(mark)
-reboot_once() { adb reboot; timeout 180 adb wait-for-device && booted; }
+reboot_once() { adb reboot; timeout 180 "$ADB" wait-for-device && booted; }
 if reboot_once || { say "reboot: one retry"; reboot_once; }; then
   wake
   wait_for "$m" OPEN 1 60 && pass "5 after a real reboot: OPEN within 60 s" || fail "5 no OPEN within 60 s of boot"
