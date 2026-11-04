@@ -1,10 +1,10 @@
-English · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md)
-
 # Homes for Android
 
 **Your home on your home screen: switch a lamp, watch the solar power,
 keep your phone's backups and your location history at home, all with your
 own box and without Google.**
+
+> **Language:** the pages and the app speak German today; English, Spanish and French are on the way.
 
 The Homes app is the phone side of [Homes](https://github.com/mdopp/homes),
 the family's page on a [Laib](https://github.com/mdopp/laib) box. Pair it
