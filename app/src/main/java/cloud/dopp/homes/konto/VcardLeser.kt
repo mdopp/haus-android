@@ -10,7 +10,7 @@ import cloud.dopp.homes.sicherung.Kontakt
  * #206): vCard 3.0 and 4.0 (RFC 2426, RFC 6350), as phones and Homes wrote
  * them into Radicale. Read into the app's own [Kontakt], the shape the
  * phone's address book takes. Lines unfolded, a group prefix (`item1.`)
- * dropped, text values unescaped, types lower case (`TYPE=CELL`,
+ * kept apart (a URL takes the X-ABLabel of its group), text values unescaped, types lower case (`TYPE=CELL`,
  * `TYPE="home,voice"`, vCard 2.1's bare `;CELL`). A card without a UID is
  * left out: the phone could not tell it from the next. Pure.
  */
@@ -49,8 +49,8 @@ object VcardLeser {
         return out
     }
 
-    /** One content line: its name (upper case, no group), its parameters (names upper case), its raw value. */
-    data class Zeile(val name: String, val parameter: Map<String, List<String>>, val wert: String)
+    /** One content line: its name (upper case, no group), its parameters (names upper case), its raw value, its group (lower case). */
+    data class Zeile(val name: String, val parameter: Map<String, List<String>>, val wert: String, val gruppe: String? = null)
 
     fun zeile(z: String): Zeile? {
         // the value starts at the first colon outside a quoted parameter value
@@ -68,6 +68,7 @@ object VcardLeser {
         if (doppelpunkt <= 0) return null
         val kopf = teile(z.substring(0, doppelpunkt), ';', quoted = true)
         val name = kopf.first().substringAfterLast('.').trim().uppercase()
+        val gruppe = kopf.first().substringBeforeLast('.', "").trim().lowercase().ifEmpty { null }
         val parameter = LinkedHashMap<String, MutableList<String>>()
         kopf.drop(1).forEach { p ->
             val gleich = p.indexOf('=')
@@ -75,13 +76,14 @@ object VcardLeser {
             val werte = teile(v, ',', quoted = true).map { it.trim().trim('"') }.filter { it.isNotEmpty() }
             parameter.getOrPut(k) { ArrayList() }.addAll(werte)
         }
-        return Zeile(name, parameter, z.substring(doppelpunkt + 1))
+        return Zeile(name, parameter, z.substring(doppelpunkt + 1), gruppe)
     }
 
     private fun karte(zeilen: List<String>): Karte? {
         val gelesen = zeilen.mapNotNull(::zeile)
         val uid = gelesen.firstOrNull { it.name == "UID" }?.let { text(it.wert) }?.trim()?.ifEmpty { null } ?: return null
         var k = Kontakt(uid = uid)
+        val labels = gelesen.filter { it.name == "X-ABLABEL" && it.gruppe != null }.associate { it.gruppe to text(it.wert).trim().ifEmpty { null } }
         for (z in gelesen) {
             val typen = (z.parameter["TYPE"] ?: emptyList()).flatMap { teile(it, ',', quoted = false) }
                 .map { it.trim().lowercase() }.filter { it.isNotEmpty() && it != "internet" }
@@ -118,7 +120,7 @@ object VcardLeser {
                 "TITLE" -> k.copy(titel = k.titel ?: text(z.wert).ifBlank { null })
                 "BDAY" -> k.copy(geburtstag = k.geburtstag ?: geburtstag(z.wert))
                 "NOTE" -> text(z.wert).ifBlank { null }?.let { k.copy(notiz = listOfNotNull(k.notiz, it).joinToString("\n")) } ?: k
-                "URL" -> text(z.wert).trim().ifEmpty { null }?.let { k.copy(webseiten = k.webseiten + it) } ?: k
+                "URL" -> text(z.wert).trim().ifEmpty { null }?.let { k.copy(webseiten = k.webseiten + Eintrag(it, label = labels[z.gruppe], gruppe = z.gruppe)) } ?: k
                 else -> k
             }
         }

@@ -59,7 +59,7 @@ class HomesKontoTest {
         assertEquals("Chefin", oma.titel)
         assertEquals("1950-01-02", oma.geburtstag)
         assertEquals("Zeile eins\nZeile zwei; mit Strichpunkt", oma.notiz)
-        assertEquals(listOf("https://example.org"), oma.webseiten)
+        assertEquals(listOf(Eintrag("https://example.org")), oma.webseiten)
         val lang = karten[1].kontakt
         assertEquals("Ein sehr langer Name der über die fünfundsiebzig Zeichen hinausgeht", lang.anzeigename)
         assertEquals(listOf(Eintrag("+4915112345", listOf("cell"))), lang.telefone)

@@ -203,30 +203,24 @@ class KalenderAbgleich(
         }
         plan.weg.forEach {
             ops += ContentProviderOperation.newDelete(zeile(Events.CONTENT_URI, it)).build()
-            flush(ops)
+            provider.flush(ops)
         }
         plan.geaendert.forEach { (eid, t) ->
             ops += ContentProviderOperation.newUpdate(zeile(Events.CONTENT_URI, eid)).withValues(werte(t, erinnerung, k.id)).build()
             ops += ContentProviderOperation.newDelete(alsAdapter(Reminders.CONTENT_URI))
                 .withSelection("${Reminders.EVENT_ID} = ?", arrayOf(eid.toString())).build()
             alarme(t, eid, 0)
-            flush(ops)
+            provider.flush(ops)
         }
         plan.neu.sortedBy { it.instanz != null }.forEach { t -> // a series before its changed instances
             val start = ops.size
             ops += ContentProviderOperation.newInsert(alsAdapter(Events.CONTENT_URI))
                 .withValues(werte(t, erinnerung, k.id)).withValue(Events.CALENDAR_ID, id).withValue(Events._SYNC_ID, t.syncId).build()
             alarme(t, null, start)
-            flush(ops)
+            provider.flush(ops)
         }
-        flush(ops, alles = true)
+        provider.flush(ops, alles = true)
         return kommend.size
-    }
-
-    private fun flush(ops: ArrayList<ContentProviderOperation>, alles: Boolean = false) {
-        if (ops.isEmpty() || (!alles && ops.size < STAPEL)) return
-        provider.applyBatch(ops)
-        ops.clear()
     }
 
     companion object {
@@ -235,7 +229,6 @@ class KalenderAbgleich(
 
         const val SERIE = "Einen einzelnen Termin einer Serie ändert das Handy noch nicht im Haus: Die Änderung ist verworfen. Ändere die ganze Serie, oder den Termin in Homes."
 
-        private const val STAPEL = 400
         private val UTC: TimeZone = TimeZone.getTimeZone("UTC")
 
         /** What [senden] reads of a dirty entry. */

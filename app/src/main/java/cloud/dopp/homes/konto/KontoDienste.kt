@@ -81,7 +81,7 @@ private class KontoSyncAdapter(ctx: Context, private val teil: HomesKonto.Teil) 
         }
         val client = GemeinsamClient(base, token)
         when (teil) {
-            HomesKonto.Teil.KONTAKTE -> KontakteAbgleich(provider, store, client::kontakte, client::schreiben).laufen(result)
+            HomesKonto.Teil.KONTAKTE -> KontakteAbgleich(provider, store, client::kontakte, client::schreiben, base).laufen(result)
             HomesKonto.Teil.KALENDER -> KalenderAbgleich(provider, store, client::kalender, client::schreiben).laufen(result)
         }
     }

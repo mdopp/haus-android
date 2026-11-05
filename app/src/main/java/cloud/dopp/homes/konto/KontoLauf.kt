@@ -1,5 +1,7 @@
 package cloud.dopp.homes.konto
 
+import android.content.ContentProviderClient
+import android.content.ContentProviderOperation
 import android.content.SyncResult
 import cloud.dopp.homes.data.GemeinsamClient
 import cloud.dopp.homes.sicherung.Lauf
@@ -103,7 +105,16 @@ abstract class KontoLauf(
         else -> throw Spaeter()
     }
 
+    /** Apply [ops] once they are many (or [alles]): a batch the provider takes in one go, never one cut inside an entry. */
+    protected fun ContentProviderClient.flush(ops: ArrayList<ContentProviderOperation>, alles: Boolean = false) {
+        if (ops.isEmpty() || (!alles && ops.size < STAPEL)) return
+        applyBatch(ops)
+        ops.clear()
+    }
+
     companion object {
+        /** Operations a batch: the provider's yield limit is 500. */
+        private const val STAPEL = 400
         const val VERWORFEN = "Ein Eintrag war im Haus inzwischen anders: Es gilt die Fassung aus dem Haus, die Änderung am Handy ist verworfen."
         const val UNERREICHBAR = "Homes war nicht erreichbar: Android versucht es bald von selbst wieder."
         const val NICHT_GESCHRIEBEN = "Das Handy hat die Einträge gerade nicht angenommen: Android versucht es bald wieder."

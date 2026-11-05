@@ -1,7 +1,7 @@
 package cloud.dopp.homes.sicherung
 
-/** One phone number, e-mail address or web address, with its vCard types (`cell`, `work`, …). */
-data class Eintrag(val wert: String, val typen: List<String> = emptyList())
+/** One phone number, e-mail address or web address, with its vCard types (`cell`, `work`, …); a web address with its label and vCard group. */
+data class Eintrag(val wert: String, val typen: List<String> = emptyList(), val label: String? = null, val gruppe: String? = null)
 
 /** A postal address, in the order of the vCard ADR components. */
 data class Adresse(
@@ -33,7 +33,7 @@ data class Kontakt(
     /** `yyyy-MM-dd`; anything else is left out. */
     val geburtstag: String? = null,
     val notiz: String? = null,
-    val webseiten: List<String> = emptyList(),
+    val webseiten: List<Eintrag> = emptyList(),
 )
 
 /**
@@ -69,9 +69,24 @@ object Vcard {
         k.titel?.takeIf { it.isNotBlank() }?.let { zeilen += "TITLE:${text(it)}" }
         k.geburtstag?.trim()?.takeIf { DATUM.matches(it) }?.let { zeilen += "BDAY:$it" }
         k.notiz?.takeIf { it.isNotBlank() }?.let { zeilen += "NOTE:${text(it)}" }
-        k.webseiten.filter { it.isNotBlank() }.forEach { zeilen += "URL:${text(it.trim())}" }
+        k.webseiten.filter { it.wert.isNotBlank() }.forEach { zeilen += "URL:${text(it.wert.trim())}" }
         zeilen += "END:VCARD"
         return zeilen.joinToString("") { falte(it) + CRLF }
+    }
+
+    /**
+     * [k] without the two links Homes adds to each household card: a URL that
+     * came in a `homes-` group, or whose path is `/kontakte/<uid>/dokumente` or
+     * `/kontakte/<uid>/nachrichten` on the paired Homes address [homes]. Homes
+     * drops them from a card it is sent anyway; the person's own URLs stay.
+     */
+    fun ohneHomesLinks(k: Kontakt, homes: String?): Kontakt = k.copy(webseiten = k.webseiten.filterNot { homesLink(it, homes) })
+
+    private fun homesLink(w: Eintrag, homes: String?): Boolean {
+        if (w.gruppe?.startsWith("homes-", ignoreCase = true) == true) return true
+        val basis = homes?.trim()?.trimEnd('/')?.ifEmpty { null } ?: return false
+        val url = w.wert.trim()
+        return url.startsWith("$basis/", ignoreCase = true) && HOMES_LINK.matches(url.substring(basis.length))
     }
 
     /** FN is required: the display name, else the name's parts, the company, a number or an address. */
@@ -127,5 +142,6 @@ object Vcard {
 
     private const val MAX = 75
     private val DATUM = Regex("""\d{4}-\d{2}-\d{2}""")
+    private val HOMES_LINK = Regex("""/kontakte/[^/?#]+/(dokumente|nachrichten)/?""")
     private val TYP = Regex("""[A-Z][A-Z0-9-]*""")
 }
