@@ -20,6 +20,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.ContactsContract.RawContacts
 import android.util.Base64
+import androidx.core.graphics.scale
 import cloud.dopp.homes.data.GemeinsamClient
 import cloud.dopp.homes.sicherung.HandyKontakte
 import cloud.dopp.homes.sicherung.Kontakt
@@ -244,7 +245,7 @@ class KontakteAbgleich(
             val b = BitmapFactory.decodeByteArray(bild, 0, bild.size) ?: return null
             val f = KANTE.toFloat() / maxOf(b.width, b.height)
             if (f >= 1f) return bild
-            val klein = Bitmap.createScaledBitmap(b, (b.width * f).roundToInt().coerceAtLeast(1), (b.height * f).roundToInt().coerceAtLeast(1), true)
+            val klein = b.scale((b.width * f).roundToInt().coerceAtLeast(1), (b.height * f).roundToInt().coerceAtLeast(1))
             return ByteArrayOutputStream().use { out ->
                 klein.compress(Bitmap.CompressFormat.JPEG, JPEG_GUETE, out)
                 out.toByteArray()
