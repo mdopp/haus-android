@@ -78,7 +78,7 @@ class AnfordernTest {
 
     @Test
     fun failedHomesSentenceIsShown() {
-        val satz = "Diese Box nimmt noch keine Wünsche an."
+        val satz = "Diese Box nimmt noch keine Anfragen an."
         server.enqueue(MockResponse().setResponseCode(503).setBody("""{"ok":false,"error":"$satz"}"""))
         assertEquals(Anfrage.Abgelehnt(503, satz), Anfordern.einmal(ctx(), client(), "standort"))
         assertEquals("nothing changed on a refusal", "fehlt", standort().spurId)

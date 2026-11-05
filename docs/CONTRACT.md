@@ -389,14 +389,14 @@ household's shared data on the phone, in its own apps: an Android account
 „Homes“ (type `cloud.dopp.homes`) with two sync adapters, each behind its own
 switch under Mehr → Homes auf dem Handy and its own permission.
 
-- **Kontakte des Hauses** (WRITE_CONTACTS): `GET
+- **Haushalts-Kontakte** (WRITE_CONTACTS): `GET
   /napi/gemeinsam/kontakte?schreibbar=1` → `text/vcard`, every card of
   Homes' own address books, each that can be written back with its version
   `X-HOMES-ETAG`. Each card one raw contact of the account, SOURCE_ID the
   SHA-1 of its UID, SYNC1 the hash of its text, SYNC2 the UID, SYNC3 the
   version. Visible without a group, so the dialer, WhatsApp and mail find
   them.
-- **Kalender des Hauses** (READ_ and WRITE_CALENDAR): `GET
+- **Haushalts-Kalender** (READ_ and WRITE_CALENDAR): `GET
   /napi/gemeinsam/kalender?schreibbar=1` → `text/calendar`, one VCALENDAR
   per shared calendar (`X-WR-CALNAME`, `X-HAUS-KALENDER` its id,
   `X-HAUS-ART` its kind, `X-HOMES-SCHREIBBAR:TRUE` when the phone writes
