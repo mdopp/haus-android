@@ -306,7 +306,7 @@ class KontakteAbgleich(
                 }
             }
             k.notiz?.let { n -> zeile(Note.CONTENT_ITEM_TYPE) { put(Note.NOTE, n) } }
-            k.foto?.let { runCatching { Base64.decode(it, Base64.DEFAULT) }.getOrNull() }?.let { jpg ->
+            k.foto?.let { runCatching { Base64.decode(it, Base64.DEFAULT) }.getOrNull() }?.takeIf { it.isNotEmpty() }?.let { jpg ->
                 zeile(Photo.CONTENT_ITEM_TYPE) {
                     put(Photo.PHOTO, jpg)
                     if (k.fotoVonHomes) put(ContactsContract.Data.SYNC1, HOMES_FOTO)
