@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.util.Locale
+import java.util.zip.ZipFile
 
 /** What a file goes to: Homes' music (`POST /napi/musik`) or the Standortverlauf (`/napi/standort/import`). */
 enum class Ziel { MUSIK, STANDORT }
@@ -54,7 +56,8 @@ object Auftraege {
  * manager that says `octet-stream` is taken by its name too.
  */
 object MusikDatei {
-    val ENDUNGEN = listOf(".mp3", ".flac", ".m4a", ".ogg", ".opus", ".wav", ".zip")
+    private val TOENE = listOf(".mp3", ".flac", ".m4a", ".ogg", ".opus", ".wav")
+    val ENDUNGEN = TOENE + ".zip"
     private val ZIP = setOf("application/zip", "application/x-zip-compressed", "application/x-zip")
 
     /** Does a file of [name] and [mime] go to the music? The name decides when there is one. */
@@ -63,6 +66,18 @@ object MusikDatei {
         if (n.isNotEmpty()) return ENDUNGEN.any { n.endsWith(it) }
         val m = mime?.substringBefore(';')?.trim()?.lowercase(Locale.ROOT) ?: return false
         return m.startsWith("audio/") || m in ZIP
+    }
+
+    /** What a ZIP holds, by the names in its central directory (owner, 2026-11-04): music, a Google Takeout, or neither. */
+    enum class Zip { MUSIK, TAKEOUT, FREMD }
+
+    fun zip(datei: File): Zip {
+        val namen = runCatching { ZipFile(datei).use { z -> z.entries().toList().map { it.name.lowercase(Locale.ROOT) } } }.getOrDefault(emptyList())
+        return when {
+            namen.any { n -> TOENE.any { n.endsWith(it) } } -> Zip.MUSIK
+            namen.any { it.startsWith("takeout/") } -> Zip.TAKEOUT
+            else -> Zip.FREMD
+        }
     }
 
     /** The name Homes gets: the file's own, else one its [mime] says, as Homes tells the kind by the name. */

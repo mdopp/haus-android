@@ -1,13 +1,11 @@
 package cloud.dopp.homes.hochladen
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import cloud.dopp.homes.R
 import cloud.dopp.homes.data.ServerStore
 import cloud.dopp.homes.data.TokenStore
+import cloud.dopp.homes.ui.PhotoShare
 import cloud.dopp.homes.ui.StandortImportActivity
 import cloud.dopp.homes.widget.ActionDialog
 
@@ -24,7 +22,7 @@ class MusikTeilenActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ActionDialog.scrim(this)
-        val uris = geteilt(intent)
+        val uris = intent?.let(PhotoShare::uris).orEmpty() // one (SEND) or several (SEND_MULTIPLE), each once
         if (uris.isEmpty()) {
             finish()
             return
@@ -49,16 +47,4 @@ class MusikTeilenActivity : Activity() {
     }
 
     private fun sagen(title: String, message: String) = Uebergabe.sagen(this, title, message)
-
-    companion object {
-        /** The files shared: one (`SEND`) or several (`SEND_MULTIPLE`), each once. */
-        @Suppress("DEPRECATION")
-        fun geteilt(intent: Intent?): List<Uri> = when (intent?.action) {
-            Intent.ACTION_SEND -> listOfNotNull(StandortImportActivity.sharedUri(intent))
-            Intent.ACTION_SEND_MULTIPLE ->
-                (if (Build.VERSION.SDK_INT >= 33) intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                else intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)).orEmpty()
-            else -> emptyList()
-        }.distinct()
-    }
 }
