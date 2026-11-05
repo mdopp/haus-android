@@ -19,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The two links Homes adds to each household card (Dokumente, Nachrichten,
+ * The links Homes adds to each household card (Dokumente, Nachrichten, Fotos,
  * as grouped URL + X-ABLabel): read with their label, written as a Website
  * row of that label, and left out when the phone sends the card back.
  */
@@ -72,7 +72,8 @@ class KontaktLinksTest {
                 Eintrag("$homes/kontakte/oma-1/dokumente", label = "Dokumente"), // by path on the paired address
                 Eintrag("HTTPS://HOMES.EXAMPLE.ORG/kontakte/oma-1/nachrichten/"),
                 Eintrag("https://anders.example.org/kontakte/oma-1/dokumente"), // another address: the person's
-                Eintrag("$homes/kontakte/oma-1/fotos"), // another path on Homes: the person's
+                Eintrag("$homes/kontakte/oma-1/fotos"), // the Fotos link (homes#287)
+                Eintrag("$homes/kontakte/oma-1/bilder"), // another path on Homes: the person's
                 Eintrag("https://wo.example.org/x", gruppe = "homes-dokumente"), // by its group
             ),
         )
@@ -80,12 +81,12 @@ class KontaktLinksTest {
         assertEquals(
             listOf(
                 "https://erna.example.org", "https://blog.example.org",
-                "https://anders.example.org/kontakte/oma-1/dokumente", "$homes/kontakte/oma-1/fotos",
+                "https://anders.example.org/kontakte/oma-1/dokumente", "$homes/kontakte/oma-1/bilder",
             ),
             zurueck,
         )
         // not paired: only the group tells a Homes link
-        assertEquals(6, Vcard.ohneHomesLinks(k, null).webseiten.size)
+        assertEquals(7, Vcard.ohneHomesLinks(k, null).webseiten.size)
     }
 
     @Test

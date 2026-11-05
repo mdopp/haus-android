@@ -2,7 +2,11 @@ package cloud.dopp.homes.konto
 
 import android.content.ContentProviderClient
 import android.content.ContentProviderOperation
+import android.content.ContentUris
 import android.content.ContentValues
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
@@ -10,16 +14,21 @@ import android.provider.ContactsContract.CommonDataKinds.Event
 import android.provider.ContactsContract.CommonDataKinds.Note
 import android.provider.ContactsContract.CommonDataKinds.Organization
 import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.ContactsContract.CommonDataKinds.Photo
 import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.ContactsContract.RawContacts
+import android.util.Base64
+import androidx.core.graphics.scale
 import cloud.dopp.homes.data.GemeinsamClient
 import cloud.dopp.homes.sicherung.HandyKontakte
 import cloud.dopp.homes.sicherung.Kontakt
 import cloud.dopp.homes.sicherung.Vcard
+import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import java.util.UUID
+import kotlin.math.roundToInt
 
 /**
  * The Homes account's contacts (#206): the household's cards from Homes as
@@ -32,8 +41,11 @@ import java.util.UUID
  * schema, kontakte_sync.xml's supportsUploading): what the contacts app
  * makes, changes or deletes in the account is dirty and sent first
  * ([senden]) as a vCard 3.0 ([Vcard]); Homes keeps what the phone does not
- * show (a photo, the IBANs), and its version wins a conflict. The account's
- * contacts are visible without a group (Settings UNGROUPED_VISIBLE).
+ * show (the IBANs), and its version wins a conflict. The account's
+ * contacts are visible without a group (Settings UNGROUPED_VISIBLE). A card's
+ * PHOTO (the person's, or the face Homes adds from Immich, SYNC1 [HOMES_FOTO])
+ * is the contact's picture; SYNC2 the hash of its bytes as Android kept them,
+ * so only a picture set or changed on the phone goes back ([eigenesFoto]).
  */
 class KontakteAbgleich(
     private val provider: ContentProviderClient,
@@ -84,10 +96,31 @@ class KontakteAbgleich(
     /** Raw contact [id] as the phone has it, as a card of [uid]. */
     private fun kontakt(id: Long, uid: String): Kontakt {
         var k = Kontakt(uid = uid)
+        var eigenes: ByteArray? = null
         provider.query(
             alsAdapter(ContactsContract.Data.CONTENT_URI), DATEN, "${ContactsContract.Data.RAW_CONTACT_ID} = ?", arrayOf(id.toString()), null,
-        )?.use { c -> while (c.moveToNext()) k = HandyKontakte.dazu(k, c) }
-        return k
+        )?.use { c ->
+            while (c.moveToNext()) if (c.getString(0) == Photo.CONTENT_ITEM_TYPE) eigenes = eigenes ?: eigenesFoto(c) else k = HandyKontakte.dazu(k, c)
+        }
+        return eigenes?.let { klein -> k.copy(foto = verkleinert(gross(id) ?: klein)?.let { Base64.encodeToString(it, Base64.NO_WRAP) }) } ?: k
+    }
+
+    /** Raw contact [id]'s large picture, as Android keeps it beside the thumbnail; null without one. */
+    private fun gross(id: Long): ByteArray? = runCatching {
+        val uri = Uri.withAppendedPath(ContentUris.withAppendedId(RawContacts.CONTENT_URI, id), RawContacts.DisplayPhoto.CONTENT_DIRECTORY)
+        provider.openAssetFile(uri, "r")?.createInputStream()?.use { it.readBytes() }
+    }.getOrNull()
+
+    /** Each picture written this run (SYNC2 [NEU]) gets the hash of its bytes as Android re-encoded and kept them. */
+    private fun fotosGelesen() {
+        val gelesen = ArrayList<Pair<Long, String>>()
+        provider.query(
+            alsAdapter(ContactsContract.Data.CONTENT_URI), arrayOf(ContactsContract.Data._ID, Photo.PHOTO),
+            "${ContactsContract.Data.MIMETYPE} = ? AND ${ContactsContract.Data.SYNC2} = ?", arrayOf(Photo.CONTENT_ITEM_TYPE, NEU), null,
+        )?.use { c -> while (c.moveToNext()) gelesen += c.getLong(0) to stand(c.getBlob(1) ?: ByteArray(0)) }
+        gelesen.forEach { (id, h) ->
+            provider.update(zeileUri(ContactsContract.Data.CONTENT_URI, id), ContentValues().apply { put(ContactsContract.Data.SYNC2, h) }, null, null)
+        }
     }
 
     public override fun schreiben(text: String): Int {
@@ -135,6 +168,7 @@ class KontakteAbgleich(
             provider.flush(ops)
         }
         provider.flush(ops, alles = true)
+        fotosGelesen()
         return karten.size
     }
 
@@ -166,8 +200,18 @@ class KontakteAbgleich(
 
         private const val MEINE = "${RawContacts.ACCOUNT_TYPE} = ? AND ${RawContacts.ACCOUNT_NAME} = ?"
 
-        /** What [HandyKontakte.dazu] reads of a data row; SYNC1 a URL's vCard group. */
-        private val DATEN = arrayOf(ContactsContract.Data.MIMETYPE, ContactsContract.Data.SYNC1) + (1..10).map { "data$it" }
+        /** What [HandyKontakte.dazu] reads of a data row; SYNC1 a URL's vCard group; a picture and its hash ([eigenesFoto]). */
+        private val DATEN = arrayOf(ContactsContract.Data.MIMETYPE, ContactsContract.Data.SYNC1) + (1..10).map { "data$it" } +
+            arrayOf(Photo.PHOTO, ContactsContract.Data.SYNC2)
+
+        /** A picture row's SYNC1 when it is the face Homes adds from Immich (Android re-encodes the bytes, so the mark is here). */
+        const val HOMES_FOTO = "homes-foto"
+
+        /** A picture row's SYNC2 between its insert and [fotosGelesen]. */
+        const val NEU = "homes-neu"
+
+        /** At most this many pixels a side for a picture that goes to Homes. */
+        private const val KANTE = 256
         private val KONTO = arrayOf(HomesKonto.TYP, HomesKonto.NAME)
 
         /** [uri] as the sync adapter of the Homes account writes it. */
@@ -178,8 +222,37 @@ class KontakteAbgleich(
             .build()
 
         /** A card's state: the hash of its text. */
-        fun stand(text: String): String =
-            MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8)).take(16).joinToString("") { "%02x".format(it) }
+        fun stand(text: String): String = stand(text.toByteArray(Charsets.UTF_8))
+
+        /** A picture's state: the hash of its bytes. */
+        fun stand(bytes: ByteArray): String =
+            MessageDigest.getInstance("SHA-256").digest(bytes).take(16).joinToString("") { "%02x".format(it) }
+
+        /**
+         * The bytes of picture row [c] when they go to Homes: the person's, set on
+         * the phone (no SYNC2: the adapter did not write it) or changed there (no
+         * longer SYNC2's hash). A picture as Homes sent it, its face or the
+         * person's own, stays: Homes keeps what it has (homes#287).
+         */
+        fun eigenesFoto(c: Cursor): ByteArray? {
+            val bytes = c.getBlob(c.getColumnIndexOrThrow(Photo.PHOTO))?.takeIf { it.isNotEmpty() } ?: return null
+            val hash = c.getString(c.getColumnIndexOrThrow(ContactsContract.Data.SYNC2))
+            return bytes.takeIf { hash == null || (hash != NEU && hash != stand(bytes)) }
+        }
+
+        /** [bild] as a JPEG of at most [KANTE] px a side; as it is when no larger; null when it is no picture. */
+        fun verkleinert(bild: ByteArray): ByteArray? {
+            val b = BitmapFactory.decodeByteArray(bild, 0, bild.size) ?: return null
+            val f = KANTE.toFloat() / maxOf(b.width, b.height)
+            if (f >= 1f) return bild
+            val klein = b.scale((b.width * f).roundToInt().coerceAtLeast(1), (b.height * f).roundToInt().coerceAtLeast(1))
+            return ByteArrayOutputStream().use { out ->
+                klein.compress(Bitmap.CompressFormat.JPEG, JPEG_GUETE, out)
+                out.toByteArray()
+            }
+        }
+
+        private const val JPEG_GUETE = 90
 
         /** The data rows of [k], one ContentValues each, without the raw contact's id. */
         fun daten(k: Kontakt): List<ContentValues> {
@@ -242,7 +315,18 @@ class KontakteAbgleich(
                     put(ContactsContract.Data.SYNC1, w.gruppe) // a Homes link is known again when the card goes back
                 }
             }
-            return out
+            return out + listOfNotNull(foto(k))
+        }
+
+        /** [k]'s picture as a data row: SYNC1 [HOMES_FOTO] when it is Homes' face, SYNC2 [NEU] until [fotosGelesen]. */
+        private fun foto(k: Kontakt): ContentValues? {
+            val jpg = k.foto?.let { runCatching { Base64.decode(it, Base64.DEFAULT) }.getOrNull() }?.takeIf { it.isNotEmpty() } ?: return null
+            return ContentValues().apply {
+                put(ContactsContract.Data.MIMETYPE, Photo.CONTENT_ITEM_TYPE)
+                put(Photo.PHOTO, jpg)
+                if (k.fotoVonHomes) put(ContactsContract.Data.SYNC1, HOMES_FOTO)
+                put(ContactsContract.Data.SYNC2, NEU)
+            }
         }
 
         /** vCard's TEL types as Android's phone type: the reverse of HandyKontakte.telefonTypen. */

@@ -34,6 +34,9 @@ data class Kontakt(
     val geburtstag: String? = null,
     val notiz: String? = null,
     val webseiten: List<Eintrag> = emptyList(),
+    /** A PHOTO's JPEG, base64; [fotoVonHomes] when it is the face Homes adds (a `homes-` group or X-HOMES). */
+    val foto: String? = null,
+    val fotoVonHomes: Boolean = false,
 )
 
 /**
@@ -70,14 +73,15 @@ object Vcard {
         k.geburtstag?.trim()?.takeIf { DATUM.matches(it) }?.let { zeilen += "BDAY:$it" }
         k.notiz?.takeIf { it.isNotBlank() }?.let { zeilen += "NOTE:${text(it)}" }
         k.webseiten.filter { it.wert.isNotBlank() }.forEach { zeilen += "URL:${text(it.wert.trim())}" }
+        k.foto?.takeIf { !k.fotoVonHomes }?.let { zeilen += "PHOTO;ENCODING=b;TYPE=JPEG:$it" }
         zeilen += "END:VCARD"
         return zeilen.joinToString("") { falte(it) + CRLF }
     }
 
     /**
-     * [k] without the two links Homes adds to each household card: a URL that
-     * came in a `homes-` group, or whose path is `/kontakte/<uid>/dokumente` or
-     * `/kontakte/<uid>/nachrichten` on the paired Homes address [homes]. Homes
+     * [k] without the links Homes adds to each household card: a URL that
+     * came in a `homes-` group, or whose path is `/kontakte/<uid>/dokumente`,
+     * `…/nachrichten` or `…/fotos` on the paired Homes address [homes]. Homes
      * drops them from a card it is sent anyway; the person's own URLs stay.
      */
     fun ohneHomesLinks(k: Kontakt, homes: String?): Kontakt = k.copy(webseiten = k.webseiten.filterNot { homesLink(it, homes) })
@@ -142,6 +146,6 @@ object Vcard {
 
     private const val MAX = 75
     private val DATUM = Regex("""\d{4}-\d{2}-\d{2}""")
-    private val HOMES_LINK = Regex("""/kontakte/[^/?#]+/(dokumente|nachrichten)/?""")
+    private val HOMES_LINK = Regex("""/kontakte/[^/?#]+/(dokumente|nachrichten|fotos)/?""")
     private val TYP = Regex("""[A-Z][A-Z0-9-]*""")
 }

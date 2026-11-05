@@ -234,9 +234,12 @@ class NapiContractTest {
             ),
             // The Homes account (mdopp/homes main at 7adc744, the merge of homes#220, homes#218): vCard and iCalendar, refusals {fehler}.
             // Writable (owner 2026-11-05): mdopp/homes main at 2b48e4a, the merge of homes#278; ?schreibbar=1 and the writes; the app reads the ETag header.
+            // Pictures (owner 2026-11-05): mdopp/homes main at b587744, the merge of homes#287; a card's Immich face (homes-foto.PHOTO,
+            // X-HOMES=immich) and the Fotos link added internal/pages/kontakt_sprung.go:185-241, dropped again on a write :255-277.
             Route(
                 "GET", "/napi/gemeinsam/kontakte",
-                "internal/napi/gemeinsam.go:85-105 (schreibbar :86), the person and refusals :63-82, ETag :198-213, registered :54, napi.go:328",
+                "internal/napi/gemeinsam.go:85-105 (schreibbar :86, each card through Karte :100), the person and refusals :63-82, " +
+                    "ETag :198-213, registered :54, napi.go:328; the face and links internal/pages/kontakt_sprung.go:185-241",
                 query = mapOf("schreibbar" to setOf("1")), sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
             ),
             Route(
