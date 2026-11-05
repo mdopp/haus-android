@@ -82,6 +82,59 @@ class HochladenTest {
         assertEquals("Musik-3.mp3", MusikDatei.name(null, "audio/mpeg", 3))
     }
 
+    // --- a ZIP that is no music (owner, 2026-11-04) ---------------------------------
+
+    private fun zip(name: String, vararg eintraege: String): File = File(ctx().cacheDir, name).apply {
+        java.util.zip.ZipOutputStream(outputStream()).use { z ->
+            eintraege.forEach { e -> z.putNextEntry(java.util.zip.ZipEntry(e)); z.write(ByteArray(10)); z.closeEntry() }
+        }
+    }
+
+    @Test fun aZipIsJudgedByTheNamesInItsDirectory() {
+        assertEquals(MusikDatei.Zip.MUSIK, MusikDatei.zip(zip("a.zip", "Album/cover.jpg", "Album/01 Lied.FLAC")))
+        assertEquals(MusikDatei.Zip.TAKEOUT, MusikDatei.zip(zip("t.zip", "Takeout/Standortverlauf/Records.json", "Takeout/archive_browser.html")))
+        assertEquals(MusikDatei.Zip.FREMD, MusikDatei.zip(zip("f.zip", "Urlaub/IMG_0001.jpg", "notizen.txt")))
+        assertEquals("not a ZIP at all", MusikDatei.Zip.FREMD, MusikDatei.zip(lied(100)))
+    }
+
+    private fun teilen(datei: File): android.app.AlertDialog {
+        koppeln("https://homes.example")
+        val i = android.content.Intent(android.content.Intent.ACTION_SEND).setType("application/zip")
+            .putExtra(android.content.Intent.EXTRA_STREAM, android.net.Uri.fromFile(datei))
+        Robolectric.buildActivity(cloud.dopp.homes.hochladen.MusikTeilenActivity::class.java, i).create()
+        repeat(40) {
+            org.robolectric.shadows.ShadowLooper.idleMainLooper()
+            val d = org.robolectric.shadows.ShadowDialog.getLatestDialog() as android.app.AlertDialog?
+            if (d != null && d.findViewById<TextView>(R.id.ad_message)?.text?.contains("?") == true) return d
+            Thread.sleep(50)
+        }
+        throw AssertionError("no question")
+    }
+
+    private fun ja(d: android.app.AlertDialog) = d.findViewById<android.view.ViewGroup>(R.id.ad_items)!!.getChildAt(0).performClick()
+
+    @Test fun aZipWithoutMusicIsAskedAboutFirst() {
+        val d = teilen(zip("urlaub.zip", "Urlaub/IMG_0001.jpg"))
+        assertEquals("Das sieht nicht nach Musik aus – trotzdem hochladen?", d.findViewById<TextView>(R.id.ad_message)!!.text.toString())
+        assertTrue("nothing queued before the answer", Auftraege.alle(ctx()).isEmpty())
+        ja(d)
+        assertEquals(listOf(Ziel.MUSIK to "urlaub.zip"), Auftraege.alle(ctx()).map { it.ziel to it.name })
+    }
+
+    @Test fun aTakeoutSharedToTheMusicIsOfferedToTheStandortverlauf() {
+        val d = teilen(zip("takeout-20261104.zip", "Takeout/Standortverlauf/Records.json"))
+        assertEquals("Das sieht nach einer Google-Sicherung aus, nicht nach Musik. Zum Standortverlauf?", d.findViewById<TextView>(R.id.ad_message)!!.text.toString())
+        ja(d)
+        assertEquals(listOf(Ziel.STANDORT to "takeout-20261104.zip"), Auftraege.alle(ctx()).map { it.ziel to it.name })
+    }
+
+    @Test fun cancelledTheCopyGoesAndNothingIsQueued() {
+        val d = teilen(zip("urlaub.zip", "Urlaub/IMG_0001.jpg"))
+        d.findViewById<android.view.View>(R.id.ad_cancel)!!.performClick()
+        assertTrue(Auftraege.alle(ctx()).isEmpty())
+        assertTrue("no copy left", File(ctx().filesDir, "hochladen").listFiles().orEmpty().isEmpty())
+    }
+
     // --- the queue ---------------------------------------------------------------
 
     @Test fun theQueueKeepsItsOrderAndReadsNoJunk() {

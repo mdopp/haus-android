@@ -535,6 +535,14 @@ of `audio/*`, `application/zip`, `application/x-zip-compressed`,
 (`.mp3`, `.flac`, `.m4a`, `.ogg`, `.opus`, `.wav`, `.zip`), a file without
 one is named by its type. It is switched by the box's `teilen` key `musik`.
 
+- A ZIP shared to the music is looked into first (owner, 2026-11-04): by
+  the names in its central directory, read from the app's copy — never
+  unpacked. With no song in it the dialog asks „Das sieht nicht nach Musik
+  aus – trotzdem hochladen?“; one whose names start with `Takeout/` is
+  offered to the Standortverlauf instead („Zum Standortverlauf?“).
+  Abbrechen drops the copy. What beets later keeps back the app does not
+  learn (no call for it; no polling): Homes' `/musik` lists it, „nicht
+  einsortiert: <Grund>“, with „Löschen“.
 - Each shared file is copied into the app's own storage first — streamed,
   never held in memory — because a share's files are readable only while
   it is open; then the job „Hochladen“ (`hochladen/Hochladen.kt`, a

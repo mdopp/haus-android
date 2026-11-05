@@ -26,6 +26,11 @@
         <item quantity="one">Die Datei wird im Hintergrund auf die Box geladen. Wie weit es ist, steht in der Benachrichtigung „Hochladen“.</item>
         <item quantity="other">Die %1$d Dateien werden im Hintergrund auf die Box geladen. Wie weit es ist, steht in der Benachrichtigung „Hochladen“.</item>
     </plurals>
+    <!-- A ZIP for the music with no song in it (owner, 2026-11-04): asked before it goes up. -->
+    <string name="musik_zip_fremd">Das sieht nicht nach Musik aus – trotzdem hochladen?</string>
+    <string name="musik_zip_trotzdem">Trotzdem hochladen</string>
+    <string name="musik_zip_takeout">Das sieht nach einer Google-Sicherung aus, nicht nach Musik. Zum Standortverlauf?</string>
+    <string name="musik_zip_standort">Zum Standortverlauf</string>
     <plurals name="musik_nicht_alle">
         <item quantity="one">%1$d Datei ließ sich nicht lesen.</item>
         <item quantity="other">%1$d Dateien ließen sich nicht lesen.</item>

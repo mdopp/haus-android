@@ -58,23 +58,21 @@ object Hochladen {
     private const val ARBEIT = NAME
     private const val ORDNER = NAME
 
-    /**
-     * Copy [uri] into the app's files, streamed, queue it for [ziel] and start
-     * the job; false when it could not be read. Blocking: call off the main thread.
-     */
-    fun uebernehmen(ctx: Context, resolver: ContentResolver, uri: Uri, name: String, ziel: Ziel): Boolean {
-        val id = UUID.randomUUID().toString()
-        val datei = File(File(ctx.filesDir, ORDNER).apply { mkdirs() }, id)
+    /** Copy [uri] into the app's files, streamed; null when it could not be read. Blocking: call off the main thread. */
+    fun kopie(ctx: Context, resolver: ContentResolver, uri: Uri): File? {
+        val datei = File(File(ctx.filesDir, ORDNER).apply { mkdirs() }, UUID.randomUUID().toString())
         val ok = runCatching {
             resolver.openInputStream(uri)?.use { ein -> datei.outputStream().use { ein.copyTo(it, PUFFER) } } != null
         }.getOrDefault(false)
-        if (!ok || datei.length() <= 0L) {
-            datei.delete()
-            return false
-        }
-        Auftraege.hinzu(ctx, Auftrag(id, ziel, datei.path, name, datei.length()))
+        if (ok && datei.length() > 0L) return datei
+        datei.delete()
+        return null
+    }
+
+    /** Queue the copy [datei] as [name] for [ziel] and start the job. */
+    fun anstellen(ctx: Context, datei: File, name: String, ziel: Ziel) {
+        Auftraege.hinzu(ctx, Auftrag(datei.name, ziel, datei.path, name, datei.length()))
         anstossen(ctx)
-        return true
     }
 
     /** Start the job when files wait: after a share, and when the app's screen opens (Android 15 resets its hours then). */
