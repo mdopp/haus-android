@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xs"
             android:textColor="@color/homes_text_muted"
-            android:text="@string/konto_nur_lesen" />
+            android:text="@string/konto_zurueck" />
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -43,8 +43,8 @@ import java.io.File
  * its two sync adapters are bound services Android alone may bind; none goes
  * foreground or posts anything. Android's SyncManager runs them, hourly at
  * most; the app schedules nothing of its own for them. They write only into
- * the account's own entries, as the sync adapter, and never send anything
- * back (supportsUploading false); each part behind its own switch and
+ * the account's own entries, as the sync adapter, and send back what the
+ * phone changed there (supportsUploading, owner 2026-11-05); each part behind its own switch and
  * permission (WRITE_CONTACTS; READ_ and WRITE_CALENDAR).
  */
 class ManifestTest {
@@ -172,7 +172,7 @@ class ManifestTest {
      * data in and never send anything back.
      */
     @Test
-    fun theHomesAccountIsBoundByAndroidAndReadOnly() {
+    fun theHomesAccountIsBoundByAndroidAndWritable() {
         val own = manifest.replace(removed, "")
         fun dienst(name: String) = own.substringAfter("""android:name=".konto.$name"""").substringBefore("</service>")
         assertTrue(dienst("KontoDienst").contains("""android:permission="android.permission.ACCOUNT_MANAGER""""))
@@ -182,13 +182,15 @@ class ManifestTest {
             assertTrue(d, d.contains("""android:permission="android.permission.BIND_SYNC_ADAPTER""""))
             assertTrue(d, d.contains("@xml/$xml"))
             val adapter = File(RepoFiles.main, "res/xml/$xml.xml").readText()
-            assertTrue("$xml sends nothing back", adapter.contains("""android:supportsUploading="false""""))
+            assertTrue("$xml sends the phone's changes back (owner, 2026-11-05)", adapter.contains("""android:supportsUploading="true""""))
             assertTrue(adapter.contains("""android:accountType="cloud.dopp.homes""""))
         }
-        assertFalse("the contacts app offers no editing", File(RepoFiles.main, "res/xml/kontakte_konto.xml").readText().contains("EditSchema"))
+        assertTrue("the contacts app edits the account", File(RepoFiles.main, "res/xml/kontakte_konto.xml").readText().contains("<EditSchema>"))
         val kalender = sources.getValue("app/src/main/java/cloud/dopp/homes/konto/KalenderAbgleich.kt")
-        assertTrue("calendars read only", kalender.contains("Calendars.CAL_ACCESS_READ"))
-        assertFalse(kalender.contains("CAL_ACCESS_OWNER") || kalender.contains("CAL_ACCESS_CONTRIBUTOR") || kalender.contains("CAL_ACCESS_EDITOR"))
+        assertTrue(
+            "the calendars Homes lets the phone write are its own, the others read only",
+            kalender.contains("if (k.schreibbar) Calendars.CAL_ACCESS_OWNER else Calendars.CAL_ACCESS_READ"),
+        )
         val konto = sources.getValue("app/src/main/java/cloud/dopp/homes/konto/HomesKonto.kt")
         assertTrue("hourly at most", konto.contains("STUNDE = 60L * 60L") && konto.contains("addPeriodicSync(konto, teil.authority, Bundle.EMPTY, STUNDE)"))
     }

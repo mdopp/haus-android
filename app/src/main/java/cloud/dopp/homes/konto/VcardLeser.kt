@@ -1,5 +1,6 @@
 package cloud.dopp.homes.konto
 
+import cloud.dopp.homes.data.Napi.FeedIcal
 import cloud.dopp.homes.sicherung.Adresse
 import cloud.dopp.homes.sicherung.Eintrag
 import cloud.dopp.homes.sicherung.Kontakt
@@ -15,8 +16,8 @@ import cloud.dopp.homes.sicherung.Kontakt
  */
 object VcardLeser {
 
-    /** One card: what the phone keeps of it, and its text, whose hash says whether it changed. */
-    data class Karte(val kontakt: Kontakt, val text: String)
+    /** One card: what the phone keeps of it, its text, whose hash says whether it changed, and its version in Homes. */
+    data class Karte(val kontakt: Kontakt, val text: String, val etag: String? = null)
 
     fun lies(text: String): List<Karte> {
         val out = ArrayList<Karte>()
@@ -121,7 +122,7 @@ object VcardLeser {
                 else -> k
             }
         }
-        return Karte(k, zeilen.joinToString("\n"))
+        return Karte(k, zeilen.joinToString("\n"), gelesen.firstOrNull { it.name == FeedIcal.ETAG }?.let { text(it.wert).trim() })
     }
 
     /**

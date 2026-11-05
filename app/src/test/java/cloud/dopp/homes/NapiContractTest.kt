@@ -233,15 +233,33 @@ class NapiContractTest {
                 sends = setOf("fehler"), headers = setOf("Range", "Content-Range", "ETag"),
             ),
             // The Homes account (mdopp/homes main at 7adc744, the merge of homes#220, homes#218): vCard and iCalendar, refusals {fehler}.
+            // Writable (owner 2026-11-05): mdopp/homes main at 2b48e4a, the merge of homes#278; ?schreibbar=1 and the writes; the app reads the ETag header.
             Route(
                 "GET", "/napi/gemeinsam/kontakte",
-                "internal/napi/gemeinsam.go:71-91, the person and refusals :49-66, ETag :109-124, registered :44, napi.go:241",
-                sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
+                "internal/napi/gemeinsam.go:85-105 (schreibbar :86), the person and refusals :63-82, ETag :198-213, registered :54, napi.go:328",
+                query = mapOf("schreibbar" to setOf("1")), sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
             ),
             Route(
                 "GET", "/napi/gemeinsam/kalender",
-                "internal/napi/gemeinsam.go:95-106, the stream internal/caldav/gemeinsam.go, ETag :109-124, registered :45",
-                sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
+                "internal/napi/gemeinsam.go:109-120 (schreibbar :111), the stream internal/caldav/gemeinsam.go, ETag :198-213, registered :55",
+                query = mapOf("schreibbar" to setOf("1")), sends = setOf("fehler"), headers = setOf("If-None-Match", "ETag"),
+            ),
+            Route(
+                "PUT", "/napi/gemeinsam/kalender/{kalender}/{uid}",
+                "internal/napi/gemeinsam.go:130-176 (412 :155-159), internal/caldav/schreiben.go, registered :56-59",
+                sends = setOf("fehler"), headers = setOf("If-Match", "If-None-Match", "ETag"),
+            ),
+            Route(
+                "PUT", "/napi/gemeinsam/kontakte/{uid}", "internal/napi/gemeinsam.go:130-176, registered :56-59",
+                sends = setOf("fehler"), headers = setOf("If-Match", "If-None-Match", "ETag"),
+            ),
+            Route(
+                "DELETE", "/napi/gemeinsam/kalender/{kalender}/{uid}", "internal/napi/gemeinsam.go:130-176, the Papierkorb :180-196",
+                sends = setOf("fehler"), headers = setOf("If-Match"),
+            ),
+            Route(
+                "DELETE", "/napi/gemeinsam/kontakte/{uid}", "internal/napi/gemeinsam.go:130-176, the Papierkorb :180-196",
+                sends = setOf("fehler"), headers = setOf("If-Match"),
             ),
             // Standortverlauf (mdopp/homes main at 145ec05, the merge of homes#212).
             Route(
@@ -344,6 +362,8 @@ class NapiContractTest {
             "POST /napi/standort/import", "HEAD /napi/standort/import/{id}",
             "PATCH /napi/standort/import/{id}", "GET /napi/standort/import/{id}",
             "GET /napi/gemeinsam/kontakte", "GET /napi/gemeinsam/kalender",
+            "PUT /napi/gemeinsam/kalender/{kalender}/{uid}", "PUT /napi/gemeinsam/kontakte/{uid}",
+            "DELETE /napi/gemeinsam/kalender/{kalender}/{uid}", "DELETE /napi/gemeinsam/kontakte/{uid}",
             "GET /napi/kann", "POST /napi/kann/anfordern",
             "GET /napi/einrichtung", "POST /napi/einrichtung/apps", "POST /napi/musik",
         )

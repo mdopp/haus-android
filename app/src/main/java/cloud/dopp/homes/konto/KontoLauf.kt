@@ -6,11 +6,13 @@ import cloud.dopp.homes.sicherung.Lauf
 
 /**
  * One sync of one part of the Homes account (#206), as its sync adapter
- * runs it: fetch Homes' state with the ETag of the last one written; on a
+ * runs it: first send what changed on the phone ([senden], owner 2026-11-05),
+ * then fetch Homes' state with the ETag of the last one written; on a
  * new state write it ([schreiben]); on Homes' 304 only check the phone still
  * holds what was written ([anzahl]), else fetch it whole again. Every
  * outcome leaves a sentence for the screen ([KontoStore]) and tells Android's
- * SyncManager whether to back off ([SyncResult]).
+ * SyncManager whether to back off ([SyncResult]). Homes not reachable while
+ * sending: nothing is fetched, so the phone's changes wait for the next run.
  */
 abstract class KontoLauf(
     private val teil: HomesKonto.Teil,
@@ -30,8 +32,19 @@ abstract class KontoLauf(
     /** The sentence when the app may no longer write the part. */
     protected abstract val keineErlaubnis: String
 
+    /**
+     * Send the phone's changed and deleted entries to Homes: a sentence when
+     * Homes' version won over one of them (412) or it refused one, else null.
+     * Throws [Spaeter] when Homes was not reachable.
+     */
+    protected abstract fun senden(): String?
+
+    /** Homes did not answer a write: the entries stay changed until the next run. */
+    class Spaeter : Exception()
+
     fun laufen(result: SyncResult) {
         try {
+            val verworfen = senden()
             var antwort = holen(store.etag(teil))
             if (antwort == GemeinsamClient.Antwort.Gleich && store.stand(teil)?.anzahl != anzahl()) {
                 store.vergissEtag(teil) // changed on the phone meanwhile: all of it again
@@ -41,8 +54,12 @@ abstract class KontoLauf(
                 is GemeinsamClient.Antwort.Neu -> {
                     val n = schreiben(antwort.text)
                     store.geschafft(teil, antwort.etag, n)
+                    verworfen?.let { store.melde(teil, it) }
                 }
-                GemeinsamClient.Antwort.Gleich -> store.geschafft(teil, null, null)
+                GemeinsamClient.Antwort.Gleich -> {
+                    store.geschafft(teil, null, null)
+                    verworfen?.let { store.melde(teil, it) }
+                }
                 is GemeinsamClient.Antwort.Abgelehnt -> {
                     if (antwort.code == 401) {
                         result.stats.numAuthExceptions++
@@ -57,6 +74,9 @@ abstract class KontoLauf(
                     store.melde(teil, UNERREICHBAR)
                 }
             }
+        } catch (e: Spaeter) {
+            result.stats.numIoExceptions++
+            store.melde(teil, UNERREICHBAR)
         } catch (e: SecurityException) {
             result.stats.numAuthExceptions++
             store.melde(teil, keineErlaubnis)
@@ -67,7 +87,23 @@ abstract class KontoLauf(
         }
     }
 
+    /**
+     * What came of sending one entry ([GemeinsamClient.schreiben]): Homes' new ETag ("" when it named none) when
+     * it took it; null when Homes' version wins (412, or a refusal) — then [verworfen] says so. Throws [Spaeter].
+     */
+    protected fun gesendet(a: GemeinsamClient.Antwort, verworfen: (String) -> Unit): String? = when (a) {
+        is GemeinsamClient.Antwort.Neu -> a.etag.orEmpty()
+        is GemeinsamClient.Antwort.Abgelehnt -> if (a.code >= 500 || a.code == 401) {
+            throw Spaeter()
+        } else {
+            verworfen(if (a.code == 412) VERWORFEN else a.satz ?: VERWORFEN)
+            null
+        }
+        else -> throw Spaeter()
+    }
+
     companion object {
+        const val VERWORFEN = "Ein Eintrag war im Haus inzwischen anders: Es gilt die Fassung aus dem Haus, die Änderung am Handy ist verworfen."
         const val UNERREICHBAR = "Homes war nicht erreichbar: Android versucht es bald von selbst wieder."
         const val NICHT_GESCHRIEBEN = "Das Handy hat die Einträge gerade nicht angenommen: Android versucht es bald wieder."
     }

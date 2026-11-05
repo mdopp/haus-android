@@ -108,7 +108,7 @@ class HomesKontoTest {
         assertEquals(utc(2026, 12, 20), see.beginn)
         assertEquals(utc(2026, 12, 23), see.ende)
         assertEquals("Ammersee", see.ort)
-        assertNull(see.alarm)
+        assertTrue(see.alarme.isEmpty())
 
         val chor = kal[1].termine
         assertEquals(listOf("chor#20261110T180000Z", "chor#20261117T180000Z"), chor.map { it.syncId })
@@ -117,11 +117,11 @@ class HomesKontoTest {
 
         val (arzt, blumen) = kal[2].termine
         assertEquals("arzt", arzt.syncId)
-        assertEquals(0, arzt.alarm)
+        assertEquals(listOf(0), arzt.alarme)
         assertEquals(arzt.beginn, arzt.ende)
         assertEquals("Europe/Berlin", blumen.zone)
         assertEquals("FREQ=WEEKLY", blumen.rrule)
-        assertEquals(15, blumen.alarm)
+        assertEquals(listOf(15), blumen.alarme)
         // 18:00 in Berlin on 6 November (CET) is 17:00 UTC
         assertEquals(utc(2026, 11, 6) + 17 * 3600_000L, blumen.beginn)
         assertEquals("PT0S", KalenderAbgleich.dauer(blumen))

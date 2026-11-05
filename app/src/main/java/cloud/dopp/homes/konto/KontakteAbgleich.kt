@@ -15,26 +15,31 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.ContactsContract.RawContacts
 import cloud.dopp.homes.data.GemeinsamClient
+import cloud.dopp.homes.sicherung.HandyKontakte
 import cloud.dopp.homes.sicherung.Kontakt
 import cloud.dopp.homes.sicherung.Vcard
 import java.security.MessageDigest
+import java.util.UUID
 
 /**
  * The Homes account's contacts (#206): the household's cards from Homes as
  * raw contacts of the account, so the dialer, WhatsApp and mail find them.
  * Each raw contact's SOURCE_ID is its card's UID ([HomesKonto.quelle]), SYNC1
- * the hash of the card's text: a card that did not change is not written.
- * Every write goes as the sync adapter (CALLER_IS_SYNCADAPTER): a deleted
- * one is gone at once, and nothing is marked dirty to be sent back — the
- * account never sends anything (res/xml/kontakte_sync.xml says
- * supportsUploading false; res/xml/kontakte_konto.xml declares no edit
- * schema, so the contacts app offers no editing). The account's contacts
- * are visible without a group (Settings UNGROUPED_VISIBLE).
+ * the hash of the card's text: a card that did not change is not written;
+ * SYNC2 the UID itself, SYNC3 the card's version in Homes. The sync
+ * adapter's own writes (CALLER_IS_SYNCADAPTER) mark nothing dirty. Writable
+ * since the owner's call of 2026-11-05 (res/xml/kontakte_konto.xml's edit
+ * schema, kontakte_sync.xml's supportsUploading): what the contacts app
+ * makes, changes or deletes in the account is dirty and sent first
+ * ([senden]) as a vCard 3.0 ([Vcard]); Homes keeps what the phone does not
+ * show (a photo, the IBANs), and its version wins a conflict. The account's
+ * contacts are visible without a group (Settings UNGROUPED_VISIBLE).
  */
 class KontakteAbgleich(
     private val provider: ContentProviderClient,
     store: KontoStore,
     holen: (String?) -> GemeinsamClient.Antwort,
+    private val nachHomes: (String?, String, String?, String?) -> GemeinsamClient.Antwort = { _, _, _, _ -> GemeinsamClient.Antwort.Unerreichbar },
 ) : KontoLauf(HomesKonto.Teil.KONTAKTE, store, holen) {
 
     override val keineErlaubnis = KEINE_ERLAUBNIS
@@ -43,6 +48,46 @@ class KontakteAbgleich(
 
     override fun anzahl(): Int =
         provider.query(alsAdapter(RawContacts.CONTENT_URI), arrayOf(RawContacts._ID), MEINE, KONTO, null)?.use { it.count } ?: 0
+
+    public override fun senden(): String? {
+        var verworfen: String? = null
+        val zeilen = ArrayList<Triple<Long, Boolean, Pair<String?, String?>>>()
+        provider.query(
+            alsAdapter(RawContacts.CONTENT_URI), arrayOf(RawContacts._ID, RawContacts.DELETED, RawContacts.SYNC2, RawContacts.SYNC3),
+            "$MEINE AND ${RawContacts.DIRTY} = 1", KONTO, null,
+        )?.use { c -> while (c.moveToNext()) zeilen += Triple(c.getLong(0), c.getInt(1) == 1, c.getString(2) to c.getString(3)) }
+        for ((id, weg, schluessel) in zeilen) {
+            val (uid, etag) = schluessel
+            if (weg) {
+                // gone from the phone: from Homes too; refused, Homes' version comes back below
+                if (uid != null && etag != null) gesendet(nachHomes(null, uid, null, etag)) { verworfen = it }
+                provider.delete(zeileUri(RawContacts.CONTENT_URI, id), null, null)
+                continue
+            }
+            val karte = uid?.takeIf { etag != null } ?: UUID.randomUUID().toString()
+            val neu = gesendet(nachHomes(null, karte, Vcard.karte(kontakt(id, karte)), etag)) { verworfen = it }
+            val werte = ContentValues().apply {
+                put(RawContacts.DIRTY, 0)
+                putNull(RawContacts.SYNC1)
+                if (neu != null) {
+                    put(RawContacts.SOURCE_ID, HomesKonto.quelle(karte))
+                    put(RawContacts.SYNC2, karte)
+                    put(RawContacts.SYNC3, neu)
+                }
+            }
+            provider.update(zeileUri(RawContacts.CONTENT_URI, id), werte, null, null)
+        }
+        return verworfen
+    }
+
+    /** Raw contact [id] as the phone has it, as a card of [uid]. */
+    private fun kontakt(id: Long, uid: String): Kontakt {
+        var k = Kontakt(uid = uid)
+        provider.query(
+            alsAdapter(ContactsContract.Data.CONTENT_URI), DATEN, "${ContactsContract.Data.RAW_CONTACT_ID} = ?", arrayOf(id.toString()), null,
+        )?.use { c -> while (c.moveToNext()) k = HandyKontakte.dazu(k, c) }
+        return k
+    }
 
     public override fun schreiben(text: String): Int {
         sichtbar()
@@ -62,7 +107,8 @@ class KontakteAbgleich(
         }
         plan.geaendert.forEach { (id, karte) ->
             ops += ContentProviderOperation.newUpdate(zeileUri(RawContacts.CONTENT_URI, id))
-                .withValue(RawContacts.SYNC1, stand(karte.text)).build()
+                .withValue(RawContacts.SYNC1, stand(karte.text)).withValue(RawContacts.SYNC2, karte.kontakt.uid)
+                .withValue(RawContacts.SYNC3, karte.etag).build()
             ops += ContentProviderOperation.newDelete(alsAdapter(ContactsContract.Data.CONTENT_URI))
                 .withSelection("${ContactsContract.Data.RAW_CONTACT_ID} = ?", arrayOf(id.toString())).build()
             daten(karte.kontakt).forEach { v ->
@@ -78,6 +124,8 @@ class KontakteAbgleich(
                 .withValue(RawContacts.ACCOUNT_NAME, HomesKonto.NAME)
                 .withValue(RawContacts.SOURCE_ID, HomesKonto.quelle(karte.kontakt.uid))
                 .withValue(RawContacts.SYNC1, stand(karte.text))
+                .withValue(RawContacts.SYNC2, karte.kontakt.uid)
+                .withValue(RawContacts.SYNC3, karte.etag)
                 .build()
             daten(karte.kontakt).forEach { v ->
                 ops += ContentProviderOperation.newInsert(alsAdapter(ContactsContract.Data.CONTENT_URI))
@@ -126,6 +174,9 @@ class KontakteAbgleich(
         private const val STAPEL = 400
 
         private const val MEINE = "${RawContacts.ACCOUNT_TYPE} = ? AND ${RawContacts.ACCOUNT_NAME} = ?"
+
+        /** What [HandyKontakte.dazu] reads of a data row. */
+        private val DATEN = arrayOf(ContactsContract.Data.MIMETYPE) + (1..10).map { "data$it" }
         private val KONTO = arrayOf(HomesKonto.TYP, HomesKonto.NAME)
 
         /** [uri] as the sync adapter of the Homes account writes it. */

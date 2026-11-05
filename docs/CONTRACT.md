@@ -65,7 +65,7 @@ each row naming the Homes file and lines it came from.
 | energy | `GET /napi/portal/energy`: the flow now, per total `today` (kWh since the house's midnight; homes#213), and `charge`, how full the battery is (mdopp/homes#228) |
 | Daten sichern | `GET /napi/sicherung/stand`, `POST /napi/sicherung/fehlend`, `POST /napi/sicherung/uploads`, `HEAD`/`PATCH /napi/sicherung/uploads/{id}`, `GET /napi/sicherung/schluessel`, `POST /napi/kontakte`, `GET /napi/sicherung/letzte`, `GET /napi/sicherung/letzte/{quelle}/{pfad...}`: see (e) |
 | Standortverlauf | `GET /napi/standort`, `POST /napi/standort`, `…/standort/import…`: see (f) |
-| Homes-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender`: see (g) |
+| Homes-Konto | `GET /napi/gemeinsam/kontakte`, `GET /napi/gemeinsam/kalender` (`?schreibbar=1`), `PUT\|DELETE /napi/gemeinsam/kalender/{kalender}/{uid}`, `PUT\|DELETE /napi/gemeinsam/kontakte/{uid}`: see (g) |
 | what the box can do | `GET /napi/kann`, `POST /napi/kann/anfordern`: see (h) |
 | Öffnen, Deine Aufgaben | `GET /napi/einrichtung`, `POST /napi/einrichtung/apps`: see (i) |
 | Share → Musik, Hochladen | `POST /napi/musik`, multipart, one `file` part a request, streamed from the app's copy: see (j) |
@@ -389,22 +389,42 @@ household's shared data on the phone, in its own apps: an Android account
 „Homes“ (type `cloud.dopp.homes`) with two sync adapters, each behind its own
 switch under Mehr → Homes auf dem Handy and its own permission.
 
-- **Kontakte des Hauses** (WRITE_CONTACTS): `GET /napi/gemeinsam/kontakte` →
-  `text/vcard`, every card of Homes' own address books. Each card one raw
-  contact of the account, SOURCE_ID the SHA-1 of its UID, SYNC1 the hash of
-  its text. Visible without a group, so the dialer, WhatsApp and mail find
+- **Kontakte des Hauses** (WRITE_CONTACTS): `GET
+  /napi/gemeinsam/kontakte?schreibbar=1` → `text/vcard`, every card of
+  Homes' own address books, each that can be written back with its version
+  `X-HOMES-ETAG`. Each card one raw contact of the account, SOURCE_ID the
+  SHA-1 of its UID, SYNC1 the hash of its text, SYNC2 the UID, SYNC3 the
+  version. Visible without a group, so the dialer, WhatsApp and mail find
   them.
 - **Kalender des Hauses** (READ_ and WRITE_CALENDAR): `GET
-  /napi/gemeinsam/kalender` → `text/calendar`, one VCALENDAR per shared
-  calendar (`X-WR-CALNAME`, `X-HAUS-KALENDER` its id, `X-HAUS-ART` its kind),
-  series expanded by Homes over a month back and a year ahead, each instance
-  with its RECURRENCE-ID; last „Erinnerungen“, each open reminder with a due
-  time as an entry with a display alarm (a recurring one with its RRULE in
-  the house's time zone). Each calendar one calendar of the account,
-  CAL_ACCESS_READ.
-- Read only: everything is written as the sync adapter, nothing is marked
-  dirty, `supportsUploading` is false; the contacts app gets no edit schema.
-  The screen says „ändern geht in Homes“.
+  /napi/gemeinsam/kalender?schreibbar=1` → `text/calendar`, one VCALENDAR
+  per shared calendar (`X-WR-CALNAME`, `X-HAUS-KALENDER` its id,
+  `X-HAUS-ART` its kind, `X-HOMES-SCHREIBBAR:TRUE` when the phone writes
+  into it), the entries with one a month back to a year ahead as Homes keeps
+  them: a series whole (RRULE, EXDATE) with its changed instances
+  (RECURRENCE-ID, written as exceptions of the series), every alarm, each
+  VEVENT with `X-HOMES-ETAG`; last „Erinnerungen“, each open reminder with a
+  due time as an entry with a display alarm (a recurring one with its RRULE
+  in the house's time zone). Each calendar one calendar of the account,
+  CAL_ACCESS_OWNER when writable, else (subscriptions, the reminders)
+  CAL_ACCESS_READ; an entry's SYNC_DATA2 its version, SYNC_DATA3 the
+  calendar Homes has it in.
+- **Writable** (the owner's call of 2026-11-05, homes#278; read only until
+  then): the calendar app and the contacts app offer the account
+  (`supportsUploading`, the contacts' edit schema); what they make, change
+  or delete there is dirty, and each sync sends it first: `PUT
+  /napi/gemeinsam/kalender/{kalender}/{uid}` (one VCALENDAR: the fields the
+  calendar shows, the alarms, a series in its time zone with DURATION) or
+  `PUT /napi/gemeinsam/kontakte/{uid}` (a vCard 3.0), with `If-None-Match:
+  *` when new (a fresh UUID) or `If-Match: <version>`; Homes' new `ETag` is
+  kept and the entry is clean. A delete is `DELETE` of the same with
+  `If-Match`, into Homes' Papierkorb. An entry moved from one of Homes'
+  calendars into another is made in the new one, then deleted from the old.
+  412 (Homes has another version) or a refusal: Homes' version wins, the
+  phone's is dropped, the screen says so. A single changed instance of a
+  series made on the phone is not sent (dropped, said); a deleted single
+  instance goes as an EXDATE of its series. Homes not reachable: nothing is
+  fetched, the changes wait for the next sync.
 - Both carry an ETag; the app sends it as `If-None-Match` and Homes' 304
   costs nothing. A 304 while the phone holds fewer entries than it wrote
   fetches all again.

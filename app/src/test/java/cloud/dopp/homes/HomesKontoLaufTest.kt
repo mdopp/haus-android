@@ -76,6 +76,7 @@ class HomesKontoLaufTest {
                 return aufDemHandy
             }
             override fun anzahl() = aufDemHandy
+            override fun senden(): String? = null
             override fun abgelehnt(code: Int) = "abgelehnt $code"
             override val keineErlaubnis = "keine Erlaubnis"
         }
@@ -152,12 +153,34 @@ class HomesKontoLaufTest {
             assertEquals(Antwort.Gleich, c.kalender("\"e1\""))
             assertEquals(Antwort.Abgelehnt(503, "Nicht eingerichtet."), c.kontakte("\"e1\""))
             val erste = homes.takeRequest()
-            assertEquals(Napi.GEMEINSAM_KONTAKTE.path, erste.path)
+            assertEquals(Napi.GEMEINSAM_KONTAKTE.path + "?schreibbar=1", erste.path)
             assertEquals("Bearer homes_device_T", erste.getHeader("Authorization"))
             assertEquals("", erste.getHeader("If-None-Match"))
             val zweite = homes.takeRequest()
-            assertEquals(Napi.GEMEINSAM_KALENDER.path, zweite.path)
+            assertEquals(Napi.GEMEINSAM_KALENDER.path + "?schreibbar=1", zweite.path)
             assertEquals("\"e1\"", zweite.getHeader("If-None-Match"))
+            homes.takeRequest()
+
+            // the writes (owner, 2026-11-05): new, over a version, deleted; Homes' ETag back, 412 refused
+            homes.enqueue(MockResponse().setResponseCode(201).setHeader("ETag", "\"2\""))
+            homes.enqueue(MockResponse().setResponseCode(412).setBody("BEGIN:VCALENDAR\r\n"))
+            homes.enqueue(MockResponse().setResponseCode(204))
+            assertEquals(Antwort.Neu("", "\"2\""), c.schreiben("haushalt", "neu 1", "BEGIN:VCALENDAR\r\n", null))
+            assertEquals(Antwort.Abgelehnt(412, null), c.schreiben(null, "urn:uuid:oma", "BEGIN:VCARD\r\n", "\"1\""))
+            assertEquals(Antwort.Neu("", null), c.schreiben("haushalt", "alt", null, "\"1\""))
+            val neu = homes.takeRequest()
+            assertEquals("PUT /napi/gemeinsam/kalender/haushalt/neu%201", "${neu.method} ${neu.path}")
+            assertEquals("*", neu.getHeader("If-None-Match"))
+            assertEquals("", neu.getHeader("If-Match"))
+            assertTrue(neu.getHeader("Content-Type")!!.startsWith("text/calendar"))
+            val karte = homes.takeRequest()
+            assertEquals("PUT /napi/gemeinsam/kontakte/urn%3Auuid%3Aoma", "${karte.method} ${karte.path}")
+            assertEquals("\"1\"", karte.getHeader("If-Match"))
+            assertEquals("", karte.getHeader("If-None-Match"))
+            assertTrue(karte.getHeader("Content-Type")!!.startsWith("text/vcard"))
+            val weg = homes.takeRequest()
+            assertEquals("DELETE /napi/gemeinsam/kalender/haushalt/alt", "${weg.method} ${weg.path}")
+            assertEquals("\"1\"", weg.getHeader("If-Match"))
         } finally {
             homes.shutdown()
         }
@@ -175,7 +198,7 @@ class HomesKontoLaufTest {
         assertFalse(schalter(a, R.id.konto_kontakte_an).isEnabled)
         assertFalse(a.findViewById<Button>(R.id.konto_jetzt).isEnabled)
         assertEquals(Lauf.NICHT_GEKOPPELT, a.findViewById<TextView>(R.id.konto_zustand).text.toString())
-        assertEquals("Auf dem Handy nur zum Lesen: ändern geht in Homes.", app.getString(R.string.konto_nur_lesen))
+        assertTrue(app.getString(R.string.konto_zurueck).contains("geht zurück nach Homes"))
     }
 
     @Test

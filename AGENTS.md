@@ -93,8 +93,14 @@ These rules apply to every session, human or agent.
   them. „Erinnerungen gehören in den normalen Kalender, nicht in ein
   Widget.“ Source: Homes' `/napi/gemeinsam/…` (vCard, iCalendar), with the
   device token. `konto/` holds it.
-- Read only on the phone; writes go as the sync adapter into the account's
-  own entries only. Android's SyncManager runs the adapters (the switch,
+- Writable since the owner's call of 2026-11-05 (read only before): the
+  calendar and contacts apps offer its calendars and address book; what is
+  made, changed or deleted there is sent back first in each sync
+  (`PUT|DELETE /napi/gemeinsam/…`, a delete into Homes' Papierkorb), Homes'
+  version wins a conflict and the screen says so. Subscriptions and
+  „Erinnerungen“ stay read only; a single changed instance of a series is
+  not sent yet. The sync adapter's own writes go into the account's own
+  entries only. Android's SyncManager runs the adapters (the switch,
   „Jetzt abgleichen“, hourly, and a `gemeinsam` frame of the open live
   stream, #209); the app adds no job, alarm or worker for them. `ManifestTest` holds this.
 - The other direction stays: a person's own contacts go phone → archive

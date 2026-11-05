@@ -11,6 +11,11 @@ what the e2e asserts on, one timestamped line each:
                     a GET /napi/gemeinsam/kontakte|kalender (the Homes account, #206):
                     200 with the household's cards or calendars, 304 when the
                     phone named the ETag it has
+  SCHREIBEN <method> <path> <code>
+                    a PUT or DELETE of one entry of the Homes account (owner 2026-11-05,
+                    homes#278): 201/200 with ETag "2" and the entry in the feed from then
+                    on, 204 and out of the feed; „Müll raus“ (e2e-muell) changed on the
+                    phone is 412, as if it had changed in the house meanwhile
   GEMEINSAM_FRAME <part> -> n
                     /ctl/gemeinsam?teil=kalender: the shared calendar gets a second
                     entry („Elternabend“) and a gemeinsam frame goes to n open streams
@@ -31,7 +36,7 @@ import ssl
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 TOKEN = "homes_device_E2E"
 lock = threading.Lock()
@@ -72,17 +77,32 @@ REPLIES = {
 GEMEINSAM = {
     "kontakte": ("text/vcard; charset=utf-8",
                  "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:urn:uuid:e2e-oma\r\nFN:Oma Erna\r\nN:Müller;Erna;;;\r\n"
-                 "TEL;TYPE=CELL:+49 170 1111111\r\nTEL;TYPE=HOME:+49 89 2222222\r\nEMAIL;TYPE=HOME:erna@homes.example\r\nEND:VCARD\r\n"
+                 "TEL;TYPE=CELL:+49 170 1111111\r\nTEL;TYPE=HOME:+49 89 2222222\r\nEMAIL;TYPE=HOME:erna@homes.example\r\n"
+                 "X-HOMES-ETAG:\"1\"\r\nEND:VCARD\r\n"
                  "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:urn:uuid:e2e-klempner\r\nFN:Klempner Huber\r\nTEL;TYPE=WORK:+49 89 3333333\r\n"
-                 "ORG:Huber Sanitär\r\nEND:VCARD\r\n"),
+                 "ORG:Huber Sanitär\r\nX-HOMES-ETAG:\"1\"\r\nEND:VCARD\r\n"),
     "kalender": ("text/calendar; charset=utf-8",
                  "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nX-WR-CALNAME:Haushalt\r\nX-HAUS-KALENDER:haushalt\r\nX-HAUS-ART:haushalt\r\n"
-                 "BEGIN:VEVENT\r\nUID:e2e-muell\r\nDTSTART:20300105T060000Z\r\nDTEND:20300105T063000Z\r\nSUMMARY:Müll raus\r\nEND:VEVENT\r\n"
+                 "X-HOMES-SCHREIBBAR:TRUE\r\n"
+                 "BEGIN:VEVENT\r\nUID:e2e-muell\r\nDTSTART:20300105T060000Z\r\nDTEND:20300105T063000Z\r\nX-HOMES-ETAG:\"1\"\r\n"
+                 "SUMMARY:Müll raus\r\nEND:VEVENT\r\n"
                  "END:VCALENDAR\r\n"
                  "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nX-WR-CALNAME:Erinnerungen\r\nX-HAUS-KALENDER:erinnerungen\r\nX-HAUS-ART:erinnerungen\r\n"
                  "BEGIN:VEVENT\r\nUID:e2e-arzt\r\nDTSTART:20300106T080000Z\r\nDTEND:20300106T080000Z\r\nSUMMARY:Arzt anrufen\r\n"
                  "BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"),
 }
+
+
+def ohne(text, kind, uid):
+    """text without the BEGIN:<kind> … END:<kind> blocks of that UID."""
+    begin, end, out = "BEGIN:%s\r\n" % kind, "END:%s\r\n" % kind, ""
+    while begin in text:
+        i = text.index(begin)
+        j = text.index(end, i) + len(end)
+        block = text[i:j]
+        out += text[:i] + ("" if ("\r\nUID:%s\r\n" % uid) in block else block)
+        text = text[j:]
+    return out + text
 
 
 class Homes(BaseHTTPRequestHandler):
@@ -135,6 +155,44 @@ class Homes(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def do_PUT(self):
+        self.schreiben()
+
+    def do_DELETE(self):
+        self.schreiben()
+
+    def schreiben(self):
+        """One entry of the Homes account written back (homes#278), kept in the feed as Homes would."""
+        url = urlparse(self.path)
+        body = self.rfile.read(int(self.headers.get("Content-Length") or 0)).decode()
+        teile = url.path.split("/")  # '', napi, gemeinsam, kalender|kontakte, [kalender,] uid
+        if not self.authed() or len(teile) < 5 or teile[3] not in GEMEINSAM:
+            return self.reply(404, {"fehler": "nicht hier"})
+        part, uid = teile[3], unquote(teile[-1])
+        kind = "VEVENT" if part == "kalender" else "VCARD"
+        code = 204 if self.command == "DELETE" else (201 if self.headers.get("If-None-Match") == "*" else 200)
+        if uid == "e2e-muell" and self.command == "PUT":
+            code = 412
+        with lock:
+            ctype, text = GEMEINSAM[part]
+            if code in (200, 201, 204):
+                text = ohne(text, kind, uid)
+            if code in (200, 201):
+                block = body[body.index("BEGIN:" + kind):body.index("END:%s\r\n" % kind)] + "X-HOMES-ETAG:\"2\"\r\nEND:%s\r\n" % kind
+                text = text.replace("END:VCALENDAR\r\n", block + "END:VCALENDAR\r\n", 1) if kind == "VEVENT" else text + block
+            GEMEINSAM[part] = (ctype, text)
+        log("SCHREIBEN %s %s %d" % (self.command, url.path, code))
+        if code == 204:
+            self.send_response(204)
+            self.end_headers()
+            return
+        if code == 412:
+            return self.reply(412, {"fehler": "anders im Haus"})
+        self.send_response(code)
+        self.send_header("ETag", '"2"')
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def do_POST(self):
         url = urlparse(self.path)
