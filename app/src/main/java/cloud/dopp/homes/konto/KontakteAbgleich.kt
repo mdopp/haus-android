@@ -162,7 +162,7 @@ class KontakteAbgleich(
 
     companion object {
         const val KEINE_ERLAUBNIS =
-            "Die App darf die Kontakte nicht mehr schreiben: schalte bei „Kontakte des Hauses“ den Schalter noch einmal ein."
+            "Die App darf die Kontakte nicht mehr schreiben: schalte bei „Haushalts-Kontakte“ den Schalter noch einmal ein."
 
         private const val MEINE = "${RawContacts.ACCOUNT_TYPE} = ? AND ${RawContacts.ACCOUNT_NAME} = ?"
 

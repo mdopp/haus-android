@@ -115,7 +115,7 @@ abstract class KontoLauf(
     companion object {
         /** Operations a batch: the provider's yield limit is 500. */
         private const val STAPEL = 400
-        const val VERWORFEN = "Ein Eintrag war im Haus inzwischen anders: Es gilt die Fassung aus dem Haus, die Änderung am Handy ist verworfen."
+        const val VERWORFEN = "Ein Eintrag war in Homes inzwischen anders: Es gilt die Fassung aus Homes, die Änderung am Handy ist verworfen."
         const val UNERREICHBAR = "Homes war nicht erreichbar: Android versucht es bald von selbst wieder."
         const val NICHT_GESCHRIEBEN = "Das Handy hat die Einträge gerade nicht angenommen: Android versucht es bald wieder."
     }

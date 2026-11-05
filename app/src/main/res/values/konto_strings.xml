@@ -6,17 +6,17 @@
     <!-- the account's name in Android's settings, beside Google and the rest -->
     <string name="konto_label">Homes</string>
     <string name="konto_title">Homes auf dem Handy</string>
-    <string name="konto_intro">Die gemeinsamen Kontakte und Kalender des Hauses, auf diesem Handy im Konto „Homes“. So findest du sie beim Telefonieren, in WhatsApp, in der Mail und im Kalender.</string>
-    <string name="konto_zurueck">Was du auf dem Handy in den Kalendern und im Adressbuch des Hauses einträgst, änderst oder löschst, geht zurück nach Homes. Gelöschtes liegt dort 30 Tage im Papierkorb.</string>
+    <string name="konto_intro">Die Haushalts-Kontakte und Haushalts-Kalender, auf diesem Handy im Konto „Homes“. So findest du sie beim Telefonieren, in WhatsApp, in der Mail und im Kalender.</string>
+    <string name="konto_zurueck">Was du auf dem Handy in den Haushalts-Kalendern und Haushalts-Kontakten einträgst, änderst oder löschst, geht zurück nach Homes. Gelöschtes liegt dort 30 Tage im Papierkorb.</string>
 
-    <string name="konto_kontakte_titel">Kontakte des Hauses</string>
+    <string name="konto_kontakte_titel">Haushalts-Kontakte</string>
     <!-- what a screen reader says for the switch -->
-    <string name="konto_kontakte_schalter">Kontakte des Hauses auf dem Handy</string>
+    <string name="konto_kontakte_schalter">Haushalts-Kontakte auf dem Handy</string>
     <string name="konto_kontakte_was">Das gemeinsame Adressbuch aus Homes, im Adressbuch des Handys.</string>
     <string name="konto_kontakte_stand">Zuletzt abgeglichen %1$s: %2$d Kontakte.</string>
 
-    <string name="konto_kalender_titel">Kalender des Hauses</string>
-    <string name="konto_kalender_schalter">Kalender des Hauses auf dem Handy</string>
+    <string name="konto_kalender_titel">Haushalts-Kalender</string>
+    <string name="konto_kalender_schalter">Haushalts-Kalender auf dem Handy</string>
     <string name="konto_kalender_was">Die gemeinsamen Kalender aus Homes und eure Erinnerungen. Eine Erinnerung klingelt zu ihrer Zeit wie ein Termin.</string>
     <string name="konto_kalender_stand">Zuletzt abgeglichen %1$s: %2$d Termine und Erinnerungen.</string>
 
@@ -32,5 +32,5 @@
     <string name="konto_abgelehnt">Ohne die Erlaubnis kann die App nichts eintragen.</string>
     <string name="konto_einstellungen">Android fragt nicht mehr nach der Erlaubnis: tippe hier und erlaube sie unter Berechtigungen.</string>
 
-    <string name="konto_andere_richtung">Deine eigenen Kontakte und Kalender gehen den anderen Weg: vom Handy in dein Archiv (Daten sichern). Die des Hauses gehen dabei nicht mit.</string>
+    <string name="konto_andere_richtung">Deine eigenen Kontakte und Kalender gehen den anderen Weg: vom Handy in dein Archiv (Daten sichern). Die Haushalts-Kontakte und Haushalts-Kalender gehen dabei nicht mit.</string>
 </resources>

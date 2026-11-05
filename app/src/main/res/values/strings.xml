@@ -17,13 +17,13 @@
     <string name="anfordern">Hier anfordern</string>
     <string name="anfordern_laeuft">Wird angefordert …</string>
     <string name="anfordern_beschreibung">%1$s hier anfordern</string>
-    <string name="anfordern_nicht">Der Wunsch ließ sich gerade nicht aufschreiben. Versuch es später noch einmal.</string>
-    <string name="anfordern_zeit">Die Box hat nicht rechtzeitig geantwortet. Schau gleich nach, ob der Wunsch angekommen ist, bevor du es noch einmal versuchst.</string>
+    <string name="anfordern_nicht">Die Anfrage ließ sich gerade nicht aufschreiben. Versuch es später noch einmal.</string>
+    <string name="anfordern_zeit">Die Box hat nicht rechtzeitig geantwortet. Schau gleich nach, ob die Anfrage angekommen ist, bevor du es noch einmal versuchst.</string>
     <string name="anfordern_offline">Keine Verbindung zu Homes. Versuch es noch einmal, wenn das Handy online ist.</string>
-    <string name="anfordern_gekoppelt">Dieses Handy ist nicht mehr mit Homes gekoppelt. Kopple es neu, dann geht der Wunsch.</string>
+    <string name="anfordern_gekoppelt">Dieses Handy ist nicht mehr mit Homes gekoppelt. Kopple es neu, dann geht die Anfrage.</string>
     <!-- Mehr's quiet section: one trace per module the box lacks. -->
     <string name="spuren_titel">Gibt es hier noch nicht</string>
-    <string name="spuren_hinweis">Das kann Homes, auf dieser Box aber noch nicht. Wünsch es dir, dann sieht es der Admin.</string>
+    <string name="spuren_hinweis">Das kann Homes, auf dieser Box aber noch nicht. Frag es an, dann sieht es der Admin.</string>
     <!-- Under a trace: what sharing to it would do, while its share target is off. -->
     <string name="spur_teilen_merken">Teilen: Links und Texte als Notiz merken</string>
     <string name="spur_teilen_dokument">Teilen: Fotos zu deinen Dokumenten</string>

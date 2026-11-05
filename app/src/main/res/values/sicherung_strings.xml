@@ -63,7 +63,7 @@
     <string name="sicherung_anleitung_sms_title">SMS und Anrufe</string>
     <string name="sicherung_anleitung_sms">Hier oben „SMS und Anrufe übertragen“ einschalten. Die App verschlüsselt sie schon auf dem Handy; ins Archiv kommen sie, während es offen ist.</string>
     <string name="sicherung_anleitung_kontakte_title">Kontakte</string>
-    <string name="sicherung_anleitung_kontakte">Hier oben „Kontakte übertragen“ einschalten. Sie kommen in dein Adressbuch „Handy-Kontakte“ auf der Box und von dort ins Archiv, während es offen ist. Löschst du einen Kontakt auf dem Handy, bleibt er im Archiv. Die Kontakte des Hauses (Mehr → Homes auf dem Handy) gehen nicht mit.</string>
+    <string name="sicherung_anleitung_kontakte">Hier oben „Kontakte übertragen“ einschalten. Sie kommen in dein Adressbuch „Handy-Kontakte“ auf der Box und von dort ins Archiv, während es offen ist. Löschst du einen Kontakt auf dem Handy, bleibt er im Archiv. Die Haushalts-Kontakte (Mehr → Homes auf dem Handy) gehen nicht mit.</string>
     <string name="sicherung_anleitung_mail_title">E-Mail</string>
     <string name="sicherung_anleitung_mail">In deinem Archiv den Zugang zu deinem Postfach eintragen: Server, Benutzername und ein App-Passwort. Das Archiv holt jede Stunde neue Mails ab, auch wenn es zu ist; im Postfach ändert es nichts.</string>
     <string name="sicherung_anleitung_kalender_title">Kalender</string>

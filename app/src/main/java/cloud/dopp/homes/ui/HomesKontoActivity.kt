@@ -37,7 +37,7 @@ import kotlin.concurrent.thread
 
 /**
  * Mehr → Homes auf dem Handy (#206, the owner's call of 2026-11-03): the Homes
- * account's two switches, „Kontakte des Hauses“ and „Kalender des Hauses“,
+ * account's two switches, „Haushalts-Kontakte“ and „Haushalts-Kalender“,
  * each asking for its own permission when turned on. Under each its last
  * good run or what went wrong; „Jetzt abgleichen“ asks Android to sync now
  * and the line under it follows the run until it ends. Read only, it says so

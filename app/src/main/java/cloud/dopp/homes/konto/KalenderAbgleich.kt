@@ -225,9 +225,9 @@ class KalenderAbgleich(
 
     companion object {
         const val KEINE_ERLAUBNIS =
-            "Die App darf den Kalender nicht mehr schreiben: schalte bei „Kalender des Hauses“ den Schalter noch einmal ein."
+            "Die App darf den Kalender nicht mehr schreiben: schalte bei „Haushalts-Kalender“ den Schalter noch einmal ein."
 
-        const val SERIE = "Einen einzelnen Termin einer Serie ändert das Handy noch nicht im Haus: Die Änderung ist verworfen. Ändere die ganze Serie, oder den Termin in Homes."
+        const val SERIE = "Einen einzelnen Termin einer Serie ändert das Handy noch nicht in Homes: Die Änderung ist verworfen. Ändere die ganze Serie, oder den Termin in Homes."
 
         private val UTC: TimeZone = TimeZone.getTimeZone("UTC")
 

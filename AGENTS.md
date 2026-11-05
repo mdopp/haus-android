@@ -43,7 +43,9 @@ These rules apply to every session, human or agent.
   widgets again. What the server keeps as stored data keeps its old name:
   the iCalendar properties `X-HAUS-KALENDER` and `X-HAUS-ART` of the shared
   calendars. „Haus“ stays where it is the ordinary word: the energy flow's
-  „Haus“ (the building), „Haus-Energie“, „Kontakte des Hauses“, Haushalt.
+  „Haus“ (the building), „Haus-Energie“, Haushalt. The household's shared contacts and calendars
+  are „Haushalts-Kontakte“ and „Haushalts-Kalender“ (the owner's call,
+  2026-11-05), and asking for a module is an „Anfrage“, not a „Wunsch“.
 - Messages to people go through their chat channel (laib ADR 0022 §3), not the
   app. Two notifications, and only these: the live service's quiet one, and
   the Hochladen job's while it uploads and for what came of it. Two

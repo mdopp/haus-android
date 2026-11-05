@@ -68,7 +68,7 @@ class KannPreviewTest {
                     path == "/napi/kann/anfordern" && request.body.readUtf8().contains("podcasts") ->
                         MockResponse().setBody(modul("podcasts").put("spur_id", "angefordert").put("spur", "angefordert").put("anfordern", false).toString())
                     path == "/napi/kann/anfordern" -> MockResponse().setResponseCode(502)
-                        .setBody("""{"ok":false,"error":"Der Wunsch ließ sich gerade nicht aufschreiben. Versuch es später noch einmal."}""")
+                        .setBody("""{"ok":false,"error":"Die Anfrage ließ sich gerade nicht aufschreiben. Versuch es später noch einmal."}""")
                         .setHeadersDelay(400, TimeUnit.MILLISECONDS)
                     else -> MockResponse().setResponseCode(404).setBody("""{"ok":false,"reason":"not_found"}""")
                 }
@@ -128,7 +128,7 @@ class KannPreviewTest {
         draw(a, "app-anfordern-laeuft", a.findViewById(R.id.spuren_section))
         settle("standort")
         assertTrue(Anfordern.stand("standort") is Anfrage.Abgelehnt)
-        assertTrue(texts(a.findViewById(R.id.spuren_group)).any { it.startsWith("Der Wunsch ließ sich gerade nicht") })
+        assertTrue(texts(a.findViewById(R.id.spuren_group)).any { it.startsWith("Die Anfrage ließ sich gerade nicht") })
         draw(a, "app-anfordern-fehler", a.findViewById(R.id.spuren_section))
     }
 
