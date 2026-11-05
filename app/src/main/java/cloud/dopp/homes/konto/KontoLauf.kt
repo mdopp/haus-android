@@ -40,7 +40,7 @@ abstract class KontoLauf(
     protected abstract fun senden(): String?
 
     /** Homes did not answer a write: the entries stay changed until the next run. */
-    class Spaeter : Exception()
+    class Spaeter(val satz: String = UNERREICHBAR) : Exception(satz)
 
     fun laufen(result: SyncResult) {
         try {
@@ -50,33 +50,10 @@ abstract class KontoLauf(
                 store.vergissEtag(teil) // changed on the phone meanwhile: all of it again
                 antwort = holen(null)
             }
-            when (antwort) {
-                is GemeinsamClient.Antwort.Neu -> {
-                    val n = schreiben(antwort.text)
-                    store.geschafft(teil, antwort.etag, n)
-                    verworfen?.let { store.melde(teil, it) }
-                }
-                GemeinsamClient.Antwort.Gleich -> {
-                    store.geschafft(teil, null, null)
-                    verworfen?.let { store.melde(teil, it) }
-                }
-                is GemeinsamClient.Antwort.Abgelehnt -> {
-                    if (antwort.code == 401) {
-                        result.stats.numAuthExceptions++
-                        store.melde(teil, Lauf.NICHT_GEKOPPELT)
-                    } else {
-                        if (antwort.code >= 500) result.stats.numIoExceptions++ else result.stats.numParseExceptions++
-                        store.melde(teil, antwort.satz ?: abgelehnt(antwort.code))
-                    }
-                }
-                GemeinsamClient.Antwort.Unerreichbar -> {
-                    result.stats.numIoExceptions++
-                    store.melde(teil, UNERREICHBAR)
-                }
-            }
+            if (geholt(antwort, result)) verworfen?.let { store.melde(teil, it) }
         } catch (e: Spaeter) {
             result.stats.numIoExceptions++
-            store.melde(teil, UNERREICHBAR)
+            store.melde(teil, e.satz)
         } catch (e: SecurityException) {
             result.stats.numAuthExceptions++
             store.melde(teil, keineErlaubnis)
@@ -85,6 +62,30 @@ abstract class KontoLauf(
             result.stats.numIoExceptions++
             store.melde(teil, NICHT_GESCHRIEBEN)
         }
+    }
+
+    /** Homes' [antwort] written, or said: whether the run was a good one. */
+    private fun geholt(antwort: GemeinsamClient.Antwort, result: SyncResult): Boolean {
+        when (antwort) {
+            is GemeinsamClient.Antwort.Neu -> store.geschafft(teil, antwort.etag, schreiben(antwort.text))
+            GemeinsamClient.Antwort.Gleich -> store.geschafft(teil, null, null)
+            is GemeinsamClient.Antwort.Abgelehnt -> {
+                if (antwort.code == 401) {
+                    result.stats.numAuthExceptions++
+                    store.melde(teil, Lauf.NICHT_GEKOPPELT)
+                } else {
+                    if (antwort.code >= 500) result.stats.numIoExceptions++ else result.stats.numParseExceptions++
+                    store.melde(teil, antwort.satz ?: abgelehnt(antwort.code))
+                }
+                return false
+            }
+            GemeinsamClient.Antwort.Unerreichbar -> {
+                result.stats.numIoExceptions++
+                store.melde(teil, UNERREICHBAR)
+                return false
+            }
+        }
+        return true
     }
 
     /**

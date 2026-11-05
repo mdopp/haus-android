@@ -34,15 +34,7 @@ object IcalSchreiber {
         z += listOf("BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//mdopp//Homes App//DE", "BEGIN:VEVENT")
         z += "UID:" + Vcard.text(e.uid)
         z += "DTSTAMP:" + utc(jetzt)
-        val zone = e.zone?.takeIf { e.rrule != null && !e.ganztags && it != "UTC" && TimeZone.getTimeZone(it).id == it }
-        z += "DTSTART" + zeit(e.beginn, e.ganztags, zone)
-        if (e.rrule != null) {
-            val s = e.dauer?.let(IcalLeser::dauer) ?: ((e.ende ?: e.beginn) - e.beginn) / 1000
-            z += "DURATION:" + if (e.ganztags) "P${maxOf(1, s / 86400)}D" else "PT${s}S"
-            z += "RRULE:" + e.rrule
-        } else {
-            z += "DTEND" + zeit(maxOf(e.ende ?: e.beginn, e.beginn), e.ganztags, null)
-        }
+        z += wann(e)
         e.exdate?.let { z += exdate(it) }
         e.titel?.let { z += "SUMMARY:" + Vcard.text(it) }
         e.ort?.takeIf { it.isNotBlank() }?.let { z += "LOCATION:" + Vcard.text(it) }
@@ -52,6 +44,15 @@ object IcalSchreiber {
         }
         z += listOf("END:VEVENT", "END:VCALENDAR")
         return z.joinToString("") { Vcard.falte(it) + "\r\n" }
+    }
+
+    /** When: DTSTART, and DTEND, or for a series its DURATION and RRULE. */
+    private fun wann(e: Eintrag): List<String> {
+        val zone = e.zone?.takeIf { e.rrule != null && !e.ganztags && it != "UTC" && TimeZone.getTimeZone(it).id == it }
+        val start = "DTSTART" + zeit(e.beginn, e.ganztags, zone)
+        if (e.rrule == null) return listOf(start, "DTEND" + zeit(maxOf(e.ende ?: e.beginn, e.beginn), e.ganztags, null))
+        val s = e.dauer?.let(IcalLeser::dauer) ?: ((e.ende ?: e.beginn) - e.beginn) / 1000
+        return listOf(start, "DURATION:" + if (e.ganztags) "P${maxOf(1, s / 86400)}D" else "PT${s}S", "RRULE:" + e.rrule)
     }
 
     /** A DTSTART's or DTEND's parameters and value: a day as DATE, a time in [zone] or UTC. */

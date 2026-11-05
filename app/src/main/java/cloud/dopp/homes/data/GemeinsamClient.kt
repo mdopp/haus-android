@@ -54,7 +54,7 @@ class GemeinsamClient(
         val headers = mapOf(Napi.IF_MATCH to etag.orEmpty()) + (if (text == null) emptyMap() else mapOf(Napi.IF_NONE_MATCH to if (etag == null) "*" else ""))
         http.newCall(endpoint.request(base, token, endpoint.path, body, headers)).execute().use { resp ->
             if (resp.isSuccessful) {
-                Antwort.Neu("", resp.replyHeader(endpoint, Napi.ETAG))
+                Antwort.Neu("", if (text == null) null else resp.replyHeader(endpoint, Napi.ETAG))
             } else {
                 Antwort.Abgelehnt(resp.code, HomesHttp.satz(resp.body?.string(), GemeinsamJson.FEHLER))
             }

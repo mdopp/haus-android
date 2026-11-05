@@ -61,24 +61,28 @@ class KalenderAbgleich(
         provider.query(alsAdapter(Events.CONTENT_URI), arrayOf(Events._ID) + SPALTEN, "$MEINE AND ${Events.DIRTY} = 1", KONTO, null)?.use { c ->
             while (c.moveToNext()) zeilen += c.getLong(0) to SPALTEN.associateWith { s -> c.getString(c.getColumnIndexOrThrow(s)) }
         }
-        for ((id, z) in zeilen) {
-            val kalender = z[Events.CALENDAR_ID]?.toLongOrNull()?.let(schreibbar::get)
-            val etag = z[Events.SYNC_DATA2]
-            val instanz = z[Events.ORIGINAL_SYNC_ID] != null || z[Events.ORIGINAL_ID] != null
-            when {
-                // gone from the phone: from Homes too; else (refused, or read only) Homes' version comes back below
-                z[Events.DELETED] == "1" || kalender == null -> {
-                    if (etag != null && kalender != null && !instanz) {
-                        gesendet(nachHomes(z[Events.SYNC_DATA3] ?: kalender, z[Events._SYNC_ID].orEmpty(), null, etag)) { verworfen = it }
-                    }
-                    provider.delete(zeile(Events.CONTENT_URI, id), null, null)
+        for ((id, z) in zeilen) verworfen = einer(id, z, z[Events.CALENDAR_ID]?.toLongOrNull()?.let(schreibbar::get)) ?: verworfen
+        return verworfen
+    }
+
+    /** One dirty entry [id] ([z]) of [kalender] (null: one the phone does not write) to Homes: what was dropped, if anything. */
+    private fun einer(id: Long, z: Map<String, String?>, kalender: String?): String? {
+        var verworfen: String? = null
+        val etag = z[Events.SYNC_DATA2]
+        val instanz = z[Events.ORIGINAL_SYNC_ID] != null || z[Events.ORIGINAL_ID] != null
+        when {
+            // gone from the phone: from Homes too; else (refused, or read only) Homes' version comes back below
+            z[Events.DELETED] == "1" || kalender == null -> {
+                if (etag != null && kalender != null && !instanz) {
+                    gesendet(nachHomes(z[Events.SYNC_DATA3] ?: kalender, z[Events._SYNC_ID].orEmpty(), null, etag)) { verworfen = it }
                 }
-                instanz -> {
-                    provider.delete(zeile(Events.CONTENT_URI, id), null, null)
-                    verworfen = SERIE
-                }
-                else -> verworfen = schicken(id, z, kalender) ?: verworfen
+                provider.delete(zeile(Events.CONTENT_URI, id), null, null)
             }
+            instanz -> {
+                provider.delete(zeile(Events.CONTENT_URI, id), null, null)
+                verworfen = SERIE
+            }
+            else -> verworfen = schicken(id, z, kalender)
         }
         return verworfen
     }

@@ -722,7 +722,7 @@ class NapiContractTest {
     @Test
     fun theTableItselfReadsAsHomesWritesIt() {
         HOMES.forEach { r ->
-            assertTrue(r.toString(), r.method in setOf("GET", "POST", "HEAD", "PATCH"))
+            assertTrue(r.toString(), r.method in setOf("GET", "POST", "HEAD", "PATCH", "PUT", "DELETE"))
             assertTrue(r.toString(), r.path.startsWith("/napi/"))
             assertTrue(r.toString(), r.at.startsWith("internal/napi/"))
         }
