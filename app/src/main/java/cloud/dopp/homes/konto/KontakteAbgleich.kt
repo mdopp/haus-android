@@ -306,13 +306,6 @@ class KontakteAbgleich(
                 }
             }
             k.notiz?.let { n -> zeile(Note.CONTENT_ITEM_TYPE) { put(Note.NOTE, n) } }
-            k.foto?.let { runCatching { Base64.decode(it, Base64.DEFAULT) }.getOrNull() }?.takeIf { it.isNotEmpty() }?.let { jpg ->
-                zeile(Photo.CONTENT_ITEM_TYPE) {
-                    put(Photo.PHOTO, jpg)
-                    if (k.fotoVonHomes) put(ContactsContract.Data.SYNC1, HOMES_FOTO)
-                    put(ContactsContract.Data.SYNC2, NEU) // the hash once Android has it (fotosGelesen)
-                }
-            }
             k.webseiten.forEach { w ->
                 zeile(Website.CONTENT_ITEM_TYPE) {
                     put(Website.URL, w.wert)
@@ -321,7 +314,18 @@ class KontakteAbgleich(
                     put(ContactsContract.Data.SYNC1, w.gruppe) // a Homes link is known again when the card goes back
                 }
             }
-            return out
+            return out + listOfNotNull(foto(k))
+        }
+
+        /** [k]'s picture as a data row: SYNC1 [HOMES_FOTO] when it is Homes' face, SYNC2 [NEU] until [fotosGelesen]. */
+        private fun foto(k: Kontakt): ContentValues? {
+            val jpg = k.foto?.let { runCatching { Base64.decode(it, Base64.DEFAULT) }.getOrNull() }?.takeIf { it.isNotEmpty() } ?: return null
+            return ContentValues().apply {
+                put(ContactsContract.Data.MIMETYPE, Photo.CONTENT_ITEM_TYPE)
+                put(Photo.PHOTO, jpg)
+                if (k.fotoVonHomes) put(ContactsContract.Data.SYNC1, HOMES_FOTO)
+                put(ContactsContract.Data.SYNC2, NEU)
+            }
         }
 
         /** vCard's TEL types as Android's phone type: the reverse of HandyKontakte.telefonTypen. */
