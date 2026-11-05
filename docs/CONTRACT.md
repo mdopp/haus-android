@@ -395,7 +395,23 @@ switch under Mehr → Homes auf dem Handy and its own permission.
   `X-HOMES-ETAG`. Each card one raw contact of the account, SOURCE_ID the
   SHA-1 of its UID, SYNC1 the hash of its text, SYNC2 the UID, SYNC3 the
   version. Visible without a group, so the dialer, WhatsApp and mail find
-  them.
+  them. Homes' links on a card (`homes-dokumente`, `homes-nachrichten`,
+  `homes-fotos`: a grouped URL with its X-ABLabel) are Website rows of that
+  label, and never go back.
+- **Pictures** (the owner's call of 2026-11-05, homes#287): a card's PHOTO
+  (vCard 3.0 `ENCODING=b`, 4.0 a `data:` URI; a link is left out) is the
+  contact's picture, a `Photo` data row. Homes adds the face of the card's
+  Immich person to a card without a PHOTO, as `homes-foto.PHOTO;…;X-HOMES=immich`
+  (≤ 96 px); that row carries SYNC1 `homes-foto`. Android re-encodes a
+  picture, so each row's SYNC2 is the hash of the bytes as read back after
+  the write. A card goes back with a PHOTO only when the picture is the
+  person's: set on the phone (no SYNC2) or changed there (its bytes no
+  longer have that hash); then it is Android's large picture (else the
+  thumbnail), a JPEG of at most 256 px, `PHOTO;ENCODING=b;TYPE=JPEG:…`.
+  Homes' face, and a picture as Homes sent it, are not sent: Homes drops
+  its face anyway (by group, X-HOMES or its bytes) and keeps a card's
+  stored picture when none comes. A picture removed on the phone is not
+  removed in Homes.
 - **Haushalts-Kalender** (READ_ and WRITE_CALENDAR): `GET
   /napi/gemeinsam/kalender?schreibbar=1` → `text/calendar`, one VCALENDAR
   per shared calendar (`X-WR-CALNAME`, `X-HAUS-KALENDER` its id,

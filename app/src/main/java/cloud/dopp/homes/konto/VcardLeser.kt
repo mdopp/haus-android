@@ -11,7 +11,8 @@ import cloud.dopp.homes.sicherung.Kontakt
  * them into Radicale. Read into the app's own [Kontakt], the shape the
  * phone's address book takes. Lines unfolded, a group prefix (`item1.`)
  * kept apart (a URL takes the X-ABLabel of its group), text values unescaped, types lower case (`TYPE=CELL`,
- * `TYPE="home,voice"`, vCard 2.1's bare `;CELL`). A card without a UID is
+ * `TYPE="home,voice"`, vCard 2.1's bare `;CELL`), a PHOTO's bytes kept as base64 (3.0's
+ * `ENCODING=b`, 4.0's `data:` URI; a link to a picture is left out). A card without a UID is
  * left out: the phone could not tell it from the next. Pure.
  */
 object VcardLeser {
@@ -120,11 +121,21 @@ object VcardLeser {
                 "TITLE" -> k.copy(titel = k.titel ?: text(z.wert).ifBlank { null })
                 "BDAY" -> k.copy(geburtstag = k.geburtstag ?: geburtstag(z.wert))
                 "NOTE" -> text(z.wert).ifBlank { null }?.let { k.copy(notiz = listOfNotNull(k.notiz, it).joinToString("\n")) } ?: k
+                "PHOTO" -> foto(z)?.takeIf { k.foto == null }?.let {
+                    k.copy(foto = it, fotoVonHomes = z.gruppe?.startsWith("homes-") == true || "X-HOMES" in z.parameter)
+                } ?: k
                 "URL" -> text(z.wert).trim().ifEmpty { null }?.let { k.copy(webseiten = k.webseiten + Eintrag(it, label = labels[z.gruppe], gruppe = z.gruppe)) } ?: k
                 else -> k
             }
         }
         return Karte(k, zeilen.joinToString("\n"), gelesen.firstOrNull { it.name == FeedIcal.ETAG }?.let { text(it.wert).trim() })
+    }
+
+    /** A PHOTO's base64: 3.0's inline value, or 4.0's `data:…;base64,` URI; null for a link. */
+    private fun foto(z: Zeile): String? {
+        val w = z.wert.filterNot { it.isWhitespace() }
+        val inline = z.parameter["ENCODING"].orEmpty().any { it.equals("b", true) || it.equals("base64", true) }
+        return (if (w.startsWith("data:", true)) w.substringAfter(";base64,", "") else w.takeIf { inline })?.ifEmpty { null }
     }
 
     /**
