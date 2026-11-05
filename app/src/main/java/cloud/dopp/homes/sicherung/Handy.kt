@@ -138,7 +138,9 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
                 Event.CONTENT_ITEM_TYPE ->
                     if (typ(Event.TYPE) == Event.TYPE_BIRTHDAY) k.copy(geburtstag = k.geburtstag ?: t(Event.START_DATE)) else k
                 Note.CONTENT_ITEM_TYPE -> t(Note.NOTE)?.let { k.copy(notiz = listOfNotNull(k.notiz, it).joinToString("\n")) } ?: k
-                Website.CONTENT_ITEM_TYPE -> t(Website.URL)?.let { k.copy(webseiten = k.webseiten + it) } ?: k
+                Website.CONTENT_ITEM_TYPE -> t(Website.URL)?.let { u ->
+                    k.copy(webseiten = k.webseiten + Eintrag(u, label = t(Website.LABEL), gruppe = t(ContactsContract.Data.SYNC1)))
+                } ?: k
                 else -> k
             }
         }

@@ -40,6 +40,7 @@ class KontakteAbgleich(
     store: KontoStore,
     holen: (String?) -> GemeinsamClient.Antwort,
     private val nachHomes: (String?, String, String?, String?) -> GemeinsamClient.Antwort = { _, _, _, _ -> GemeinsamClient.Antwort.Unerreichbar },
+    private val homes: String? = null,
 ) : KontoLauf(HomesKonto.Teil.KONTAKTE, store, holen) {
 
     override val keineErlaubnis = KEINE_ERLAUBNIS
@@ -65,7 +66,7 @@ class KontakteAbgleich(
                 continue
             }
             val karte = uid?.takeIf { etag != null } ?: UUID.randomUUID().toString()
-            val neu = gesendet(nachHomes(null, karte, Vcard.karte(kontakt(id, karte)), etag)) { verworfen = it }
+            val neu = gesendet(nachHomes(null, karte, Vcard.karte(Vcard.ohneHomesLinks(kontakt(id, karte), homes)), etag)) { verworfen = it }
             val werte = ContentValues().apply {
                 put(RawContacts.DIRTY, 0)
                 putNull(RawContacts.SYNC1)
@@ -103,7 +104,7 @@ class KontakteAbgleich(
         val ops = ArrayList<ContentProviderOperation>()
         plan.weg.forEach { id ->
             ops += ContentProviderOperation.newDelete(zeileUri(RawContacts.CONTENT_URI, id)).build()
-            flush(ops)
+            provider.flush(ops)
         }
         plan.geaendert.forEach { (id, karte) ->
             ops += ContentProviderOperation.newUpdate(zeileUri(RawContacts.CONTENT_URI, id))
@@ -115,7 +116,7 @@ class KontakteAbgleich(
                 ops += ContentProviderOperation.newInsert(alsAdapter(ContactsContract.Data.CONTENT_URI))
                     .withValues(v).withValue(ContactsContract.Data.RAW_CONTACT_ID, id).build()
             }
-            flush(ops)
+            provider.flush(ops)
         }
         plan.neu.forEach { karte ->
             val start = ops.size
@@ -131,17 +132,10 @@ class KontakteAbgleich(
                 ops += ContentProviderOperation.newInsert(alsAdapter(ContactsContract.Data.CONTENT_URI))
                     .withValues(v).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, start).build()
             }
-            flush(ops)
+            provider.flush(ops)
         }
-        flush(ops, alles = true)
+        provider.flush(ops, alles = true)
         return karten.size
-    }
-
-    /** Apply [ops] once they are many (or [alles]): a batch the provider takes in one go, never one cut inside a contact. */
-    private fun flush(ops: ArrayList<ContentProviderOperation>, alles: Boolean = false) {
-        if (ops.isEmpty() || (!alles && ops.size < STAPEL)) return
-        provider.applyBatch(ops)
-        ops.clear()
     }
 
     /** The account's contacts show without a group, as a phone's own do. */
@@ -170,13 +164,10 @@ class KontakteAbgleich(
         const val KEINE_ERLAUBNIS =
             "Die App darf die Kontakte nicht mehr schreiben: schalte bei „Kontakte des Hauses“ den Schalter noch einmal ein."
 
-        /** Operations a batch: the provider's yield limit is 500. */
-        private const val STAPEL = 400
-
         private const val MEINE = "${RawContacts.ACCOUNT_TYPE} = ? AND ${RawContacts.ACCOUNT_NAME} = ?"
 
-        /** What [HandyKontakte.dazu] reads of a data row. */
-        private val DATEN = arrayOf(ContactsContract.Data.MIMETYPE) + (1..10).map { "data$it" }
+        /** What [HandyKontakte.dazu] reads of a data row; SYNC1 a URL's vCard group. */
+        private val DATEN = arrayOf(ContactsContract.Data.MIMETYPE, ContactsContract.Data.SYNC1) + (1..10).map { "data$it" }
         private val KONTO = arrayOf(HomesKonto.TYP, HomesKonto.NAME)
 
         /** [uri] as the sync adapter of the Homes account writes it. */
@@ -245,8 +236,10 @@ class KontakteAbgleich(
             k.notiz?.let { n -> zeile(Note.CONTENT_ITEM_TYPE) { put(Note.NOTE, n) } }
             k.webseiten.forEach { w ->
                 zeile(Website.CONTENT_ITEM_TYPE) {
-                    put(Website.URL, w)
-                    put(Website.TYPE, Website.TYPE_OTHER)
+                    put(Website.URL, w.wert)
+                    put(Website.TYPE, if (w.label == null) Website.TYPE_OTHER else Website.TYPE_CUSTOM)
+                    put(Website.LABEL, w.label)
+                    put(ContactsContract.Data.SYNC1, w.gruppe) // a Homes link is known again when the card goes back
                 }
             }
             return out

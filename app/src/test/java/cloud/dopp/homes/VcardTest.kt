@@ -29,7 +29,7 @@ class VcardTest {
             mails = listOf(Eintrag("anna@example.org", listOf("home"))),
             adressen = listOf(Adresse(typen = listOf("home"), strasse = "Hauptstr. 1", ort = "Berlin", plz = "10115", land = "Deutschland")),
             firma = "Firma GmbH", abteilung = "Einkauf", titel = "Leitung",
-            geburtstag = "1980-05-17", notiz = "Erste Zeile\nzweite; mit, Zeichen", webseiten = listOf("https://example.org"),
+            geburtstag = "1980-05-17", notiz = "Erste Zeile\nzweite; mit, Zeichen", webseiten = listOf(Eintrag("https://example.org")),
         )
         val karte = Vcard.karte(k)
         assertTrue(karte.endsWith("END:VCARD\r\n"))
