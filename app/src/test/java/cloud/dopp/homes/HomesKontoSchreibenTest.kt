@@ -147,10 +147,11 @@ class HomesKontoSchreibenTest {
         assertEquals(KontoLauf.VERWORFEN, KontoStore(app).meldung(Teil.KALENDER))
         assertEquals(1, KontoStore(app).stand(Teil.KALENDER)!!.anzahl)
 
-        // Homes' own sentence for a refusal, then a clean run clears it
+        // Homes' own sentence for a refusal; the clean run Android starts right after does not hide it, a day later one does
         lauf(listOf(Antwort.Abgelehnt(400, "Homes hat darin nicht genau diesen einen Eintrag gefunden.")), ArrayList()).laufen(SyncResult())
-        assertEquals("Homes hat darin nicht genau diesen einen Eintrag gefunden.", KontoStore(app).meldung(Teil.KALENDER))
         lauf(emptyList(), ArrayList()).laufen(SyncResult())
+        assertEquals("Homes hat darin nicht genau diesen einen Eintrag gefunden.", KontoStore(app).meldung(Teil.KALENDER))
+        KontoStore(app).geschafft(Teil.KALENDER, null, null, System.currentTimeMillis() + 25 * 3600_000L)
         assertNull(KontoStore(app).meldung(Teil.KALENDER))
     }
 

@@ -18,17 +18,23 @@ class KontoStore(ctx: Context) {
 
     fun etag(teil: HomesKonto.Teil): String? = p.getString(key(teil, "etag"), null)
 
-    /** A good run: [etag] written, [anzahl] entries on the phone; its last word cleared. */
+    /** A good run: [etag] written, [anzahl] entries on the phone; its last word cleared, unless it is a day's ([melde]). */
     fun geschafft(teil: HomesKonto.Teil, etag: String?, anzahl: Int?, zeit: Long = System.currentTimeMillis()) {
-        val e = p.edit().putLong(key(teil, "zeit"), zeit).remove(key(teil, "meldung"))
+        val e = p.edit().putLong(key(teil, "zeit"), zeit)
+        if (zeit - p.getLong(key(teil, BLEIBT), 0L) > TAG) e.remove(key(teil, "meldung"))
         if (etag != null) e.putString(key(teil, "etag"), etag)
         if (anzahl != null) e.putInt(key(teil, "anzahl"), anzahl)
         e.apply()
     }
 
-    /** A run that went wrong: its sentence, kept until the next good one. */
-    fun melde(teil: HomesKonto.Teil, satz: String) {
-        p.edit().putString(key(teil, "meldung"), satz).apply()
+    /**
+     * A run that went wrong: its sentence, kept until the next good one; [bleibt] (a change on the phone Homes'
+     * version won over) for a day, so the next sync Android starts at once does not hide it.
+     */
+    fun melde(teil: HomesKonto.Teil, satz: String, bleibt: Boolean = false) {
+        val e = p.edit().putString(key(teil, "meldung"), satz)
+        if (bleibt) e.putLong(key(teil, BLEIBT), System.currentTimeMillis())
+        e.apply()
     }
 
     fun stand(teil: HomesKonto.Teil): Stand? {
@@ -41,7 +47,7 @@ class KontoStore(ctx: Context) {
     /** The part is off: next time it starts from nothing. */
     fun vergiss(teil: HomesKonto.Teil) {
         p.edit().remove(key(teil, "etag")).remove(key(teil, "zeit")).remove(key(teil, "anzahl"))
-            .remove(key(teil, "meldung")).remove(key(teil, ANGEHALTEN)).apply()
+            .remove(key(teil, "meldung")).remove(key(teil, ANGEHALTEN)).remove(key(teil, BLEIBT)).apply()
     }
 
     /** The part syncs no more because the box lacks it (homes ADR 0001 §3): it comes back on with the box. */
@@ -61,5 +67,7 @@ class KontoStore(ctx: Context) {
     private companion object {
         const val PREFS = "homes_konto"
         const val ANGEHALTEN = "angehalten"
+        const val BLEIBT = "bleibt"
+        const val TAG = 24L * 60 * 60 * 1000
     }
 }

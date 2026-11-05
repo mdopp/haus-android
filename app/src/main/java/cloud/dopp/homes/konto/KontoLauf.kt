@@ -50,7 +50,7 @@ abstract class KontoLauf(
                 store.vergissEtag(teil) // changed on the phone meanwhile: all of it again
                 antwort = holen(null)
             }
-            if (geholt(antwort, result)) verworfen?.let { store.melde(teil, it) }
+            if (geholt(antwort, result)) verworfen?.let { store.melde(teil, it, bleibt = true) }
         } catch (e: Spaeter) {
             result.stats.numIoExceptions++
             store.melde(teil, e.satz)
