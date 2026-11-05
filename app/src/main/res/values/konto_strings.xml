@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Das Homes-Konto (#206, owner 2026-11-03): the household's shared contacts,
-     calendars and reminders in the phone's own apps, read only. -->
+     calendars and reminders in the phone's own apps; writable since the owner's
+     call of 2026-11-05. -->
 <resources>
     <!-- the account's name in Android's settings, beside Google and the rest -->
     <string name="konto_label">Homes</string>
     <string name="konto_title">Homes auf dem Handy</string>
     <string name="konto_intro">Die gemeinsamen Kontakte und Kalender des Hauses, auf diesem Handy im Konto „Homes“. So findest du sie beim Telefonieren, in WhatsApp, in der Mail und im Kalender.</string>
-    <string name="konto_nur_lesen">Auf dem Handy nur zum Lesen: ändern geht in Homes.</string>
+    <string name="konto_zurueck">Was du auf dem Handy in den Kalendern und im Adressbuch des Hauses einträgst, änderst oder löschst, geht zurück nach Homes. Gelöschtes liegt dort 30 Tage im Papierkorb.</string>
 
     <string name="konto_kontakte_titel">Kontakte des Hauses</string>
     <!-- what a screen reader says for the switch -->

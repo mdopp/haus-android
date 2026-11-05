@@ -13,12 +13,13 @@ import java.util.TimeZone
  * ([FeedIcal]). Each VEVENT becomes a [Termin], the shape the phone's
  * calendar takes: start and end in epoch ms, a whole day as UTC midnights
  * (as CalendarContract wants it), a time zone for a recurring one. Series
- * come expanded, each instance with its RECURRENCE-ID; only a recurring
- * reminder carries an RRULE. Pure.
+ * come whole (`?schreibbar=1`, owner 2026-11-05): the series with its RRULE
+ * and EXDATE, each changed instance with its RECURRENCE-ID, every alarm,
+ * and the version ([FeedIcal.ETAG]) the phone writes back over. Pure.
  */
 object IcalLeser {
 
-    data class Kalender(val id: String, val name: String, val art: String, val termine: List<Termin>)
+    data class Kalender(val id: String, val name: String, val art: String, val termine: List<Termin>, val schreibbar: Boolean = false)
 
     data class Termin(
         val uid: String,
@@ -33,14 +34,21 @@ object IcalLeser {
         val ort: String? = null,
         val beschreibung: String? = null,
         val rrule: String? = null,
-        /** Minutes before the start a display alarm rings; null: none. */
-        val alarm: Int? = null,
+        /** Minutes before the start each display alarm rings. */
+        val alarme: List<Int> = emptyList(),
+        /** EXDATE as CalendarContract keeps it: `<zone>;<dates>` or the UTC or whole-day dates. */
+        val exdate: String? = null,
+        /** A changed instance: the start it replaces, epoch ms. */
+        val original: Long? = null,
+        /** The version Homes has, the phone writes back over it. */
+        val etag: String? = null,
     ) {
         /** The entry's id on the phone (`_SYNC_ID`). */
         val syncId: String get() = if (instanz == null) uid else "$uid#$instanz"
 
-        /** Whether the phone's entry must be written again: every field the phone shows. */
-        val stand: String get() = listOf(beginn, ende, ganztags, zone, titel, ort, beschreibung, rrule, alarm).joinToString("\u0001")
+        /** Whether the phone's entry must be written again: every field the phone shows, and the version. */
+        val stand: String
+            get() = listOf(beginn, ende, ganztags, zone, titel, ort, beschreibung, rrule, alarme, exdate, original, etag).joinToString("\u0001")
     }
 
     fun lies(text: String): List<Kalender> {
@@ -49,6 +57,7 @@ object IcalLeser {
         var termine = ArrayList<Termin>()
         var ereignis: MutableList<VcardLeser.Zeile>? = null
         var alarm: MutableList<VcardLeser.Zeile>? = null
+        val alarme = ArrayList<List<VcardLeser.Zeile>>()
         for (roh in VcardLeser.entfalte(text)) {
             if (roh.isBlank()) continue
             val z = VcardLeser.zeile(roh) ?: continue
@@ -60,17 +69,22 @@ object IcalLeser {
                 z.name == "END" && z.wert.equals("VCALENDAR", true) -> {
                     val k = kal ?: continue
                     val id = k[FeedIcal.KALENDER]?.ifBlank { null }
-                    if (id != null) out += Kalender(id, k[FeedIcal.NAME]?.ifBlank { null } ?: id, k[FeedIcal.ART].orEmpty(), termine)
+                    if (id != null) {
+                        out += Kalender(id, k[FeedIcal.NAME]?.ifBlank { null } ?: id, k[FeedIcal.ART].orEmpty(), termine, k[FeedIcal.SCHREIBBAR] == "TRUE")
+                    }
                     kal = null
                 }
                 z.name == "BEGIN" && z.wert.equals("VEVENT", true) -> ereignis = ArrayList()
                 z.name == "END" && z.wert.equals("VEVENT", true) -> {
-                    ereignis?.let { e -> termin(e, alarm)?.let(termine::add) }
+                    ereignis?.let { e -> termin(e, alarme)?.let(termine::add) }
                     ereignis = null
-                    alarm = null
+                    alarme.clear()
                 }
                 z.name == "BEGIN" && z.wert.equals("VALARM", true) -> if (ereignis != null) alarm = ArrayList()
-                z.name == "END" && z.wert.equals("VALARM", true) -> {}
+                z.name == "END" && z.wert.equals("VALARM", true) -> {
+                    alarm?.let(alarme::add)
+                    alarm = null
+                }
                 alarm != null -> alarm.add(z)
                 ereignis != null -> ereignis.add(z)
                 kal != null && z.name in KOPF -> kal[z.name] = VcardLeser.text(z.wert).trim()
@@ -79,9 +93,9 @@ object IcalLeser {
         return out
     }
 
-    private val KOPF = setOf(FeedIcal.NAME, FeedIcal.KALENDER, FeedIcal.ART)
+    private val KOPF = setOf(FeedIcal.NAME, FeedIcal.KALENDER, FeedIcal.ART, FeedIcal.SCHREIBBAR)
 
-    private fun termin(e: List<VcardLeser.Zeile>, alarm: List<VcardLeser.Zeile>?): Termin? {
+    private fun termin(e: List<VcardLeser.Zeile>, alarme: List<List<VcardLeser.Zeile>>): Termin? {
         fun eins(name: String) = e.firstOrNull { it.name == name }
         fun text(name: String) = eins(name)?.let { VcardLeser.text(it.wert).trim() }?.ifEmpty { null }
         val uid = text("UID") ?: return null
@@ -100,11 +114,19 @@ object IcalLeser {
             ort = text("LOCATION"),
             beschreibung = text("DESCRIPTION"),
             rrule = eins("RRULE")?.wert?.trim()?.ifEmpty { null },
-            alarm = alarm?.let { a ->
-                val t = a.firstOrNull { it.name == "TRIGGER" } ?: return@let 0
-                dauer(t.wert)?.let { s -> maxOf(0, (-s / 60).toInt()) } ?: 0
-            },
+            alarme = alarme.map { a -> a.firstOrNull { it.name == "TRIGGER" }?.let { t -> dauer(t.wert) }?.let { s -> maxOf(0, (-s / 60).toInt()) } ?: 0 },
+            exdate = ausnahmen(e.filter { it.name == "EXDATE" }),
+            original = eins("RECURRENCE-ID")?.let(::zeit)?.ms,
+            etag = text(FeedIcal.ETAG),
         )
+    }
+
+    /** EXDATE lines as CalendarContract's column: `<zone>;<dates>` when the first names a zone, the dates joined by commas. */
+    private fun ausnahmen(z: List<VcardLeser.Zeile>): String? {
+        if (z.isEmpty()) return null
+        val zone = z.first().parameter["TZID"]?.firstOrNull()?.trimStart('/')
+        val daten = z.joinToString(",") { it.wert.trim() }
+        return if (zone != null) "$zone;$daten" else daten
     }
 
     /** A DTSTART or DTEND: epoch ms, whether a whole day, the zone it was written in. */
@@ -130,15 +152,15 @@ object IcalLeser {
     /** A zone by its IANA name; null when the phone does not know it. */
     private fun bekannt(id: String): TimeZone? = TimeZone.getTimeZone(id).takeIf { it.id == id }
 
-    /** A DURATION in seconds (`PT1H30M`, `-PT15M`, `P1D`); null when unreadable. */
+    /** A DURATION in seconds (`PT1H30M`, `-PT15M`, `P1D`, and Android's own `P3600S`); null when unreadable. */
     fun dauer(v: String): Long? {
-        val m = Regex("""^([+-])?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$""").matchEntire(v.trim()) ?: return null
+        val m = Regex("""^([+-])?P(?:(\d+)W)?(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$""").matchEntire(v.trim()) ?: return null
         fun n(i: Int) = m.groupValues[i].ifEmpty { "0" }.toLong()
         val s = n(2) * 7 * 86400 + n(3) * 86400 + n(4) * 3600 + n(5) * 60 + n(6)
         return if (m.groupValues[1] == "-") -s else s
     }
 
-    private fun format(muster: String, zone: TimeZone) =
+    fun format(muster: String, zone: TimeZone) =
         SimpleDateFormat(muster, Locale.ROOT).apply { timeZone = zone; isLenient = false }
 
     private val UTC: TimeZone = TimeZone.getTimeZone("UTC")

@@ -104,50 +104,50 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
             arrayOf(HomesKonto.TYP), null,
         )?.use { c ->
             while (c.moveToNext()) {
-                if (c.isNull(0) || c.isNull(1)) continue
-                out.getOrPut(c.getLong(0)) { ArrayList() }.add(c.getString(1))
+                if (c.isNull(0)) continue // one made on the phone has its SOURCE_ID once it went to Homes
+                out.getOrPut(c.getLong(0)) { ArrayList() }.add(c.getString(1).orEmpty())
             }
         }
         return out
     }
 
-    /** [k] with what the data row [c] adds. */
-    private fun dazu(k: Kontakt, c: Cursor): Kontakt {
-        fun t(spalte: String) = text(c, spalte)
-        fun typ(spalte: String) = c.getColumnIndex(spalte).let { if (it < 0 || c.isNull(it)) 0 else c.getInt(it) }
-        return when (t(ContactsContract.Data.MIMETYPE)) {
-            Name.CONTENT_ITEM_TYPE -> k.copy(
-                anzeigename = k.anzeigename ?: t(Name.DISPLAY_NAME),
-                nachname = t(Name.FAMILY_NAME), vorname = t(Name.GIVEN_NAME), weitere = t(Name.MIDDLE_NAME),
-                praefix = t(Name.PREFIX), suffix = t(Name.SUFFIX),
-            )
-            Phone.CONTENT_ITEM_TYPE -> t(Phone.NUMBER)?.let { k.copy(telefone = k.telefone + Eintrag(it, telefonTypen(typ(Phone.TYPE)))) } ?: k
-            Email.CONTENT_ITEM_TYPE -> t(Email.ADDRESS)?.let { k.copy(mails = k.mails + Eintrag(it, ortTyp(typ(Email.TYPE)))) } ?: k
-            Postal.CONTENT_ITEM_TYPE -> k.copy(
-                adressen = k.adressen + Adresse(
-                    typen = ortTyp(typ(Postal.TYPE)), postfach = t(Postal.POBOX), zusatz = t(Postal.NEIGHBORHOOD),
-                    strasse = t(Postal.STREET), ort = t(Postal.CITY), region = t(Postal.REGION), plz = t(Postal.POSTCODE),
-                    land = t(Postal.COUNTRY),
-                ),
-            )
-            Organization.CONTENT_ITEM_TYPE -> k.copy(
-                firma = k.firma ?: t(Organization.COMPANY), abteilung = k.abteilung ?: t(Organization.DEPARTMENT),
-                titel = k.titel ?: t(Organization.TITLE),
-            )
-            Event.CONTENT_ITEM_TYPE ->
-                if (typ(Event.TYPE) == Event.TYPE_BIRTHDAY) k.copy(geburtstag = k.geburtstag ?: t(Event.START_DATE)) else k
-            Note.CONTENT_ITEM_TYPE -> t(Note.NOTE)?.let { k.copy(notiz = listOfNotNull(k.notiz, it).joinToString("\n")) } ?: k
-            Website.CONTENT_ITEM_TYPE -> t(Website.URL)?.let { k.copy(webseiten = k.webseiten + it) } ?: k
-            else -> k
-        }
-    }
-
-    private fun text(c: Cursor, spalte: String): String? {
-        val i = c.getColumnIndex(spalte)
-        return if (i < 0 || c.isNull(i)) null else c.getString(i)?.takeIf { it.isNotBlank() }
-    }
-
     companion object {
+        /** [k] with what the data row [c] adds. */
+        fun dazu(k: Kontakt, c: Cursor): Kontakt {
+            fun t(spalte: String) = text(c, spalte)
+            fun typ(spalte: String) = c.getColumnIndex(spalte).let { if (it < 0 || c.isNull(it)) 0 else c.getInt(it) }
+            return when (t(ContactsContract.Data.MIMETYPE)) {
+                Name.CONTENT_ITEM_TYPE -> k.copy(
+                    anzeigename = k.anzeigename ?: t(Name.DISPLAY_NAME),
+                    nachname = t(Name.FAMILY_NAME), vorname = t(Name.GIVEN_NAME), weitere = t(Name.MIDDLE_NAME),
+                    praefix = t(Name.PREFIX), suffix = t(Name.SUFFIX),
+                )
+                Phone.CONTENT_ITEM_TYPE -> t(Phone.NUMBER)?.let { k.copy(telefone = k.telefone + Eintrag(it, telefonTypen(typ(Phone.TYPE)))) } ?: k
+                Email.CONTENT_ITEM_TYPE -> t(Email.ADDRESS)?.let { k.copy(mails = k.mails + Eintrag(it, ortTyp(typ(Email.TYPE)))) } ?: k
+                Postal.CONTENT_ITEM_TYPE -> k.copy(
+                    adressen = k.adressen + Adresse(
+                        typen = ortTyp(typ(Postal.TYPE)), postfach = t(Postal.POBOX), zusatz = t(Postal.NEIGHBORHOOD),
+                        strasse = t(Postal.STREET), ort = t(Postal.CITY), region = t(Postal.REGION), plz = t(Postal.POSTCODE),
+                        land = t(Postal.COUNTRY),
+                    ),
+                )
+                Organization.CONTENT_ITEM_TYPE -> k.copy(
+                    firma = k.firma ?: t(Organization.COMPANY), abteilung = k.abteilung ?: t(Organization.DEPARTMENT),
+                    titel = k.titel ?: t(Organization.TITLE),
+                )
+                Event.CONTENT_ITEM_TYPE ->
+                    if (typ(Event.TYPE) == Event.TYPE_BIRTHDAY) k.copy(geburtstag = k.geburtstag ?: t(Event.START_DATE)) else k
+                Note.CONTENT_ITEM_TYPE -> t(Note.NOTE)?.let { k.copy(notiz = listOfNotNull(k.notiz, it).joinToString("\n")) } ?: k
+                Website.CONTENT_ITEM_TYPE -> t(Website.URL)?.let { k.copy(webseiten = k.webseiten + it) } ?: k
+                else -> k
+            }
+        }
+
+        private fun text(c: Cursor, spalte: String): String? {
+            val i = c.getColumnIndex(spalte)
+            return if (i < 0 || c.isNull(i)) null else c.getString(i)?.takeIf { it.isNotBlank() }
+        }
+
         private val SPALTEN = arrayOf(
             ContactsContract.Data.CONTACT_ID, ContactsContract.Data.LOOKUP_KEY, ContactsContract.Data.DISPLAY_NAME,
             ContactsContract.Data.MIMETYPE, ContactsContract.RawContacts.ACCOUNT_TYPE,

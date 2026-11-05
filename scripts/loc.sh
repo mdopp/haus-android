@@ -34,10 +34,14 @@ budget ui        3500  # 3,026: the activities: start screen, pairing, settings 
                        #   (+12 of it is #237's level sheet, merged meanwhile);
                        # 3320 -> 3500: „Deine Geräte“ as tiles (owner, 2026-11-04): ui/FavoritenAnsicht.kt, the
                        #   widgets' pictures, ▲ ■ ▼ on a cover's tile, the part-way blind; today's rows removed (net +178)
-budget data      2950  # 2,780: Homes' calls (Napi), clients, models, the token store;
+budget data      3007  # 2,780: Homes' calls (Napi), clients, models, the token store;
                        # 2919 -> 2940 (owner-approved, homes ADR 0001 plan): /napi/kann and its client, homes-android#231;
-                       # 2940 -> 2950 (owner, 2026-11-04: the Hochladen job): POST /napi/musik and the musik share key
-budget konto     1304  # 1,242: das Homes-Konto, the sync adapters for contacts and calendars
+                       # 2940 -> 2950 (owner, 2026-11-04: the Hochladen job): POST /napi/musik and the musik share key;
+                       # 2950 -> 3007 (owner-approved 2026-11-05: writable Homes-Konto): the four write endpoints, If-Match,
+                       #   PUT and DELETE, GemeinsamClient.schreiben (homes#278)
+budget konto     1632  # 1,242: das Homes-Konto, the sync adapters for contacts and calendars;
+                       # 1304 -> 1632 (owner-approved 2026-11-05: writable Homes-Konto): the phone's changes sent before
+                       #   each pull, the iCalendar writer, alarms, EXDATE, exceptions and versions in the reader
 budget standort  1098  # 1,046: Standortverlauf — recording, batching, import
 budget kann      460  #   340 on 2026-11-04: what the box can do, /napi/kann kept and read, „Hier anfordern“ (homes ADR 0001);
                        # 360 -> 420 (owner-approved, homes ADR 0001 plan): the share targets switched by teilen, homes-android#232;

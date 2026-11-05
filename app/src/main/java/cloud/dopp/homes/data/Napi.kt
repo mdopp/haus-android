@@ -24,8 +24,8 @@ object Napi {
     /** The root every path shares. A tool's rows path must sit under it, see [TOOL_ROWS]. */
     const val ROOT = "/napi/"
 
-    /** HEAD and PATCH are the resumable upload's (`/napi/sicherung/uploads/{id}`, #194). */
-    enum class Method { GET, POST, HEAD, PATCH }
+    /** HEAD and PATCH are the resumable upload's (`/napi/sicherung/uploads/{id}`, #194); PUT and DELETE the Homes account's writes. */
+    enum class Method { GET, POST, HEAD, PATCH, PUT, DELETE }
 
     /**
      * The resumable upload's offset: a reply header of HEAD, a request header of
@@ -55,8 +55,14 @@ object Napi {
     /** The body of `POST /napi/kontakte`: the contacts as concatenated vCards. */
     const val VCARD = "text/vcard"
 
-    /** The Homes account's request header: the state the phone has, Homes' last [ETAG] (#206). */
+    /** The Homes account's request header: the state the phone has, Homes' last [ETAG] (#206); `*` on a write: a new entry. */
     const val IF_NONE_MATCH = "If-None-Match"
+
+    /** A write of the Homes account: only over this version, the entry's [FeedIcal.ETAG] (owner, 2026-11-05). */
+    const val IF_MATCH = "If-Match"
+
+    /** An appointment the phone writes back, as one VCALENDAR. */
+    const val ICAL = "text/calendar"
 
     /**
      * One call. [query] and [body] are the names the client sends, in the order
@@ -404,7 +410,14 @@ object Napi {
         const val KALENDER = "X-HAUS-KALENDER"
         const val ART = "X-HAUS-ART"
         const val ERINNERUNGEN = "erinnerungen"
+
+        /** With [SCHREIBBAR_QUERY]: a calendar the phone writes into, and each entry's (and card's) version. */
+        const val SCHREIBBAR = "X-HOMES-SCHREIBBAR"
+        const val ETAG = "X-HOMES-ETAG"
     }
+
+    /** The feeds as a phone that writes back reads them: series whole, each entry with its [FeedIcal.ETAG]. */
+    private const val SCHREIBBAR_QUERY = "schreibbar"
 
     /**
      * `GET /napi/standort` (Standortverlauf, owner 2026-11-02): whether the
@@ -688,19 +701,38 @@ object Napi {
      * 304 when [IF_NONE_MATCH] names the state Homes has.
      */
     val GEMEINSAM_KONTAKTE = Endpoint(
-        Method.GET, "/napi/gemeinsam/kontakte", reply = listOf(GemeinsamJson),
-        headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+        Method.GET, "/napi/gemeinsam/kontakte", query = listOf(SCHREIBBAR_QUERY), allowed = mapOf(SCHREIBBAR_QUERY to listOf("1")),
+        reply = listOf(GemeinsamJson), headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
     )
 
     /**
      * The Homes account: the household's shared calendars and the reminders,
-     * as iCalendar, `text/calendar`, one VCALENDAR per calendar ([FeedIcal]); series expanded by Homes, a month back and
-     * a year ahead.
+     * as iCalendar, `text/calendar`, one VCALENDAR per calendar ([FeedIcal]); a month back and
+     * a year ahead, series whole with their changed instances and alarms ([SCHREIBBAR_QUERY]).
      */
     val GEMEINSAM_KALENDER = Endpoint(
-        Method.GET, "/napi/gemeinsam/kalender", reply = listOf(GemeinsamJson),
-        headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+        Method.GET, "/napi/gemeinsam/kalender", query = listOf(SCHREIBBAR_QUERY), allowed = mapOf(SCHREIBBAR_QUERY to listOf("1")),
+        reply = listOf(GemeinsamJson), headers = listOf(IF_NONE_MATCH), replyHeaders = listOf(ETAG),
     )
+
+    /**
+     * The Homes account, writable (owner, 2026-11-05): one appointment ([ICAL]) or card ([VCARD]) by its UID, new
+     * ([IF_NONE_MATCH] `*`) or over its [FeedIcal.ETAG] ([IF_MATCH]); Homes' new [ETAG]. 412: Homes' version wins.
+     */
+    val GEMEINSAM_TERMIN = Endpoint(
+        Method.PUT, "/napi/gemeinsam/kalender/{kalender}/{uid}", reply = listOf(GemeinsamJson),
+        headers = listOf(IF_MATCH, IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+    )
+    val GEMEINSAM_KARTE = Endpoint(
+        Method.PUT, "/napi/gemeinsam/kontakte/{uid}", reply = listOf(GemeinsamJson),
+        headers = listOf(IF_MATCH, IF_NONE_MATCH), replyHeaders = listOf(ETAG),
+    )
+
+    /** A delete from the Homes account, over its version: into Homes' Papierkorb (30 days). */
+    val GEMEINSAM_TERMIN_WEG = Endpoint(
+        Method.DELETE, "/napi/gemeinsam/kalender/{kalender}/{uid}", reply = listOf(GemeinsamJson), headers = listOf(IF_MATCH),
+    )
+    val GEMEINSAM_KARTE_WEG = Endpoint(Method.DELETE, "/napi/gemeinsam/kontakte/{uid}", reply = listOf(GemeinsamJson), headers = listOf(IF_MATCH))
 
     /** Standortverlauf: whether the person connected Reitti on Homes. */
     val STANDORT_STAND = Endpoint(Method.GET, "/napi/standort", reply = listOf(StandortStandJson))

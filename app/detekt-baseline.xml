@@ -10,10 +10,10 @@
     <ID>CyclomaticComplexMethod:EnergyPicture.kt$EnergyPicture$fun single(f: EnergyFluss?, sizeDp: Int, density: Float): Bitmap</ID>
     <ID>CyclomaticComplexMethod:EnergyPicture.kt$EnergyPicture$private fun pill(c: Canvas, f: EnergyFluss?, key: String, l: Lage)</ID>
     <ID>CyclomaticComplexMethod:Handy.kt$HandyKontakte$override fun exportieren(datei: File): Int</ID>
-    <ID>CyclomaticComplexMethod:Handy.kt$HandyKontakte$private fun dazu(k: Kontakt, c: Cursor): Kontakt</ID>
+    <ID>CyclomaticComplexMethod:Handy.kt$HandyKontakte.Companion$fun dazu(k: Kontakt, c: Cursor): Kontakt</ID>
     <ID>CyclomaticComplexMethod:Handy.kt$HandyTelefon$override fun nachrichten(datei: File, seitSms: Long, seitMms: Long): Auszug?</ID>
     <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$fun lies(text: String): List&lt;Kalender&gt;</ID>
-    <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$private fun termin(e: List&lt;VcardLeser.Zeile&gt;, alarm: List&lt;VcardLeser.Zeile&gt;?): Termin?</ID>
+    <ID>CyclomaticComplexMethod:IcalLeser.kt$IcalLeser$private fun termin(e: List&lt;VcardLeser.Zeile&gt;, alarme: List&lt;List&lt;VcardLeser.Zeile&gt;&gt;): Termin?</ID>
     <ID>CyclomaticComplexMethod:KontakteLauf.kt$KontakteLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>CyclomaticComplexMethod:NachrichtenLauf.kt$NachrichtenLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>CyclomaticComplexMethod:NachrichtenLauf.kt$NachrichtenLauf$private fun senden(f: File): Lauf.Ergebnis?</ID>
@@ -48,7 +48,6 @@
     <ID>NestedBlockDepth:Handy.kt$HandyKontakte$override fun exportieren(datei: File): Int</ID>
     <ID>NestedBlockDepth:Import.kt$Import$private fun warten(id: String, groesse: Long, fortschritt: (Fortschritt) -&gt; Unit, halt: () -&gt; Boolean): Ausgang</ID>
     <ID>NestedBlockDepth:KontakteLauf.kt$KontakteLauf$fun laufen(): Lauf.Ergebnis</ID>
-    <ID>NestedBlockDepth:KontoLauf.kt$KontoLauf$fun laufen(result: SyncResult)</ID>
     <ID>NestedBlockDepth:NachrichtenLauf.kt$NachrichtenLauf$fun laufen(): Lauf.Ergebnis</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"cover"</ID>
     <ID>StringLiteralDuplication:DeviceLook.kt$DeviceLook$"light"</ID>

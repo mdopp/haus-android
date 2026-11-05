@@ -14,7 +14,7 @@ import org.json.JSONObject
  * (`NapiContractTest.onlyNapiRequestBuildsARequest`).
  *
  * [target] is the endpoint's path with its query ([Napi.Endpoint.target]); a
- * GET or HEAD carries no [body], a POST or PATCH always one. [headers] are the
+ * GET, HEAD or DELETE carries no [body], a POST, PATCH or PUT always one. [headers] are the
  * values of the endpoint's [Napi.Endpoint.headers], by name; no other header
  * is sent.
  */
@@ -25,8 +25,8 @@ fun Napi.Endpoint.request(
     body: RequestBody? = null,
     headers: Map<String, String> = emptyMap(),
 ): Request {
-    val bodiless = method == Napi.Method.GET || method == Napi.Method.HEAD
-    require(bodiless == (body == null)) { "$this: a GET or HEAD has no body, a POST or PATCH has one" }
+    val bodiless = method == Napi.Method.GET || method == Napi.Method.HEAD || method == Napi.Method.DELETE
+    require(bodiless == (body == null)) { "$this: a GET, HEAD or DELETE has no body, a POST, PATCH or PUT has one" }
     require(headers.keys == this.headers.toSet()) { "$this sends the headers ${this.headers}, not ${headers.keys}" }
     val b = Request.Builder()
         .url(base.trimEnd('/') + target)

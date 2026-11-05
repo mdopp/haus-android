@@ -17,8 +17,16 @@ import java.security.MessageDigest
  * Das Homes-Konto (#206, the owner's call of 2026-11-03): an Android account
  * „Homes“ whose contacts and calendars hold the household's shared data from
  * Homes (`/napi/gemeinsam/…`, homes#218), so the dialer, WhatsApp, mail and
- * the calendar app see them like any account's. Read only on the phone:
- * what changes, changes in Homes.
+ * the calendar app see them like any account's. Writable since the owner's
+ * call of 2026-11-05 (it was read only until then): the household's
+ * calendars show in the calendar app's choice of calendars and the address
+ * book as a place to save a contact; what is made, changed, moved in or
+ * deleted there goes back to Homes on the next sync, a delete into Homes'
+ * Papierkorb (30 days). Homes' version wins a conflict, and the account's
+ * screen says so. Subscriptions and „Erinnerungen“ stay read only. Phones
+ * that have the account already take it with the update: the sync XMLs say
+ * supportsUploading, the contacts XML has its edit schema, and the next sync
+ * gives the calendars their access level ([KalenderAbgleich.zugriff]).
  *
  * Two parts, each behind its own switch and permission: [Teil.KONTAKTE]
  * (ContactsContract) and [Teil.KALENDER] (CalendarContract, the reminders

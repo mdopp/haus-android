@@ -1,4 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- How the contacts app shows the Homes account (#206): no edit schema, so it
-     offers no editing of the shared contacts; they change in Homes. -->
-<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android" />
+<!-- How the contacts app shows the Homes account (#206): writable since the
+     owner's call of 2026-11-05, so the contacts app offers it as a place to
+     save a contact and edits its contacts. The kinds are what the sync sends
+     back as a vCard (konto/KontakteAbgleich, sicherung/Vcard); a photo is
+     required by the contacts app but stays on the phone. -->
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditSchema>
+        <DataKind kind="name" maxOccurs="1" supportsDisplayName="true" supportsPrefix="true" supportsMiddleName="true" supportsSuffix="true"
+            supportsPhoneticFamilyName="false" supportsPhoneticMiddleName="false" supportsPhoneticGivenName="false" />
+        <DataKind kind="photo" maxOccurs="1" />
+        <DataKind kind="phone">
+            <Type type="mobile" />
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="work_mobile" />
+            <Type type="fax_work" />
+            <Type type="fax_home" />
+            <Type type="pager" />
+            <Type type="main" />
+            <Type type="other" />
+        </DataKind>
+        <DataKind kind="email">
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="other" />
+        </DataKind>
+        <DataKind kind="postal" needsStructured="true">
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="other" />
+        </DataKind>
+        <DataKind kind="organization" maxOccurs="1" />
+        <DataKind kind="event" dateWithTime="false">
+            <Type type="birthday" maxOccurs="1" yearOptional="true" />
+        </DataKind>
+        <DataKind kind="note" maxOccurs="1" />
+        <DataKind kind="website" />
+    </EditSchema>
+</ContactsAccountType>

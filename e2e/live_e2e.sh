@@ -15,8 +15,10 @@
 #   6 the share sheet: the assistant's Direct Share target "Homes" is in it (#188)
 #   7 a photo shared from the camera's way: one upload in Homes' shape, „Abgelegt“
 #   8 the Homes account (#206): its two switches sync through Android's SyncManager
-#     from the fake Homes; the shared contacts resolve by number, the calendars are
-#     read only, the reminder rings; „Kontakte übertragen“ sends none of it
+#     from the fake Homes; the shared contacts resolve by number, the household's
+#     calendar is writable, the reminder rings; „Kontakte übertragen“ sends none of it;
+#     writable (owner 2026-11-05): a contact and an appointment made on the phone go
+#     to Homes, a deleted contact goes, Homes' version wins a conflict
 #   9 push (#209): a gemeinsam frame on the open stream syncs the calendar part at
 #     once, and the new entry is in the phone's calendar
 #  10 the box gone (the owner, 2026-11-04: it read „Pausiert, Bildschirm aus“): the fake
@@ -240,6 +242,10 @@ grep -q "OK (2 tests)" "$OUT/konto.txt" \
   && pass "8 the Homes account: contacts and calendars on the phone, none in the archive" \
   || { grep -m3 -E 'AssertionError|Exception' "$OUT/konto.txt"; fail "8 the Homes account"; }
 [ "$(since "$m" "GEMEINSAM kontakte 304")" -ge 1 ] && pass "8 an unchanged state costs Homes' 304" || fail "8 no 304 for the unchanged contacts"
+[ "$(since "$m" "SCHREIBEN PUT /napi/gemeinsam/kontakte/")" -ge 1 ] && [ "$(since "$m" "SCHREIBEN DELETE /napi/gemeinsam/kontakte/urn%3Auuid%3Ae2e-klempner 204")" -ge 1 ] \
+  && pass "8 a contact made and one deleted on the phone go to Homes" || fail "8 the phone's contacts did not reach Homes"
+[ "$(since "$m" "SCHREIBEN PUT /napi/gemeinsam/kalender/haushalt/")" -ge 2 ] && [ "$(since "$m" "SCHREIBEN PUT /napi/gemeinsam/kalender/haushalt/e2e-muell 412")" -ge 1 ] \
+  && pass "8 an appointment made on the phone goes to Homes, a conflict is Homes' 412" || fail "8 the phone's appointments did not reach Homes"
 
 # 9 --------------------------------------------------------------------------
 wake
