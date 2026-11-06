@@ -6,10 +6,13 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
+import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Base64
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.ContactsContract.CommonDataKinds.Photo
 import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import androidx.test.core.app.ApplicationProvider
 import cloud.dopp.homes.konto.HomesKonto
@@ -25,6 +28,8 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import java.io.ByteArrayOutputStream
 
 /**
  * No loop (#206): the Homes account's shared contacts never go with
@@ -38,6 +43,7 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class HomesKontoAusschlussTest {
 
     @get:Rule
@@ -46,7 +52,7 @@ class HomesKontoAusschlussTest {
     /** One row of `Data` as the provider joins it: its contact, the contact's key and name, its raw contact's account. */
     class Reihe(
         val kontakt: Long, val schluessel: String, val name: String, val konto: String,
-        val mime: String, val data1: String, val data2: String? = null,
+        val mime: String, val data1: String?, val data2: String? = null, val foto: ByteArray? = null,
     )
 
     /** A raw contact: its contact, account type and SOURCE_ID. */
@@ -81,6 +87,8 @@ class HomesKontoAusschlussTest {
                                 ContactsContract.RawContacts.ACCOUNT_TYPE -> r.konto
                                 ContactsContract.Data.DATA1 -> r.data1
                                 ContactsContract.Data.DATA2 -> r.data2
+                                ContactsContract.Data.RAW_CONTACT_ID -> r.kontakt
+                                Photo.PHOTO -> r.foto
                                 else -> null
                             }
                         }.toTypedArray(),
@@ -141,6 +149,48 @@ class HomesKontoAusschlussTest {
         assertTrue(text, text.contains("UID:1473iben\r\n") && text.contains("FN:Ben Bauer\r\n"))
         listOf("Erna", "+49 89 2222222", "erna@homes.example", "Klempner", "3333333", "Schule", "4444444", HomesKonto.schluesselTeil(omaQuelle))
             .forEach { assertFalse("$it went into the archive:\n$text", text.contains(it)) }
+    }
+
+    /**
+     * A contact's picture goes with it (homes#298): the person's own as its
+     * PHOTO; the face Homes added to a joined one never; a picture a
+     * messenger joined to a shared contact makes it no card.
+     */
+    @Test
+    fun thePersonsOwnPictureGoesAlong() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        shadowOf(app).grantPermissions(Manifest.permission.READ_CONTACTS)
+        Robolectric.setupContentProvider(FakeKontakte::class.java, ContactsContract.AUTHORITY)
+        val google = "com.google"
+        val homes = HomesKonto.TYP
+        val schule = HomesKonto.quelle("urn:uuid:schule")
+        val ben = jpeg(0xff3366cc.toInt())
+        val gesicht = jpeg(0xffcc6633.toInt())
+        roh = listOf(Roh(4, google, "ben"), Roh(1, google, "oma"), Roh(1, homes, HomesKonto.quelle("urn:uuid:oma")), Roh(3, homes, schule), Roh(3, "org.thoughtcrime.securesms", "s"))
+        reihen = listOf(
+            Reihe(1, "1473ioma", "Oma", google, StructuredName.CONTENT_ITEM_TYPE, "Oma"),
+            Reihe(1, "1473ioma", "Oma", google, Phone.CONTENT_ITEM_TYPE, "+49 170 1111111"),
+            Reihe(1, "1473ioma", "Oma", homes, Photo.CONTENT_ITEM_TYPE, null, foto = gesicht),
+            Reihe(3, HomesKonto.schluesselTeil(schule), "Schule", homes, StructuredName.CONTENT_ITEM_TYPE, "Schule"),
+            Reihe(3, HomesKonto.schluesselTeil(schule), "Schule", "org.thoughtcrime.securesms", Photo.CONTENT_ITEM_TYPE, null, foto = jpeg(0xff00ff00.toInt())),
+            Reihe(4, "1473iben", "Ben Bauer", google, StructuredName.CONTENT_ITEM_TYPE, "Ben Bauer"),
+            Reihe(4, "1473iben", "Ben Bauer", google, Photo.CONTENT_ITEM_TYPE, null, foto = ben),
+        )
+        val datei = tmp.newFile("kontakte.vcf")
+        val n = HandyKontakte(app).exportieren(datei)
+        val text = datei.readText().replace("\r\n ", "")
+        assertEquals(text, 2, n)
+        assertTrue(text, text.contains("FN:Ben Bauer\r\nN:;;;;\r\nPHOTO;ENCODING=b;TYPE=JPEG:${Base64.encodeToString(ben, Base64.NO_WRAP)}\r\n"))
+        assertEquals(text, 1, Regex("PHOTO").findAll(text).count())
+        assertFalse(text, text.contains("Schule"))
+    }
+
+    private fun jpeg(farbe: Int): ByteArray {
+        val b = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888).apply { eraseColor(farbe) }
+        return ByteArrayOutputStream().use { out ->
+            b.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            out.toByteArray()
+        }
     }
 
     companion object {
