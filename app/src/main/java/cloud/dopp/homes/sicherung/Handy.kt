@@ -2,6 +2,7 @@ package cloud.dopp.homes.sicherung
 
 import android.Manifest
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -13,12 +14,15 @@ import android.provider.ContactsContract.CommonDataKinds.Event
 import android.provider.ContactsContract.CommonDataKinds.Note
 import android.provider.ContactsContract.CommonDataKinds.Organization
 import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.ContactsContract.CommonDataKinds.Photo
 import android.provider.ContactsContract.CommonDataKinds.StructuredName as Name
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal as Postal
 import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.Telephony
+import android.util.Base64
 import androidx.core.content.ContextCompat
 import cloud.dopp.homes.konto.HomesKonto
+import cloud.dopp.homes.konto.KontakteAbgleich
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
@@ -38,7 +42,9 @@ object Erlaubnis {
  * contact written as a vCard 3.0 of the app's own ([Vcard.karte]) with
  * `UID:<lookup key>`, one after the other into the file. Not Android's own
  * vCard export: that is 2.1, which the box's Radicale may refuse (homes#210).
- * Read only; no photo.
+ * Read only. A contact's picture goes as its PHOTO (homes#298: Homes asks
+ * Immich whose face it is): Android's large one, else the thumbnail, at most
+ * 256 px a side; a picture alone makes no shared contact the person's.
  *
  * The Homes account's contacts are not the person's (#206): they come from
  * Homes and never go back to the archive. Their rows are left out; a contact
@@ -83,6 +89,10 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
                         k = Kontakt(uid = uid, anzeigename = if (mitHomes) null else text(c, ContactsContract.Data.DISPLAY_NAME))
                     }
                     if (text(c, ContactsContract.RawContacts.ACCOUNT_TYPE) == HomesKonto.TYP) continue
+                    if (text(c, ContactsContract.Data.MIMETYPE) == Photo.CONTENT_ITEM_TYPE) {
+                        k = k!!.copy(foto = k!!.foto ?: bild(c))
+                        continue
+                    }
                     val vorher = k!!
                     k = dazu(vorher, c)
                     // a name alone is not the person's: a messenger joins its own name row to every contact it knows
@@ -92,6 +102,17 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
             }
         }
         return n
+    }
+
+    /** The picture of photo row [c]'s raw contact, as it goes to Homes: base64; null when it is none. */
+    private fun bild(c: Cursor): String? {
+        val roh = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, c.getLong(c.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID)))
+        val gross = runCatching {
+            ctx.contentResolver.openAssetFileDescriptor(Uri.withAppendedPath(roh, ContactsContract.RawContacts.DisplayPhoto.CONTENT_DIRECTORY), "r")
+                ?.createInputStream()?.use { it.readBytes() }
+        }.getOrNull()
+        val jpeg = (gross ?: c.getBlob(c.getColumnIndexOrThrow(Photo.PHOTO)))?.let { KontakteAbgleich.verkleinert(it) } ?: return null
+        return Base64.encodeToString(jpeg, Base64.NO_WRAP)
     }
 
     /** The Homes account's raw contacts, by the contact Android joined each into: their SOURCE_IDs. */
@@ -155,7 +176,7 @@ class HandyKontakte(private val ctx: Context) : Adressbuch {
             ContactsContract.Data.MIMETYPE, ContactsContract.RawContacts.ACCOUNT_TYPE,
             ContactsContract.Data.DATA1, ContactsContract.Data.DATA2, ContactsContract.Data.DATA3, ContactsContract.Data.DATA4,
             ContactsContract.Data.DATA5, ContactsContract.Data.DATA6, ContactsContract.Data.DATA7, ContactsContract.Data.DATA8,
-            ContactsContract.Data.DATA9, ContactsContract.Data.DATA10,
+            ContactsContract.Data.DATA9, ContactsContract.Data.DATA10, ContactsContract.Data.RAW_CONTACT_ID, Photo.PHOTO,
         )
 
         /** Android's phone type as vCard 3.0 TYPE values. */

@@ -26,7 +26,9 @@ budget() { # budget <package> <cap>  — "." is the files beside the packages
 known=""
 # package    cap     size on 2026-11-03, and what it is
 budget widget    4938  # 4,703: the home-screen widgets, their rendering and pinning
-budget sicherung 3183  # 3,031: Daten sichern — backups, contacts, SMS and calls, age
+budget sicherung 3199  # 3,031: Daten sichern — backups, contacts, SMS and calls, age;
+                       # 3183 -> 3199 (owner approved 2026-11-06): „Kontakte übertragen“
+                       #   sends each contact's own picture as its PHOTO, ≤256 px, for Homes' „Ist das …?“ in Immich (homes#298)
 budget ui        3500  # 3,026: the activities: start screen, pairing, settings screens;
                        # 3177 -> 3200 (owner-approved, homes ADR 0001 plan): the traces and „Hier anfordern“ on the start screen, homes-android#231;
                        # 3200 -> 3220: a trace says what sharing to it would do, homes-android#232;

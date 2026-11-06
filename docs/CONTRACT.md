@@ -284,7 +284,10 @@ after the folders, only while the switch is on and the permission granted.
   `POST /napi/kontakte` (`Content-Type: text/vcard`) → `{kontakte, neu,
   geaendert, entfernt}`. Homes mirrors the set into the person's own address
   book „Handy-Kontakte“, which the box's admin can read like the calendar.
-  No contact on the phone: no request. No photos.
+  No contact on the phone: no request. A contact's own picture goes as its
+  `PHOTO;ENCODING=b;TYPE=JPEG` (Android's large one, else the thumbnail,
+  at most 256 px a side), for Homes to ask Immich whose face it is
+  (homes#298); the face the Homes account added never.
 - **„SMS und Anrufe“** (READ_SMS, READ_CALL_LOG): the SMS and
   MMS, and the calls, newer than a high-water mark per kind (the largest
   date that reached the box; the first run takes everything), as XML in the
