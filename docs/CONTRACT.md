@@ -521,7 +521,7 @@ anfordern“ (`anfordern`).
 
 (The owner's call, 2026-11-04; Homes' side is mdopp/homes#269,
 docs/REFERENCE.md there.) `GET /napi/einrichtung` → `{version: 1, offen,
-module: [{name, titel, icon, web, app: {name, paket, store}, nur_web,
+module: [{name, titel, icon, oeffnen, web, app: {name, paket, store}, nur_web,
 aufgabe: {titel, erledigt, am, wie, einrichten}}], ziele: {einkauf,
 zeitleiste, scannen}}`, the device's person's modules that are on.
 
@@ -531,16 +531,19 @@ zeitleiste, scannen}}`, the device's person's modules that are on.
   (`einrichtung/EinrichtungStore.kt`) and used offline. An older Homes
   answers 404: the app forgets what it kept, and „Öffnen“, „Deine
   Aufgaben“ and the shortcuts that need it are gone, quietly.
-- **„Öffnen“** below „Deine Geräte“: three modules only (owner, 2026-11-04:
-  the whole list was too long, most modules live in the Homes app, the
-  phone's apps or their own apps; `gesundheit` was removed 2026-11-07) —
-  `dokumente`, `standort` (Zeitleiste), `musik` (Musik verwalten), in that order, each when the box
-  sends it with a `web` (`Einrichtung.OEFFNEN`), opening it in a Custom Tab,
+- **„Öffnen“** below „Deine Geräte“: Homes decides it (owner, 2026-11-07;
+  mdopp/homes#300). `oeffnen` (bool) per module marks the ones the app lists,
+  in the answer's order, each only with a `web`; a missing `oeffnen` counts as
+  false. Only when no module in the answer carries the field at all (an older
+  Homes) does the app fall back to its own list, `Einrichtung.OEFFNEN`
+  (the owner's of 2026-11-04: `dokumente`, `standort` (Zeitleiste), `musik`
+  (Musik verwalten), in that order, each with a `web`). Each opens in a Custom Tab,
   where the person's login is; below them „Homes“, Homes' own start page
   (`/start` of the paired address), whenever the box answered. A module
   with its own app is a task while the app is missing, and then the
-  phone's own app icon is the way in. Pictures by `icon` (`einrichtung/Abschnitte.kt`, `Bilder`),
-  any other key the default one.
+  phone's own app icon is the way in. Pictures by `icon` (`einrichtung/Abschnitte.kt`, `Bilder`):
+  the drawables are the app's own, so Homes sends a key, never a picture;
+  an unknown or missing key gets the generic one.
 - **„Deine Aufgaben“** with `offen` beside its title: the tasks with
   `erledigt: false`. A tap opens the app's `store` page while the app is
   not on the phone, else `einrichten` in a Custom Tab.

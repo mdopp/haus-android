@@ -20,6 +20,8 @@ data class Modul(
     val icon: String,
     /** Its page in Homes or its service's address, https only; null when it has none. */
     val web: String?,
+    /** Homes lists it under „Öffnen“ (`oeffnen`, homes#300); false when the answer does not say. */
+    val oeffnen: Boolean,
     /** Its own phone app; null for a module that is only on the web. */
     val app: App?,
     val aufgabe: Aufgabe?,
@@ -29,12 +31,20 @@ data class Modul(
  * The person's modules and setup tasks (`GET /napi/einrichtung`, owner
  * 2026-11-04): what the start screen offers to open, the tasks still open,
  * and where the launcher's shortcuts lead. Nothing is taken on a guess: an
- * unknown field is ignored, an address that is not https is none.
+ * unknown field is ignored, an address that is not https is none. [vomServer]:
+ * some module in the answer carries `oeffnen`, so Homes decides „Öffnen“.
  */
-class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String, String>) {
+class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String, String>, private val vomServer: Boolean) {
 
-    /** „Öffnen“: of [OEFFNEN], in that order, each one the box sends with an address. */
-    val oeffnen: List<Modul> get() = OEFFNEN.mapNotNull { n -> module.firstOrNull { it.name == n && it.web != null } }
+    /**
+     * „Öffnen“ (owner, 2026-11-07: from the server): the modules Homes marks `oeffnen`, in the
+     * answer's order, each with an address; from an older Homes, which marks none, [OEFFNEN].
+     */
+    val oeffnen: List<Modul> get() = if (vomServer) {
+        module.filter { it.oeffnen && it.web != null }
+    } else {
+        OEFFNEN.mapNotNull { n -> module.firstOrNull { it.name == n && it.web != null } }
+    }
 
     /** The open setup tasks: a done one leaves the list, and then the phone's own app icon is the way in. */
     val aufgaben: List<Modul> get() = module.filter { it.aufgabe?.erledigt == false }
@@ -53,11 +63,9 @@ class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String
 
     companion object {
         /**
-         * What „Öffnen“ shows (owner, 2026-11-04): the whole list was too long — on a box
-         * some fifteen modules, most of them in the Homes app itself, among the phone's
-         * apps, or in their own apps. These only: Dokumente, the Zeitleiste
-         * (standort) and Musik verwalten (Gesundheit was the fourth until the
-         * owner removed it, 2026-11-07).
+         * Fallback only (2026-11-07): what „Öffnen“ shows from an older Homes that sends no
+         * `oeffnen`; a Homes that does decides the list itself. The owner's list of 2026-11-04:
+         * Dokumente, the Zeitleiste (standort) and Musik verwalten (Gesundheit removed 2026-11-07).
          */
         val OEFFNEN = listOf("dokumente", "standort", "musik")
 
@@ -69,11 +77,13 @@ class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String
             val o = HomesHttp.json(body) ?: return null
             if (o.optInt(KannJson.VERSION, 0) < 1) return null
             val module = o.optJSONArray(KannJson.MODULE)
+            val roh = (0 until (module?.length() ?: 0)).mapNotNull { module?.optJSONObject(it) }
             val ziele = o.optJSONObject(EinrichtungJson.ZIELE)
             return Einrichtung(
                 offen = o.optInt(EinrichtungJson.OFFEN, 0).coerceAtLeast(0),
-                module = (0 until (module?.length() ?: 0)).mapNotNull { modul(module?.optJSONObject(it)) },
+                module = roh.mapNotNull(::modul),
                 ziele = ZIELE.mapNotNull { k -> https(HomesHttp.text(ziele, k))?.let { k to it } }.toMap(),
+                vomServer = roh.any { it.has(EinrichtungModulJson.OEFFNEN) },
             )
         }
 
@@ -87,6 +97,7 @@ class Einrichtung(val offen: Int, val module: List<Modul>, val ziele: Map<String
                 titel = HomesHttp.text(o, EinrichtungModulJson.TITEL) ?: name,
                 icon = HomesHttp.text(o, EinrichtungModulJson.ICON) ?: name,
                 web = https(HomesHttp.text(o, EinrichtungModulJson.WEB)),
+                oeffnen = o?.optBoolean(EinrichtungModulJson.OEFFNEN, false) == true,
                 app = if (o?.optBoolean(EinrichtungModulJson.NUR_WEB, false) == true || paket == null) {
                     null
                 } else {

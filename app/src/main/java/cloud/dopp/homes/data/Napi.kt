@@ -144,9 +144,7 @@ object Napi {
     }
 
     /** The domains Homes draws as a card. */
-    val CARD_DOMAINS: Set<String> = setOf(
-        "sensor", "binary_sensor", "cover", "light", "switch", "climate", "media_player", "lock",
-    )
+    val CARD_DOMAINS: Set<String> = setOf("sensor", "binary_sensor", "cover", "light", "switch", "climate", "media_player", "lock")
 
     // --- the replies, by the keys the app reads ---------------------------------
 
@@ -546,6 +544,7 @@ object Napi {
         const val NAME = "name"
         const val TITEL = ModulJson.TITEL
         const val ICON = "icon"
+        const val OEFFNEN = "oeffnen" // the app lists it under „Öffnen“, in the answer's order (homes#300)
         const val WEB = "web"
         const val NUR_WEB = "nur_web"
         const val PAKET = "paket"
