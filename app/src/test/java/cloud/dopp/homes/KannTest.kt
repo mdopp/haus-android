@@ -54,7 +54,7 @@ class KannTest {
         val k = Kann.lesen(FULLSITE)
         assertNotNull(k)
         k!!
-        assertEquals(18, k.module.size)
+        assertEquals(17, k.module.size)
         assertTrue(k.hat(Liste.WIDGETS, Napi.KannKey.GERAET))
         assertTrue(k.hat(Liste.WIDGETS, "tool:doc"))
         assertFalse("Standortverlauf is off on the full site", k.hat(Liste.MEHR, Napi.KannKey.STANDORTVERLAUF))
@@ -80,7 +80,7 @@ class KannTest {
         o.getJSONObject("app").getJSONArray("widgets").put("tool:neu")
         o.getJSONArray("module").getJSONObject(0).put("farbe", "gruen")
         val k = Kann.lesen(o.toString())!!
-        assertEquals(18, k.module.size)
+        assertEquals(17, k.module.size)
         assertTrue(k.hat(Liste.WIDGETS, Napi.KannKey.ENERGIE))
         assertFalse(k.hat(Liste.MEHR, Napi.KannKey.STANDORTVERLAUF))
     }
@@ -186,7 +186,7 @@ class KannTest {
         val m = KannStore.kann(ctx())!!.module.single { it.name == "standort" }
         assertEquals("angefordert", m.spurId)
         assertFalse(m.anfordern)
-        assertEquals(18, KannStore.kann(ctx())!!.module.size)
+        assertEquals(17, KannStore.kann(ctx())!!.module.size)
         assertEquals("the ETag stays: the next read brings Homes' whole answer", "\"a1\"", KannStore.etag(ctx()))
     }
 

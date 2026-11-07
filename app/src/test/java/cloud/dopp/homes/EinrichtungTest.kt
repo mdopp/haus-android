@@ -50,7 +50,7 @@ class EinrichtungTest {
     @Test fun theAnswerIsReadAsHomesWritesIt() {
         val e = Einrichtung.lesen(ANTWORT)!!
         assertEquals(1, e.offen)
-        assertEquals(listOf("fotos", "filme", "einkauf", "dokumente", "standort", "gesundheit", "sprechen"), e.module.map { it.name })
+        assertEquals(listOf("fotos", "filme", "einkauf", "dokumente", "standort", "sprechen"), e.module.map { it.name })
         val fotos = e.module[0]
         assertEquals("Immich", fotos.app?.name)
         assertEquals("app.alextran.immich", fotos.app?.paket)
@@ -78,12 +78,12 @@ class EinrichtungTest {
             """{"version":1,"offen":-3,"module":[{"titel":"ohne Namen"},
                {"name":"dokumente","web":"http://klartext.example","nur_web":true},
                {"name":"standort","web":"javascript:alert(1)","nur_web":true},
-               {"name":"gesundheit","icon":"z","web":"https://z.example","nur_web":true,"neu":"ein Feld von morgen"}],
+               {"name":"musik","icon":"z","web":"https://z.example","nur_web":true,"neu":"ein Feld von morgen"}],
                "ziele":{"einkauf":"http://klartext.example","unbekannt":"https://u.example","zeitleiste":"https://r.example"}}""",
         )!!
         assertEquals(0, e.offen)
-        assertEquals("a module without its name is none", listOf("dokumente", "standort", "gesundheit"), e.module.map { it.name })
-        assertEquals("only https addresses", listOf("gesundheit"), e.oeffnen.map { it.name })
+        assertEquals("a module without its name is none", listOf("dokumente", "standort", "musik"), e.module.map { it.name })
+        assertEquals("only https addresses", listOf("musik"), e.oeffnen.map { it.name })
         assertEquals("only https targets the app knows", mapOf("zeitleiste" to "https://r.example"), e.ziele)
     }
 
@@ -108,22 +108,21 @@ class EinrichtungTest {
 
     // --- what is shown -----------------------------------------------------------
 
-    /** „Öffnen“ is four modules only (owner, 2026-11-04), in their order, each when the box sends it. */
-    @Test fun oeffnenListsTheFourTheBoxSends() {
+    /** „Öffnen“ is three modules only (owner, 2026-11-04; Gesundheit gone 2026-11-07), in their order, each when the box sends it. */
+    @Test fun oeffnenListsTheThreeTheBoxSends() {
         val e = Einrichtung.lesen(ANTWORT)!!
-        assertEquals("musik is not on this box", listOf("dokumente", "standort", "gesundheit"), e.oeffnen.map { it.name })
+        assertEquals("musik is not on this box", listOf("dokumente", "standort"), e.oeffnen.map { it.name })
         assertTrue("not Einkauf, not a module with its own app", e.oeffnen.none { it.name in setOf("einkauf", "fotos", "filme", "sprechen") })
         val alle = Einrichtung.lesen(
             """{"version":1,"module":[
                {"name":"musik","titel":"Musik verwalten","web":"https://homes.example/musik","nur_web":true},
                {"name":"notizen","titel":"Notizen","web":"https://homes.example/notizen","nur_web":true},
-               {"name":"gesundheit","titel":"Gesundheit","web":"https://gesundheit.example","nur_web":true},
                {"name":"standort","titel":"Zeitleiste","web":"https://reitti.example","nur_web":true},
                {"name":"kalender","titel":"Kalender","web":"https://homes.example/kalender","nur_web":true},
                {"name":"dokumente","titel":"Dokumente","nur_web":true}]}""",
         )!!
-        assertEquals("in the owner's order; dokumente without an address is none", listOf("standort", "gesundheit", "musik"), alle.oeffnen.map { it.name })
-        assertEquals(listOf("dokumente", "standort", "gesundheit", "musik"), Einrichtung.OEFFNEN)
+        assertEquals("in the owner's order; dokumente without an address is none", listOf("standort", "musik"), alle.oeffnen.map { it.name })
+        assertEquals(listOf("dokumente", "standort", "musik"), Einrichtung.OEFFNEN)
     }
 
     @Test fun aTaskShowsOnlyWhileItIsOpen() {
@@ -185,7 +184,6 @@ class EinrichtungTest {
             {"name":"einkauf","titel":"Einkauf","icon":"einkauf","web":"https://homes.example/einkauf","nur_web":true},
             {"name":"dokumente","titel":"Dokumente","icon":"dokumente","web":"https://homes.example/dokumente","nur_web":true},
             {"name":"standort","titel":"Zeitleiste","icon":"standort","web":"https://reitti.example","nur_web":true},
-            {"name":"gesundheit","titel":"Gesundheit","icon":"gesundheit","web":"https://gesundheit.example","nur_web":true},
             {"name":"sprechen","titel":"Sprechen","icon":"sprechen",
              "app":{"name":"Signal","paket":"org.thoughtcrime.securesms","store":"https://play.google.com/store/apps/details?id=org.thoughtcrime.securesms"},
              "nur_web":false}],

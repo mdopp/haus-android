@@ -28,7 +28,7 @@ import java.util.Locale
  * The start screen's „Öffnen“ and „Deine Aufgaben“ (owner, 2026-11-04), from
  * the kept answer of `/napi/einrichtung` ([EinrichtungStore]).
  *
- * **Öffnen** lists four modules ([Einrichtung.OEFFNEN], owner 2026-11-04),
+ * **Öffnen** lists three modules ([Einrichtung.OEFFNEN], owner 2026-11-04),
  * each the box sends, opening its address in a Custom Tab, where the person's
  * login is, and below them „Homes“, Homes' own start page. A module with its
  * own app is a task while the app is missing, and then the phone's own app
@@ -133,7 +133,6 @@ object Bilder {
     private val NACH_ICON = mapOf(
         "einkauf" to R.drawable.ic_modul_einkauf,
         "dokumente" to R.drawable.ic_modul_dokumente,
-        "gesundheit" to R.drawable.ic_modul_gesundheit,
         "kalender" to R.drawable.ic_modul_kalender,
         "musik" to R.drawable.ic_modul_musik,
         "podcasts" to R.drawable.ic_modul_podcasts,

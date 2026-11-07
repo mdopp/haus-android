@@ -531,10 +531,10 @@ zeitleiste, scannen}}`, the device's person's modules that are on.
   (`einrichtung/EinrichtungStore.kt`) and used offline. An older Homes
   answers 404: the app forgets what it kept, and „Öffnen“, „Deine
   Aufgaben“ and the shortcuts that need it are gone, quietly.
-- **„Öffnen“** below „Deine Geräte“: four modules only (owner, 2026-11-04:
+- **„Öffnen“** below „Deine Geräte“: three modules only (owner, 2026-11-04:
   the whole list was too long, most modules live in the Homes app, the
-  phone's apps or their own apps) — `dokumente`, `standort` (Zeitleiste),
-  `gesundheit`, `musik` (Musik verwalten), in that order, each when the box
+  phone's apps or their own apps; `gesundheit` was removed 2026-11-07) —
+  `dokumente`, `standort` (Zeitleiste), `musik` (Musik verwalten), in that order, each when the box
   sends it with a `web` (`Einrichtung.OEFFNEN`), opening it in a Custom Tab,
   where the person's login is; below them „Homes“, Homes' own start page
   (`/start` of the paired address), whenever the box answered. A module
