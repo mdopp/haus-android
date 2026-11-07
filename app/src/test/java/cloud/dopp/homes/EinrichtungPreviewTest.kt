@@ -198,7 +198,7 @@ class EinrichtungPreviewTest {
             {"entity_id":"cover.garage","name":"Garagentor Garage","domain":"cover","device_class":"garage","state":"closed","supported_features":3,"page":"/raeume/cover.garage"},
             {"entity_id":"lock.haustuer","name":"Haustür","domain":"lock","state":"locked","supported_features":1,"page":"/raeume/lock.haustuer"}]}"""
 
-        /** A household's answer: Einkauf and the four of „Öffnen“ on the web, two apps still to set up, one done. */
+        /** A household's answer: Einkauf and the three Homes marks `oeffnen` on the web, two apps still to set up, one done. */
         private const val ANTWORT = """{"version":1,"offen":2,"module":[
             {"name":"fotos","titel":"Fotos","icon":"fotos","web":"https://photos.example",
              "app":{"name":"Immich","paket":"app.alextran.immich","store":"https://play.google.com/store/apps/details?id=app.alextran.immich"},
@@ -209,10 +209,10 @@ class EinrichtungPreviewTest {
             {"name":"filme","titel":"Filme und Musik","icon":"filme","web":"https://media.example",
              "app":{"name":"Jellyfin","paket":"org.jellyfin.mobile","store":"https://play.google.com/store/apps/details?id=org.jellyfin.mobile"},
              "nur_web":false,"aufgabe":{"titel":"Filme und Musik auf dem Handy einrichten","erledigt":true,"am":"2026-11-04","wie":"app","einrichten":"https://homes.example/einrichten/filme"}},
-            {"name":"einkauf","titel":"Einkauf","icon":"einkauf","web":"https://homes.example/einkauf","nur_web":true},
-            {"name":"dokumente","titel":"Dokumente","icon":"dokumente","web":"https://homes.example/dokumente","nur_web":true},
-            {"name":"standort","titel":"Zeitleiste","icon":"standort","web":"https://reitti.example","nur_web":true},
-            {"name":"musik","titel":"Musik verwalten","icon":"musik","web":"https://homes.example/musik","nur_web":true}],
+            {"name":"einkauf","titel":"Einkauf","icon":"einkauf","oeffnen":false,"web":"https://homes.example/einkauf","nur_web":true},
+            {"name":"dokumente","titel":"Dokumente","icon":"dokumente","oeffnen":true,"web":"https://homes.example/dokumente","nur_web":true},
+            {"name":"standort","titel":"Zeitleiste","icon":"standort","oeffnen":true,"web":"https://reitti.example","nur_web":true},
+            {"name":"musik","titel":"Musik verwalten","icon":"musik","oeffnen":true,"web":"https://homes.example/musik","nur_web":true}],
            "ziele":{"einkauf":"https://homes.example/einkauf","zeitleiste":"https://reitti.example","scannen":"https://homes.example/napi/upload"}}"""
     }
 }

@@ -2,6 +2,7 @@ package cloud.dopp.homes
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import cloud.dopp.homes.einrichtung.Bilder
 import cloud.dopp.homes.einrichtung.Einrichtung
 import cloud.dopp.homes.einrichtung.EinrichtungClient
 import cloud.dopp.homes.einrichtung.EinrichtungLeser
@@ -25,8 +26,8 @@ import java.util.concurrent.TimeUnit
 /**
  * The person's modules and setup tasks (`/napi/einrichtung`, owner
  * 2026-11-04): the answer read as Homes writes it (docs/REFERENCE.md), an
- * older Homes' 404 that hides it all, which modules „Öffnen“ lists and
- * which tasks show, and what the phone tells Homes it has installed.
+ * older Homes' 404 that hides it all, which modules „Öffnen“ lists (Homes'
+ * `oeffnen`, or the fallback for an older Homes), a module's picture, which tasks show, and what the phone tells Homes it has installed.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -108,8 +109,28 @@ class EinrichtungTest {
 
     // --- what is shown -----------------------------------------------------------
 
-    /** „Öffnen“ is three modules only (owner, 2026-11-04; Gesundheit gone 2026-11-07), in their order, each when the box sends it. */
-    @Test fun oeffnenListsTheThreeTheBoxSends() {
+    /** „Öffnen“ is what Homes marks `oeffnen` (owner, 2026-11-07), in the answer's order, each with an address. */
+    @Test fun oeffnenIsWhatHomesMarks() {
+        val e = Einrichtung.lesen(
+            """{"version":1,"module":[
+               {"name":"notizen","titel":"Notizen","icon":"notizen","oeffnen":true,"web":"https://homes.example/notizen","nur_web":true},
+               {"name":"dokumente","titel":"Dokumente","oeffnen":false,"web":"https://homes.example/dokumente","nur_web":true},
+               {"name":"musik","titel":"Musik verwalten","web":"https://homes.example/musik","nur_web":true},
+               {"name":"kalender","titel":"Kalender","oeffnen":true,"nur_web":true},
+               {"name":"standort","titel":"Zeitleiste","oeffnen":true,"web":"https://reitti.example","nur_web":true}]}""",
+        )!!
+        assertEquals(
+            "Homes' order; not unmarked, not false, not without an address — and the old list does not count",
+            listOf("notizen", "standort"),
+            e.oeffnen.map { it.name },
+        )
+        assertEquals(listOf(true, false, false, true, true), e.module.map { it.oeffnen })
+        val keins = Einrichtung.lesen(ANTWORT.replace("\"nur_web\":true", "\"oeffnen\":false,\"nur_web\":true"))!!
+        assertTrue("Homes marks none: „Öffnen“ is empty, not the fallback", keins.oeffnen.isEmpty())
+    }
+
+    /** An older Homes sends no `oeffnen`: the fallback, three modules (owner, 2026-11-04; Gesundheit gone 2026-11-07), in their order. */
+    @Test fun anOlderHomesWithoutOeffnenGetsTheFallback() {
         val e = Einrichtung.lesen(ANTWORT)!!
         assertEquals("musik is not on this box", listOf("dokumente", "standort"), e.oeffnen.map { it.name })
         assertTrue("not Einkauf, not a module with its own app", e.oeffnen.none { it.name in setOf("einkauf", "fotos", "filme", "sprechen") })
@@ -123,6 +144,15 @@ class EinrichtungTest {
         )!!
         assertEquals("in the owner's order; dokumente without an address is none", listOf("standort", "musik"), alle.oeffnen.map { it.name })
         assertEquals(listOf("dokumente", "standort", "musik"), Einrichtung.OEFFNEN)
+    }
+
+    /** Drawables cannot come from Homes: a known `icon` key has its picture, an unknown or missing one the generic one. */
+    @Test fun anUnknownIconGetsTheGenericPicture() {
+        assertEquals(R.drawable.ic_modul_dokumente, Bilder.fuer("dokumente"))
+        assertEquals(R.drawable.ic_services, Bilder.fuer("ein-icon-von-morgen"))
+        assertEquals(R.drawable.ic_services, Bilder.fuer(null))
+        val e = Einrichtung.lesen("""{"version":1,"module":[{"name":"neu","icon":"ein-icon-von-morgen","oeffnen":true,"web":"https://n.example"}]}""")!!
+        assertEquals(R.drawable.ic_services, Bilder.fuer(e.oeffnen.single().icon))
     }
 
     @Test fun aTaskShowsOnlyWhileItIsOpen() {

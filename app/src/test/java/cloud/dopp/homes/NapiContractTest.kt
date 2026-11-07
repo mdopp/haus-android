@@ -69,7 +69,7 @@ class NapiContractTest {
 
         /** `/napi/einrichtung`'s answer: `einrichten.Antwort`, `NapiModul`, `NapiApp`, `NapiAufgabe` and the ziele's keys. */
         val EINRICHTUNG = setOf(
-            "version", "offen", "module", "ziele", "name", "titel", "icon", "web", "app", "nur_web", "aufgabe",
+            "version", "offen", "module", "ziele", "name", "titel", "icon", "oeffnen", "web", "app", "nur_web", "aufgabe",
             "paket", "store", "erledigt", "am", "wie", "einrichten", "einkauf", "zeitleiste", "scannen",
         )
 
@@ -320,7 +320,7 @@ class NapiContractTest {
             // registered napi.go:243-244, not_found napi.go:334.
             Route(
                 "GET", "/napi/einrichtung",
-                "internal/napi/einrichtung.go:18-45, the answer internal/einrichten/einrichten.go:207-239, ziele cmd/homes/module.go:307-313",
+                "internal/napi/einrichtung.go:18-45, the answer internal/einrichten/einrichten.go:233-266, ziele cmd/homes/module.go:307-313",
                 sends = EINRICHTUNG + setOf("ok", "reason"),
             ),
             Route(

@@ -28,8 +28,8 @@ import java.util.Locale
  * The start screen's „Öffnen“ and „Deine Aufgaben“ (owner, 2026-11-04), from
  * the kept answer of `/napi/einrichtung` ([EinrichtungStore]).
  *
- * **Öffnen** lists three modules ([Einrichtung.OEFFNEN], owner 2026-11-04),
- * each the box sends, opening its address in a Custom Tab, where the person's
+ * **Öffnen** lists the modules Homes marks `oeffnen` ([Einrichtung.oeffnen], owner
+ * 2026-11-07), each with its address, opened in a Custom Tab, where the person's
  * login is, and below them „Homes“, Homes' own start page. A module with its
  * own app is a task while the app is missing, and then the phone's own app
  * icon is the way in.
@@ -67,7 +67,7 @@ object Abschnitte {
         val e = EinrichtungStore.einrichtung(a)
         val grau = Verbindung.stand(a) != null
         val oeffnen = e?.oeffnen.orEmpty()
-        // below the four, Homes' own start page (owner, 2026-11-04), whenever the box answered
+        // below the modules, Homes' own start page (owner, 2026-11-04), whenever the box answered
         val homes = ServerStore.baseUrl(a)?.takeIf { e != null }?.let { HomesPages.url(it, HomesPages.START) }
         fuellen(a, R.id.oeffnen_section, R.id.oeffnen_group, grau, oeffnen.map { m ->
             zeile(a, Bilder.fuer(m.icon), m.titel, null) { m.web?.let { oeffnen(a, it.toUri()) } }
@@ -128,7 +128,7 @@ object Abschnitte {
     private const val GRAU = 0.45f
 }
 
-/** A module's picture by the app's key for it (`icon`, the module's name); an unknown one gets the default. */
+/** A module's picture by the app's key for it (`icon`, the module's name; drawables cannot come from Homes): an unknown key gets the generic one. */
 object Bilder {
     private val NACH_ICON = mapOf(
         "einkauf" to R.drawable.ic_modul_einkauf,
