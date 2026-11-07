@@ -6,7 +6,7 @@
 
     <!-- Pairing (#176): Homes' address, then /pair-device, confirm, done. -->
     <string name="home_connect_hint">Gib die Adresse von Homes ein. Danach meldest du dich an und bestätigst die Kopplung.</string>
-    <string name="home_url_hint">homes.example.org</string>
+    <string name="home_url_hint">www.example.org</string>
     <string name="home_connect">Koppeln</string>
     <string name="home_enter_url">Bitte die Adresse eingeben.</string>
     <string name="home_reconnect">Bei %1$s anmelden, um die Kopplung abzuschließen.</string>

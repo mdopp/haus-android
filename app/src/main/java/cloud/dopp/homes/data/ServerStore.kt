@@ -17,7 +17,7 @@ object ServerStore {
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    /** e.g. `https://homes.example.org` (no trailing slash), or null if unset. */
+    /** e.g. `https://www.example.org` (no trailing slash), or null if unset. */
     fun baseUrl(ctx: Context): String? = p(ctx).getString(KEY, null)
 
     /** True iff [url] names plain http — refused, with its own message. */

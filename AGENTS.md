@@ -9,7 +9,7 @@ with the server is [`docs/CONTRACT.md`](docs/CONTRACT.md), the look is
 ## What the app is
 
 This repo is the **Homes app**: native Kotlin home-screen widgets, the
-pairing with **Homes** (`https://homes.<domain>`, repo `mdopp/homes`), the
+pairing with **Homes** (`https://www.<domain>`, repo `mdopp/homes`), the
 family's surface of the box Laib runs, and on the app's start screen the
 person's favorite devices (the owner's calls, 2026-11-02 and 2026-11-03: the
 widgets are one device per widget, one energy widget and the tools Dokumente

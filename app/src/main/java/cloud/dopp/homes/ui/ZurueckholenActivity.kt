@@ -350,7 +350,7 @@ class ZurueckholenActivity : AppCompatActivity() {
         }
     }
 
-    /** The person's archive, where the vault opens: archiv.<domain> beside homes.<domain>. */
+    /** The person's archive, where the vault opens: archiv.<domain> beside Homes' www.<domain>. */
     private fun archivAdresse(): String? = ServerStore.baseUrl(this)?.let(Rueckholung::archivAdresse)
 
     private fun archivOeffnen() {
