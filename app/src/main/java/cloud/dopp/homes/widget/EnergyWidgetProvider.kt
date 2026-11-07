@@ -14,7 +14,7 @@ import org.json.JSONObject
  * "Gesamt"): what flows now and what came together today, from
  * `/napi/portal/energy` ([EnergyRender]). No per-instance config — one house
  * picture. A tap opens Homes' Energie page at the paired address
- * (`https://haus.<domain>/energie`); the live stream keeps it current. The
+ * (`https://www.<domain>/energie`); the live stream keeps it current. The
  * energy read last draws at once and stays when a read fails ([WidgetCache]).
  */
 class EnergyWidgetProvider : FedWidgetProvider(ACTION_REFRESH, 730_000, tapStartsLive = true) {

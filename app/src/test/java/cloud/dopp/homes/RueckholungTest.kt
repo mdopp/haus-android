@@ -273,6 +273,7 @@ class RueckholungTest {
     @Test
     fun theArchiveBesideHomes() {
         assertEquals("https://archiv.dopp.cloud/", Rueckholung.archivAdresse("https://homes.dopp.cloud"))
+        assertEquals("https://archiv.dopp.cloud/", Rueckholung.archivAdresse("https://www.dopp.cloud")) // Homes since 2026-11-07
         assertEquals("https://archiv.example.org/", Rueckholung.archivAdresse("https://homes.example.org/"))
         // whatever the first label is: the old address, another name, a port
         assertEquals("https://archiv.dopp.cloud/", Rueckholung.archivAdresse("https://haus.dopp.cloud/start"))

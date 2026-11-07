@@ -268,8 +268,8 @@ class Rueckholung(
         /**
          * The person's archive beside Homes: the server's first label swapped
          * for `archiv` (laib's archive template, one name for every person's
-         * instance), whatever that label is — `https://homes.<domain>` and
-         * `https://haus.<domain>` both → `https://archiv.<domain>/`. Null for
+         * instance), whatever that label is — `https://www.<domain>` (Homes since
+         * 2026-11-07) and `https://homes.<domain>` both → `https://archiv.<domain>/`. Null for
          * http, a host of one label or an IP address.
          */
         fun archivAdresse(homesBase: String): String? {
