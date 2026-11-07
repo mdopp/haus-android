@@ -146,11 +146,11 @@ class EinrichtungPreviewTest {
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.oeffnen_section).visibility)
         assertEquals(View.VISIBLE, a.findViewById<View>(R.id.aufgaben_section).visibility)
         val oeffnen = a.findViewById<ViewGroup>(R.id.oeffnen_group)
-        assertEquals("the four, then Homes", 5, oeffnen.childCount)
+        assertEquals("the three, then Homes", 4, oeffnen.childCount)
         val titel = (0 until oeffnen.childCount).map { oeffnen.getChildAt(it).findViewById<TextView>(R.id.einr_titel).text.toString() }
-        assertEquals(listOf("Dokumente", "Zeitleiste", "Gesundheit", "Musik verwalten", "Homes"), titel)
+        assertEquals(listOf("Dokumente", "Zeitleiste", "Musik verwalten", "Homes"), titel)
         if (!offline) {
-            oeffnen.getChildAt(4).performClick()
+            oeffnen.getChildAt(3).performClick()
             assertEquals("Homes' start page", "https://homes.example/start", shadowOf(a).nextStartedActivity?.dataString)
         }
         assertEquals(2, a.findViewById<ViewGroup>(R.id.aufgaben_group).childCount)
@@ -212,7 +212,6 @@ class EinrichtungPreviewTest {
             {"name":"einkauf","titel":"Einkauf","icon":"einkauf","web":"https://homes.example/einkauf","nur_web":true},
             {"name":"dokumente","titel":"Dokumente","icon":"dokumente","web":"https://homes.example/dokumente","nur_web":true},
             {"name":"standort","titel":"Zeitleiste","icon":"standort","web":"https://reitti.example","nur_web":true},
-            {"name":"gesundheit","titel":"Gesundheit","icon":"gesundheit","web":"https://gesundheit.example","nur_web":true},
             {"name":"musik","titel":"Musik verwalten","icon":"musik","web":"https://homes.example/musik","nur_web":true}],
            "ziele":{"einkauf":"https://homes.example/einkauf","zeitleiste":"https://reitti.example","scannen":"https://homes.example/napi/upload"}}"""
     }
